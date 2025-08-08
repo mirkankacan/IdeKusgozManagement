@@ -1,0 +1,6 @@
+@IdeKusgozManagement.WebAPI_HostAddress = http://localhost:5291
+
+GET {{IdeKusgozManagement.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
