@@ -11,7 +11,7 @@ namespace IdeKusgozManagement.Application.Mappings
             // ApplicationUser -> UserDTO
             TypeAdapterConfig<ApplicationUser, UserDTO>
                 .NewConfig()
-                .Map(dest => dest.Role, src => (string?)null); // Infrastructure'da manuel set edilecek
+                .Map(dest => dest.RoleName, src => (string?)null); // Infrastructure'da manuel set edilecek
 
             // CreateUserDTO -> ApplicationUser
             TypeAdapterConfig<CreateUserDTO, ApplicationUser>

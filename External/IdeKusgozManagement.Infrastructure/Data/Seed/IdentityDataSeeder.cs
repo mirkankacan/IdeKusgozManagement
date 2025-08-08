@@ -17,9 +17,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
             // Rolleri oluştur
             if (!await roleManager.RoleExistsAsync(adminRole))
             {
-                await roleManager.CreateAsync(new ApplicationRole { Name = adminRole });
-                await roleManager.CreateAsync(new ApplicationRole { Name = chiefRole });
-                await roleManager.CreateAsync(new ApplicationRole { Name = personnelRole });
+                await roleManager.CreateAsync(new ApplicationRole { Name = adminRole,IsActive=true});
+                await roleManager.CreateAsync(new ApplicationRole { Name = chiefRole, IsActive = true });
+                await roleManager.CreateAsync(new ApplicationRole { Name = personnelRole, IsActive = true });
             }
 
             // İlk kullanıcı: Admin kullanıcısı

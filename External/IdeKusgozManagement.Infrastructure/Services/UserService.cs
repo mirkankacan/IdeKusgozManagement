@@ -36,7 +36,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     var roles = await _userManager.GetRolesAsync(user);
                     var userDTO = user.Adapt<UserDTO>();
-                    userDTO.Role = roles.FirstOrDefault();
+                    userDTO.RoleName = roles.FirstOrDefault();
                     userDTOs.Add(userDTO);
                 }
 
@@ -61,7 +61,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var roles = await _userManager.GetRolesAsync(user);
                 var userDTO = user.Adapt<UserDTO>();
-                userDTO.Role = roles.FirstOrDefault();
+                userDTO.RoleName = roles.FirstOrDefault();
 
                 return ApiResponse<UserDTO>.Success(userDTO);
             }
@@ -102,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 var userDTO = user.Adapt<UserDTO>();
-                userDTO.Role = createUserDTO.RoleName;
+                userDTO.RoleName = createUserDTO.RoleName;
 
                 return ApiResponse<UserDTO>.Success(userDTO, "Kullanıcı başarıyla oluşturuldu");
             }
@@ -144,7 +144,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var roles = await _userManager.GetRolesAsync(user);
                 var userDTO = user.Adapt<UserDTO>();
-                userDTO.Role = roles.FirstOrDefault();
+                userDTO.RoleName = roles.FirstOrDefault();
 
                 return ApiResponse<UserDTO>.Success(userDTO, "Kullanıcı başarıyla güncellendi");
             }
@@ -286,9 +286,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var usersInRole = await _userManager.GetUsersInRoleAsync(roleName);
                 var userDTOs = usersInRole.Select(user =>
                 {
-                    var userDto = user.Adapt<UserDTO>();
-                    userDto.Role = roleName;
-                    return userDto;
+                    var userDTO = user.Adapt<UserDTO>();
+                    userDTO.RoleName = roleName;
+                    return userDTO;
                 }).ToList();
 
                 return ApiResponse<IEnumerable<UserDTO>>.Success(userDTOs);
