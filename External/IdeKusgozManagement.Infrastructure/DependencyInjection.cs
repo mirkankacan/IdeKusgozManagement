@@ -1,4 +1,6 @@
-﻿using IdeKusgozManagement.Infrastructure.Data.Context;
+﻿using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Infrastructure.Data.Context;
+using IdeKusgozManagement.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +15,9 @@ namespace IdeKusgozManagement.Infrastructure
 
             services.AddDbContext<ApplicationDbContext>(opts =>
                 opts.UseSqlServer(connectionString));
+
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoleService, RoleService>();
 
             return services;
         }

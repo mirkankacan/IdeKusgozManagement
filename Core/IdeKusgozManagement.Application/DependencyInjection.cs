@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using IdeKusgozManagement.Application.Mappings;
+using Mapster;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace IdeKusgozManagement.Application
 {
@@ -6,6 +8,9 @@ namespace IdeKusgozManagement.Application
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
+            services.AddMapster();
+            UserMappingConfig.Configure();
+            RoleMappingConfig.Configure();
             return services;
         }
     }
