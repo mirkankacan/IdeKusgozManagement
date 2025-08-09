@@ -1,5 +1,5 @@
 ﻿using System.Net.Http.Headers;
-using System.Security.Claims;
+using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.AuthModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -11,11 +11,13 @@ namespace IdeKusgozManagement.WebUI.Handlers
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<JwtTokenHandler> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public JwtTokenHandler(IHttpContextAccessor httpContextAccessor, ILogger<JwtTokenHandler> logger)
+        public JwtTokenHandler(IHttpContextAccessor httpContextAccessor, ILogger<JwtTokenHandler> logger, IHttpClientFactory httpClientFactory)
         {
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -33,9 +35,11 @@ namespace IdeKusgozManagement.WebUI.Handlers
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && !string.IsNullOrEmpty(token))
             {
                 var refreshToken = _httpContextAccessor.HttpContext?.Session.GetString("RefreshToken");
-                if (!string.IsNullOrEmpty(refreshToken))
+                var userId = _httpContextAccessor.HttpContext?.Session.GetString("UserId");
+
+                if (!string.IsNullOrEmpty(refreshToken) && !string.IsNullOrEmpty(userId))
                 {
-                    var newToken = await TryRefreshTokenAsync(refreshToken, cancellationToken);
+                    var newToken = await TryRefreshTokenAsync(userId, refreshToken, cancellationToken);
 
                     if (!string.IsNullOrEmpty(newToken))
                     {
@@ -66,28 +70,12 @@ namespace IdeKusgozManagement.WebUI.Handlers
             return response;
         }
 
-        private async Task<string?> TryRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
+        private async Task<string?> TryRefreshTokenAsync(string userId, string refreshToken, CancellationToken cancellationToken)
         {
             try
             {
-                var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    _logger.LogWarning("UserId bulunamadı refresh token işlemi için");
-                    return null;
-                }
-
-                using var httpClient = new HttpClient();
-                var apiBaseUrl = _httpContextAccessor.HttpContext?.RequestServices
-                    .GetService<IConfiguration>()?["ApiSettings:BaseUrl"];
-
-                if (string.IsNullOrEmpty(apiBaseUrl))
-                {
-                    _logger.LogError("ApiSettings:BaseUrl yapılandırması bulunamadı");
-                    return null;
-                }
-
-                httpClient.BaseAddress = new Uri(apiBaseUrl);
+                // AuthApi HttpClient'ı kullan (JwtTokenHandler olmadan)
+                using var httpClient = _httpClientFactory.CreateClient("AuthApi");
 
                 var refreshRequest = new
                 {
@@ -98,24 +86,30 @@ namespace IdeKusgozManagement.WebUI.Handlers
                 var json = JsonConvert.SerializeObject(refreshRequest);
                 var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-                var response = await httpClient.PostAsync("api/Auth/CreateTokenByRefreshToken", content, cancellationToken);
+                // Doğru endpoint kullan
+                var response = await httpClient.PostAsync("api/Auth/refresh-token", content, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                    var refreshResponse = JsonConvert.DeserializeObject<TokenViewModel>(responseContent);
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<TokenViewModel>>(responseContent);
 
-                    if (!string.IsNullOrEmpty(refreshResponse.Token))
+                    if (apiResponse?.IsSuccess == true && !string.IsNullOrEmpty(apiResponse.Data.Token))
                     {
                         // Session'ı güncelle
-                        _httpContextAccessor.HttpContext?.Session.SetString("JwtToken", refreshResponse.Token);
-                        if (!string.IsNullOrEmpty(refreshResponse.RefreshToken))
+                        _httpContextAccessor.HttpContext?.Session.SetString("JwtToken", apiResponse.Data.Token);
+                        _httpContextAccessor.HttpContext?.Session.SetString("UserId", apiResponse.Data.UserId);
+                        _httpContextAccessor.HttpContext?.Session.SetString("UserName", apiResponse.Data.UserName);
+                        _httpContextAccessor.HttpContext?.Session.SetString("FullName", apiResponse.Data.FullName);
+                        _httpContextAccessor.HttpContext?.Session.SetString("RoleName", apiResponse.Data.RoleName);
+
+                        if (!string.IsNullOrEmpty(apiResponse.Data.RefreshToken))
                         {
-                            _httpContextAccessor.HttpContext?.Session.SetString("RefreshToken", refreshResponse.RefreshToken);
+                            _httpContextAccessor.HttpContext?.Session.SetString("RefreshToken", apiResponse.Data.RefreshToken);
                         }
 
                         _logger.LogInformation("Token başarıyla yenilendi - UserId: {UserId}", userId);
-                        return refreshResponse.Token;
+                        return apiResponse.Data.Token;
                     }
                 }
                 else

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace IdeKusgozManagement.Infrastructure.OptionsSetup
 {
-    public class JwtOptionsSetup : IConfigureOptions<JwtOptionsDto>
+    public class JwtOptionsSetup : IConfigureOptions<JwtOptionsDTO>
     {
         private readonly IConfiguration _configuration;
 
@@ -13,7 +13,7 @@ namespace IdeKusgozManagement.Infrastructure.OptionsSetup
             _configuration = configuration;
         }
 
-        public void Configure(JwtOptionsDto options)
+        public void Configure(JwtOptionsDTO options)
         {
             _configuration.GetSection("JwtConfiguration").Bind(options);
         }

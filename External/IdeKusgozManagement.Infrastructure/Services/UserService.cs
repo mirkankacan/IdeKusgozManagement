@@ -279,27 +279,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetUsersByRoleAsync(string roleName)
-        {
-            try
-            {
-                var usersInRole = await _userManager.GetUsersInRoleAsync(roleName);
-                var userDTOs = usersInRole.Select(user =>
-                {
-                    var userDTO = user.Adapt<UserDTO>();
-                    userDTO.RoleName = roleName;
-                    return userDTO;
-                }).ToList();
-
-                return ApiResponse<IEnumerable<UserDTO>>.Success(userDTOs);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetUsersByRoleAsync işleminde hata oluştu. RoleName: {RoleName}", roleName);
-                return ApiResponse<IEnumerable<UserDTO>>.Error("Role sahip kullanıcılar getirilirken hata oluştu");
-            }
-        }
-
         public async Task<ApiResponse<bool>> ChangePasswordAsync(string userId, ChangePasswordDTO changePasswordDTO)
         {
             try
