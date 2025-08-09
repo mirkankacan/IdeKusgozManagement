@@ -41,15 +41,17 @@ builder.Services.AddHttpClient<IRoleApiService, RoleApiService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
-builder.Services.AddHttpClient<IAuthApiService, AuthApiService>("AuthApiWithToken", client =>
+builder.Services.AddScoped<IAuthApiService, AuthApiService>();
+
+builder.Services.AddHttpClient("AuthApiWithToken", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
-builder.Services.AddHttpClient<AuthApiService>("AuthApiWithoutToken", client =>
+builder.Services.AddHttpClient("AuthApiWithoutToken", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]!);
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 var app = builder.Build();
@@ -71,6 +73,15 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/")
+    {
+        context.Response.Redirect("/giris-yap");
+        return;
+    }
+    await next();
+});
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")

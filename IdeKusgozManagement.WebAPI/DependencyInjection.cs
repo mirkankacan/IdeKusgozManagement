@@ -46,11 +46,6 @@ namespace IdeKusgozManagement.WebAPI
                },
                restrictedToMinimumLevel: LogEventLevel.Warning,
                columnOptions: GetColumnOptions())
-           .WriteTo.File("logs/errors-.log",
-               restrictedToMinimumLevel: LogEventLevel.Error,
-               rollingInterval: RollingInterval.Day,
-               retainedFileCountLimit: 90,
-               outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
            .WriteTo.Email(
                from: configuration["EmailConfiguration:FromEmail"],
                to: GetEmailRecipients(configuration),
@@ -62,7 +57,7 @@ namespace IdeKusgozManagement.WebAPI
                    configuration["EmailConfiguration:Password"]
                ),
                subject: "🚨 Kuşgöz API Error Alert - {Level}",
-               restrictedToMinimumLevel: LogEventLevel.Error
+               restrictedToMinimumLevel: LogEventLevel.Warning
                )
            .CreateLogger();
 

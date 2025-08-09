@@ -11,12 +11,10 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
     public class UserManagment : Controller
     {
         private readonly IUserApiService _userApiService;
-        private readonly IRoleApiService _roleApiService;
 
-        public UserManagment(IUserApiService userApiService, IRoleApiService roleApiService)
+        public UserManagment(IUserApiService userApiService)
         {
             _userApiService = userApiService;
-            _roleApiService = roleApiService;
         }
 
         [HttpGet("")]

@@ -15,15 +15,10 @@
   <ItemGroup>
     <Folder Include="Areas\Admin\Data\" />
     <Folder Include="Areas\Admin\Models\" />
-    <Folder Include="Areas\Admin\Views\" />
-    <Folder Include="Areas\Personel\Controllers\" />
     <Folder Include="Areas\Personel\Data\" />
     <Folder Include="Areas\Personel\Models\" />
-    <Folder Include="Areas\Personel\Views\" />
-    <Folder Include="Areas\Sef\Controllers\" />
     <Folder Include="Areas\Sef\Data\" />
     <Folder Include="Areas\Sef\Models\" />
-    <Folder Include="Areas\Sef\Views\" />
   </ItemGroup>
 
 </Project>
