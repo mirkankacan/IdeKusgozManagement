@@ -17,12 +17,12 @@ namespace IdeKusgozManagement.WebUI.Services
             _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetAllUsersAsync()
+        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetAllUsersAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/users");
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.GetAsync("api/users", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -39,12 +39,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<UserViewModel>> GetUserByIdAsync(string id)
+        public async Task<ApiResponse<UserViewModel>> GetUserByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/users/{id}");
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.GetAsync($"api/users/{id}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -61,15 +61,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<UserViewModel>> CreateUserAsync(CreateUserViewModel model)
+        public async Task<ApiResponse<UserViewModel>> CreateUserAsync(CreateUserViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("api/users", content);
-                var responseContent = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PostAsync("api/users", content, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -87,15 +87,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<UserViewModel>> UpdateUserAsync(string id, UpdateUserViewModel model)
+        public async Task<ApiResponse<UserViewModel>> UpdateUserAsync(string id, UpdateUserViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"api/users/{id}", content);
-                var responseContent = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PutAsync($"api/users/{id}", content, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -113,12 +113,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteUserAsync(string id)
+        public async Task<ApiResponse<bool>> DeleteUserAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"api/users/{id}");
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.DeleteAsync($"api/users/{id}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -135,15 +135,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> AssignRoleToUserAsync(AssignRoleViewModel model)
+        public async Task<ApiResponse<bool>> AssignRoleToUserAsync(AssignRoleViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("api/users/assign-role", content);
-                var responseContent = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PostAsync("api/users/assign-role", content, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -161,12 +161,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateUserAsync(string id)
+        public async Task<ApiResponse<bool>> ActivateUserAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/users/{id}/activate", null);
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PostAsync($"api/users/{id}/activate", null, cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -183,12 +183,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateUserAsync(string id)
+        public async Task<ApiResponse<bool>> DeactivateUserAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/users/{id}/deactivate", null);
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PostAsync($"api/users/{id}/deactivate", null, cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -205,15 +205,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> ChangePasswordAsync(string userId, ChangePasswordViewModel model)
+        public async Task<ApiResponse<bool>> ChangePasswordAsync(string userId, ChangePasswordViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync($"api/users/{userId}/change-password", content);
-                var responseContent = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PostAsync($"api/users/{userId}/change-password", content, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {

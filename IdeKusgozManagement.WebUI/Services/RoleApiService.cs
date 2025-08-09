@@ -18,12 +18,12 @@ namespace IdeKusgozManagement.WebUI.Services
             _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<RoleViewModel>>> GetAllRolesAsync()
+        public async Task<ApiResponse<IEnumerable<RoleViewModel>>> GetAllRolesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/roles");
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.GetAsync("api/roles", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -40,12 +40,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<RoleViewModel>> GetRoleByIdAsync(string id)
+        public async Task<ApiResponse<RoleViewModel>> GetRoleByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/roles/{id}");
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.GetAsync($"api/roles/{id}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -62,12 +62,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<RoleViewModel>> GetRoleByNameAsync(string name)
+        public async Task<ApiResponse<RoleViewModel>> GetRoleByNameAsync(string name, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/roles/by-name/{name}");
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.GetAsync($"api/roles/by-name/{name}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -84,15 +84,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<RoleViewModel>> CreateRoleAsync(CreateRoleViewModel model)
+        public async Task<ApiResponse<RoleViewModel>> CreateRoleAsync(CreateRoleViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("api/roles", content);
-                var responseContent = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PostAsync("api/roles", content, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -110,15 +110,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<RoleViewModel>> UpdateRoleAsync(string id, UpdateRoleViewModel model)
+        public async Task<ApiResponse<RoleViewModel>> UpdateRoleAsync(string id, UpdateRoleViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"api/roles/{id}", content);
-                var responseContent = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PutAsync($"api/roles/{id}", content, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -136,12 +136,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteRoleAsync(string id)
+        public async Task<ApiResponse<bool>> DeleteRoleAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"api/roles/{id}");
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.DeleteAsync($"api/roles/{id}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -158,12 +158,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateRoleAsync(string id)
+        public async Task<ApiResponse<bool>> ActivateRoleAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/roles/{id}/activate", null);
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PostAsync($"api/roles/{id}/activate", null, cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -180,12 +180,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateRoleAsync(string id)
+        public async Task<ApiResponse<bool>> DeactivateRoleAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/roles/{id}/deactivate", null);
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PostAsync($"api/roles/{id}/deactivate", null, cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -202,12 +202,12 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersInRoleAsync(string roleName)
+        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/roles/{roleName}/users");
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.GetAsync($"api/roles/{roleName}/users", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
