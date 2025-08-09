@@ -8,9 +8,9 @@ namespace IdeKusgozManagement.Infrastructure.OptionsSetup
 {
     public sealed class JwtBearerOptionsSetup : IPostConfigureOptions<JwtBearerOptions>
     {
-        private readonly JwtOptionsDto _jwtOptions;
+        private readonly JwtOptionsDTO _jwtOptions;
 
-        public JwtBearerOptionsSetup(IOptions<JwtOptionsDto> jwtOptions)
+        public JwtBearerOptionsSetup(IOptions<JwtOptionsDTO> jwtOptions)
         {
             _jwtOptions = jwtOptions.Value;
         }
