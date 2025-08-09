@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Headers;
-using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.AuthModels;
+using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Newtonsoft.Json;
@@ -11,13 +11,13 @@ namespace IdeKusgozManagement.WebUI.Handlers
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<JwtTokenHandler> _logger;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IAuthApiService _authApiService;
 
-        public JwtTokenHandler(IHttpContextAccessor httpContextAccessor, ILogger<JwtTokenHandler> logger, IHttpClientFactory httpClientFactory)
+        public JwtTokenHandler(IHttpContextAccessor httpContextAccessor, ILogger<JwtTokenHandler> logger, IHttpClientFactory httpClientFactory, IAuthApiService authApiService)
         {
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
-            _httpClientFactory = httpClientFactory;
+            _authApiService = authApiService;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -74,49 +74,35 @@ namespace IdeKusgozManagement.WebUI.Handlers
         {
             try
             {
-                // AuthApi HttpClient'ı kullan (JwtTokenHandler olmadan)
-                using var httpClient = _httpClientFactory.CreateClient("AuthApi");
-
-                var refreshRequest = new
+                var refreshRequest = new CreateTokenByRefreshTokenViewModel
                 {
                     UserId = userId,
                     RefreshToken = refreshToken
                 };
 
-                var json = JsonConvert.SerializeObject(refreshRequest);
-                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var apiResponse = await _authApiService.RefreshTokenAsync(refreshRequest, cancellationToken);
 
-                // Doğru endpoint kullan
-                var response = await httpClient.PostAsync("api/Auth/refresh-token", content, cancellationToken);
-
-                if (response.IsSuccessStatusCode)
+                if (apiResponse?.IsSuccess == true && !string.IsNullOrEmpty(apiResponse.Data.Token))
                 {
-                    var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<TokenViewModel>>(responseContent);
+                    // Session'ı güncelle
+                    _httpContextAccessor.HttpContext?.Session.SetString("JwtToken", apiResponse.Data.Token);
+                    _httpContextAccessor.HttpContext?.Session.SetString("UserId", apiResponse.Data.UserId);
+                    _httpContextAccessor.HttpContext?.Session.SetString("UserName", apiResponse.Data.UserName);
+                    _httpContextAccessor.HttpContext?.Session.SetString("FullName", apiResponse.Data.FullName);
+                    _httpContextAccessor.HttpContext?.Session.SetString("RoleName", apiResponse.Data.RoleName);
 
-                    if (apiResponse?.IsSuccess == true && !string.IsNullOrEmpty(apiResponse.Data.Token))
+                    if (!string.IsNullOrEmpty(apiResponse.Data.RefreshToken))
                     {
-                        // Session'ı güncelle
-                        _httpContextAccessor.HttpContext?.Session.SetString("JwtToken", apiResponse.Data.Token);
-                        _httpContextAccessor.HttpContext?.Session.SetString("UserId", apiResponse.Data.UserId);
-                        _httpContextAccessor.HttpContext?.Session.SetString("UserName", apiResponse.Data.UserName);
-                        _httpContextAccessor.HttpContext?.Session.SetString("FullName", apiResponse.Data.FullName);
-                        _httpContextAccessor.HttpContext?.Session.SetString("RoleName", apiResponse.Data.RoleName);
-
-                        if (!string.IsNullOrEmpty(apiResponse.Data.RefreshToken))
-                        {
-                            _httpContextAccessor.HttpContext?.Session.SetString("RefreshToken", apiResponse.Data.RefreshToken);
-                        }
-
-                        _logger.LogInformation("Token başarıyla yenilendi - UserId: {UserId}", userId);
-                        return apiResponse.Data.Token;
+                        _httpContextAccessor.HttpContext?.Session.SetString("RefreshToken", apiResponse.Data.RefreshToken);
                     }
+
+                    _logger.LogInformation("Token başarıyla yenilendi - UserId: {UserId}", userId);
+                    return apiResponse.Data.Token;
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                    _logger.LogWarning("Refresh token başarısız - StatusCode: {StatusCode}, Content: {Content}",
-                        response.StatusCode, errorContent);
+                    _logger.LogWarning("Refresh token başarısız -  Errors: {Errors}",
+                        apiResponse?.Errors);
                 }
             }
             catch (Exception ex)
@@ -134,6 +120,7 @@ namespace IdeKusgozManagement.WebUI.Handlers
             {
                 try
                 {
+                    await _authApiService.LogoutAsync();
                     // Session'ı tamamen temizle
                     httpContext.Session.Clear();
 
