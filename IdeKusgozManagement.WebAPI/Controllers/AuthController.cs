@@ -73,32 +73,5 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             var result = await _authService.IsAuthenticatedAsync();
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
-
-        /// <summary>
-        /// Anlık kullanıcı bilgilerini döner
-        /// </summary>
-        [HttpGet("me")]
-        [Authorize]
-        public async Task<IActionResult> GetCurrentUser()
-        {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            var userName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
-            var fullName = User.FindFirst("FullName")?.Value;
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-
-            var userInfo = new
-            {
-                UserId = userId,
-                UserName = userName,
-                FullName = fullName,
-                Role = role
-            };
-
-            return Ok(new
-            {
-                IsSuccess = true,
-                Data = userInfo
-            });
-        }
     }
 }

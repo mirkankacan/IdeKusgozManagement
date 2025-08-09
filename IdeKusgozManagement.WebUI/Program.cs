@@ -41,8 +41,7 @@ builder.Services.AddHttpClient<IRoleApiService, RoleApiService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
-// Auth API Service (Refresh token için ayrý HttpClient - JwtTokenHandler olmadan)
-builder.Services.AddHttpClient("AuthApi", client =>
+builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
     client.Timeout = TimeSpan.FromSeconds(30);
@@ -71,5 +70,13 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllerRoute(
+      name: "areas",
+      pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}"
+    );
+});
 
 app.Run();

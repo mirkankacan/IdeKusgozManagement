@@ -8,7 +8,22 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="9.0.8" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Areas\Admin\Data\" />
+    <Folder Include="Areas\Admin\Models\" />
+    <Folder Include="Areas\Admin\Views\" />
+    <Folder Include="Areas\Personel\Controllers\" />
+    <Folder Include="Areas\Personel\Data\" />
+    <Folder Include="Areas\Personel\Models\" />
+    <Folder Include="Areas\Personel\Views\" />
+    <Folder Include="Areas\Sef\Controllers\" />
+    <Folder Include="Areas\Sef\Data\" />
+    <Folder Include="Areas\Sef\Models\" />
+    <Folder Include="Areas\Sef\Views\" />
   </ItemGroup>
 
 </Project>

@@ -1,12 +1,21 @@
 ﻿using System.Security.Claims;
+using IdeKusgozManagement.WebUI.Models.AuthModels;
+using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Controllers
 {
     [AllowAnonymous]
-    public class AccountController(IAuthApiService authApiService) : Controller
+    public class AccountController : Controller
     {
+        private readonly IAuthApiService _authApiService;
+
+        public AccountController(IAuthApiService authApiService)
+        {
+            _authApiService = authApiService;
+        }
+
         [HttpGet("giris-yap")]
         public IActionResult Login()
         {
@@ -29,14 +38,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpPost("giris-yap")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDTO request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Login([FromBody] LoginViewModel model, CancellationToken cancellationToken = default)
         {
-            var response = await authApiService.LoginAsync(request, cancellationToken);
+            var response = await _authApiService.LoginAsync(model, cancellationToken);
             if (!response.IsSuccess)
             {
-                return BadRequest(response.ErrorMessage);
+                return BadRequest(response.Errors);
             }
-            var role = response.Data;
+            var role = response.Data.RoleName;
             switch (role)
             {
                 case "Admin":
@@ -55,9 +64,9 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpGet("cikis-yap")]
         [Authorize]
-        public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+        public async Task<IActionResult> Logout(CancellationToken cancellationToken = default)
         {
-            await authApiService.LogoutAsync(cancellationToken);
+            await _authApiService.LogoutAsync(cancellationToken);
             return Redirect("/giris-yap");
         }
     }
