@@ -12,12 +12,14 @@ namespace IdeKusgozManagement.WebUI.Handlers
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<JwtTokenHandler> _logger;
         private readonly IAuthApiService _authApiService;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public JwtTokenHandler(IHttpContextAccessor httpContextAccessor, ILogger<JwtTokenHandler> logger, IHttpClientFactory httpClientFactory, IAuthApiService authApiService)
         {
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
             _authApiService = authApiService;
+            _httpClientFactory = httpClientFactory;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -74,6 +76,8 @@ namespace IdeKusgozManagement.WebUI.Handlers
         {
             try
             {
+                var httpClient = _httpClientFactory.CreateClient("AuthApiWithoutToken");
+
                 var refreshRequest = new CreateTokenByRefreshTokenViewModel
                 {
                     UserId = userId,

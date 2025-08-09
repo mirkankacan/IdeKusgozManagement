@@ -45,8 +45,13 @@ builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+}).AddHttpMessageHandler<JwtTokenHandler>();
 
+builder.Services.AddHttpClient<AuthApiService>("AuthApiWithoutToken", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]!);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
