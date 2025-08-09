@@ -263,7 +263,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var userDTOs = usersInRole.Select(user =>
                 {
                     var userDto = user.Adapt<UserDTO>();
-                    userDto.Role = roleName;
+                    userDto.RoleName = roleName;
                     return userDto;
                 }).ToList();
 
@@ -273,6 +273,24 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "GetUsersInRoleAsync işleminde hata oluştu. RoleName: {RoleName}", roleName);
                 return ApiResponse<IEnumerable<UserDTO>>.Error("Role sahip kullanıcılar getirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<bool>> IsUserInRoleAsync(string userId, string roleName)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
+
+                var isInRole = await _userManager.IsInRoleAsync(user, roleName);
+                return ApiResponse<bool>.Success(isInRole);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "IsUserInRoleAsync işleminde hata oluştu. UserId:{userId} RoleName: {RoleName}", userId, roleName);
+                return ApiResponse<bool>.Error("Kullanıcı rol kontolü yapılırken hata oluştu");
             }
         }
     }

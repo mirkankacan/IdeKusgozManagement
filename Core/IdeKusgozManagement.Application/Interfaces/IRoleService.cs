@@ -23,5 +23,7 @@ namespace IdeKusgozManagement.Application.Interfaces
         Task<ApiResponse<bool>> DeactivateRoleAsync(string roleId);
 
         Task<ApiResponse<IEnumerable<UserDTO>>> GetUsersInRoleAsync(string roleName);
+
+        Task<ApiResponse<bool>> IsUserInRoleAsync(string userId, string roleName);
     }
 }
