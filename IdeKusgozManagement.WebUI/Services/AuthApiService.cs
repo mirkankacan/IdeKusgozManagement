@@ -8,12 +8,12 @@ namespace IdeKusgozManagement.WebUI.Services
 {
     public class AuthApiService : IAuthApiService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<AuthApiService> _logger;
 
-        public AuthApiService(HttpClient httpClient, ILogger<AuthApiService> logger)
+        public AuthApiService(IHttpClientFactory httpClientFactory, ILogger<AuthApiService> logger)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
@@ -21,7 +21,9 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/auth/check-auth", cancellationToken);
+                var httpClient = _httpClientFactory.CreateClient("AuthApiWithToken");
+
+                var response = await httpClient.GetAsync("api/auth/check-auth", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -43,10 +45,12 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
+                var httpClient = _httpClientFactory.CreateClient("AuthApiWithoutToken");
+
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("api/auth/login", content, cancellationToken);
+                var response = await httpClient.PostAsync("api/auth/login", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -69,7 +73,8 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PostAsync("api/auth/logout", null, cancellationToken);
+                var httpClient = _httpClientFactory.CreateClient("AuthApiWithToken");
+                var response = await httpClient.PostAsync("api/auth/logout", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -92,10 +97,11 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
+                var httpClient = _httpClientFactory.CreateClient("AuthApiWithoutToken");
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("api/auth/refresh-token", content, cancellationToken);
+                var response = await httpClient.PostAsync("api/auth/refresh-token", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

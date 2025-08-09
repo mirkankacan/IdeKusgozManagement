@@ -10,6 +10,7 @@ namespace IdeKusgozManagement.WebUI.Models.AuthModels
         [Required]
         public string Password { get; set; }
 
-        public bool RememberMe { get; set; }
+        [Required]
+        public bool RememberMe { get; set; } = false;
     }
 }

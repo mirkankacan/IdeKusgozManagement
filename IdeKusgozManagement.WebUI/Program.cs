@@ -41,7 +41,7 @@ builder.Services.AddHttpClient<IRoleApiService, RoleApiService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
-builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
+builder.Services.AddHttpClient<IAuthApiService, AuthApiService>("AuthApiWithToken", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
     client.Timeout = TimeSpan.FromSeconds(30);

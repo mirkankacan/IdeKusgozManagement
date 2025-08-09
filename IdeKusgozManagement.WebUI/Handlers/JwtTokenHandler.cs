@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Headers;
+using System.Text;
+using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.AuthModels;
-using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Newtonsoft.Json;
@@ -11,14 +12,14 @@ namespace IdeKusgozManagement.WebUI.Handlers
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<JwtTokenHandler> _logger;
-        private readonly IAuthApiService _authApiService;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public JwtTokenHandler(IHttpContextAccessor httpContextAccessor, ILogger<JwtTokenHandler> logger, IHttpClientFactory httpClientFactory, IAuthApiService authApiService)
+        public JwtTokenHandler(IHttpContextAccessor httpContextAccessor,
+            ILogger<JwtTokenHandler> logger,
+            IHttpClientFactory httpClientFactory)
         {
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
-            _authApiService = authApiService;
             _httpClientFactory = httpClientFactory;
         }
 
@@ -84,29 +85,50 @@ namespace IdeKusgozManagement.WebUI.Handlers
                     RefreshToken = refreshToken
                 };
 
-                var apiResponse = await _authApiService.RefreshTokenAsync(refreshRequest, cancellationToken);
+                var json = JsonConvert.SerializeObject(refreshRequest);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                if (apiResponse?.IsSuccess == true && !string.IsNullOrEmpty(apiResponse.Data.Token))
+                var response = await httpClient.PostAsync("api/auth/refresh-token", content, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    // Session'ı güncelle
-                    _httpContextAccessor.HttpContext?.Session.SetString("JwtToken", apiResponse.Data.Token);
-                    _httpContextAccessor.HttpContext?.Session.SetString("UserId", apiResponse.Data.UserId);
-                    _httpContextAccessor.HttpContext?.Session.SetString("UserName", apiResponse.Data.UserName);
-                    _httpContextAccessor.HttpContext?.Session.SetString("FullName", apiResponse.Data.FullName);
-                    _httpContextAccessor.HttpContext?.Session.SetString("RoleName", apiResponse.Data.RoleName);
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<TokenViewModel>>(responseContent);
 
-                    if (!string.IsNullOrEmpty(apiResponse.Data.RefreshToken))
+                    if (apiResponse?.IsSuccess == true && !string.IsNullOrEmpty(apiResponse.Data?.Token))
                     {
-                        _httpContextAccessor.HttpContext?.Session.SetString("RefreshToken", apiResponse.Data.RefreshToken);
-                    }
+                        // Session'ı thread-safe şekilde güncelle
+                        var httpContext = _httpContextAccessor.HttpContext;
+                        if (httpContext != null)
+                        {
+                            lock (httpContext.Session)
+                            {
+                                httpContext.Session.SetString("JwtToken", apiResponse.Data.Token);
+                                httpContext.Session.SetString("UserId", apiResponse.Data.UserId);
+                                httpContext.Session.SetString("UserName", apiResponse.Data.UserName);
+                                httpContext.Session.SetString("FullName", apiResponse.Data.FullName);
+                                httpContext.Session.SetString("RoleName", apiResponse.Data.RoleName);
 
-                    _logger.LogInformation("Token başarıyla yenilendi - UserId: {UserId}", userId);
-                    return apiResponse.Data.Token;
+                                if (!string.IsNullOrEmpty(apiResponse.Data.RefreshToken))
+                                {
+                                    httpContext.Session.SetString("RefreshToken", apiResponse.Data.RefreshToken);
+                                }
+                            }
+                        }
+
+                        _logger.LogInformation("Token başarıyla yenilendi - UserId: {UserId}", userId);
+                        return apiResponse.Data.Token;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Refresh token başarısız - Message: {Message}, Errors: {Errors}",
+                            apiResponse?.Message, string.Join(", ", apiResponse?.Errors ?? new List<string>()));
+                    }
                 }
                 else
                 {
-                    _logger.LogWarning("Refresh token başarısız -  Errors: {Errors}",
-                        apiResponse?.Errors);
+                    _logger.LogWarning("Refresh token API çağrısı başarısız - StatusCode: {StatusCode}, Content: {Content}",
+                        response.StatusCode, responseContent);
                 }
             }
             catch (Exception ex)
@@ -124,12 +146,22 @@ namespace IdeKusgozManagement.WebUI.Handlers
             {
                 try
                 {
-                    await _authApiService.LogoutAsync();
-                    // Session'ı tamamen temizle
+                    // Session'ı önce temizle
                     httpContext.Session.Clear();
 
                     // Cookie authentication'ı temizle
                     await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+                    // API logout'u en son yap (başarısız olsa da önemli değil)
+                    try
+                    {
+                        var httpClient = _httpClientFactory.CreateClient("AuthApiWithoutToken");
+                        await httpClient.PostAsync("api/auth/logout", null);
+                    }
+                    catch (Exception logoutEx)
+                    {
+                        _logger.LogWarning(logoutEx, "API logout başarısız oldu, ancak local logout devam etti");
+                    }
 
                     _logger.LogInformation("Kullanıcı zorla logout edildi");
                 }
@@ -154,7 +186,7 @@ namespace IdeKusgozManagement.WebUI.Handlers
                         message = "Oturum süresi doldu. Lütfen tekrar giriş yapın.",
                         redirectToLogin = true,
                         loginUrl = "/giris-yap"
-                    }), System.Text.Encoding.UTF8, "application/json")
+                    }), Encoding.UTF8, "application/json")
                 };
             }
             else
@@ -166,15 +198,16 @@ namespace IdeKusgozManagement.WebUI.Handlers
             }
         }
 
-        private bool IsAjaxRequest(HttpRequest request)
+        private static bool IsAjaxRequest(HttpRequest request)
         {
-            return request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+            return request.Headers.ContainsKey("X-Requested-With") &&
+                   request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
                    request.Headers["Content-Type"].ToString().Contains("application/json") ||
                    request.Path.StartsWithSegments("/api") ||
                    request.Headers["Accept"].ToString().Contains("application/json");
         }
 
-        private async Task<HttpRequestMessage> CloneRequestAsync(HttpRequestMessage originalRequest)
+        private static async Task<HttpRequestMessage> CloneRequestAsync(HttpRequestMessage originalRequest)
         {
             var clonedRequest = new HttpRequestMessage(originalRequest.Method, originalRequest.RequestUri);
 
@@ -184,16 +217,24 @@ namespace IdeKusgozManagement.WebUI.Handlers
                 clonedRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
-            // Content'i kopyala
+            // Content'i kopyala - sadece gerekirse
             if (originalRequest.Content != null)
             {
-                var contentBytes = await originalRequest.Content.ReadAsByteArrayAsync();
-                clonedRequest.Content = new ByteArrayContent(contentBytes);
-
-                // Content headers'ını kopyala
-                foreach (var header in originalRequest.Content.Headers)
+                try
                 {
-                    clonedRequest.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                    var contentBytes = await originalRequest.Content.ReadAsByteArrayAsync();
+                    clonedRequest.Content = new ByteArrayContent(contentBytes);
+
+                    // Content headers'ını kopyala
+                    foreach (var header in originalRequest.Content.Headers)
+                    {
+                        clonedRequest.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Content okunamadıysa null bırak
+                    clonedRequest.Content = null;
                 }
             }
 
