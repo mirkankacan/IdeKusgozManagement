@@ -1,9 +1,11 @@
 ﻿using System.Security.Claims;
 using IdeKusgozManagement.WebUI.Models.AuthModels;
+using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Controllers
@@ -12,11 +14,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
     {
         private readonly IAuthApiService _authApiService;
         private readonly ILogger<AccountController> _logger;
-
-        public AccountController(IAuthApiService authApiService, ILogger<AccountController> logger)
+        private readonly IUserApiService _userApiService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public AccountController(IAuthApiService authApiService, ILogger<AccountController> logger, IUserApiService userApiService, IHttpContextAccessor httpContextAccessor)
         {
             _authApiService = authApiService;
             _logger = logger;
+            _userApiService = userApiService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [HttpGet("giris-yap")]
@@ -117,6 +122,71 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
         }
 
+        [HttpGet("profil")]
+        [Authorize]
+        public async Task<IActionResult> Profile(CancellationToken cancellationToken = default)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var response = await _userApiService.GetUserByIdAsync(userId, cancellationToken);
+            return View(response);
+        }
+
+        [HttpPut("profil-guncelle")]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> Profile([FromBody]UpdateUserViewModel model, CancellationToken cancellationToken = default)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            model.Id = userId;
+            model.RoleName = null;
+            model.IsActive = null;
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var response = await _userApiService.UpdateUserAsync(userId, model, cancellationToken);
+            if (response.IsSuccess)
+            {
+                var httpContext = _httpContextAccessor.HttpContext;
+
+                httpContext.Session.SetString("UserName", response.Data.UserName);
+                httpContext.Session.SetString("FullName", response.Data.FullName);
+                await UpdateUserClaims(response.Data);
+
+            }
+            return View(response);
+        }
+        private async Task UpdateUserClaims(UserViewModel user)
+        {
+            // Mevcut kimlik bilgilerini al
+            var identity = (ClaimsIdentity)User.Identity;
+
+            // Güncellenebilir claim'leri kaldır
+            var claimsToRemove = identity.Claims.Where(c =>
+                c.Type == ClaimTypes.Name ||
+                c.Type == ClaimTypes.GivenName ||
+                c.Type == "FullName" ||
+                c.Type == ClaimTypes.Surname).ToList();
+
+            foreach (var claim in claimsToRemove)
+            {
+                identity.RemoveClaim(claim);
+            }
+
+            // Yeni claim'leri ekle
+            identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+            identity.AddClaim(new Claim(ClaimTypes.GivenName, user.Name));
+            identity.AddClaim(new Claim("FullName", user.FullName));
+            identity.AddClaim(new Claim(ClaimTypes.Surname, user.Surname));
+
+            // Yeni ClaimsPrincipal oluştur
+            var principal = new ClaimsPrincipal(identity);
+
+            // Authentication cookie'sini güncelle
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+        }
         private IActionResult RedirectByRole(string? role)
         {
             var redirectUrl = GetRoleRedirectUrl(role);

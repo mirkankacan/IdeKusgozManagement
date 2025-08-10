@@ -1,0 +1,121 @@
+﻿@using IdeKusgozManagement.WebUI.Models.UserModels
+@model ApiResponse<UserViewModel>
+@{
+    ViewData["Title"] = "Profil";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+                      <div class="col">
+                        <div class="card">
+                          <div class="card-body">
+                              <h5 class="card-title">Profil Güncelleme Sayfası</h5>
+
+                <form  class="row g-3 needs-validation" novalidate>
+                    <input type="hidden" id="txtUserId" readonly disabled value="@Model.Data.Id" />
+                    <div class="col-md-6">
+                        <label for="txtUsername" class="form-label">Kullanıcı Adı</label>
+                        <input type="text" class="form-control" id="txtUsername" name="UserName" value="@Model.Data.UserName" required>
+                        <div class="valid-feedback">İyi görünüyor!</div>
+                        <div class="invalid-feedback">Geçerli bir kullanıcı adı giriniz.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="txtPassword" class="form-label">Şifre</label>
+                        <input type="password" class="form-control" id="txtPassword" name="Password" value="">
+                        <div class="form-text text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Boş bırakırsanız şifre değişmez, doldurursanız şifre güncellenir.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="txtName" class="form-label">Adı</label>
+                        <input type="text" class="form-control" id="txtName" name="Name" value="@Model.Data.Name" required>
+                        <div class="valid-feedback">İyi görünüyor!</div>
+                        <div class="invalid-feedback">Geçerli bir isim giriniz.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="txtSurname" class="form-label">Soyadı</label>
+                        <input type="text" class="form-control" id="txtSurname" name="Surname" value="@Model.Data.Surname" required>
+                        <div class="valid-feedback">İyi görünüyor!</div>
+                        <div class="invalid-feedback">Geçerli bir soyisim giriniz.</div>
+                    </div>
+
+                    @Html.AntiForgeryToken()
+                    <div class="col-12">
+                        <button class="btn btn-primary w-100" id="btnUpdateProfile" type="submit">Güncelle</button>
+                    </div>
+                </form>
+                          </div>
+                      </div>
+                      </div>
+                    </div>
+                    @section Scripts {
+
+<script>
+ $(document).ready(async function() {
+                      $(document).on('click', '#btnUpdateProfile', async function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                                await updateProfile();
+                    });
+  
+});
+          async function updateProfile() {
+                try {
+                    const submitBtn = $('.btn-primary');
+                    const originalText = submitBtn.text();
+                    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Güncelleniyor...');
+
+                         const userData = {
+                            Id: $('#txtUserId').val(),
+                            UserName: $('#txtUsername').val().trim(),
+                            Password: $("#txtPassword").val().trim() || null,
+                            Name: $('#txtName').val().trim(),
+                            Surname: $('#txtSurname').val().trim()
+                        };
+
+                    const response = await $.ajax({
+                        url: '/profil-guncelle',
+                        type: 'PUT',
+                        contentType: 'application/json',
+                                data: JSON.stringify(userData),
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        }
+                    });
+
+                    toastr.success('Profil başarıyla güncellendi!', 'Başarılı');
+
+                    $('#txtPassword').val('');
+
+                    $('.needs-validation').removeClass('was-validated');
+
+                           setTimeout(() => {
+                          location.reload()
+                        }, "1500");
+                } catch (error) {
+                    console.error('Error:', error);
+
+                    if (error.responseJSON && error.responseJSON.message) {
+                        toastr.error(error.responseJSON.message, 'Hata');
+                    } else if (error.responseJSON && error.responseJSON.errors) {
+                        // Validation hatalarını göster
+                        let errorMessages = [];
+                        for (let field in error.responseJSON.errors) {
+                            errorMessages.push(...error.responseJSON.errors[field]);
+                        }
+                        toastr.error(errorMessages.join('<br>'), 'Validation Hatası');
+                    } else {
+                        toastr.error('Güncelleme sırasında hata oluştu!', 'Hata');
+                    }
+                } finally {
+                    // Loading'i kaldır
+                    const submitBtn = $('.btn-primary');
+                    submitBtn.prop('disabled', false).text('Güncelle');
+                }
+            }
+</script>
+}

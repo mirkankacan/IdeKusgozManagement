@@ -40,6 +40,8 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
         [HttpPost("olustur")]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Create([FromBody] CreateUserViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
@@ -52,6 +54,8 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         }
 
         [HttpPut("guncelle/{userId}")]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Update(string userId, [FromBody]  UpdateUserViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
@@ -64,6 +68,8 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         }
 
         [HttpDelete("sil/{userId}")]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Delete(string userId, CancellationToken cancellationToken = default)
         {
             var response = await _userApiService.DeleteUserAsync(userId, cancellationToken);
@@ -71,6 +77,8 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         }
 
         [HttpPost("aktif/{userId}")]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Activate(string userId, CancellationToken cancellationToken = default)
         {
             var response = await _userApiService.ActivateUserAsync(userId, cancellationToken);
@@ -78,6 +86,8 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         }
 
         [HttpPost("pasif/{userId}")]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Deactivate(string userId, CancellationToken cancellationToken = default)
         {
             var response = await _userApiService.DeactivateUserAsync(userId, cancellationToken);
@@ -85,6 +95,8 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         }
 
         [HttpPost("rol-ata")]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> AssignRole([FromBody]  AssignRoleViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)

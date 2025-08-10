@@ -15,11 +15,10 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
 
         [Required]
         public string Surname { get; set; }
-        public string? Password { get; set;}
 
-        [Required]
-        public bool IsActive { get; set; }
-        [Required]
-        public string RoleName { get; set; }
+        public string? Password { get; set; }
+
+        public bool? IsActive { get; set; }
+        public string? RoleName { get; set; }
     }
 }

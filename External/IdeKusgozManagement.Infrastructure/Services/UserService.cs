@@ -158,7 +158,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 user.UserName = updateUserDTO.UserName;
                 user.Name = updateUserDTO.Name;
                 user.Surname = updateUserDTO.Surname;
-                user.IsActive = updateUserDTO.IsActive;
+                user.IsActive = updateUserDTO.IsActive.HasValue ? updateUserDTO.IsActive.Value : user.IsActive;
 
                 var result = await _userManager.UpdateAsync(user);
                 if (!result.Succeeded)

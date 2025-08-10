@@ -2,7 +2,7 @@
 	Layout = "~/Views/Shared/_Layout.cshtml";
 	ViewData["Title"] = "Kullanıcı Yönetimi";
 }
-
+@Html.AntiForgeryToken()
 <div class="row">
 	<div class="col-md-12">
 		<div class="card">
@@ -118,7 +118,7 @@
 				<h5 class="modal-title">Kullanıcı Güncelleme Penceresi</h5>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
-			<form class="needs-validation" novalidate>
+			<form   class="needs-validation" novalidate>
 				<div class="modal-body">
 					<div class="row g-3">
 						<input type="text" id="txtUUserId" value="" readonly hidden disabled />
@@ -210,7 +210,6 @@
 			await initializeDataTable();
 			await getRoles();
 
-			// Modal event handlers
 			$('#createUserModal').on('hidden.bs.modal', function() {
 				clearCreateUserForm();
 			});
@@ -227,56 +226,7 @@
 			});
 		});
 
-		async function createUser() {
-			try {
-
-				const form = document.querySelector('#createUserModal form');
-				if (!form.checkValidity()) {
-					form.classList.add('was-validated');
-					return;
-				}
-
-				const userData = {
-					UserName: $('#txtCUsername').val().trim(),
-					Name: $('#txtCName').val().trim(),
-					Surname: $('#txtCSurname').val().trim(),
-					Password: $('#txtCPassword').val(),
-					RoleName: $('#ddCRole').val()
-				};
-				const submitBtn = $('#btnCreateUser');
-				submitBtn.prop('disabled', true)
-					   .html('<i class="fas fa-spinner fa-spin me-2"></i>Oluşturuluyor...');
-
-				// API çağrısı
-				const response = await $.ajax({
-					url: '/admin/kullanici-yonetimi/olustur',
-					type: 'POST',
-					contentType: 'application/json',
-					data: JSON.stringify(userData)
-				});
-
-				toastr.success('Kullanıcı başarıyla oluşturuldu!');
-				$('#createUserModal').modal('hide');
-				usersTable.ajax.reload(null, false);
-
-			} catch (error) {
-				console.error('Kullanıcı oluşturma hatası:', error);
-				toastr.error('Kullanıcı oluşturulurken hata oluştu: ' + (error.responseJSON?.message || error.message || 'Bilinmeyen hata'));
-			} finally {
-				// Loading state'i kaldır
-				const submitBtn = $('#btnCreateUser');
-				submitBtn.prop('disabled', false).html('Oluştur');
-			}
-		}
-
-		function clearCreateUserForm() {
-			const form = document.querySelector('#createUserModal form');
-			if (form) {
-				form.reset();
-				form.classList.remove('was-validated');
-				$('#ddCRole').val('').trigger('change');
-			}
-		}
+	
 
 		async function initializeDataTable() {
 			usersTable = $('#usersTable').DataTable({
@@ -412,304 +362,435 @@
 			});
 		}
 
-			async function getRoles() {
-			try {
-				const roleSelects = $('.ddRole');
-				if (!roleSelects.length) {
-					console.warn('Role select elements not found');
-					return;
-				}
+        async function createUser() {
+            try {
+                const form = document.querySelector('#createUserModal form');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
 
-				roleSelects.prop('disabled', true);
-				roleSelects.html('<option value="">Yükleniyor...</option>');
+                const userData = {
+                    UserName: $('#txtCUsername').val().trim(),
+                    Name: $('#txtCName').val().trim(),
+                    Surname: $('#txtCSurname').val().trim(),
+                    Password: $('#txtCPassword').val(),
+                    RoleName: $('#ddCRole').val()
+                };
 
-				const response = await $.ajax({
-					url: '/admin/kullanici-yonetimi/roller',
-					type: 'GET',
-					dataType: 'json'
-				});
+                const submitBtn = $('#btnCreateUser');
+                submitBtn.prop('disabled', true)
+                       .html('<i class="fas fa-spinner fa-spin me-2"></i>Oluşturuluyor...');
 
-				if (response && response.isSuccess && response.data) {
-					roleSelects.each(function() {
-						const currentSelect = $(this);
-						currentSelect.empty();
-						currentSelect.append('<option selected disabled value="">Rol seçiniz...</option>');
+                const response = await $.ajax({
+                    url: '/admin/kullanici-yonetimi/olustur',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(userData),
+                      headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        }
+                });
 
-						response.data.forEach(role => {
-							if (role.isActive) {
-								currentSelect.append(`<option value="${role.name}">${role.name}</option>`);
-							}
-						});
-					});
+                toastr.success('Kullanıcı başarıyla oluşturuldu!');
+                $('#createUserModal').modal('hide');
+                usersTable.ajax.reload(null, false);
 
-				} else {
-					throw new Error(response?.message || 'Roller yüklenemedi');
-				}
-			} catch (error) {
-				console.error('Roller yüklenirken hata:', error);
+            } catch (error) {
+                console.error('Kullanıcı oluşturma hatası:', error);
 
-				$('.ddRole').each(function() {
-					$(this).html('<option value="">Rol yüklenemedi</option>');
-				});
+                let errorMessage = 'Kullanıcı oluşturulurken hata oluştu';
 
-				toastr.error('Roller yüklenirken hata oluştu: ' + (error.responseJSON?.message || error.message || 'Bilinmeyen hata'));
-			} finally {
-				$('.ddRole').prop('disabled', false);
-			}
-		}
-		async function activateUser(userId) {
-			try {
-				const result = await Swal.fire({
-					title: 'Kullanıcıyı Aktifleştir',
-					text: 'Bu kullanıcıyı aktifleştirmek istediğinizden emin misiniz?',
-					icon: 'question',
-					showCancelButton: true,
-					confirmButtonColor: '#28a745',
-					cancelButtonColor: '#6c757d',
-					confirmButtonText: '<i class="fas fa-check"></i> Evet, Aktifleştir',
-					cancelButtonText: '<i class="fas fa-times"></i> İptal',
-					showLoaderOnConfirm: true,
-					preConfirm: async () => {
-						try {
-							const response = await $.ajax({
-								url: `/admin/kullanici-yonetimi/aktif/${userId}`,
-								type: 'POST',
-								contentType: 'application/json'
-							});
-							return response;
-						} catch (error) {
-							Swal.showValidationMessage(
-								`Hata: ${error.responseJSON?.message || 'Aktifleştirme başarısız'}`
-							);
-							throw error;
-						}
-					},
-					allowOutsideClick: () => !Swal.isLoading()
-				});
+                if (error.responseJSON) {
+                    
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    }
+                    else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
 
-				if (result.isConfirmed) {
-					await Swal.fire({
-						title: 'Başarılı!',
-						text: 'Kullanıcı başarıyla aktifleştirildi.',
-						icon: 'success',
-						timer: 2000,
-						showConfirmButton: false
-					});
+                toastr.error(errorMessage);
+            } finally {
+                const submitBtn = $('#btnCreateUser');
+                submitBtn.prop('disabled', false).html('Oluştur');
+            }
+        }
 
-					usersTable.ajax.reload(null, false);
-				}
+        async function updateUser() {
+            try {
+                const form = document.querySelector('#updateUserModal form');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
 
-			} catch (error) {
-				console.error('Aktifleştirme hatası:', error);
-				throw error;
-			}
-		}
+                const userData = {
+                    Id: $('#txtUUserId').val(),
+                    UserName: $('#txtUUsername').val().trim(),
+                    Password: $("#txtUPassword").val().trim() || null,
+                    Name: $('#txtUName').val().trim(),
+                    Surname: $('#txtUSurname').val().trim(),
+                    RoleName: $('#ddURole').val(),
+                    IsActive: $('#ddUStatus').val() === "true"
+                };
 
-		async function deactivateUser(userId) {
-			try {
-				const result = await Swal.fire({
-					title: 'Kullanıcıyı Pasifleştir',
-					text: 'Bu kullanıcıyı pasifleştirmek istediğinizden emin misiniz?',
-					icon: 'warning',
-					showCancelButton: true,
-					confirmButtonColor: '#ffc107',
-					cancelButtonColor: '#6c757d',
-					confirmButtonText: '<i class="fas fa-user-slash"></i> Evet, Pasifleştir',
-					cancelButtonText: '<i class="fas fa-times"></i> İptal',
-					showLoaderOnConfirm: true,
-					preConfirm: async () => {
-						try {
-							const response = await $.ajax({
-								url: `/admin/kullanici-yonetimi/pasif/${userId}`,
-								type: 'POST',
-								contentType: 'application/json'
-							});
-							return response;
-						} catch (error) {
-							Swal.showValidationMessage(
-								`Hata: ${error.responseJSON?.message || 'Pasifleştirme başarısız'}`
-							);
-							throw error;
-						}
-					},
-					allowOutsideClick: () => !Swal.isLoading()
-				});
+                if (!userData.Id) {
+                    toastr.error('Kullanıcı ID\'si bulunamadı');
+                    return;
+                }
 
-				if (result.isConfirmed) {
-					await Swal.fire({
-						title: 'Başarılı!',
-						text: 'Kullanıcı başarıyla pasifleştirildi.',
-						icon: 'success',
-						timer: 2000,
-						showConfirmButton: false
-					});
+                const submitBtn = $('#updateUserModal button[type="submit"]');
+                submitBtn.prop('disabled', true)
+                       .html('<i class="fas fa-spinner fa-spin me-2"></i>Güncelleniyor...');
 
-					usersTable.ajax.reload(null, false);
-				}
+                // API çağrısı
+                const response = await $.ajax({
+                    url: `/admin/kullanici-yonetimi/guncelle/${userData.Id}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(userData),
+                      headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        }
+                });
 
-			} catch (error) {
-				console.error('Pasifleştirme hatası:', error);
-				throw error;
-			}
-		}
+                toastr.success('Kullanıcı başarıyla güncellendi!');
+                $('#updateUserModal').modal('hide');
+                usersTable.ajax.reload(null, false);
 
-		async function deleteUser(userId) {
-			try {
-				const result = await Swal.fire({
-					title: 'Kullanıcıyı Sil',
-					text: 'Bu kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!',
-					icon: 'error',
-					showCancelButton: true,
-					confirmButtonColor: '#dc3545',
-					cancelButtonColor: '#6c757d',
-					confirmButtonText: '<i class="fas fa-trash"></i> Evet, Sil',
-					cancelButtonText: '<i class="fas fa-times"></i> İptal',
-					showLoaderOnConfirm: true,
-					preConfirm: async () => {
-						try {
-							const response = await $.ajax({
-								url: `/admin/kullanici-yonetimi/sil/${userId}`,
-								type: 'DELETE',
-								contentType: 'application/json'
-							});
-							return response;
-						} catch (error) {
-							Swal.showValidationMessage(
-								`Hata: ${error.responseJSON?.message || 'Silme başarısız'}`
-							);
-							throw error;
-						}
-					},
-					allowOutsideClick: () => !Swal.isLoading()
-				});
+            } catch (error) {
+                console.error('Kullanıcı güncelleme hatası:', error);
 
-				if (result.isConfirmed) {
-					await Swal.fire({
-						title: 'Başarılı!',
-						text: 'Kullanıcı başarıyla silindi.',
-						icon: 'success',
-						timer: 2000,
-						showConfirmButton: false
-					});
+               
+                let errorMessage = 'Kullanıcı güncellenirken hata oluştu';
 
-					usersTable.ajax.reload(null, false);
-				}
+                if (error.responseJSON) {
+                    
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    }
+                    else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
 
-			} catch (error) {
-				console.error('Silme hatası:', error);
-				throw error;
-			}
-		}
+                toastr.error(errorMessage);
+            } finally {
+                const submitBtn = $('#updateUserModal button[type="submit"]');
+                submitBtn.prop('disabled', false).html('Güncelle');
+            }
+        }
 
-			async function getUser(userId) {
-			try {
+        async function activateUser(userId) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Kullanıcıyı Aktifleştir',
+                    text: 'Bu kullanıcıyı aktifleştirmek istediğinizden emin misiniz?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-check"></i> Evet, Aktifleştir',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await $.ajax({
+                                url: `/admin/kullanici-yonetimi/aktif/${userId}`,
+                                type: 'POST',
+                                contentType: 'application/json',
+                                  headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        }
+                            });
+                            return response;
+                        } catch (error) {
+                           
+                            let errorMessage = 'Aktifleştirme başarısız';
 
-				  if ($('#updateUserModal').length > 0) {
-			$('#updateUserModal input, #updateUserModal select, #updateUserModal button').prop('disabled', true);
-			$('#updateUserModal .modal-body').prepend(`
-				<div id="formLoader" class="text-center py-3">
-					<div class="spinner-border text-primary" role="status">
-						<span class="visually-hidden">Yükleniyor...</span>
-					</div>
-					<div class="mt-2">Kullanıcı bilgileri getiriliyor...</div>
-				</div>
-			`);
-		}
+                            if (error.responseJSON) {
+                                if (error.responseJSON.message) {
+                                    errorMessage = error.responseJSON.message;
+                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                                    errorMessage = error.responseJSON.errors.join(', ');
+                                }
+                            }
 
-				const response = await $.ajax({
-					url: `/admin/kullanici-yonetimi/detay/${userId}`,
-					type: 'GET',
-					contentType: 'application/json'
-				});
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            throw error;
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
 
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Kullanıcı başarıyla aktifleştirildi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
 
-				if (response && (response.data || response.id)) {
-					const userData = response.data || response;
+                    usersTable.ajax.reload(null, false);
+                }
 
-					 $('#txtUUserId').val(userData.id || '');
-					$('#txtUUsername').val(userData.userName || '');
-					$('#txtUPassword').val(''); 
-					$('#txtUName').val(userData.name || '');
-					$('#txtUSurname').val(userData.surname || '');
-				 $('#ddURole').val(userData.roleName);  
-				 $('#ddUStatus').val(userData.isActive ? "true" : "false");
+            } catch (error) {
+                console.error('Aktifleştirme hatası:', error);
+                throw error;
+            }
+        }
 
-				  const form = document.querySelector('#updateUserModal form');
-					if (form) {
-						form.classList.remove('was-validated');
-					}
+        async function deactivateUser(userId) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Kullanıcıyı Pasifleştir',
+                    text: 'Bu kullanıcıyı pasifleştirmek istediğinizden emin misiniz?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ffc107',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-user-slash"></i> Evet, Pasifleştir',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await $.ajax({
+                                url: `/admin/kullanici-yonetimi/pasif/${userId}`,
+                                type: 'POST',
+                                contentType: 'application/json',
+                                  headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        }
+                            });
+                            return response;
+                        } catch (error) {
+                           
+                            let errorMessage = 'Pasifleştirme başarısız';
 
-				$('#updateUserModal').modal('show');
-						return userData;
+                            if (error.responseJSON) {
+                                if (error.responseJSON.message) {
+                                    errorMessage = error.responseJSON.message;
+                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                                    errorMessage = error.responseJSON.errors.join(', ');
+                                }
+                            }
 
-				} else {
-					throw new Error('Kullanıcı verisi alınamadı');
-				}
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            throw error;
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
 
-			} catch (error) {
-				console.error('Kullanıcı getirme hatası:', error);
-				throw error;
-			} finally {
-				  $('#formLoader').remove();
-		$('#updateUserModal input, #updateUserModal select, #updateUserModal button').prop('disabled', false);
-			}
-		}
-			async function updateUser() {
-			try {
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Kullanıcı başarıyla pasifleştirildi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
 
-				// Form validation kontrolü
-				const form = document.querySelector('#updateUserModal form');
-				if (!form.checkValidity()) {
-					form.classList.add('was-validated');
-					return;
-				}
+                    usersTable.ajax.reload(null, false);
+                }
 
-				// Form verilerini topla
-				const userData = {
-					Id: $('#txtUUserId').val(),
-					UserName: $('#txtUUsername').val().trim(),
-					Password: $("#txtUPassword").val().trim() || null,
-					Name: $('#txtUName').val().trim(),
-					Surname: $('#txtUSurname').val().trim(),
-					RoleName: $('#ddURole').val(),
-					IsActive: $('#ddUStatus').val() === "true" 
-				};
+            } catch (error) {
+                console.error('Pasifleştirme hatası:', error);
+                throw error;
+            }
+        }
 
-				if (!userData.Id) {
-					toastr.error('Kullanıcı ID\'si bulunamadı');
-					return;
-				}
+        async function deleteUser(userId) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Kullanıcıyı Sil',
+                    text: 'Bu kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-trash"></i> Evet, Sil',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await $.ajax({
+                                url: `/admin/kullanici-yonetimi/sil/${userId}`,
+                                type: 'DELETE',
+                                contentType: 'application/json',
+                                  headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        }
+                            });
+                            return response;
+                        } catch (error) {
+                           
+                            let errorMessage = 'Silme başarısız';
 
-				// Loading state
-				const submitBtn = $('#updateUserModal button[type="submit"]');
-				const originalText = submitBtn.html();
-				submitBtn.prop('disabled', true)
-					   .html('<i class="fas fa-spinner fa-spin me-2"></i>Güncelleniyor...');
+                            if (error.responseJSON) {
+                                if (error.responseJSON.message) {
+                                    errorMessage = error.responseJSON.message;
+                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                                    errorMessage = error.responseJSON.errors.join(', ');
+                                }
+                            }
 
-				// API çağrısı
-				const response = await $.ajax({
-					url: `/admin/kullanici-yonetimi/guncelle/${userData.Id}`,
-					type: 'PUT',
-					contentType: 'application/json',
-					data: JSON.stringify(userData)
-				});
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            throw error;
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
 
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Kullanıcı başarıyla silindi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
 
-				toastr.success('Kullanıcı başarıyla güncellendi!');
+                    usersTable.ajax.reload(null, false);
+                }
 
-				$('#updateUserModal').modal('hide');
+            } catch (error) {
+                console.error('Silme hatası:', error);
+                throw error;
+            }
+        }
 
-				usersTable.ajax.reload(null, false);
+        async function getUser(userId) {
+            try {
+                if ($('#updateUserModal').length > 0) {
+                    $('#updateUserModal input, #updateUserModal select, #updateUserModal button').prop('disabled', true);
+                    $('#updateUserModal .modal-body').prepend(`
+                        <div id="formLoader" class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Yükleniyor...</span>
+                            </div>
+                            <div class="mt-2">Kullanıcı bilgileri getiriliyor...</div>
+                        </div>
+                    `);
+                }
 
-			} catch (error) {
-				console.error('Kullanıcı getirme hatası:', error);
-				let errorMessage = 'Kullanıcı güncellenirken hata oluştu';
-				toastr.error(errorMessage);
-				throw error;
-			} finally {
-				const submitBtn = $('#updateUserModal button[type="submit"]');
-				submitBtn.prop('disabled', false).html('Güncelle');
-			}
-		}
+                const response = await $.ajax({
+                    url: `/admin/kullanici-yonetimi/detay/${userId}`,
+                    type: 'GET',
+                    contentType: 'application/json'
+                });
+
+                if (response && (response.data || response.id)) {
+                    const userData = response.data || response;
+
+                    $('#txtUUserId').val(userData.id || '');
+                    $('#txtUUsername').val(userData.userName || '');
+                    $('#txtUPassword').val('');
+                    $('#txtUName').val(userData.name || '');
+                    $('#txtUSurname').val(userData.surname || '');
+                    $('#ddURole').val(userData.roleName);
+                    $('#ddUStatus').val(userData.isActive ? "true" : "false");
+
+                    const form = document.querySelector('#updateUserModal form');
+                    if (form) {
+                        form.classList.remove('was-validated');
+                    }
+
+                    $('#updateUserModal').modal('show');
+                    return userData;
+
+                } else {
+                    throw new Error('Kullanıcı verisi alınamadı');
+                }
+
+            } catch (error) {
+                console.error('Kullanıcı getirme hatası:', error);
+
+               
+                let errorMessage = 'Kullanıcı bilgileri alınırken hata oluştu';
+
+                if (error.responseJSON) {
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                toastr.error(errorMessage);
+                throw error;
+            } finally {
+                $('#formLoader').remove();
+                $('#updateUserModal input, #updateUserModal select, #updateUserModal button').prop('disabled', false);
+            }
+        }
+
+        async function getRoles() {
+            try {
+                const roleSelects = $('.ddRole');
+                if (!roleSelects.length) {
+                    console.warn('Role select elements not found');
+                    return;
+                }
+
+                roleSelects.prop('disabled', true);
+                roleSelects.html('<option value="">Yükleniyor...</option>');
+
+                const response = await $.ajax({
+                    url: '/admin/kullanici-yonetimi/roller',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    roleSelects.each(function() {
+                        const currentSelect = $(this);
+                        currentSelect.empty();
+                        currentSelect.append('<option selected disabled value="">Rol seçiniz...</option>');
+
+                        response.data.forEach(role => {
+                            if (role.isActive) {
+                                currentSelect.append(`<option value="${role.name}">${role.name}</option>`);
+                            }
+                        });
+                    });
+
+                } else {
+                    throw new Error(response?.message || 'Roller yüklenemedi');
+                }
+            } catch (error) {
+                console.error('Roller yüklenirken hata:', error);
+
+                $('.ddRole').each(function() {
+                    $(this).html('<option value="">Rol yüklenemedi</option>');
+                });
+
+               
+                let errorMessage = 'Roller yüklenirken hata oluştu';
+
+                if (error.responseJSON) {
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                toastr.error(errorMessage);
+            } finally {
+                $('.ddRole').prop('disabled', false);
+            }
+        }
 	</script>
 }
