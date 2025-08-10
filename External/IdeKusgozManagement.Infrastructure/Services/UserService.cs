@@ -133,7 +133,32 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     }
                 }
 
-                updateUserDTO.Adapt(user);
+                if (!string.IsNullOrEmpty(updateUserDTO.RoleName))
+                {
+                    var currentRoles = await _userManager.GetRolesAsync(user);
+                    if (currentRoles.Any())
+                    {
+                        await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                    }
+                    await _userManager.AddToRoleAsync(user, updateUserDTO.RoleName);
+                }
+
+                // Şifre güncelleme kontrolü
+                if (!string.IsNullOrEmpty(updateUserDTO.Password) && updateUserDTO.Password.Length > 3)
+                {
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    var passwordResult = await _userManager.ResetPasswordAsync(user, token, updateUserDTO.Password);
+                    if (!passwordResult.Succeeded)
+                    {
+                        var passwordErrors = passwordResult.Errors.Select(e => e.Description).ToList();
+                        return ApiResponse<UserDTO>.Error(passwordErrors);
+                    }
+                }
+
+                user.UserName = updateUserDTO.UserName;
+                user.Name = updateUserDTO.Name;
+                user.Surname = updateUserDTO.Surname;
+                user.IsActive = updateUserDTO.IsActive;
 
                 var result = await _userManager.UpdateAsync(user);
                 if (!result.Succeeded)
@@ -165,10 +190,10 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
                 }
 
-                // Soft delete
-                user.IsActive = false;
-                var result = await _userManager.UpdateAsync(user);
-
+                //// Soft delete
+                //user.IsActive = false;
+                //var result = await _userManager.UpdateAsync(user);
+                var result = await _userManager.DeleteAsync(user);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();

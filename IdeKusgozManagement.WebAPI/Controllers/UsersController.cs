@@ -1,10 +1,13 @@
 ﻿using IdeKusgozManagement.Application.DTOs.UserDTOs;
 using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebAPI.Controllers
 {
+    [RoleFilter("Admin")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -113,7 +116,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>
         [HttpPost("{id}/deactivate")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeactivateUser(string id)
         {
             var result = await _userService.DeactivateUserAsync(id);

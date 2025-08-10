@@ -1,0 +1,715 @@
+﻿@{
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	ViewData["Title"] = "Kullanıcı Yönetimi";
+}
+
+<div class="row">
+	<div class="col-md-12">
+		<div class="card">
+			<div class="card-body">
+				<h5 class="card-title">
+					<i class="fas fa-users me-2"></i>
+					Kullanıcılar Tablosu
+				</h5>
+				<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+					<i class="fas fa-user-plus me-2"></i>Kullanıcı Oluştur
+				</button>
+				<br />
+				<br />
+				<div class="table-responsive">
+					<table id="usersTable" class="table table-striped table-hover display" style="width:100%">
+						<thead class="table-dark">
+							<tr>
+								<th>#</th>
+								<th>KULLANICI ADI</th>
+								<th>AD SOYAD</th>
+								<th>ROL</th>
+								<th>AKTİF Mİ</th>
+								<th>İŞLEMLER</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!-- DataTables will populate this -->
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Kullanıcı Oluşturma Penceresi</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form class="needs-validation" novalidate>
+				<div class="modal-body">
+					<div class="row g-3">
+						<div class="col-md-6">
+							<label for="txtCUsername" class="form-label">Kullanıcı Adı</label>
+							<input type="text" class="form-control" id="txtCUsername" value="" required>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir kullanıcı adı giriniz.
+							</div>
+						</div>
+						<div class="col-md-6">
+							<label for="txtCPassword" class="form-label">Şifre</label>
+							<input type="password" class="form-control" id="txtCPassword" value="" required >
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir şifre giriniz.
+							</div>
+						</div>
+						<div class="col-md-6">
+							<label for="txtCName" class="form-label">Adı</label>
+							<input type="text" class="form-control" id="txtCName" value="" required>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir isim giriniz.
+							</div>
+						</div>
+						<div class="col-md-6">
+							<label for="txtCSurname" class="form-label">Soyadı</label>
+							<input type="text" class="form-control" id="txtCSurname" value="" required>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir soyisim giriniz.
+							</div>
+						</div>
+						<div class="col-md-12">
+							<label for="ddCRole" class="form-label">Rol</label>
+							<select class="form-select ddRole" id="ddCRole" required="">
+							</select>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir rol seçiniz.
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+					<button class="btn btn-primary w-100" type="submit" id="btnCreateUser">Oluştur</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="updateUserModal" tabindex="-1" aria-labelledby="updateUserModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Kullanıcı Güncelleme Penceresi</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form class="needs-validation" novalidate>
+				<div class="modal-body">
+					<div class="row g-3">
+						<input type="text" id="txtUUserId" value="" readonly hidden disabled />
+						<div class="col-md-6">
+							<label for="txtUUsername" class="form-label">Kullanıcı Adı</label>
+							<input type="text" class="form-control" id="txtUUsername" value="" required>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir kullanıcı adı giriniz.
+							</div>
+						</div>
+						<div class="col-md-6">
+							<label for="txtUPassword" class="form-label">Şifre</label>
+							<input type="password" class="form-control" id="txtUPassword" value="" >
+							<div class="form-text text-muted">
+								<i class="fas fa-info-circle me-1"></i>
+								Boş bırakırsanız şifre değişmez, doldurursanız şifre güncellenir.
+							</div>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir şifre giriniz.
+							</div>
+						</div>
+						<div class="col-md-6">
+							<label for="txtUName" class="form-label">Adı</label>
+							<input type="text" class="form-control" id="txtUName" value="" required>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir isim giriniz.
+							</div>
+						</div>
+						<div class="col-md-6">
+							<label for="txtUSurname" class="form-label">Soyadı</label>
+							<input type="text" class="form-control" id="txtUSurname" value="" required>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir soyisim giriniz.
+							</div>
+						</div>
+						<div class="col-md-6">
+							<label for="ddURole" class="form-label">Rol</label>
+							<select class="form-select ddRole" id="ddURole" required="">
+							</select>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir rol seçiniz.
+							</div>
+						</div>
+						<div class="col-md-6">
+							<label for="ddUStatus" class="form-label">Rol</label>
+							<select class="form-select" id="ddUStatus" required="">
+								<option value="" selected="" disabled>Durum seçiniz...</option>
+								<option value="true">Aktif</option>
+								<option value="false">Pasif</option>
+							</select>
+							<div class="valid-feedback">
+								İyi görünüyor!
+							</div>
+							<div class="invalid-feedback">
+								Geçerli bir rol seçiniz.
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+					<button class="btn btn-primary w-100" type="submit" id="btnUpdateUser">Güncelle</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script>
+		let usersTable;
+
+		$(document).ready(async function() {
+			await initializeDataTable();
+			await getRoles();
+
+			// Modal event handlers
+			$('#createUserModal').on('hidden.bs.modal', function() {
+				clearCreateUserForm();
+			});
+			$(document).on('click', '#btnUpdateUser', async function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				await updateUser();
+			});
+
+			$(document).on('click', '#btnCreateUser', async function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				await createUser();
+			});
+		});
+
+		async function createUser() {
+			try {
+
+				const form = document.querySelector('#createUserModal form');
+				if (!form.checkValidity()) {
+					form.classList.add('was-validated');
+					return;
+				}
+
+				const userData = {
+					UserName: $('#txtCUsername').val().trim(),
+					Name: $('#txtCName').val().trim(),
+					Surname: $('#txtCSurname').val().trim(),
+					Password: $('#txtCPassword').val(),
+					RoleName: $('#ddCRole').val()
+				};
+				const submitBtn = $('#btnCreateUser');
+				submitBtn.prop('disabled', true)
+					   .html('<i class="fas fa-spinner fa-spin me-2"></i>Oluşturuluyor...');
+
+				// API çağrısı
+				const response = await $.ajax({
+					url: '/admin/kullanici-yonetimi/olustur',
+					type: 'POST',
+					contentType: 'application/json',
+					data: JSON.stringify(userData)
+				});
+
+				toastr.success('Kullanıcı başarıyla oluşturuldu!');
+				$('#createUserModal').modal('hide');
+				usersTable.ajax.reload(null, false);
+
+			} catch (error) {
+				console.error('Kullanıcı oluşturma hatası:', error);
+				toastr.error('Kullanıcı oluşturulurken hata oluştu: ' + (error.responseJSON?.message || error.message || 'Bilinmeyen hata'));
+			} finally {
+				// Loading state'i kaldır
+				const submitBtn = $('#btnCreateUser');
+				submitBtn.prop('disabled', false).html('Oluştur');
+			}
+		}
+
+		function clearCreateUserForm() {
+			const form = document.querySelector('#createUserModal form');
+			if (form) {
+				form.reset();
+				form.classList.remove('was-validated');
+				$('#ddCRole').val('').trigger('change');
+			}
+		}
+
+		async function initializeDataTable() {
+			usersTable = $('#usersTable').DataTable({
+				"processing": true,
+				"ajax": {
+					"url": "/admin/kullanici-yonetimi/liste",
+					"type": "GET",
+					"dataSrc": function(json) {
+						if (json && json.isSuccess && json.data) {
+							return json.data;
+						}
+						return [];
+					},
+					"error": function(xhr, error, code) {
+						console.error('DataTables AJAX error:', error);
+						let errorMessage = 'Veriler yüklenirken hata oluştu';
+						try {
+							if (xhr.responseJSON && xhr.responseJSON.message) {
+								errorMessage += ': ' + xhr.responseJSON.message;
+							} else if (xhr.responseText) {
+								errorMessage += ': ' + xhr.responseText;
+							}
+						} catch (e) {
+							errorMessage += ': ' + error;
+						}
+
+						toastr.error(errorMessage);
+					}
+				},
+				"columns": [
+					{
+						"data": null,
+						"width": "5%",
+						"orderable": false,
+						"className": "text-center",
+						"render": function(data, type, row, meta) {
+						  return '';
+						}
+					},
+					{
+						"data": "userName",
+						"render": function(data) {
+							return data ? `<strong>${data}</strong>` : '';
+						}
+					},
+					{
+						"data": "fullName",
+						"render": function(data) {
+							return data || '';
+						}
+					},
+					{
+						"data": "roleName",
+						"render": function(data) {
+							if(data == "Admin"){
+								return `<span class="badge bg-primary">${data}</span>`;
+							}
+							else if(data =="Şef"){
+								return `<span class="badge bg-info">${data}</span>`;
+							}
+							else if(data == "Personel"){
+								return `<span class="badge bg-warning">${data}</span>`;
+							}
+							else{
+								return `<span class="badge bg-secondary">${data}</span>`;
+							}
+						}
+					},
+					{
+						"data": "isActive",
+						"width": "10%",
+						"className": "text-center",
+						"render": function(data) {
+							return data ?
+								'<span class="badge bg-success">Evet</span>' :
+								'<span class="badge bg-danger">Hayır</span>';
+						}
+					},
+					{
+						"data": null,
+						"width": "12%",
+						"orderable": false,
+						"className": "text-center",
+						"render": function(data, type, row) {
+							const statusButton = row.isActive
+								? `<button type="button" class="btn btn-outline-secondary btn-sm"
+									   onclick="deactivateUser('${row.id}')" title="Pasifleştir">
+									   <i class="fas fa-user-slash"></i>
+								   </button>`
+								: `<button type="button" class="btn btn-outline-success btn-sm"
+									   onclick="activateUser('${row.id}')" title="Aktifleştir">
+									   <i class="fas fa-user-check"></i>
+								   </button>`;
+							return `
+								<div class="btn-group btn-group-sm" role="group">
+									<button type="button" class="btn btn-outline-warning btn-sm"
+											onclick="getUser('${row.id}')" title="Düzenle">
+										<i class="fas fa-edit"></i>
+									</button>
+									${statusButton}
+									<button type="button" class="btn btn-outline-danger btn-sm"
+											onclick="deleteUser('${row.id}')" title="Sil">
+										<i class="fas fa-trash"></i>
+									</button>
+								</div>
+							`;
+						}
+					}
+				],
+				"order": [[1, "asc"]],
+				"language": {
+					url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
+				},
+				"lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+				"pageLength": 10,
+				"responsive": true,
+				"searchDelay": 300,
+				"stateSave": true,
+				"dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+					   '<"row"<"col-sm-12"tr>>' +
+					   '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+				"initComplete": function() {
+				},
+				"drawCallback": function() {
+					  var api = this.api();
+		var pageInfo = api.page.info();
+
+		api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+			cell.innerHTML = pageInfo.start + i + 1;
+		});
+					$('[title]').tooltip();
+				}
+			});
+		}
+
+			async function getRoles() {
+			try {
+				const roleSelects = $('.ddRole');
+				if (!roleSelects.length) {
+					console.warn('Role select elements not found');
+					return;
+				}
+
+				roleSelects.prop('disabled', true);
+				roleSelects.html('<option value="">Yükleniyor...</option>');
+
+				const response = await $.ajax({
+					url: '/admin/kullanici-yonetimi/roller',
+					type: 'GET',
+					dataType: 'json'
+				});
+
+				if (response && response.isSuccess && response.data) {
+					roleSelects.each(function() {
+						const currentSelect = $(this);
+						currentSelect.empty();
+						currentSelect.append('<option selected disabled value="">Rol seçiniz...</option>');
+
+						response.data.forEach(role => {
+							if (role.isActive) {
+								currentSelect.append(`<option value="${role.name}">${role.name}</option>`);
+							}
+						});
+					});
+
+				} else {
+					throw new Error(response?.message || 'Roller yüklenemedi');
+				}
+			} catch (error) {
+				console.error('Roller yüklenirken hata:', error);
+
+				$('.ddRole').each(function() {
+					$(this).html('<option value="">Rol yüklenemedi</option>');
+				});
+
+				toastr.error('Roller yüklenirken hata oluştu: ' + (error.responseJSON?.message || error.message || 'Bilinmeyen hata'));
+			} finally {
+				$('.ddRole').prop('disabled', false);
+			}
+		}
+		async function activateUser(userId) {
+			try {
+				const result = await Swal.fire({
+					title: 'Kullanıcıyı Aktifleştir',
+					text: 'Bu kullanıcıyı aktifleştirmek istediğinizden emin misiniz?',
+					icon: 'question',
+					showCancelButton: true,
+					confirmButtonColor: '#28a745',
+					cancelButtonColor: '#6c757d',
+					confirmButtonText: '<i class="fas fa-check"></i> Evet, Aktifleştir',
+					cancelButtonText: '<i class="fas fa-times"></i> İptal',
+					showLoaderOnConfirm: true,
+					preConfirm: async () => {
+						try {
+							const response = await $.ajax({
+								url: `/admin/kullanici-yonetimi/aktif/${userId}`,
+								type: 'POST',
+								contentType: 'application/json'
+							});
+							return response;
+						} catch (error) {
+							Swal.showValidationMessage(
+								`Hata: ${error.responseJSON?.message || 'Aktifleştirme başarısız'}`
+							);
+							throw error;
+						}
+					},
+					allowOutsideClick: () => !Swal.isLoading()
+				});
+
+				if (result.isConfirmed) {
+					await Swal.fire({
+						title: 'Başarılı!',
+						text: 'Kullanıcı başarıyla aktifleştirildi.',
+						icon: 'success',
+						timer: 2000,
+						showConfirmButton: false
+					});
+
+					usersTable.ajax.reload(null, false);
+				}
+
+			} catch (error) {
+				console.error('Aktifleştirme hatası:', error);
+				throw error;
+			}
+		}
+
+		async function deactivateUser(userId) {
+			try {
+				const result = await Swal.fire({
+					title: 'Kullanıcıyı Pasifleştir',
+					text: 'Bu kullanıcıyı pasifleştirmek istediğinizden emin misiniz?',
+					icon: 'warning',
+					showCancelButton: true,
+					confirmButtonColor: '#ffc107',
+					cancelButtonColor: '#6c757d',
+					confirmButtonText: '<i class="fas fa-user-slash"></i> Evet, Pasifleştir',
+					cancelButtonText: '<i class="fas fa-times"></i> İptal',
+					showLoaderOnConfirm: true,
+					preConfirm: async () => {
+						try {
+							const response = await $.ajax({
+								url: `/admin/kullanici-yonetimi/pasif/${userId}`,
+								type: 'POST',
+								contentType: 'application/json'
+							});
+							return response;
+						} catch (error) {
+							Swal.showValidationMessage(
+								`Hata: ${error.responseJSON?.message || 'Pasifleştirme başarısız'}`
+							);
+							throw error;
+						}
+					},
+					allowOutsideClick: () => !Swal.isLoading()
+				});
+
+				if (result.isConfirmed) {
+					await Swal.fire({
+						title: 'Başarılı!',
+						text: 'Kullanıcı başarıyla pasifleştirildi.',
+						icon: 'success',
+						timer: 2000,
+						showConfirmButton: false
+					});
+
+					usersTable.ajax.reload(null, false);
+				}
+
+			} catch (error) {
+				console.error('Pasifleştirme hatası:', error);
+				throw error;
+			}
+		}
+
+		async function deleteUser(userId) {
+			try {
+				const result = await Swal.fire({
+					title: 'Kullanıcıyı Sil',
+					text: 'Bu kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!',
+					icon: 'error',
+					showCancelButton: true,
+					confirmButtonColor: '#dc3545',
+					cancelButtonColor: '#6c757d',
+					confirmButtonText: '<i class="fas fa-trash"></i> Evet, Sil',
+					cancelButtonText: '<i class="fas fa-times"></i> İptal',
+					showLoaderOnConfirm: true,
+					preConfirm: async () => {
+						try {
+							const response = await $.ajax({
+								url: `/admin/kullanici-yonetimi/sil/${userId}`,
+								type: 'DELETE',
+								contentType: 'application/json'
+							});
+							return response;
+						} catch (error) {
+							Swal.showValidationMessage(
+								`Hata: ${error.responseJSON?.message || 'Silme başarısız'}`
+							);
+							throw error;
+						}
+					},
+					allowOutsideClick: () => !Swal.isLoading()
+				});
+
+				if (result.isConfirmed) {
+					await Swal.fire({
+						title: 'Başarılı!',
+						text: 'Kullanıcı başarıyla silindi.',
+						icon: 'success',
+						timer: 2000,
+						showConfirmButton: false
+					});
+
+					usersTable.ajax.reload(null, false);
+				}
+
+			} catch (error) {
+				console.error('Silme hatası:', error);
+				throw error;
+			}
+		}
+
+			async function getUser(userId) {
+			try {
+
+				  if ($('#updateUserModal').length > 0) {
+			$('#updateUserModal input, #updateUserModal select, #updateUserModal button').prop('disabled', true);
+			$('#updateUserModal .modal-body').prepend(`
+				<div id="formLoader" class="text-center py-3">
+					<div class="spinner-border text-primary" role="status">
+						<span class="visually-hidden">Yükleniyor...</span>
+					</div>
+					<div class="mt-2">Kullanıcı bilgileri getiriliyor...</div>
+				</div>
+			`);
+		}
+
+				const response = await $.ajax({
+					url: `/admin/kullanici-yonetimi/detay/${userId}`,
+					type: 'GET',
+					contentType: 'application/json'
+				});
+
+
+				if (response && (response.data || response.id)) {
+					const userData = response.data || response;
+
+					 $('#txtUUserId').val(userData.id || '');
+					$('#txtUUsername').val(userData.userName || '');
+					$('#txtUPassword').val(''); 
+					$('#txtUName').val(userData.name || '');
+					$('#txtUSurname').val(userData.surname || '');
+				 $('#ddURole').val(userData.roleName);  
+				 $('#ddUStatus').val(userData.isActive ? "true" : "false");
+
+				  const form = document.querySelector('#updateUserModal form');
+					if (form) {
+						form.classList.remove('was-validated');
+					}
+
+				$('#updateUserModal').modal('show');
+						return userData;
+
+				} else {
+					throw new Error('Kullanıcı verisi alınamadı');
+				}
+
+			} catch (error) {
+				console.error('Kullanıcı getirme hatası:', error);
+				throw error;
+			} finally {
+				  $('#formLoader').remove();
+		$('#updateUserModal input, #updateUserModal select, #updateUserModal button').prop('disabled', false);
+			}
+		}
+			async function updateUser() {
+			try {
+
+				// Form validation kontrolü
+				const form = document.querySelector('#updateUserModal form');
+				if (!form.checkValidity()) {
+					form.classList.add('was-validated');
+					return;
+				}
+
+				// Form verilerini topla
+				const userData = {
+					Id: $('#txtUUserId').val(),
+					UserName: $('#txtUUsername').val().trim(),
+					Password: $("#txtUPassword").val().trim() || null,
+					Name: $('#txtUName').val().trim(),
+					Surname: $('#txtUSurname').val().trim(),
+					RoleName: $('#ddURole').val(),
+					IsActive: $('#ddUStatus').val() === "true" 
+				};
+
+				if (!userData.Id) {
+					toastr.error('Kullanıcı ID\'si bulunamadı');
+					return;
+				}
+
+				// Loading state
+				const submitBtn = $('#updateUserModal button[type="submit"]');
+				const originalText = submitBtn.html();
+				submitBtn.prop('disabled', true)
+					   .html('<i class="fas fa-spinner fa-spin me-2"></i>Güncelleniyor...');
+
+				// API çağrısı
+				const response = await $.ajax({
+					url: `/admin/kullanici-yonetimi/guncelle/${userData.Id}`,
+					type: 'PUT',
+					contentType: 'application/json',
+					data: JSON.stringify(userData)
+				});
+
+
+				toastr.success('Kullanıcı başarıyla güncellendi!');
+
+				$('#updateUserModal').modal('hide');
+
+				usersTable.ajax.reload(null, false);
+
+			} catch (error) {
+				console.error('Kullanıcı getirme hatası:', error);
+				let errorMessage = 'Kullanıcı güncellenirken hata oluştu';
+				toastr.error(errorMessage);
+				throw error;
+			} finally {
+				const submitBtn = $('#updateUserModal button[type="submit"]');
+				submitBtn.prop('disabled', false).html('Güncelle');
+			}
+		}
+	</script>
+}

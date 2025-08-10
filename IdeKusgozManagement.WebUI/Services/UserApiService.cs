@@ -187,12 +187,13 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
+
                 var response = await _httpClient.PostAsync($"api/users/{id}/deactivate", null, cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(content);
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
                     return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 

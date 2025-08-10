@@ -27,9 +27,13 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 	<!-- Or for RTL support -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
-
+	<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.3/dist/sweetalert2.min.css" rel="stylesheet">
 	<link href="/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
-
+	<style>
+		.modal-footer{
+			flex-wrap:nowrap !important;
+		}
+	</style>
 </head>
 <body class="">
 
@@ -82,12 +86,10 @@
 					<li class="sidebar-title">
 						Kullanıcı Yönetimi
 					</li>
-					<li class="@(Context.Request.Path == "/admin/kullanici-yonetimi/liste" ? "active-page" : "")">
-						<a href="/admin/kullanici-yonetimi/liste"><i data-feather="users"></i>Kullanıcılar</a>
+					<li class="@(Context.Request.Path == "/admin/kullanici-yonetimi" ? "active-page" : "")">
+						<a href="/admin/kullanici-yonetimi"><i data-feather="users"></i>Kullanıcılar</a>
 					</li>
-					<li class="@(Context.Request.Path == "/admin/kullanici-yonetimi/olustur" ? "active-page" : "")">
-						<a href="/admin/kullanici-yonetimi/olustur"><i data-feather="user-plus"></i>Yeni Kullanıcı</a>
-					</li>
+					
 				}
 
 				@if (User.IsInRole("Şef"))
@@ -156,7 +158,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/tr.min.js" integrity="sha512-2386tYyq9+EGdON3UecxdBTaO5lnboGy/rq93uHoVeBqxHAPvjnQsXJMfKBJck63KwQ3xidTlPBDvW3DR+Yo+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<script src="/theme/assets/plugins/DataTables/datatables.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.3/dist/sweetalert2.all.min.js"></script>
 
 	@await RenderSectionAsync("Scripts", required: false)
 </body>

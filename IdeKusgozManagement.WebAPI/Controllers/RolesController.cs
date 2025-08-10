@@ -1,10 +1,13 @@
 ﻿using IdeKusgozManagement.Application.DTOs.RoleDTOs;
 using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebAPI.Controllers
 {
+    [RoleFilter("Admin")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
     public class RolesController : ControllerBase
