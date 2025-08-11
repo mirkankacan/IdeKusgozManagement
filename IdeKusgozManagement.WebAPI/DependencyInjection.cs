@@ -56,8 +56,9 @@ namespace IdeKusgozManagement.WebAPI
                    configuration["EmailConfiguration:FromEmail"],
                    configuration["EmailConfiguration:Password"]
                ),
-               subject: "🚨 Kuşgöz API Error Alert - {Level}",
+               subject: "🚨 Kuşgöz API Hata Bildirimi - {Level} - {Timestamp:yyyy-MM-dd HH:mm}",
                restrictedToMinimumLevel: LogEventLevel.Warning
+               
                )
            .CreateLogger();
 
@@ -109,22 +110,7 @@ namespace IdeKusgozManagement.WebAPI
                 NullValueHandling = NullValueHandling.Ignore
             };
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                   .AddJwtBearer(options =>
-                   {
-                       options.TokenValidationParameters = new TokenValidationParameters
-                       {
-                           ValidateIssuer = true,
-                           ValidateAudience = true,
-                           ValidateLifetime = true,
-                           ValidateIssuerSigningKey = true,
-                           ValidIssuer = configuration["JwtConfiguration:Issuer"],
-                           ValidAudience = configuration["JwtConfiguration:Audience"],
-                           IssuerSigningKey = new SymmetricSecurityKey(
-                               Encoding.UTF8.GetBytes(configuration["JwtConfiguration:SecretKey"])),
-                           ClockSkew = TimeSpan.FromMinutes(5)
-                       };
-                   });
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
             services.AddAuthorization();
 
@@ -193,5 +179,7 @@ namespace IdeKusgozManagement.WebAPI
             // Fallback to single email
             return configuration["EmailConfiguration:ToEmail"] ?? configuration["EmailConfiguration:FromEmail"];
         }
+      
+
     }
 }

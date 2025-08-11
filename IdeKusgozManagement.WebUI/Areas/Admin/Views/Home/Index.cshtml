@@ -1,8 +1,72 @@
-﻿
-@{
-    ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+﻿@{
+	Layout = "~/Views/Shared/_Layout.cshtml";
+	ViewData["Title"] = "Ana sayfa";
 }
 
-<h1>Index</h1>
+<div class="row mb-4">
+	<!-- Kullanıcı Sayısı Kartı -->
+	<div class="col-md-6 col-xl-4">
+		<div class="card stat-widget">
+			<div class="card-body">
+				<h5 class="card-title">
+					<i class="fas fa-user me-2"></i>
+					Kullanıcı Sayısı
+				</h5>
+				<h2>@(ViewBag.UserCount ?? 0)</h2>
+				<small class="text-muted">Toplam Kullanıcı Sayısı</small>
 
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-6 col-xl-4">
+		<div class="card stat-widget">
+			<div class="card-body">
+				<h5 class="card-title">
+					<i class="fas fa-calendar-check me-2"></i>
+					Toplam Puantaj Girişi
+				</h5>
+				<h2 id="totalInvoices">0</h2>
+				<small class="text-muted">Toplam Girilen Puantaj Sayısı</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-6 col-xl-4">
+		<div class="card stat-widget">
+			<div class="card-body">
+				<h5 class="card-title">
+					<i class="fas fa-file-invoice me-2"></i>
+					Toplam Puantaj Girişi
+				</h5>
+				<h2 id="totalInvoices">0</h2>
+				<small class="text-muted">Toplam Girilen Puantaj Sayısı</small>
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+<div class="row">
+	<!-- Yıllık Puantaj Grafiği -->
+	<div class="col-lg-12">
+		<div class="card">
+			<div class="card-body">
+				<h5 class="card-title">
+					<i class="fas fa-chart-line me-2"></i>
+					Yıllık Puantaj Analizi
+				</h5>
+				<div id="yearlyChart" style="height: 400px;"></div>
+			</div>
+		</div>
+	</div>
+	
+</div>
+
+@section Scripts {
+	<script>
+
+
+
+	</script>
+}

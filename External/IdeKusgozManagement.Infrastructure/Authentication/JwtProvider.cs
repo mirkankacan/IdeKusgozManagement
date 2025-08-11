@@ -31,7 +31,7 @@ namespace IdeKusgozManagement.Infrastructure.Authentication
             var claims = new List<Claim>
     {
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new Claim(ClaimTypes.Name, applicationUser.UserName ?? string.Empty),
+        new Claim(ClaimTypes.Name, applicationUser.UserName),
         new Claim("FullName", $"{applicationUser.Name} {applicationUser.Surname}"),
         new Claim(ClaimTypes.GivenName, applicationUser.Name),
         new Claim(ClaimTypes.Surname, applicationUser.Surname),
@@ -70,6 +70,7 @@ namespace IdeKusgozManagement.Infrastructure.Authentication
                 Surname = applicationUser.Surname,
                 RoleName = userRoles.FirstOrDefault(),
             };
+            Console.WriteLine($"TOKEN OLUŞTURULDU - Expire: {expires:yyyy-MM-dd HH:mm:ss}");
 
             return response;
         }

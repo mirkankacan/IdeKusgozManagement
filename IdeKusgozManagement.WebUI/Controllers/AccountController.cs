@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Threading.Tasks;
 using IdeKusgozManagement.WebUI.Models.AuthModels;
 using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
@@ -26,13 +27,42 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpGet("giris-yap")]
         [AllowAnonymous]
-        public IActionResult Login()
+        public async Task<IActionResult> Login()
         {
             if (User.Identity?.IsAuthenticated == true)
             {
+                // Session bilgilerini kontrol et
+                var userId = HttpContext.Session.GetString("UserId");
+                var jwtToken = HttpContext.Session.GetString("JwtToken");
+
+                // Eğer authenticated ama session bilgileri yoksa silent logout
+                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jwtToken))
+                {
+                    // Logout metodunu çağırmak yerine direkt temizle
+                    try
+                    {
+                        await _authApiService.LogoutAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Silent logout API çağrısında hata");
+                    }
+
+                    // Session'ı temizle
+                    HttpContext.Session.Clear();
+
+                    // Cookie authentication'ı temizle
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+                    // Login sayfasını göster (redirect etme)
+                    return View();
+                }
+
+                // Session bilgileri varsa normal yönlendirme
                 var role = User.FindFirst(ClaimTypes.Role)?.Value;
                 return RedirectByRole(role);
             }
+
             return View();
         }
 

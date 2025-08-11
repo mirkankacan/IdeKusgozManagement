@@ -108,35 +108,35 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var user = await _userManager.FindByIdAsync(createTokenByRefreshTokenDTO.UserId);
                 if (user == null)
                 {
-                    _logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı bulunamadı: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                    _logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı bulunamadı. User Id: {UserId}", createTokenByRefreshTokenDTO.UserId);
                     return ApiResponse<TokenDTO>.Error("Kullanıcı bulunamadı");
                 }
 
                 // Kullanıcı aktif mi kontrol et
                 if (!user.IsActive)
                 {
-                    _logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı pasif durumda: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                    _logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı pasif durumda. User Id: {UserId}", createTokenByRefreshTokenDTO.UserId);
                     return ApiResponse<TokenDTO>.Error("Hesabınız pasif durumda");
                 }
 
                 // Refresh token kontrolü
                 if (user.RefreshToken != createTokenByRefreshTokenDTO.RefreshToken)
                 {
-                    _logger.LogWarning("Refresh token denemesi başarısız. Geçersiz refresh token: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                    _logger.LogWarning("Refresh token denemesi başarısız. Geçersiz refresh token User Id: {UserId} | Database Refresh Token: {DbRefreshToken} | From UI Refresh Token: {UiRefreshToken}", createTokenByRefreshTokenDTO.UserId, user.RefreshToken,createTokenByRefreshTokenDTO.RefreshToken);
                     return ApiResponse<TokenDTO>.Error("Geçersiz refresh token");
                 }
 
                 // Refresh token süresi dolmuş mu kontrol et
                 if (user.RefreshTokenExpires == null || user.RefreshTokenExpires <= DateTime.Now)
                 {
-                    _logger.LogWarning("Refresh token denemesi başarısız. Refresh token süresi dolmuş: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                    _logger.LogWarning("Refresh token denemesi başarısız. Refresh token süresi dolmuş. User Id: {UserId}", createTokenByRefreshTokenDTO.UserId);
                     return ApiResponse<TokenDTO>.Error("Refresh token süresi dolmuş");
                 }
 
                 // Yeni token oluştur
                 var newToken = await _jwtProvider.CreateTokenAsync(user);
 
-                _logger.LogInformation("Token başarıyla yenilendi: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                _logger.LogInformation("Token başarıyla yenilendi. User Id: {UserId}", createTokenByRefreshTokenDTO.UserId);
 
                 return ApiResponse<TokenDTO>.Success(newToken, "Token başarıyla yenilendi");
             }

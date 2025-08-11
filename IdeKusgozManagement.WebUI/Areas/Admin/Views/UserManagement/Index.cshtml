@@ -1,6 +1,8 @@
-﻿@{
+﻿@using System.Security.Claims
+@{
 	Layout = "~/Views/Shared/_Layout.cshtml";
 	ViewData["Title"] = "Kullanıcı Yönetimi";
+
 }
 @Html.AntiForgeryToken()
 <div class="row">
@@ -61,7 +63,7 @@
 						</div>
 						<div class="col-md-6">
 							<label for="txtCPassword" class="form-label">Şifre</label>
-							<input type="password" class="form-control" id="txtCPassword" value="" required >
+                            <input type="password" class="form-control" id="txtCPassword" value="" required autocomplete="new-password" data-lpignore="true">
 							<div class="valid-feedback">
 								İyi görünüyor!
 							</div>
@@ -134,7 +136,7 @@
 						</div>
 						<div class="col-md-6">
 							<label for="txtUPassword" class="form-label">Şifre</label>
-							<input type="password" class="form-control" id="txtUPassword" value="" >
+                            <input type="password" class="form-control" id="txtUPassword" value="" autocomplete="new-password" data-lpignore="true">
 							<div class="form-text text-muted">
 								<i class="fas fa-info-circle me-1"></i>
 								Boş bırakırsanız şifre değişmez, doldurursanız şifre güncellenir.
@@ -307,10 +309,15 @@
 					},
 					{
 						"data": null,
-						"width": "12%",
+						"width": "10%",
 						"orderable": false,
 						"className": "text-center",
 						"render": function(data, type, row) {
+                                const currentUserId = '@User.FindFirst(ClaimTypes.NameIdentifier)?.Value';
+
+                               if (row.id === currentUserId) {
+                                    return '<span class="text-muted">-</span>';
+                                }
 							const statusButton = row.isActive
 								? `<button type="button" class="btn btn-outline-secondary btn-sm"
 									   onclick="deactivateUser('${row.id}')" title="Pasifleştir">
@@ -336,7 +343,7 @@
 						}
 					}
 				],
-				"order": [[1, "asc"]],
+				"order": [[3, "asc"]],
 				"language": {
 					url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
 				},
@@ -352,12 +359,12 @@
 				},
 				"drawCallback": function() {
 					  var api = this.api();
-		var pageInfo = api.page.info();
+		            var pageInfo = api.page.info();
 
-		api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
-			cell.innerHTML = pageInfo.start + i + 1;
-		});
-					$('[title]').tooltip();
+		            api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+			            cell.innerHTML = pageInfo.start + i + 1;
+		            });
+					            $('[title]').tooltip();
 				}
 			});
 		}

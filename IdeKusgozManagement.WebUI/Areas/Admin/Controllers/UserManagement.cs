@@ -1,5 +1,8 @@
-﻿using IdeKusgozManagement.WebUI.Models.UserModels;
+﻿using System.Security.Claims;
+using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +15,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
     {
         private readonly IUserApiService _userApiService;
         private readonly IRoleApiService _roleApiService;
+
         public UserManagementController(IUserApiService userApiService, IRoleApiService roleApiService)
         {
             _userApiService = userApiService;
@@ -39,9 +43,9 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [HttpPost("olustur")]
         [ValidateAntiForgeryToken]
-
         public async Task<IActionResult> Create([FromBody] CreateUserViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
@@ -55,8 +59,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [HttpPut("guncelle/{userId}")]
         [ValidateAntiForgeryToken]
-
-        public async Task<IActionResult> Update(string userId, [FromBody]  UpdateUserViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Update(string userId, [FromBody] UpdateUserViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
@@ -65,11 +68,10 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             var response = await _userApiService.UpdateUserAsync(userId, model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
-        }
 
+        }
         [HttpDelete("sil/{userId}")]
         [ValidateAntiForgeryToken]
-
         public async Task<IActionResult> Delete(string userId, CancellationToken cancellationToken = default)
         {
             var response = await _userApiService.DeleteUserAsync(userId, cancellationToken);
@@ -78,7 +80,6 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [HttpPost("aktif/{userId}")]
         [ValidateAntiForgeryToken]
-
         public async Task<IActionResult> Activate(string userId, CancellationToken cancellationToken = default)
         {
             var response = await _userApiService.ActivateUserAsync(userId, cancellationToken);
@@ -87,7 +88,6 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [HttpPost("pasif/{userId}")]
         [ValidateAntiForgeryToken]
-
         public async Task<IActionResult> Deactivate(string userId, CancellationToken cancellationToken = default)
         {
             var response = await _userApiService.DeactivateUserAsync(userId, cancellationToken);
@@ -96,8 +96,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [HttpPost("rol-ata")]
         [ValidateAntiForgeryToken]
-
-        public async Task<IActionResult> AssignRole([FromBody]  AssignRoleViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> AssignRole([FromBody] AssignRoleViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {

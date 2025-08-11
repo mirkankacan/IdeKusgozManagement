@@ -1,4 +1,4 @@
-﻿@using IdeKusgozManagement.WebUI.Models.UserModels
+﻿
 @model ApiResponse<UserViewModel>
 @{
     ViewData["Title"] = "Profil";
@@ -22,7 +22,7 @@
 
                     <div class="col-md-6">
                         <label for="txtPassword" class="form-label">Şifre</label>
-                        <input type="password" class="form-control" id="txtPassword" name="Password" value="">
+                        <input type="password" class="form-control" id="txtPassword" name="Password" value="" autocomplete="new-password" data-lpignore="true">
                         <div class="form-text text-muted">
                             <i class="fas fa-info-circle me-1"></i>
                             Boş bırakırsanız şifre değişmez, doldurursanız şifre güncellenir.
