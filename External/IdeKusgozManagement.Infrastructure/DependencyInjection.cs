@@ -23,8 +23,8 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IJwtProvider, JwtProvider>();
-
-            // Repository and Unit of Work registrations
+            services.AddScoped<IWorkRecordService, WorkRecordService>();
+            services.AddScoped<IWorkRecordExpenseService, WorkRecordExpenseService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.ConfigureOptions<JwtOptionsSetup>();

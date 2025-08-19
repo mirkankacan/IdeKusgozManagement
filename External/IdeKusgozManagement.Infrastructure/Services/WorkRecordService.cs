@@ -66,6 +66,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
+                // OPTIMIZE EDİLDİ: Expression kullanarak direkt filtreleme
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
                     .FindAsync(wr => wr.CreatedBy == userId, cancellationToken);
 
@@ -84,6 +85,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
+                // OPTIMIZE EDİLDİ: Combined expression - tek sorguda hem tarih hem kullanıcı filtresi
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
                     .FindAsync(wr => wr.Date.Date == date.Date && wr.CreatedBy == userId, cancellationToken);
 
@@ -95,49 +97,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "GetWorkRecordsByDateAndUserAsync işleminde hata oluştu. Date: {Date}, UserId: {UserId}", date, userId);
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Tarih ve kullanıcıya göre iş kayıtları getirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<WorkRecordDTO>> CreateWorkRecordAsync(CreateWorkRecordDTO createWorkRecordDTO, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-                var workRecord = createWorkRecordDTO.Adapt<IdtWorkRecord>();
-                workRecord.Status = WorkRecordStatus.Pending;
-
-                var createdWorkRecord = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .AddAsync(workRecord, cancellationToken);
-
-                // Eğer masraflar varsa, onları da ekle
-                if (createWorkRecordDTO.Expenses != null && createWorkRecordDTO.Expenses.Any())
-                {
-                    var expenses = createWorkRecordDTO.Expenses.Select(exp =>
-                    {
-                        var expense = exp.Adapt<IdtWorkRecordExpense>();
-                        expense.WorkRecordId = createdWorkRecord.Id;
-                        return expense;
-                    }).ToList();
-
-                    await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .AddRangeAsync(expenses, cancellationToken);
-                }
-
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
-
-                var workRecordDTO = createdWorkRecord.Adapt<WorkRecordDTO>();
-
-                _logger.LogInformation("İş kaydı başarıyla oluşturuldu. WorkRecordId: {WorkRecordId}", createdWorkRecord.Id);
-
-                return ApiResponse<WorkRecordDTO>.Success(workRecordDTO, "İş kaydı başarıyla oluşturuldu");
-            }
-            catch (Exception ex)
-            {
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                _logger.LogError(ex, "CreateWorkRecordAsync işleminde hata oluştu");
-                return ApiResponse<WorkRecordDTO>.Error("İş kaydı oluşturulurken hata oluştu");
             }
         }
 
@@ -184,7 +143,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var workRecordDTOs = createdWorkRecords.Select(wr => wr.Adapt<WorkRecordDTO>()).ToList();
 
-                _logger.LogInformation("Toplu iş kaydı başarıyla oluşturuldu. Kayıt sayısı: {Count}", createdWorkRecords.Count());
+                _logger.LogInformation("Toplu iş kaydı başarıyla oluşturuldu. Kayıt sayısı: {Count}, EkleyenUserId: {UserId}", createdWorkRecords.Count(), GetCurrentUserId());
 
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs, "Toplu iş kayıtları başarıyla oluşturuldu");
             }
@@ -206,6 +165,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<WorkRecordDTO>.Error("İş kaydı bulunamadı");
                 }
 
+                // Sadece Pending durumundaki kayıtlar güncellenebilir
+                if (workRecord.Status != WorkRecordStatus.Pending)
+                {
+                    return ApiResponse<WorkRecordDTO>.Error("Sadece beklemede olan iş kayıtları güncellenebilir");
+                }
+
                 updateWorkRecordDTO.Adapt(workRecord);
 
                 var updatedWorkRecord = await _unitOfWork.Repository<IdtWorkRecord>()
@@ -215,7 +180,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var workRecordDTO = updatedWorkRecord.Adapt<WorkRecordDTO>();
 
-                _logger.LogInformation("İş kaydı başarıyla güncellendi. WorkRecordId: {WorkRecordId}", id);
+                _logger.LogInformation("İş kaydı başarıyla güncellendi. WorkRecordId: {WorkRecordId}, GüncelleyenUserId", id, GetCurrentUserId());
 
                 return ApiResponse<WorkRecordDTO>.Success(workRecordDTO, "İş kaydı başarıyla güncellendi");
             }
@@ -235,6 +200,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     return ApiResponse<bool>.Error("İş kaydı bulunamadı");
                 }
+
+                if (workRecord.Status != WorkRecordStatus.Pending)
+                {
+                    return ApiResponse<bool>.Error("Sadece beklemede olan iş kayıtları onaylanabilir");
+                }
+
                 workRecord.Status = WorkRecordStatus.Approved;
 
                 await _unitOfWork.Repository<IdtWorkRecord>().UpdateAsync(workRecord, cancellationToken);
@@ -262,6 +233,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<bool>.Error("İş kaydı bulunamadı");
                 }
 
+                if (workRecord.Status != WorkRecordStatus.Pending)
+                {
+                    return ApiResponse<bool>.Error("Sadece beklemede olan iş kayıtları reddedilebilir");
+                }
+
                 workRecord.Status = WorkRecordStatus.Rejected;
 
                 await _unitOfWork.Repository<IdtWorkRecord>().UpdateAsync(workRecord, cancellationToken);
@@ -276,6 +252,36 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "RejectWorkRecordAsync işleminde hata oluştu. WorkRecordId: {WorkRecordId}", id);
                 return ApiResponse<bool>.Error("İş kaydı reddedilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<int>> GetWorkRecordCountAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var count = await _unitOfWork.Repository<IdtWorkRecord>().CountAsync(cancellationToken);
+                return ApiResponse<int>.Success(count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetWorkRecordCountAsync işleminde hata oluştu");
+                return ApiResponse<int>.Error("İş kaydı sayısı hesaplanırken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<int>> GetWorkRecordCountByStatusAsync(WorkRecordStatus status, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var count = await _unitOfWork.Repository<IdtWorkRecord>()
+                    .CountAsync(wr => wr.Status == status, cancellationToken);
+
+                return ApiResponse<int>.Success(count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetWorkRecordCountByStatusAsync işleminde hata oluştu. Status: {Status}", status);
+                return ApiResponse<int>.Error("Duruma göre iş kaydı sayısı hesaplanırken hata oluştu");
             }
         }
 

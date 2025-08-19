@@ -1,5 +1,6 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
+using IdeKusgozManagement.Domain.Enums;
 
 namespace IdeKusgozManagement.Application.Interfaces
 {
@@ -13,8 +14,6 @@ namespace IdeKusgozManagement.Application.Interfaces
 
         Task<ApiResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByDateAndUserAsync(DateTime date, string userId, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<WorkRecordDTO>> CreateWorkRecordAsync(CreateWorkRecordDTO createWorkRecordDTO, CancellationToken cancellationToken = default);
-
         Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchCreateWorkRecordsAsync(List<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<WorkRecordDTO>> UpdateWorkRecordAsync(string id, UpdateWorkRecordDTO updateWorkRecordDTO, CancellationToken cancellationToken = default);
@@ -22,5 +21,9 @@ namespace IdeKusgozManagement.Application.Interfaces
         Task<ApiResponse<bool>> ApproveWorkRecordAsync(string id, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> RejectWorkRecordAsync(string id, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<int>> GetWorkRecordCountByStatusAsync(WorkRecordStatus status, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<int>> GetWorkRecordCountAsync(CancellationToken cancellationToken = default);
     }
 }

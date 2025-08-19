@@ -11,6 +11,7 @@ namespace IdeKusgozManagement.Application
             services.AddMapster();
             UserMappingConfig.Configure();
             RoleMappingConfig.Configure();
+            WorkRecordMappingConfig.Configure();
             return services;
         }
     }

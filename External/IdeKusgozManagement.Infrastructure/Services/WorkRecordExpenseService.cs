@@ -43,15 +43,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<WorkRecordExpenseDTO>.Error("Sadece beklemede olan iş kayıtlarına masraf eklenebilir");
                 }
 
-                // Kullanıcı sadece kendi iş kayıtlarına masraf ekleyebilir (Admin hariç)
-                var currentUserId = GetCurrentUserId();
-                var currentUserRole = GetCurrentUserRole();
-
-                if (currentUserRole != "Admin" && workRecord.CreatedBy != currentUserId)
-                {
-                    return ApiResponse<WorkRecordExpenseDTO>.Error("Bu iş kaydına masraf ekleme yetkiniz yok");
-                }
-
                 var expense = createExpenseDTO.Adapt<IdtWorkRecordExpense>();
                 expense.WorkRecordId = workRecordId;
 
@@ -62,8 +53,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var expenseDTO = createdExpense.Adapt<WorkRecordExpenseDTO>();
 
-                _logger.LogInformation("İş kaydına masraf başarıyla eklendi. WorkRecordId: {WorkRecordId}, ExpenseId: {ExpenseId}",
-                    workRecordId, createdExpense.Id);
+                _logger.LogInformation("İş kaydına masraf başarıyla eklendi. WorkRecordId: {WorkRecordId}, ExpenseId: {ExpenseId}, EkleyenUserId: {UserId}",
+                    workRecordId, createdExpense.Id, GetCurrentUserId());
 
                 return ApiResponse<WorkRecordExpenseDTO>.Success(expenseDTO, "Masraf başarıyla eklendi");
             }
@@ -78,9 +69,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                // İş kaydının varlığını kontrol et
-                var workRecord = await _unitOfWork.Repository<IdtWorkRecord>().GetByIdAsync(workRecordId, cancellationToken);
-                if (workRecord == null)
+                // İş kaydının varlığını kontrol et - optimize edilmiş
+                var workRecordExists = await _unitOfWork.Repository<IdtWorkRecord>().ExistsAsync(workRecordId, cancellationToken);
+                if (!workRecordExists)
                 {
                     return ApiResponse<IEnumerable<WorkRecordExpenseDTO>>.Error("İş kaydı bulunamadı");
                 }
@@ -142,15 +133,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<WorkRecordExpenseDTO>.Error("Sadece beklemede olan iş kayıtlarının masrafları güncellenebilir");
                 }
 
-                // Kullanıcı sadece kendi masraflarını güncelleyebilir (Admin hariç)
-                var currentUserId = GetCurrentUserId();
-                var currentUserRole = GetCurrentUserRole();
-
-                if (currentUserRole != "Admin" && expense.CreatedBy != currentUserId)
-                {
-                    return ApiResponse<WorkRecordExpenseDTO>.Error("Bu masraf kaydını güncelleme yetkiniz yok");
-                }
-
                 updateExpenseDTO.Adapt(expense);
 
                 var updatedExpense = await _unitOfWork.Repository<IdtWorkRecordExpense>()
@@ -160,7 +142,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var expenseDTO = updatedExpense.Adapt<WorkRecordExpenseDTO>();
 
-                _logger.LogInformation("Masraf kaydı başarıyla güncellendi. ExpenseId: {ExpenseId}", expenseId);
+                _logger.LogInformation("Masraf kaydı başarıyla güncellendi. ExpenseId: {ExpenseId}, GüncelleyenUserId:{UserId}", expenseId, GetCurrentUserId());
 
                 return ApiResponse<WorkRecordExpenseDTO>.Success(expenseDTO, "Masraf kaydı başarıyla güncellendi");
             }
@@ -188,25 +170,15 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<bool>.Error("İlgili iş kaydı bulunamadı");
                 }
 
-                // Sadece Pending durumundaki iş kayıtlarının masrafları silinebilir
-                if (workRecord.Status != WorkRecordStatus.Pending)
+                if (workRecord.Status != WorkRecordStatus.Pending || workRecord.Status != WorkRecordStatus.Rejected)
                 {
-                    return ApiResponse<bool>.Error("Sadece beklemede olan iş kayıtlarının masrafları silinebilir");
-                }
-
-                // Kullanıcı sadece kendi masraflarını silebilir (Admin hariç)
-                var currentUserId = GetCurrentUserId();
-                var currentUserRole = GetCurrentUserRole();
-
-                if (currentUserRole != "Admin" && expense.CreatedBy != currentUserId)
-                {
-                    return ApiResponse<bool>.Error("Bu masraf kaydını silme yetkiniz yok");
+                    return ApiResponse<bool>.Error("Sadece reddedilen ve beklemede olan iş kayıtlarının masrafları silinebilir");
                 }
 
                 await _unitOfWork.Repository<IdtWorkRecordExpense>().DeleteAsync(expense, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Masraf kaydı başarıyla silindi. ExpenseId: {ExpenseId}", expenseId);
+                _logger.LogInformation("Masraf kaydı başarıyla silindi. ExpenseId: {ExpenseId}, SilenUserId: {UserId}", expenseId, GetCurrentUserId());
 
                 return ApiResponse<bool>.Success(true, "Masraf kaydı başarıyla silindi");
             }
@@ -240,16 +212,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 // İş kaydının varlığını kontrol et
-                var workRecord = await _unitOfWork.Repository<IdtWorkRecord>().GetByIdAsync(workRecordId, cancellationToken);
-                if (workRecord == null)
+                var workRecordExists = await _unitOfWork.Repository<IdtWorkRecord>().ExistsAsync(workRecordId, cancellationToken);
+                if (!workRecordExists)
                 {
                     return ApiResponse<decimal>.Error("İş kaydı bulunamadı");
                 }
 
-                var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                    .FindAsync(exp => exp.WorkRecordId == workRecordId, cancellationToken);
-
-                var totalAmount = expenses.Sum(exp => exp.Amount);
+                var totalAmount = await _unitOfWork.Repository<IdtWorkRecordExpense>()
+                    .SumAsync(exp => exp.Amount, exp => exp.WorkRecordId == workRecordId, cancellationToken);
 
                 return ApiResponse<decimal>.Success(totalAmount);
             }
@@ -264,8 +234,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var allExpenses = await _unitOfWork.Repository<IdtWorkRecordExpense>().GetAllAsync(cancellationToken);
-                var totalAmount = allExpenses.Sum(exp => exp.Amount);
+                var totalAmount = await _unitOfWork.Repository<IdtWorkRecordExpense>()
+                    .SumAsync(exp => exp.Amount, cancellationToken);
 
                 return ApiResponse<decimal>.Success(totalAmount);
             }
@@ -279,11 +249,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
         private string? GetCurrentUserId()
         {
             return _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        }
-
-        private string? GetCurrentUserRole()
-        {
-            return _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role)?.Value;
         }
     }
 }
