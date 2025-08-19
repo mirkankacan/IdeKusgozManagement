@@ -170,7 +170,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<bool>.Error("İlgili iş kaydı bulunamadı");
                 }
 
-                if (workRecord.Status != WorkRecordStatus.Pending || workRecord.Status != WorkRecordStatus.Rejected)
+                // Sadece Pending ve Rejected durumundaki iş kayıtlarının masrafları silinebilir
+                if (workRecord.Status != WorkRecordStatus.Pending && workRecord.Status != WorkRecordStatus.Rejected)
                 {
                     return ApiResponse<bool>.Error("Sadece reddedilen ve beklemede olan iş kayıtlarının masrafları silinebilir");
                 }
@@ -230,6 +231,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
+        public async Task<ApiResponse<decimal>> GetTotalExpenseAmountByUserAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var totalAmount = await _unitOfWork.Repository<IdtWorkRecordExpense>()
+                    .SumAsync(exp => exp.Amount, exp => exp.CreatedBy == userId, cancellationToken);
+
+                return ApiResponse<decimal>.Success(totalAmount);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetTotalExpenseAmountByUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                return ApiResponse<decimal>.Error("Kullanıcının toplam masraf tutarı hesaplanırken hata oluştu");
+            }
+        }
+
         public async Task<ApiResponse<decimal>> GetTotalExpenseAmountAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -243,6 +260,28 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "GetTotalExpenseAmountAsync işleminde hata oluştu");
                 return ApiResponse<decimal>.Error("Toplam masraf tutarı hesaplanırken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<decimal>> GetAverageExpenseAmountAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var count = await _unitOfWork.Repository<IdtWorkRecordExpense>().CountAsync(cancellationToken);
+                if (count == 0)
+                {
+                    return ApiResponse<decimal>.Success(0);
+                }
+
+                var averageAmount = await _unitOfWork.Repository<IdtWorkRecordExpense>()
+                    .AverageAsync(exp => exp.Amount, cancellationToken);
+
+                return ApiResponse<decimal>.Success(averageAmount);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetAverageExpenseAmountAsync işleminde hata oluştu");
+                return ApiResponse<decimal>.Error("Ortalama masraf tutarı hesaplanırken hata oluştu");
             }
         }
 

@@ -1,3 +1,5 @@
+using IdeKusgozManagement.Domain.Enums;
+
 namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
 {
     public class WorkRecordDTO
@@ -15,23 +17,19 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public bool HasLunch { get; set; }
         public bool HasDinner { get; set; }
         public bool HasNightMeal { get; set; }
-        public int Status { get; set; }
-        public string StatusText => GetStatusText();
+        public WorkRecordStatus Status { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
-        public List<WorkRecordExpenseDTO>? Expenses { get; set; }
+        public TimeSpan WorkDuration => EndTime - StartTime;
 
-        private string GetStatusText()
+        public string StatusText => Status switch
         {
-            return Status switch
-            {
-                0 => "Beklemede",
-                1 => "Onaylandý",
-                2 => "Reddedildi",
-                _ => "Bilinmiyor"
-            };
-        }
+            WorkRecordStatus.Pending => "Beklemede",
+            WorkRecordStatus.Approved => "Onaylandý",
+            WorkRecordStatus.Rejected => "Reddedildi",
+            _ => "Bilinmiyor"
+        };
     }
 }

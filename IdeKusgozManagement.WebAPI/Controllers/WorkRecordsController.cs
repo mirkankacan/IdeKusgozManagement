@@ -1,7 +1,7 @@
-﻿// IdeKusgozManagement.WebAPI/Controllers/WorkRecordsController.cs
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +27,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> GetAllWorkRecords(CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.GetAllWorkRecordsAsync();
+            var result = await _workRecordService.GetAllWorkRecordsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -36,9 +36,10 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">İş kaydı ID'si</param>
         [HttpGet("{id}")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> GetWorkRecordById(string id, CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.GetWorkRecordByIdAsync(id);
+            var result = await _workRecordService.GetWorkRecordByIdAsync(id, cancellationToken);
             return result.IsSuccess ? Ok(result) : NotFound(result);
         }
 
@@ -54,14 +55,26 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
 
-            var result = await _workRecordService.GetWorkRecordsByUserIdAsync(currentUserId);
+            var result = await _workRecordService.GetWorkRecordsByUserIdAsync(currentUserId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
-        /// Tarih aralığına göre iş kayıtlarını getirir
+        /// Kullanıcının iş kayıtlarını getirir (Sadece yetkili kullanıcılar)
         /// </summary>
-        /// <param name="date">Tarihi</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
+        [HttpGet("user/{userId}")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> GetWorkRecordsByUserId(string userId, CancellationToken cancellationToken = default)
+        {
+            var result = await _workRecordService.GetWorkRecordsByUserIdAsync(userId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Tarih ve kullanıcıya göre iş kayıtlarını getirir
+        /// </summary>
+        /// <param name="date">Tarih</param>
         /// <param name="userId">Kullanıcı ID'si</param>
         [HttpGet("by-date-and-user")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
@@ -70,23 +83,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             [FromQuery] string userId,
             CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.GetWorkRecordsByDateAndUserAsync(date, userId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// Yeni iş kaydı oluşturur
-        /// </summary>
-        /// <param name="createWorkRecordDTO">İş kaydı bilgileri</param>
-        [HttpPost]
-        public async Task<IActionResult> CreateWorkRecord([FromBody] CreateWorkRecordDTO createWorkRecordDTO, CancellationToken cancellationToken = default)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var result = await _workRecordService.CreateWorkRecordAsync(createWorkRecordDTO);
+            var result = await _workRecordService.GetWorkRecordsByDateAndUserAsync(date, userId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -107,7 +104,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("İş kaydı listesi boş olamaz");
             }
 
-            var result = await _workRecordService.BatchCreateWorkRecordsAsync(createWorkRecordDTOs);
+            var result = await _workRecordService.BatchCreateWorkRecordsAsync(createWorkRecordDTOs, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -124,7 +121,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _workRecordService.UpdateWorkRecordAsync(id, updateWorkRecordDTO);
+            var result = await _workRecordService.UpdateWorkRecordAsync(id, updateWorkRecordDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -132,11 +129,11 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// İş kaydını onaylar (Sadece yetkili kullanıcılar)
         /// </summary>
         /// <param name="id">İş kaydı ID'si</param>
-        [HttpPost("approve/{id}")]
+        [HttpPost("{id}/approve")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> ApproveWorkRecord(string id, CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.ApproveWorkRecordAsync(id);
+            var result = await _workRecordService.ApproveWorkRecordAsync(id, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -144,11 +141,34 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// İş kaydını reddeder (Sadece yetkili kullanıcılar)
         /// </summary>
         /// <param name="id">İş kaydı ID'si</param>
-        [HttpPost("reject/{id}")]
+        [HttpPost("{id}/reject")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> RejectWorkRecord(string id, CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.RejectWorkRecordAsync(id);
+            var result = await _workRecordService.RejectWorkRecordAsync(id, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Toplam iş kaydı sayısını getirir
+        /// </summary>
+        [HttpGet("count")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> GetWorkRecordCount(CancellationToken cancellationToken = default)
+        {
+            var result = await _workRecordService.GetWorkRecordCountAsync(cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Duruma göre iş kaydı sayısını getirir
+        /// </summary>
+        /// <param name="status">İş kaydı durumu</param>
+        [HttpGet("count/by-status/{status}")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> GetWorkRecordCountByStatus(WorkRecordStatus status, CancellationToken cancellationToken = default)
+        {
+            var result = await _workRecordService.GetWorkRecordCountByStatusAsync(status, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

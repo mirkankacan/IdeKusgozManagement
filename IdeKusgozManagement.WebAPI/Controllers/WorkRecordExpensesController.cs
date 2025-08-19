@@ -1,7 +1,6 @@
 ﻿using System.Security.Claims;
 using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces;
-using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +35,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _workRecordExpenseService.AddExpenseToWorkRecordAsync(workRecordId, createExpenseDTO);
+            var result = await _workRecordExpenseService.AddExpenseToWorkRecordAsync(workRecordId, createExpenseDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -49,7 +48,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             string workRecordId,
             CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordExpenseService.GetWorkRecordExpensesAsync(workRecordId);
+            var result = await _workRecordExpenseService.GetWorkRecordExpensesAsync(workRecordId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -62,7 +61,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             string expenseId,
             CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordExpenseService.GetExpenseByIdAsync(expenseId);
+            var result = await _workRecordExpenseService.GetExpenseByIdAsync(expenseId, cancellationToken);
             return result.IsSuccess ? Ok(result) : NotFound(result);
         }
 
@@ -82,7 +81,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _workRecordExpenseService.UpdateWorkRecordExpenseAsync(expenseId, updateWorkRecordExpenseDTO);
+            var result = await _workRecordExpenseService.UpdateWorkRecordExpenseAsync(expenseId, updateWorkRecordExpenseDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -95,7 +94,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             string expenseId,
             CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordExpenseService.DeleteWorkRecordExpenseAsync(expenseId);
+            var result = await _workRecordExpenseService.DeleteWorkRecordExpenseAsync(expenseId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -109,7 +108,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             string userId,
             CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordExpenseService.GetAllExpensesByUserAsync(userId);
+            var result = await _workRecordExpenseService.GetAllExpensesByUserAsync(userId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -125,7 +124,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
 
-            var result = await _workRecordExpenseService.GetAllExpensesByUserAsync(currentUserId);
+            var result = await _workRecordExpenseService.GetAllExpensesByUserAsync(currentUserId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -138,20 +137,59 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             string workRecordId,
             CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordExpenseService.GetTotalExpenseAmountByWorkRecordAsync(workRecordId);
+            var result = await _workRecordExpenseService.GetTotalExpenseAmountByWorkRecordAsync(workRecordId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
-        /// Toplam masraf tutarını getirir
+        /// Kullanıcının toplam masraf tutarını getirir
+        /// </summary>
+        /// <param name="userId">Kullanıcı ID'si</param>
+        [HttpGet("user/{userId}/total")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> GetTotalExpenseAmountByUser(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _workRecordExpenseService.GetTotalExpenseAmountByUserAsync(userId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Mevcut kullanıcının toplam masraf tutarını getirir
+        /// </summary>
+        [HttpGet("my-total")]
+        public async Task<IActionResult> GetMyTotalExpenseAmount(CancellationToken cancellationToken = default)
+        {
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return BadRequest("Kullanıcı kimliği bulunamadı");
+            }
+
+            var result = await _workRecordExpenseService.GetTotalExpenseAmountByUserAsync(currentUserId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Toplam masraf tutarını getirir (Tüm sistem)
         /// </summary>
         [HttpGet("total")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetTotalExpenseAmount(
-            string workRecordId,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetTotalExpenseAmount(CancellationToken cancellationToken = default)
         {
             var result = await _workRecordExpenseService.GetTotalExpenseAmountAsync(cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Ortalama masraf tutarını getirir
+        /// </summary>
+        [HttpGet("average")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> GetAverageExpenseAmount(CancellationToken cancellationToken = default)
+        {
+            var result = await _workRecordExpenseService.GetAverageExpenseAmountAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

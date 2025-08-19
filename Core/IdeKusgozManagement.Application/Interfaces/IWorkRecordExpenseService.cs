@@ -19,6 +19,10 @@ namespace IdeKusgozManagement.Application.Interfaces
 
         Task<ApiResponse<decimal>> GetTotalExpenseAmountByWorkRecordAsync(string workRecordId, CancellationToken cancellationToken = default);
 
+        Task<ApiResponse<decimal>> GetTotalExpenseAmountByUserAsync(string userId, CancellationToken cancellationToken = default);
+
         Task<ApiResponse<decimal>> GetTotalExpenseAmountAsync(CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<decimal>> GetAverageExpenseAmountAsync(CancellationToken cancellationToken = default);
     }
 }
