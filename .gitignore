@@ -10,6 +10,7 @@
 *.userosscache
 *.sln.docstates
 
+/.vscode
 appsettings.json
 appsettings.*.json
 
