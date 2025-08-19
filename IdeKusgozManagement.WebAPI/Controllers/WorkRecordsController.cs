@@ -129,11 +129,11 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// İş kaydını onaylar (Sadece yetkili kullanıcılar)
         /// </summary>
         /// <param name="id">İş kaydı ID'si</param>
-        [HttpPost("{id}/approve")]
+        [HttpPost("approve")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> ApproveWorkRecord(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchApproveWorkRecordByUserAndDate([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.ApproveWorkRecordAsync(id, cancellationToken);
+            var result = await _workRecordService.BatchApproveWorkRecordsByUserAndMonthAsync(userId, date, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -141,11 +141,11 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// İş kaydını reddeder (Sadece yetkili kullanıcılar)
         /// </summary>
         /// <param name="id">İş kaydı ID'si</param>
-        [HttpPost("{id}/reject")]
+        [HttpPost("reject")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> RejectWorkRecord(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchRejectWorkRecordByUserAndDate([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.RejectWorkRecordAsync(id, cancellationToken);
+            var result = await _workRecordService.BatchRejectWorkRecordsByUserAndMonthAsync(userId, date, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

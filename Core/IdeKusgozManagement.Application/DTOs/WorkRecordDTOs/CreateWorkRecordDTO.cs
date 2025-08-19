@@ -1,4 +1,6 @@
-﻿namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
+﻿using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
+
+namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
 {
     public class CreateWorkRecordDTO
     {

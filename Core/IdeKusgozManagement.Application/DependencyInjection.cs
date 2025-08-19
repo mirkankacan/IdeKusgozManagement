@@ -12,6 +12,7 @@ namespace IdeKusgozManagement.Application
             UserMappingConfig.Configure();
             RoleMappingConfig.Configure();
             WorkRecordMappingConfig.Configure();
+            WorkRecordExpenseMappingConfig.Configure();
             return services;
         }
     }

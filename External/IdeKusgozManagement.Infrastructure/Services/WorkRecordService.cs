@@ -66,7 +66,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                // OPTIMIZE EDİLDİ: Expression kullanarak direkt filtreleme
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
                     .FindAsync(wr => wr.CreatedBy == userId, cancellationToken);
 
@@ -85,9 +84,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                // OPTIMIZE EDİLDİ: Combined expression - tek sorguda hem tarih hem kullanıcı filtresi
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .FindAsync(wr => wr.Date.Date == date.Date && wr.CreatedBy == userId, cancellationToken);
+                    .FindAsync(wr => wr.Date.Year == date.Date.Year && wr.Date.Month == date.Date.Month && wr.CreatedBy == userId, cancellationToken);
 
                 var workRecordDTOs = workRecords.Select(wr => wr.Adapt<WorkRecordDTO>()).ToList();
 
@@ -191,67 +189,87 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> ApproveWorkRecordAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> BatchApproveWorkRecordsByUserAndMonthAsync(string userId,DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
-                var workRecord = await _unitOfWork.Repository<IdtWorkRecord>().GetByIdAsync(id, cancellationToken);
-                if (workRecord == null)
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+                var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
+                    .FindAsync(wr => wr.CreatedBy == userId &&
+                                   wr.Date.Year >= date.Date.Year &&
+                                   wr.Date.Month <= date.Date.Month, cancellationToken);
+
+                var workRecordsList = workRecords.ToList();
+
+                if (!workRecordsList.Any())
                 {
-                    return ApiResponse<bool>.Error("İş kaydı bulunamadı");
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    return ApiResponse<bool>.Error("Belirtilen tarih aralığında iş kaydı bulunamadı");
                 }
 
-                if (workRecord.Status != WorkRecordStatus.Pending)
+                // Tüm kayıtları onaylı duruma getir
+                foreach (var workRecord in workRecordsList)
                 {
-                    return ApiResponse<bool>.Error("Sadece beklemede olan iş kayıtları onaylanabilir");
+                    workRecord.Status = WorkRecordStatus.Approved;
+                    await _unitOfWork.Repository<IdtWorkRecord>().UpdateAsync(workRecord, cancellationToken);
                 }
 
-                workRecord.Status = WorkRecordStatus.Approved;
-
-                await _unitOfWork.Repository<IdtWorkRecord>().UpdateAsync(workRecord, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                _logger.LogInformation("İş kaydı başarıyla onaylandı. WorkRecordId: {WorkRecordId}, OnaylayanUserId: {UserId}",
-                    id, GetCurrentUserId());
+                _logger.LogInformation("Toplu iş kaydı onaylandı. UserId: {UserId}, Year: {Year}, Month: {Month}, Count: {Count}, OnaylayanUserId: {ApproverUserId}",
+                    userId, date.Date.Year, date.Date.Month, workRecordsList.Count, GetCurrentUserId());
 
-                return ApiResponse<bool>.Success(true, "İş kaydı başarıyla onaylandı");
+                return ApiResponse<bool>.Success(true, $"{workRecordsList.Count} adet iş kaydı başarıyla onaylandı");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ApproveWorkRecordAsync işleminde hata oluştu. WorkRecordId: {WorkRecordId}", id);
-                return ApiResponse<bool>.Error("İş kaydı onaylanırken hata oluştu");
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                _logger.LogError(ex, "BatchApproveWorkRecordsByUserAndMonthAsync işleminde hata oluştu. UserId: {UserId}, Year: {Year}, Month: {Month}", userId, date.Date.Year, date.Date.Month);
+                return ApiResponse<bool>.Error("Toplu iş kaydı onaylanırken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> RejectWorkRecordAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> BatchRejectWorkRecordsByUserAndMonthAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
-                var workRecord = await _unitOfWork.Repository<IdtWorkRecord>().GetByIdAsync(id, cancellationToken);
-                if (workRecord == null)
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+                var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
+                      .FindAsync(wr => wr.CreatedBy == userId &&
+                                     wr.Date.Year >= date.Date.Year &&
+                                     wr.Date.Month <= date.Date.Month, cancellationToken);
+
+                var workRecordsList = workRecords.ToList();
+
+                if (!workRecordsList.Any())
                 {
-                    return ApiResponse<bool>.Error("İş kaydı bulunamadı");
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    return ApiResponse<bool>.Error("Belirtilen tarih aralığında beklemede olan iş kaydı bulunamadı");
                 }
 
-                if (workRecord.Status != WorkRecordStatus.Pending)
+                // Tüm kayıtları reddedildi duruma getir
+                foreach (var workRecord in workRecordsList)
                 {
-                    return ApiResponse<bool>.Error("Sadece beklemede olan iş kayıtları reddedilebilir");
+                    workRecord.Status = WorkRecordStatus.Rejected;
+                    await _unitOfWork.Repository<IdtWorkRecord>().UpdateAsync(workRecord, cancellationToken);
                 }
 
-                workRecord.Status = WorkRecordStatus.Rejected;
-
-                await _unitOfWork.Repository<IdtWorkRecord>().UpdateAsync(workRecord, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                _logger.LogInformation("İş kaydı başarıyla reddedildi. WorkRecordId: {WorkRecordId}, ReddedenUserId: {UserId}",
-                    id, GetCurrentUserId());
+                _logger.LogInformation("Toplu iş kaydı reddedildi. UserId: {UserId}, Year: {Year}, Month: {Month}, Count: {Count}, ReddedenUserId: {RejecterUserId}",
+                    userId, date.Date.Year, date.Date.Month, workRecordsList.Count, GetCurrentUserId());
 
-                return ApiResponse<bool>.Success(true, "İş kaydı başarıyla reddedildi");
+                return ApiResponse<bool>.Success(true, $"{workRecordsList.Count} adet iş kaydı başarıyla reddedildi");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "RejectWorkRecordAsync işleminde hata oluştu. WorkRecordId: {WorkRecordId}", id);
-                return ApiResponse<bool>.Error("İş kaydı reddedilirken hata oluştu");
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                _logger.LogError(ex, "BatchRejectWorkRecordsByUserAndMonthAsync işleminde hata oluştu. UserId: {UserId}, Year: {Year}, Month: {Month}", userId, date.Date.Year, date.Date.Month);
+                return ApiResponse<bool>.Error("Toplu iş kaydı reddedilirken hata oluştu");
             }
         }
 

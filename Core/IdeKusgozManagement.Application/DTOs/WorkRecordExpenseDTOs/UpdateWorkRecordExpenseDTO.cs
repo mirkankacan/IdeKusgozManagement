@@ -1,4 +1,4 @@
-﻿namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
+﻿namespace IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs
 {
     public class UpdateWorkRecordExpenseDTO
     {

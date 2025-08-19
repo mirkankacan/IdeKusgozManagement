@@ -1,5 +1,5 @@
 ﻿using IdeKusgozManagement.Application.Common;
-using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
+using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
 
 namespace IdeKusgozManagement.Application.Interfaces
 {
