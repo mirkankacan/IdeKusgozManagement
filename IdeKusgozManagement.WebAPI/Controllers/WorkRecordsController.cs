@@ -129,17 +129,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
-        /// İş kaydını siler
-        /// </summary>
-        /// <param name="id">İş kaydı ID'si</param>
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteWorkRecord(string id, CancellationToken cancellationToken = default)
-        {
-            var result = await _workRecordService.DeleteWorkRecordAsync(id);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
         /// İş kaydını onaylar (Sadece yetkili kullanıcılar)
         /// </summary>
         /// <param name="id">İş kaydı ID'si</param>

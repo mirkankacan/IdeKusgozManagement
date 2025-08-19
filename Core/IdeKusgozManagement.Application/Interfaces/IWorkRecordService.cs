@@ -19,8 +19,6 @@ namespace IdeKusgozManagement.Application.Interfaces
 
         Task<ApiResponse<WorkRecordDTO>> UpdateWorkRecordAsync(string id, UpdateWorkRecordDTO updateWorkRecordDTO, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<bool>> DeleteWorkRecordAsync(string id, CancellationToken cancellationToken = default);
-
         Task<ApiResponse<bool>> ApproveWorkRecordAsync(string id, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> RejectWorkRecordAsync(string id, CancellationToken cancellationToken = default);
