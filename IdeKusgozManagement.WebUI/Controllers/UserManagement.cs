@@ -1,16 +1,15 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 {
-    [Area("Admin")]
     [Authorize(Roles = "Admin")]
-    [Route("admin/kullanici-yonetimi")]
+    [Route("kullanici-yonetimi")]
     public class UserManagementController : Controller // Typo düzeltildi: UserManagment -> UserManagement
     {
         private readonly IUserApiService _userApiService;

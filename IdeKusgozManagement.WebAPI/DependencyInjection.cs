@@ -1,11 +1,9 @@
 ﻿using System.Data;
 using System.Net;
-using System.Text;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -39,12 +37,12 @@ namespace IdeKusgozManagement.WebAPI
                connectionString: configuration.GetConnectionString("SqlConnection"),
                sinkOptions: new Serilog.Sinks.MSSqlServer.MSSqlServerSinkOptions
                {
-                   TableName = "ApiLogs",
+                   TableName = "Logs",
                    AutoCreateSqlTable = true,
                    BatchPostingLimit = 50,
                    BatchPeriod = TimeSpan.FromSeconds(5)
                },
-               restrictedToMinimumLevel: LogEventLevel.Warning,
+               restrictedToMinimumLevel: LogEventLevel.Information,
                columnOptions: GetColumnOptions())
            .WriteTo.Email(
                from: configuration["EmailConfiguration:FromEmail"],
@@ -58,7 +56,7 @@ namespace IdeKusgozManagement.WebAPI
                ),
                subject: "🚨 Kuşgöz API Hata Bildirimi - {Level} - {Timestamp:yyyy-MM-dd HH:mm}",
                restrictedToMinimumLevel: LogEventLevel.Warning
-               
+
                )
            .CreateLogger();
 
@@ -179,7 +177,5 @@ namespace IdeKusgozManagement.WebAPI
             // Fallback to single email
             return configuration["EmailConfiguration:ToEmail"] ?? configuration["EmailConfiguration:FromEmail"];
         }
-      
-
     }
 }

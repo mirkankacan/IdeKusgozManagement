@@ -1,40 +1,36 @@
-﻿
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="tr">
+
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="author" content="ideaktif">
+	<meta name="author" content="İdeaktif Danışmanlık ve Yazılım Ltd.">
 	<!-- The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 	<!-- Title -->
 	<title>Kuşgöz İzmir Vinç - @ViewData["Title"]</title>
 
 	<!-- Styles -->
 	<link href="https://fonts.googleapis.com/css?family=Poppins:400,500,700,800&display=swap" rel="stylesheet">
-	<link href="/theme/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-	<link href="/theme/assets/plugins/font-awesome/css/all.min.css" rel="stylesheet">
-	<link href="/theme/assets/plugins/perfectscroll/perfect-scrollbar.css" rel="stylesheet">
-	<link href="/theme/assets/plugins/apexcharts/apexcharts.css" rel="stylesheet">
-
+	<link href="~/theme/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+		integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<link href="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.css" rel="stylesheet">
+	@await RenderSectionAsync("CalendarCss", required: false)
 	<!-- Theme Styles -->
-	<link href="/theme/assets/css/main.min.css" rel="stylesheet">
-	<link href="/theme/assets/css/custom.css" rel="stylesheet">
-	<link href="/css/site.css" rel="stylesheet">
+	<link href="~/theme/assets/css/main.min.css" rel="stylesheet">
+	<link href="~/theme/assets/css/custom.css" rel="stylesheet">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
-	<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
-	<!-- Or for RTL support -->
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
-	<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.3/dist/sweetalert2.min.css" rel="stylesheet">
-	<link href="/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+
+	@await RenderSectionAsync("Styles", required: false)
 	<style>
-		.modal-footer{
-			flex-wrap:nowrap !important;
+		.modal-footer {
+			flex-wrap: nowrap !important;
 		}
 	</style>
 </head>
+
 <body class="">
 
 	<div class="page-container">
@@ -49,21 +45,25 @@
 					</ul>
 				</div>
 				<div class="logo">
-					
 
-<a class="navbar-brand" href="/@(User.FindFirst(ClaimTypes.Role)?.Value.ToLower(System.Globalization.CultureInfo.CreateSpecificCulture("tr-TR")))/ana-sayfa"></a>
-</div>
+
+					<a class="navbar-brand"
+						href="/@(User.FindFirst(ClaimTypes.Role)?.Value.ToLower(System.Globalization.CultureInfo.CreateSpecificCulture("tr-TR")))/ana-sayfa"></a>
+				</div>
 				<div class="" id="headerNav">
 					<ul class="navbar-nav">
 
 						<li class="nav-item dropdown">
 
-							<a class="nav-link profile-dropdown" href="#" id="profileDropDown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-								<img src="/theme/assets/images/avatars/profile-image.png" alt=""><span class="mt-5 text-black">
+							<a class="nav-link profile-dropdown" href="#" id="profileDropDown" role="button"
+								data-bs-toggle="dropdown" aria-expanded="false">
+								<img src="/theme/assets/images/avatars/profile-image.png" alt=""><span
+									class="mt-5 text-black">
 									@User.FindFirst("FullName")?.Value
 								</span>
 							</a>
-							<div class="dropdown-menu dropdown-menu-end profile-drop-menu" aria-labelledby="profileDropDown">
+							<div class="dropdown-menu dropdown-menu-end profile-drop-menu"
+								aria-labelledby="profileDropDown">
 								<a class="dropdown-item" href="/profil"><i data-feather="user"></i>Profil</a>
 								<div class="dropdown-divider"></div>
 								<a class="dropdown-item" href="/cikis-yap"><i data-feather="log-out"></i>Çıkış Yap</a>
@@ -78,43 +78,43 @@
 				<li class="sidebar-title">
 					Menü
 				</li>
+				<li class="@(Context.Request.Path == "/ana-sayfa" ? "active-page" : "")">
+					<a href="/ana-sayfa"><i data-feather="home"></i>Ana Sayfa</a>
+				</li>
+				<li class="@(Context.Request.Path == "/takvim" ? "active-page" : "")">
+					<a href="/takvim"><i data-feather="calendar"></i>Takvim</a>
+				</li>
 				@if (User.IsInRole("Admin"))
 				{
-					<li class="@(Context.Request.Path == "/admin/ana-sayfa" ? "active-page" : "")">
-						<a href="/admin/ana-sayfa"><i data-feather="home"></i>Ana Sayfa</a>
-					</li>
 					<li class="sidebar-title">
 						Kullanıcı Yönetimi
 					</li>
-					<li class="@(Context.Request.Path == "/admin/kullanici-yonetimi" ? "active-page" : "")">
-						<a href="/admin/kullanici-yonetimi"><i data-feather="users"></i>Kullanıcılar</a>
+					<li class="@(Context.Request.Path == "/kullanici-yonetimi" ? "active-page" : "")">
+						<a href="/kullanici-yonetimi"><i data-feather="users"></i>Kullanıcılar</a>
 					</li>
-					
+
 				}
 
-				@if (User.IsInRole("Şef"))
-				{
-					<li class="@(Context.Request.Path == "/sef/ana-sayfa" ? "active-page" : "")">
-						<a href="/sef/ana-sayfa"><i data-feather="home"></i>Ana Sayfa</a>
-					</li>
-					<li class="sidebar-title">
-						Şef İşlemleri
-					</li>
-					<li class="@(Context.Request.Path == "/raporlar" ? "active-page" : "")">
-						<a href="/sef/raporlar"><i data-feather="bar-chart-2"></i>Raporlar</a>
-					</li>
-				}
 
 				@if (User.IsInRole("Personel"))
 				{
-					<li class="@(Context.Request.Path == "/personel/ana-sayfa" ? "active-page" : "")">
-						<a href="/personel/ana-sayfa"><i data-feather="home"></i>Ana Sayfa</a>
-					</li>
 					<li class="sidebar-title">
 						Personel İşlemleri
 					</li>
-					<li class="@(Context.Request.Path == "/puantaj-gir" ? "active-page" : "")">
-						<a href="/personel/puantaj-gir"><i data-feather="clock"></i>Puantaj Gir</a>
+					<li class="@(Context.Request.Path == "/puantaj/ekle" ? "active-page" : "")">
+						<a href="/puantaj/ekle"><i data-feather="clock"></i>Puantaj Gir</a>
+					</li>
+				}
+				<li class="sidebar-title">
+					Puantaj İşlemleri
+				</li>
+				<li class="@(Context.Request.Path == "/puantaj/ekle" ? "active-page" : "")">
+					<a href="/puantaj/ekle"><i data-feather="clock"></i>Puantaj Gir</a>
+				</li>
+				@if (User.IsInRole("Şef") || User.IsInRole("Admin"))
+				{
+					<li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
+						<a href="/puantaj"><i data-feather="bar-chart-2"></i>Puantaj Listesi</a>
 					</li>
 				}
 
@@ -135,7 +135,8 @@
 					</div>
 					<div class="col-sm-6">
 						<div class="text-sm-end d-none d-sm-block">
-							<a href="https://www.ideaktif.com.tr" target="_blank" style="color:#5b5b5b">2025 © İdeaktif Danışmanlık ve Yazılım Ltd.</a>
+							<a href="https://www.ideaktif.com.tr" target="_blank" style="color:#5b5b5b">2025 © İdeaktif
+								Danışmanlık ve Yazılım Ltd.</a>
 						</div>
 					</div>
 				</div>
@@ -143,23 +144,20 @@
 		</footer>
 	</div>
 	<!-- Javascripts -->
-	<script src="/theme/assets/plugins/jquery/jquery-3.4.1.min.js"></script>
+	<script src="~/theme/assets/plugins/jquery/jquery-3.4.1.min.js"></script>
 	<script src="https://unpkg.com/@@popperjs/core@2"></script>
-	<script src="/theme/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+	<script src="~/theme/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
 	<script src="https://unpkg.com/feather-icons"></script>
-	<script src="/theme/assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
-	<script src="/theme/assets/js/main.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/js/all.min.js"
+		integrity="sha512-gBYquPLlR76UWqCwD06/xwal4so02RjIR0oyG1TIhSGwmBTRrIkQbaPehPF8iwuY9jFikDHMGEelt0DtY7jtvQ=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-	<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/tr.js"></script>
-	<script src="/theme/assets/plugins/blockui/jquery.blockUI.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/tr.min.js" integrity="sha512-2386tYyq9+EGdON3UecxdBTaO5lnboGy/rq93uHoVeBqxHAPvjnQsXJMfKBJck63KwQ3xidTlPBDvW3DR+Yo+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-	<script src="/theme/assets/plugins/DataTables/datatables.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.3/dist/sweetalert2.all.min.js"></script>
+	<script src="~/theme/assets/plugins/blockui/jquery.blockUI.js"></script>
+	<script src="~/theme/assets/js/main.min.js"></script>
 
 	@await RenderSectionAsync("Scripts", required: false)
+
 </body>
+
 </html>

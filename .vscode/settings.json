@@ -1,0 +1,26 @@
+{
+    "dotnet.defaultSolution": "IdeKusgozManagement.sln",
+    "omnisharp.enableRoslynAnalyzers": true,
+    "omnisharp.enableEditorConfigSupport": true,
+    "csharp.semanticHighlighting.enabled": true,
+    "dotnet.server.useOmnisharp": true,
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/node_modules": true,
+        "**/.vs": true
+    },
+    "search.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/node_modules": true,
+        "**/.vs": true
+    },
+    "files.watcherExclude": {
+        "**/bin/**": true,
+        "**/obj/**": true
+    },
+    "csharp.format.enable": true,
+    "csharp.suppressDotnetRestoreNotification": false,
+    "csharp.suppressProjectJsonNotification": false
+}

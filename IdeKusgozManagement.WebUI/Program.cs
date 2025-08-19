@@ -23,9 +23,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LogoutPath = "/cikis-yap";
         options.AccessDeniedPath = "/erisim-engellendi";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.Cookie.SameSite = SameSiteMode.Lax; 
+        options.Cookie.SameSite = SameSiteMode.Lax;
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.SlidingExpiration = true;
+        options.Cookie.Name = "IdeKusgozManagementAuthCookie";
     });
 
 builder.Services.AddHttpContextAccessor();
@@ -35,12 +36,14 @@ builder.Services.AddTransient<JwtTokenHandler>();
 builder.Services.AddHttpClient<IUserApiService, UserApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
 builder.Services.AddHttpClient<IRoleApiService, RoleApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
@@ -49,12 +52,14 @@ builder.Services.AddScoped<IAuthApiService, AuthApiService>();
 builder.Services.AddHttpClient("AuthApiWithToken", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
 builder.Services.AddHttpClient("AuthApiWithoutToken", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 var app = builder.Build();
@@ -67,7 +72,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();

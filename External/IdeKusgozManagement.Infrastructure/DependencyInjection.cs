@@ -2,6 +2,7 @@
 using IdeKusgozManagement.Infrastructure.Authentication;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using IdeKusgozManagement.Infrastructure.OptionsSetup;
+using IdeKusgozManagement.Infrastructure.Repositories;
 using IdeKusgozManagement.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -22,6 +23,9 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IJwtProvider, JwtProvider>();
+
+            // Repository and Unit of Work registrations
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.ConfigureOptions<JwtOptionsSetup>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();

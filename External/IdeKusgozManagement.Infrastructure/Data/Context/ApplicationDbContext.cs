@@ -17,6 +17,10 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public DbSet<IdtWorkRecord> IdtWorkRecords => Set<IdtWorkRecord>();
+        public DbSet<IdtLeaveRequest> IdtLeaveRequests => Set<IdtLeaveRequest>();
+        public DbSet<IdtWorkRecordExpense> IdtWorkRecordExpenses => Set<IdtWorkRecordExpense>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

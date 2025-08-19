@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch WebAPI",
+            "type": "msedge",
+            "request": "launch",
+            "url": "http://localhost:5291/swagger",
+            "webRoot": "${workspaceFolder}/IdeKusgozManagement.WebAPI",
+            "preLaunchTask": "start-webapi",
+            "runtimeExecutable": "msedge"
+        },
+        {
+            "name": "Launch WebUI",
+            "type": "msedge",
+            "request": "launch",
+            "url": "http://localhost:5116",
+            "webRoot": "${workspaceFolder}/IdeKusgozManagement.WebUI",
+            "preLaunchTask": "start-webui",
+            "runtimeExecutable": "msedge"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch Both Projects",
+            "configurations": ["Launch WebAPI", "Launch WebUI"],
+            "stopAll": true
+        }
+    ]
+}

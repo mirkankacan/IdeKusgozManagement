@@ -15,5 +15,6 @@ namespace IdeKusgozManagement.Domain.Entities
         public bool IsActive { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpires { get; set; }
+        public string TCNo { get; set; }
     }
 }

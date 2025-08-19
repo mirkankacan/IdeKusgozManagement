@@ -1,0 +1,179 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/IdeKusgozManagement.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "start-webapi",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/IdeKusgozManagement.WebAPI/IdeKusgozManagement.WebAPI.csproj"
+            ],
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "\\bNow listening on:\\s+(https?://\\S+)",
+                    "file": 1,
+                    "location": 2
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                    "endsPattern": "\\bNow listening on:\\s+(https?://\\S+)"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            }
+        },
+        {
+            "label": "start-webui",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/IdeKusgozManagement.WebUI/IdeKusgozManagement.WebUI.csproj"
+            ],
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "\\bNow listening on:\\s+(https?://\\S+)",
+                    "file": 1,
+                    "location": 2
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                    "endsPattern": "\\bNow listening on:\\s+(https?://\\S+)"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            }
+        },
+        {
+            "label": "build-webapi",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/IdeKusgozManagement.WebAPI/IdeKusgozManagement.WebAPI.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "build-webui",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/IdeKusgozManagement.WebUI/IdeKusgozManagement.WebUI.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "watch-webapi",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "--project",
+                "${workspaceFolder}/IdeKusgozManagement.WebAPI/IdeKusgozManagement.WebAPI.csproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "isBackground": true,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            }
+        },
+        {
+            "label": "watch-webui",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "--project",
+                "${workspaceFolder}/IdeKusgozManagement.WebUI/IdeKusgozManagement.WebUI.csproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "isBackground": true,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            }
+        },
+        {
+            "label": "clean",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "clean",
+                "${workspaceFolder}/IdeKusgozManagement.sln"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "restore",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "restore",
+                "${workspaceFolder}/IdeKusgozManagement.sln"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

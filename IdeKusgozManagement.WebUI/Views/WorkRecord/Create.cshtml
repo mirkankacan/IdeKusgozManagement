@@ -1,0 +1,548 @@
+@{
+    ViewData["Title"] = "Puantaj Ekle";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <!-- Or for RTL support -->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+
+    <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/css/bootstrap-material-datetimepicker.min.css"
+        rel="stylesheet">
+
+
+
+    <style>
+        .time-input {
+            text-align: center;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.80rem;
+        }
+
+        .fa-clock {
+            cursor: pointer;
+        }
+
+        .fa-clock:hover {
+            color: #007bff;
+        }
+
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .table th {
+            vertical-align: middle;
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.1rem !important;
+            white-space: nowrap;
+        }
+
+        .table td {
+            vertical-align: middle;
+            text-align: center;
+            padding: 0.25rem 0.1rem !important;
+            font-size: 0.80rem;
+        }
+
+        .project-input {
+            font-size: 0.80rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
+            font-size: 0.80rem !important;
+
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option {
+            font-size: 0.80rem
+        }
+
+        .select2-selection__rendered {
+            font-size: 0.80rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered .select2-selection__placeholder {
+            font-size: 0.80rem;
+        }
+    </style>
+}
+
+@Html.AntiForgeryToken()
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-hourglass-start me-2"></i>
+                    Puantaj Ekleme Tablosu
+                </h5>
+
+                <!-- Yıl ve Ay Seçimi -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <label for="yearSelect" class="form-label">Yıl</label>
+                        <select id="yearSelect" class="form-select">
+                            @for (int year = DateTime.Now.Year - 2; year <= DateTime.Now.Year; year++)
+                            {
+                                if (year == DateTime.Now.Year)
+                                {
+                                    <option value="@year" selected>@year</option>
+                                }
+                                else
+                                {
+                                    <option value="@year">@year</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="monthSelect" class="form-label">Ay</label>
+                        <select id="monthSelect" class="form-select">
+                            <option value="1">Ocak</option>
+                            <option value="2">Şubat</option>
+                            <option value="3">Mart</option>
+                            <option value="4">Nisan</option>
+                            <option value="5">Mayıs</option>
+                            <option value="6">Haziran</option>
+                            <option value="7">Temmuz</option>
+                            <option value="8">Ağustos</option>
+                            <option value="9">Eylül</option>
+                            <option value="10">Ekim</option>
+                            <option value="11">Kasım</option>
+                            <option value="12">Aralık</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" id="saveBtn" class="btn btn-success d-block w-100">
+                            <i class="fas fa-save me-2"></i>Kaydet
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dinamik Tablo -->
+                <div id="dynamicTableContainer">
+                    <div class="table-responsive">
+                        <table id="workRecordsTable" class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>TARİH</th>
+                                    <th>HAFTA<br /> TATİLİ</th>
+                                    <th style="width: 100px;">BAŞLAMA<br /> SAATİ</th>
+                                    <th style="width: 100px;">BIRAKMA<br /> SAATİ</th>
+                                    <th>PROJE</th>
+                                    <th style="width: 150px;">ÇALIŞILAN<br /> EKİPMAN</th>
+                                    <th style="width: 160px;">ÇALIŞILAN<br /> İL</th>
+                                    <th style="width: 150px;">ÇALIŞILAN<br /> İLÇE</th>
+                                    <th>MASRAF</th>
+                                    <th>YEMEK</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workRecordsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/tr.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js"></script>
+    <script src="~/js/turkey-locations.js"></script>
+
+
+    <script>
+
+        let workRecordsTable;
+        let currentYear;
+        let currentMonth;
+
+        $(document).ready(async function () {
+            $('body').addClass('sidebar-hidden');
+
+            // Sayfa yüklendiğinde mevcut yıl ve ayı seç
+            currentYear = new Date().getFullYear();
+            currentMonth = new Date().getMonth() + 1;
+
+            $('#yearSelect').val(currentYear);
+            $('#monthSelect').val(currentMonth);
+
+            // Event listeners
+            $('#saveBtn').on('click', saveWorkRecords);
+
+            // Sayfa yüklendiğinde otomatik olarak tabloyu oluştur
+            await generateDynamicTable();
+        });
+
+        function initializeTimepickers() {
+            // Moment.js locale'ını Türkçe yap
+            moment.locale('tr');
+
+            // Başlama saati için bootstrap material datetimepicker
+            $('.start-time').each(function () {
+                $(this).bootstrapMaterialDatePicker({
+                    format: 'HH:mm',
+                    shortTime: false,
+                    date: false,
+                    time: true,
+                    monthPicker: false,
+                    yearPicker: false,
+                    dayPicker: false,
+                    hourPicker: true,
+                    minutePicker: true,
+                    minuteStep: 15,
+                    clearButton: true,
+                    nowButton: true,
+                    switchOnClick: true,
+                    ampm: false,
+                    // Türkçe buton metinleri
+                    okText: 'Tamam',
+                    cancelText: 'İptal',
+                    clearText: 'Temizle',
+                    nowText: 'Şimdi',
+                    lang: 'tr',
+                    currentDate: moment().startOf('day').add(8, 'hours'),
+                    showTodayBtn: false,
+                    showClear: true,
+                    showClose: true
+                }).on('change', function () {
+                    validateTimeInputs($(this));
+                });
+
+                // Clock icon'a tıklandığında time picker'ı aç
+                $(this).closest('.input-group').find('.fa-clock').parent().on('click', function () {
+                    $(this).closest('.input-group').find('.start-time').focus();
+                });
+            });
+
+            // Bırakma saati için bootstrap material datetimepicker
+            $('.end-time').each(function () {
+                $(this).bootstrapMaterialDatePicker({
+                    format: 'HH:mm',
+                    shortTime: false,
+                    date: false,
+                    time: true,
+                    monthPicker: false,
+                    yearPicker: false,
+                    dayPicker: false,
+                    hourPicker: true,
+                    minutePicker: true,
+                    minuteStep: 15,
+                    clearButton: true,
+                    nowButton: true,
+                    switchOnClick: true,
+                    ampm: false,
+                    // Türkçe buton metinleri
+                    okText: 'Tamam',
+                    cancelText: 'İptal',
+                    clearText: 'Temizle',
+                    nowText: 'Şimdi',
+                    lang: 'tr',
+                    currentDate: moment().startOf('day').add(17, 'hours'),
+                    showTodayBtn: false,
+                    showClear: true,
+                    showClose: true
+                }).on('change', function () {
+                    validateTimeInputs($(this));
+                });
+
+                // Clock icon'a tıklandığında time picker'ı aç
+                $(this).closest('.input-group').find('.fa-clock').parent().on('click', function () {
+                    $(this).closest('.input-group').find('.end-time').focus();
+                });
+            });
+        }
+        function validateTimeInputs(changedInput) {
+            const row = changedInput.closest('tr');
+            const startTimeInput = row.find('.start-time');
+            const endTimeInput = row.find('.end-time');
+
+            const startTime = startTimeInput.val();
+            const endTime = endTimeInput.val();
+
+            if (startTime && endTime) {
+                const startMoment = moment(startTime, 'HH:mm');
+                const endMoment = moment(endTime, 'HH:mm');
+
+                if (endMoment.isSameOrBefore(startMoment)) {
+                    // Bırakma saati başlama saatinden erken olamaz
+                    toastr.warning('Bırakma saati başlama saatinden erken olamaz!', 'Uyarı!');
+
+                    // Eğer değişen input end-time ise, start-time'dan 1 saat sonrasını set et
+                    if (changedInput.hasClass('end-time')) {
+                        const newEndTime = startMoment.add(1, 'hour').format('HH:mm');
+                        endTimeInput.val(newEndTime);
+                    }
+                    // Eğer değişen input start-time ise, end-time'ı start-time'dan 1 saat sonrasına set et
+                    else if (changedInput.hasClass('start-time')) {
+                        const newEndTime = startMoment.add(1, 'hour').format('HH:mm');
+                        endTimeInput.val(newEndTime);
+                    }
+                }
+            }
+        }
+
+        async function generateDynamicTable() {
+            const year = parseInt($('#yearSelect').val());
+            const month = parseInt($('#monthSelect').val());
+
+            currentYear = year;
+            currentMonth = month;
+
+            // Ayın kaç gün çektiğini hesapla
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            // Tablo body'sini temizle
+            $('#workRecordsTableBody').empty();
+
+            // Her gün için satır oluştur
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month - 1, day);
+                const dayOfWeek = getDayOfWeekTurkish(date.getDay());
+                const formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year} ${dayOfWeek}`;
+                const row = `
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <tr data-day="${day}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <td class="date-cell">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span class="badge bg-info">${formattedDate}</span></td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <td>
+                                                                                                                                                <div class="form-check d-flex justify-content-center">
+                                                                                                                                                <input class="form-check-input weekend-checkbox" type="checkbox" id="weekend_${day}">
+                                                                                                                                                </div>
+                                                                                                                                                </td>
+                                                                                                                                                <td>
+                                                                                                                                                <div class="input-group">
+                                                                                                                                                <input type="text" class="form-control time-input start-time" 
+                                                                                                                                                value="08:00" data-day="${day}" placeholder="08:00" readonly>
+                                                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                </div>
+                                                                                                                                                </td>
+                                                                                                                                                <td>
+                                                                                                                                                <div class="input-group">
+                                                                                                                                                <input type="text" class="form-control time-input end-time" value="17:00" data-day="${day}" placeholder="17:00" readonly>
+                                                                                                                                                <span class="input-group-text">
+                                                                                                                                                <i class="fas fa-clock"></i>
+                                                                                                                                                </span>
+                                                                                                                                                </div>
+                                                                                                                                                </td>
+                                                                                                                                                <td>
+                                                                                                                                                <input type="text" class="form-control project-input" placeholder="Proje adı" data-day="${day}">
+                                                                                                                                                </td>
+                                                                                                                                                <td>
+                                                                                                                                                <select class="form-select form-select-sm equipment-select" data-day="${day}">
+                                                                                                                                                <option value="">Ekipman seçin</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <option value="excavator">Ekskavatör</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <option value="bulldozer">Buldozer</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <option value="loader">Yükleyici</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <option value="truck">Kamyon</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <option value="crane">Vinç</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <option value="other">Diğer</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            </select>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <select class="form-select form-select-sm province-select" data-day="${day}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <option value="" selected="" disabled>İl seçin</option>
+        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <select class="form-select form-select-sm district-select" data-day="${day}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <option value="" selected="" disabled>İlçe seçin</option>
+              
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <select class="form-select form-select-sm expense-select" data-day="${day}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <option value="" selected="" disabled>Masraf seçin</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <option value="yol">Yol Masrafı</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <option value="yemek">Yemek Masrafı</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <option value="konaklama">Konaklama Masrafı</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <option value="diger">Diğer Masraf</option>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </select>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                              <td>
+                                                        <div class="d-flex justify-content-center meal-section">
+                                                            <div class="meal-item">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}" data-meal="S" data-day="${day}">
+                                                                    <label class="form-check-label ml-1" for="s_${day}">S</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="meal-item">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}" data-meal="O" data-day="${day}">
+                                                                    <label class="form-check-label ml-1" for="o_${day}">Ö</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="meal-item">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}" data-meal="A" data-day="${day}">
+                                                                        <label class="form-check-label ml-1" for="a_${day}">A</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="meal-item">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}" data-meal="G" data-day="${day}">
+                                                                    <label class="form-check-label ml-1" for="g_${day}">G</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            </tr>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            `;
+
+                $('#workRecordsTableBody').append(row);
+            }
+
+
+            // İl ve ilçe select'lerini doldur
+            await populateAllProvinces();
+
+            // İl değiştiğinde ilçeleri güncelle
+            setupProvinceDistrictChangeHandlers();
+
+            initializeSelect2();
+            initializeTimepickers();
+        }
+
+        // Tüm il select'lerini doldur
+        async function populateAllProvinces() {
+            $('.province-select').each(function () {
+                populateProvinces($(this));
+            });
+        }
+
+        // İl değiştiğinde ilçeleri güncelle
+        function setupProvinceDistrictChangeHandlers() {
+            $(document).on('change', '.province-select', function () {
+                const row = $(this).closest('tr');
+                const districtSelect = row.find('.district-select');
+                populateDistricts($(this), districtSelect);
+
+
+            });
+        }
+
+
+
+        function initializeSelect2() {
+            $('.equipment-select').select2({
+                placeholder: 'Ekipman seçin',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('.province-select').select2({
+                placeholder: 'İl seçin',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('.district-select').select2({
+                placeholder: 'İlçe seçin',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('.expense-select').select2({
+                placeholder: 'Masraf seçin',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+
+
+        function getDayOfWeekTurkish(day) {
+            const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+            return days[day];
+        }
+
+        async function saveWorkRecords() {
+            const workRecords = [];
+
+            $('#workRecordsTableBody tr').each(function () {
+                const day = $(this).data('day');
+                const isWeekend = $(this).find('.weekend-checkbox').is(':checked');
+                const startTime = $(this).find('.start-time').val();
+                const endTime = $(this).find('.end-time').val();
+                const project = $(this).find('.project-input').val();
+                const equipment = $(this).find('.equipment-select').val();
+                const province = $(this).find('.province-select').val();
+                const district = $(this).find('.district-select').val();
+                const expense = $(this).find('.expense-select').val();
+				const hasBreakfast = $(this).find('.meal-checkbox[data-meal="S"]').is(':checked');
+				const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
+				const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
+				const hasNighMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');             
+
+                workRecords.push({
+                    day: day,
+                    date: new Date(currentYear, currentMonth - 1, day),
+                    isWeekend: isWeekend,
+                    startTime: startTime,
+                    endTime: endTime,
+                    project: project,
+                    equipment: equipment,
+                    province: province,
+                    district: district,
+                    expense: expense,
+                    hasBreakfast: hasBreakfast,
+					hasLunch: hasLunch,
+                    hasDinner: hasDinner,
+					hasNighMeal: hasNighMeal
+                });
+            });
+
+            // Veriyi console'da göster (test için)
+            console.log('Kaydedilecek veriler:', workRecords);
+
+            // AJAX ile backend'e gönder
+            try {
+                const response = await $.ajax({
+                    url: '/puantaj/ekle',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(workRecords),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                if (response.success) {
+                    toastr.success(response.message, 'Başarılı!');
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                console.error('Hata:', error);
+                toastr.error('Puantaj kaydedilirken bir hata oluştu.', 'Hata!');
+            }
+        }
+
+        // Yıl ve ay değiştiğinde tabloyu güncelle
+        $('#yearSelect, #monthSelect').on('change', function () {
+            generateDynamicTable();
+        });
+    </script>
+}

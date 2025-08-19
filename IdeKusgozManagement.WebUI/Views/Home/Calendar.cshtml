@@ -1,0 +1,35 @@
+@{
+    ViewData["Title"] = "Takvim";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section CalendarCss {
+    <link href="~/theme/assets/plugins/fullcalendar/main.min.css" rel="stylesheet">
+}
+@section Styles {
+
+}
+
+<div class="card">
+    <div class="card-body">
+        <div id='calendar'></div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="~/theme/assets/plugins/fullcalendar/main.min.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'tr',
+                firstDay: 1,
+                events: 'https://fullcalendar.io/demo-events.json?overload-day'
+            });
+            calendar.render();
+        });
+
+    </script>
+}

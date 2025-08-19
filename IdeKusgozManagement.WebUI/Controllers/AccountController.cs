@@ -17,6 +17,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         private readonly ILogger<AccountController> _logger;
         private readonly IUserApiService _userApiService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+
         public AccountController(IAuthApiService authApiService, ILogger<AccountController> logger, IUserApiService userApiService, IHttpContextAccessor httpContextAccessor)
         {
             _authApiService = authApiService;
@@ -110,7 +111,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
                     var authProperties = new AuthenticationProperties
                     {
                         IsPersistent = model.RememberMe,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1)
                     };
 
                     await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
@@ -164,8 +164,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [HttpPut("profil-guncelle")]
         [Authorize]
         [ValidateAntiForgeryToken]
-
-        public async Task<IActionResult> Profile([FromBody]UpdateUserViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Profile([FromBody] UpdateUserViewModel model, CancellationToken cancellationToken = default)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             model.Id = userId;
@@ -184,10 +183,10 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 httpContext.Session.SetString("UserName", response.Data.UserName);
                 httpContext.Session.SetString("FullName", response.Data.FullName);
                 await UpdateUserClaims(response.Data);
-
             }
             return View(response);
         }
+
         private async Task UpdateUserClaims(UserViewModel user)
         {
             // Mevcut kimlik bilgilerini al
@@ -217,6 +216,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             // Authentication cookie'sini güncelle
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
         }
+
         private IActionResult RedirectByRole(string? role)
         {
             var redirectUrl = GetRoleRedirectUrl(role);

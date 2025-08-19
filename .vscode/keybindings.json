@@ -1,0 +1,241 @@
+[
+    // Build ve Run kısayolları
+    {
+        "key": "ctrl+shift+b",
+        "command": "workbench.action.tasks.build"
+    },
+    {
+        "key": "f5",
+        "command": "workbench.action.debug.start"
+    },
+    {
+        "key": "ctrl+f5",
+        "command": "workbench.action.debug.startWithoutDebugging"
+    },
+    {
+        "key": "shift+f5",
+        "command": "workbench.action.debug.stop"
+    },
+    {
+        "key": "ctrl+shift+f5",
+        "command": "workbench.action.debug.restart"
+    },
+
+    // Debug kısayolları
+    {
+        "key": "f9",
+        "command": "workbench.action.debug.toggleBreakpoint"
+    },
+    {
+        "key": "f10",
+        "command": "workbench.action.debug.stepOver"
+    },
+    {
+        "key": "f11",
+        "command": "workbench.action.debug.stepInto"
+    },
+    {
+        "key": "shift+f11",
+        "command": "workbench.action.debug.stepOut"
+    },
+    {
+        "key": "ctrl+shift+f9",
+        "command": "workbench.action.debug.clearBreakpoints"
+    },
+
+    // Edit kısayolları
+    {
+        "key": "ctrl+k ctrl+c",
+        "command": "editor.action.commentLine"
+    },
+    {
+        "key": "ctrl+k ctrl+u",
+        "command": "editor.action.uncommentLine"
+    },
+    {
+        "key": "ctrl+k ctrl+d",
+        "command": "editor.action.formatDocument"
+    },
+    {
+        "key": "ctrl+k ctrl+f",
+        "command": "editor.action.formatSelection"
+    },
+    {
+        "key": "ctrl+k ctrl+k",
+        "command": "editor.action.deleteLines"
+    },
+    {
+        "key": "ctrl+k ctrl+u",
+        "command": "editor.action.transformToUppercase"
+    },
+    {
+        "key": "ctrl+k ctrl+l",
+        "command": "editor.action.transformToLowercase"
+    },
+
+    // Visual Studio tarzı kelime seçimi
+    {
+        "key": "ctrl+left",
+        "command": "cursorWordLeft",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "ctrl+right",
+        "command": "cursorWordRight",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "ctrl+shift+left",
+        "command": "cursorWordLeftSelect",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "ctrl+shift+right",
+        "command": "cursorWordRightSelect",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "ctrl+shift+alt+left",
+        "command": "cursorWordStartLeftSelect",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "ctrl+shift+alt+right",
+        "command": "cursorWordEndRightSelect",
+        "when": "textInputFocus"
+    },
+
+    // Navigasyon kısayolları
+    {
+        "key": "ctrl+tab",
+        "command": "workbench.action.nextEditor"
+    },
+    {
+        "key": "ctrl+shift+tab",
+        "command": "workbench.action.previousEditor"
+    },
+    {
+        "key": "ctrl+shift+t",
+        "command": "workbench.action.reopenClosedEditor"
+    },
+    {
+        "key": "ctrl+shift+n",
+        "command": "workbench.action.newWindow"
+    },
+
+    // Search ve Replace
+    {
+        "key": "ctrl+shift+f",
+        "command": "workbench.action.findInFiles"
+    },
+    {
+        "key": "ctrl+shift+h",
+        "command": "workbench.action.replaceInFiles"
+    },
+    {
+        "key": "ctrl+shift+o",
+        "command": "workbench.action.quickOpen"
+    },
+
+    // Solution Explorer benzeri
+    {
+        "key": "ctrl+shift+e",
+        "command": "workbench.view.explorer"
+    },
+    {
+        "key": "ctrl+shift+g",
+        "command": "workbench.view.scm"
+    },
+    {
+        "key": "ctrl+shift+d",
+        "command": "workbench.view.debug"
+    },
+    {
+        "key": "ctrl+shift+x",
+        "command": "workbench.view.extensions"
+    },
+
+    // IntelliSense
+    {
+        "key": "ctrl+space",
+        "command": "editor.action.triggerSuggest"
+    },
+    {
+        "key": "ctrl+shift+space",
+        "command": "editor.action.triggerParameterHints"
+    },
+    {
+        "key": "ctrl+shift+i",
+        "command": "editor.action.quickFix"
+    },
+
+    // Refactoring
+    {
+        "key": "f2",
+        "command": "editor.action.rename"
+    },
+    {
+        "key": "ctrl+r ctrl+r",
+        "command": "editor.action.rename"
+    },
+    {
+        "key": "ctrl+.",
+        "command": "editor.action.quickFix"
+    },
+
+    // File operations
+    {
+        "key": "ctrl+n",
+        "command": "workbench.action.files.newUntitledFile"
+    },
+    {
+        "key": "ctrl+shift+n",
+        "command": "workbench.action.files.newFile"
+    },
+    {
+        "key": "ctrl+s",
+        "command": "workbench.action.files.save"
+    },
+    {
+        "key": "ctrl+shift+s",
+        "command": "workbench.action.files.saveAs"
+    },
+
+    // Window management
+    {
+        "key": "ctrl+w",
+        "command": "workbench.action.closeActiveEditor"
+    },
+    {
+        "key": "ctrl+shift+w",
+        "command": "workbench.action.closeAllEditors"
+    },
+    {
+        "key": "ctrl+f4",
+        "command": "workbench.action.closeWindow"
+    },
+
+    // Terminal
+    {
+        "key": "ctrl+`",
+        "command": "workbench.action.terminal.toggleTerminal"
+    },
+    {
+        "key": "ctrl+shift+`",
+        "command": "workbench.action.terminal.new"
+    },
+
+    // Zoom
+    {
+        "key": "ctrl+=",
+        "command": "workbench.action.zoomIn"
+    },
+    {
+        "key": "ctrl+-",
+        "command": "workbench.action.zoomOut"
+    },
+    {
+        "key": "ctrl+0",
+        "command": "workbench.action.zoomReset"
+    }
+]
