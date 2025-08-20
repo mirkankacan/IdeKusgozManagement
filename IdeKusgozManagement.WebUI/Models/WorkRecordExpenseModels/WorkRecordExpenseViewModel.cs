@@ -1,12 +1,11 @@
-﻿using IdeKusgozManagement.Domain.Entities.Base;
-
-namespace IdeKusgozManagement.Domain.Entities
+﻿namespace IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels
 {
-    public class IdtWorkRecordExpense : BaseEntity
+    public class WorkRecordExpenseViewModel
     {
+        public string Id { get; set; }
         public string WorkRecordId { get; set; }
         public string Expense { get; set; }
-        public string? Description { get; set; }
+        public string Description { get; set; }
         public decimal Amount { get; set; }
         public string? ReceiptImageUrl { get; set; }
     }

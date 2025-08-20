@@ -1,8 +1,6 @@
-using IdeKusgozManagement.Domain.Enums;
-
-namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
+ï»¿namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
 {
-    public class WorkRecordDTO
+    public class WorkRecordViewModel
     {
         public string Id { get; set; }
         public DateTime Date { get; set; }
@@ -17,18 +15,13 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public bool HasLunch { get; set; }
         public bool HasDinner { get; set; }
         public bool HasNightMeal { get; set; }
-        public WorkRecordStatus Status { get; set; }
+        public int Status { get; set; } // 0 = Pending, 1 = Approved, 2 = Rejected
+
+        public string StatusText { get; set; }
+        public string CreatedBy { get; set; }
+
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
-
-        public string StatusText => Status switch
-        {
-            WorkRecordStatus.Pending => "Beklemede",
-            WorkRecordStatus.Approved => "Onaylandý",
-            WorkRecordStatus.Rejected => "Reddedildi",
-            _ => "Bilinmiyor"
-        };
     }
 }
