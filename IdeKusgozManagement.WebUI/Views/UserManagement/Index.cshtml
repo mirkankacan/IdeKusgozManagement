@@ -3,6 +3,16 @@
     ViewData["Title"] = "Kullanıcı Yönetimi";
 
 }
+@section Styles {
+
+    <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <!-- Or for RTL support -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+}
 @Html.AntiForgeryToken()
 <div class="row">
     <div class="col-md-12">
@@ -52,7 +62,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="txtCUsername" class="form-label">Kullanıcı Adı</label>
+                            <label for="txtCUsername" class="form-label">TC Kimlik No</label>
                             <input type="text" class="form-control" id="txtCUsername" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
@@ -92,7 +102,7 @@
                                 Geçerli bir soyisim giriniz.
                             </div>
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             <label for="ddCRole" class="form-label">Rol</label>
                             <select class="form-select ddRole" id="ddCRole" required="">
                             </select>
@@ -101,6 +111,17 @@
                             </div>
                             <div class="invalid-feedback">
                                 Geçerli bir rol seçiniz.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ddCSuperior" class="form-label">Atanacak</label>
+                            <select class="form-select ddSuperior" id="ddCSuperior" required="">
+                            </select>
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir kullanıcı seçiniz.
                             </div>
                         </div>
                     </div>
@@ -127,7 +148,7 @@
                     <div class="row g-3">
                         <input type="text" id="txtUUserId" value="" readonly hidden disabled />
                         <div class="col-md-6">
-                            <label for="txtUUsername" class="form-label">Kullanıcı Adı</label>
+                            <label for="txtUUsername" class="form-label">TC Kimlik No</label>
                             <input type="text" class="form-control" id="txtUUsername" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
@@ -183,7 +204,18 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="ddUStatus" class="form-label">Rol</label>
+                            <label for="ddUSuperior" class="form-label">Atanacak</label>
+                            <select class="form-select ddSuperior" id="ddUSuperior" required="">
+                            </select>
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir kullanıcı seçiniz.
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="ddUStatus" class="form-label">Durum</label>
                             <select class="form-select" id="ddUStatus" required="">
                                 <option value="" selected="" disabled>Durum seçiniz...</option>
                                 <option value="true">Aktif</option>
@@ -196,6 +228,7 @@
                                 Geçerli bir rol seçiniz.
                             </div>
                         </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -208,14 +241,23 @@
 </div>
 
 @section Scripts {
+
+
+    <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
         let usersTable;
 
         $(document).ready(async function () {
             await initializeDataTable();
             await getRoles();
-
+            initializeSelect2();
+            await getSuperiorUsers();
             $('#createUserModal').on('hidden.bs.modal', function () {
+                clearCreateUserForm();
+            });
+              $('#updateUserModal').on('hidden.bs.modal', function () {
                 clearCreateUserForm();
             });
             $(document).on('click', '#btnUpdateUser', async function (e) {
@@ -230,9 +272,35 @@
                 await createUser();
             });
         });
+         function initializeSelect2() {
+            $('.ddSuperior').select2({
+                placeholder: 'Atanacak kullanıcı(lar) seçin',
+                theme: 'bootstrap-5',
+                multiple: true,
+                width: '100%'
+            });
+         }
+        function clearCreateUserForm(){
+            $('#txtCUsername').val('');
+            $('#txtCPassword').val('');
+            $('#txtCName').val('');
+            $('#txtCSurname').val('');
 
+            // Select2 alanlarını temizle
+            $('#ddCRole').val('').trigger('change');
+            $('#ddCSuperior').val('').trigger('change');
+        }
+          function clearUpdateUserForm(){
+            $('#txtUUsername').val('');
+            $('#txtUPassword').val('');
+            $('#txtUName').val('');
+            $('#txtUSurname').val('');
 
-
+            // Select2 alanlarını temizle
+            $('#ddURole').val('').trigger('change');
+            $('#ddUSuperior').val('').trigger('change');
+            $('#ddUStatus').val('').trigger('change');
+        }
         async function initializeDataTable() {
             usersTable = $('#usersTable').DataTable({
                 "processing": true,
@@ -295,6 +363,9 @@
                             else if (data == "Personel") {
                                 return `<span class="badge bg-warning">${data}</span>`;
                             }
+                             else if (data=="Yönetici"){
+                                return `<span class="badge bg-danger">${data}</span>`;
+                            }
                             else {
                                 return `<span class="badge bg-secondary">${data}</span>`;
                             }
@@ -346,7 +417,6 @@
                         }
                     }
                 ],
-                "order": [[3, "asc"]],
                 "language": {
                     url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
@@ -385,7 +455,8 @@
                     Name: $('#txtCName').val().trim(),
                     Surname: $('#txtCSurname').val().trim(),
                     Password: $('#txtCPassword').val(),
-                    RoleName: $('#ddCRole').val()
+                    RoleName: $('#ddCRole').val(),
+                    SuperiorIds: $('#ddCSuperior').val() || []
                 };
 
                 const submitBtn = $('#btnCreateUser');
@@ -445,7 +516,8 @@
                     Name: $('#txtUName').val().trim(),
                     Surname: $('#txtUSurname').val().trim(),
                     RoleName: $('#ddURole').val(),
-                    IsActive: $('#ddUStatus').val() === "true"
+                    IsActive: $('#ddUStatus').val() === "true",
+                    SuperiorIds : $('#ddUSuperior').val() || []
                 };
 
                 if (!userData.Id) {
@@ -696,9 +768,10 @@
                     type: 'GET',
                     contentType: 'application/json'
                 });
+                                    console.log(response)
 
-                if (response && (response.data || response.id)) {
-                    const userData = response.data || response;
+                if (response) {
+                    const userData = response;
 
                     $('#txtUUserId').val(userData.id || '');
                     $('#txtUUsername').val(userData.userName || '');
@@ -707,6 +780,11 @@
                     $('#txtUSurname').val(userData.surname || '');
                     $('#ddURole').val(userData.roleName);
                     $('#ddUStatus').val(userData.isActive ? "true" : "false");
+                        if (userData.superiorIds && Array.isArray(userData.superiorIds) && userData.superiorIds.length > 0) {
+                        $('#ddUSuperior').val(userData.superiorIds).trigger('change');
+                    } else {
+                        $('#ddUSuperior').val([]).trigger('change'); // Boş array - hiçbiri seçili değil
+                    }
 
                     const form = document.querySelector('#updateUserModal form');
                     if (form) {
@@ -722,10 +800,7 @@
 
             } catch (error) {
                 console.error('Kullanıcı getirme hatası:', error);
-
-
                 let errorMessage = 'Kullanıcı bilgileri alınırken hata oluştu';
-
                 if (error.responseJSON) {
                     if (error.responseJSON.message) {
                         errorMessage = error.responseJSON.message;
@@ -735,7 +810,6 @@
                 } else if (error.message) {
                     errorMessage = error.message;
                 }
-
                 toastr.error(errorMessage);
                 throw error;
             } finally {
@@ -756,7 +830,7 @@
                 roleSelects.html('<option value="">Yükleniyor...</option>');
 
                 const response = await $.ajax({
-                    url: '/kullanici-yonetimi/roller',
+                    url: '/kullanici-yonetimi/aktif-roller',
                     type: 'GET',
                     dataType: 'json'
                 });
@@ -768,9 +842,8 @@
                         currentSelect.append('<option selected disabled value="">Rol seçiniz...</option>');
 
                         response.data.forEach(role => {
-                            if (role.isActive) {
                                 currentSelect.append(`<option value="${role.name}">${role.name}</option>`);
-                            }
+                            
                         });
                     });
 
@@ -779,7 +852,6 @@
                 }
             } catch (error) {
                 console.error('Roller yüklenirken hata:', error);
-
                 $('.ddRole').each(function () {
                     $(this).html('<option value="">Rol yüklenemedi</option>');
                 });
@@ -800,6 +872,81 @@
                 toastr.error(errorMessage);
             } finally {
                 $('.ddRole').prop('disabled', false);
+            }
+        }
+                async function getSuperiorUsers() {
+            try {
+                const superiorSelects = $('.ddSuperior');
+                if (!superiorSelects.length) {
+                    console.warn('Superior select elements not found');
+                    return;
+                }
+
+                // Select2'yi devre dışı bırak
+                superiorSelects.prop('disabled', true);
+
+                // Select2 için loading durumu
+                superiorSelects.each(function() {
+                    const currentSelect = $(this);
+                    currentSelect.empty();
+                    currentSelect.append('<option value="">Yükleniyor...</option>');
+
+                    // Eğer Select2 initialize edilmişse trigger et
+                    if (currentSelect.hasClass('select2-hidden-accessible')) {
+                        currentSelect.trigger('change');
+                    }
+                });
+
+                const response = await $.ajax({
+                    url: '/kullanici-yonetimi/aktif-ust-kullanicilar',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+                if (response && response.isSuccess && response.data) {
+                    superiorSelects.each(function() {
+                        const currentSelect = $(this);
+                        currentSelect.empty();
+
+                        response.data.forEach(user => {
+                                currentSelect.append(`<option value="${user.id}">${user.fullName}</option>`);
+                            
+                        });
+
+                        // Select2 için change event'ini trigger et
+                        if (currentSelect.hasClass('select2-hidden-accessible')) {
+                            currentSelect.trigger('change');
+                        }
+                    });
+                } else {
+                    throw new Error(response?.message || 'Üst kullanıcılar yüklenemedi');
+                }
+            } catch (error) {
+                console.error('Üst kullanıcılar yüklenirken hata:', error);
+
+                $('.ddSuperior').each(function() {
+                    const currentSelect = $(this);
+                    currentSelect.html('<option value="">Kullanıcılar yüklenemedi</option>');
+
+                    // Select2 için change event'ini trigger et
+                    if (currentSelect.hasClass('select2-hidden-accessible')) {
+                        currentSelect.trigger('change');
+                    }
+                });
+
+                let errorMessage = 'Üst kullanıcılar yüklenirken hata oluştu';
+                if (error.responseJSON) {
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                toastr.error(errorMessage);
+            } finally {
+                $('.ddSuperior').prop('disabled', false);
             }
         }
     </script>

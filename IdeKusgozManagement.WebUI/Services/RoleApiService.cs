@@ -40,6 +40,28 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
+        public async Task<ApiResponse<IEnumerable<RoleViewModel>>> GetActiveRolesAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("api/roles/actives", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<RoleViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<RoleViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<IEnumerable<RoleViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetAllRolesAsync işleminde hata oluştu");
+                return new ApiResponse<IEnumerable<RoleViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
         public async Task<ApiResponse<RoleViewModel>> GetRoleByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try

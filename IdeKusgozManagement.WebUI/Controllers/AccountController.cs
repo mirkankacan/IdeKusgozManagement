@@ -1,12 +1,10 @@
 ﻿using System.Security.Claims;
-using System.Threading.Tasks;
 using IdeKusgozManagement.WebUI.Models.AuthModels;
 using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Controllers
@@ -167,7 +165,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> Profile([FromBody] UpdateUserViewModel model, CancellationToken cancellationToken = default)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            model.Id = userId;
             model.RoleName = null;
             model.IsActive = null;
             if (!ModelState.IsValid)

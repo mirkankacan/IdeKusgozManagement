@@ -91,7 +91,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Toplu iş kaydı oluşturur
         /// </summary>
         /// <param name="createWorkRecordDTOs">İş kaydı listesi</param>
-        [HttpPost("batch")]
+        [HttpPost("batch-create")]
         public async Task<IActionResult> BatchCreateWorkRecord([FromBody] List<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)

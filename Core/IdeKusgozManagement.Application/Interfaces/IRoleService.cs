@@ -8,6 +8,8 @@ namespace IdeKusgozManagement.Application.Interfaces
     {
         Task<ApiResponse<IEnumerable<RoleDTO>>> GetAllRolesAsync();
 
+        Task<ApiResponse<IEnumerable<RoleDTO>>> GetActiveRolesAsync();
+
         Task<ApiResponse<RoleDTO>> GetRoleByIdAsync(string id);
 
         Task<ApiResponse<RoleDTO>> GetRoleByNameAsync(string name);

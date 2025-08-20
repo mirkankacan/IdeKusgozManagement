@@ -1,8 +1,8 @@
+using System.Linq.Expressions;
 using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Domain.Entities.Base;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace IdeKusgozManagement.Infrastructure.Repositories
 {
@@ -68,6 +68,15 @@ namespace IdeKusgozManagement.Infrastructure.Repositories
                 return false;
 
             _dbSet.Remove(entity);
+            return await Task.FromResult(true);
+        }
+
+        public virtual async Task<bool> DeleteRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            if (entities == null)
+                return false;
+
+            _dbSet.RemoveRange(entities);
             return await Task.FromResult(true);
         }
 
@@ -330,15 +339,6 @@ namespace IdeKusgozManagement.Infrastructure.Repositories
 
         #region Bulk Operations
 
-        public virtual async Task<bool> DeleteRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
-        {
-            if (entities == null || !entities.Any())
-                return false;
-
-            _dbSet.RemoveRange(entities);
-            return await Task.FromResult(true);
-        }
-
         public virtual async Task<bool> DeleteRangeAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
         {
             var entities = await _dbSet.Where(predicate).ToListAsync(cancellationToken);
@@ -407,6 +407,15 @@ namespace IdeKusgozManagement.Infrastructure.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+
+
         #endregion Distinct ve Group By Metodlarý
+        public async Task<IEnumerable<TResult>> SelectAsync<TResult>(Expression<Func<T, TResult>> selector, Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                   .Where(predicate)
+                   .Select(selector)
+                   .ToListAsync(cancellationToken);
+        }
     }
 }

@@ -1,9 +1,9 @@
-﻿using System.Security.Claims;
-using IdeKusgozManagement.Application.Common;
+﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Domain.Enums;
+using IdeKusgozManagement.Infrastructure.Helpers;
 using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -141,7 +141,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var workRecordDTOs = createdWorkRecords.Select(wr => wr.Adapt<WorkRecordDTO>()).ToList();
 
-                _logger.LogInformation("Toplu iş kaydı başarıyla oluşturuldu. Kayıt sayısı: {Count}, EkleyenUserId: {UserId}", createdWorkRecords.Count(), GetCurrentUserId());
+                _logger.LogInformation("Toplu iş kaydı başarıyla oluşturuldu. Kayıt sayısı: {Count}, EkleyenUserId: {UserId}", createdWorkRecords.Count(), CurrentUserHelper.GetCurrentUserId());
 
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs, "Toplu iş kayıtları başarıyla oluşturuldu");
             }
@@ -178,7 +178,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var workRecordDTO = updatedWorkRecord.Adapt<WorkRecordDTO>();
 
-                _logger.LogInformation("İş kaydı başarıyla güncellendi. WorkRecordId: {WorkRecordId}, GüncelleyenUserId", id, GetCurrentUserId());
+                _logger.LogInformation("İş kaydı başarıyla güncellendi. WorkRecordId: {WorkRecordId}, GüncelleyenUserId", id, CurrentUserHelper.GetCurrentUserId());
 
                 return ApiResponse<WorkRecordDTO>.Success(workRecordDTO, "İş kaydı başarıyla güncellendi");
             }
@@ -189,7 +189,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> BatchApproveWorkRecordsByUserAndMonthAsync(string userId,DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> BatchApproveWorkRecordsByUserAndMonthAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -219,7 +219,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
                 _logger.LogInformation("Toplu iş kaydı onaylandı. UserId: {UserId}, Year: {Year}, Month: {Month}, Count: {Count}, OnaylayanUserId: {ApproverUserId}",
-                    userId, date.Date.Year, date.Date.Month, workRecordsList.Count, GetCurrentUserId());
+                    userId, date.Date.Year, date.Date.Month, workRecordsList.Count, CurrentUserHelper.GetCurrentUserId());
 
                 return ApiResponse<bool>.Success(true, $"{workRecordsList.Count} adet iş kaydı başarıyla onaylandı");
             }
@@ -261,7 +261,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
                 _logger.LogInformation("Toplu iş kaydı reddedildi. UserId: {UserId}, Year: {Year}, Month: {Month}, Count: {Count}, ReddedenUserId: {RejecterUserId}",
-                    userId, date.Date.Year, date.Date.Month, workRecordsList.Count, GetCurrentUserId());
+                    userId, date.Date.Year, date.Date.Month, workRecordsList.Count, CurrentUserHelper.GetCurrentUserId());
 
                 return ApiResponse<bool>.Success(true, $"{workRecordsList.Count} adet iş kaydı başarıyla reddedildi");
             }
@@ -301,11 +301,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 _logger.LogError(ex, "GetWorkRecordCountByStatusAsync işleminde hata oluştu. Status: {Status}", status);
                 return ApiResponse<int>.Error("Duruma göre iş kaydı sayısı hesaplanırken hata oluştu");
             }
-        }
-
-        private string? GetCurrentUserId()
-        {
-            return _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
     }
 }

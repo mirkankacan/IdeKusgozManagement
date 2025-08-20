@@ -14,15 +14,18 @@ namespace IdeKusgozManagement.Infrastructure.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly ILogger<UserService> _logger;
+        private readonly IUnitOfWork _unitOfWork;
 
         public UserService(
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
-            ILogger<UserService> logger)
+            ILogger<UserService> logger,
+            IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _logger = logger;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<ApiResponse<IEnumerable<UserDTO>>> GetAllUsersAsync()
@@ -30,15 +33,26 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 var users = await _userManager.Users.ToListAsync();
+                var userIds = users.Select(u => u.Id).ToList();
+
+
                 var userDTOs = new List<UserDTO>();
 
                 foreach (var user in users)
                 {
-                    var roles = await _userManager.GetRolesAsync(user);
                     var userDTO = user.Adapt<UserDTO>();
+                    var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
+                  .SelectAsync(
+                      selector: x => x.SuperiorId,
+                      predicate: x => x.SubordinateId == user.Id
+                  );
+                    var roles = await _userManager.GetRolesAsync(user);
+
+                    userDTO.SuperiorIds = superiorIds.ToList();
                     userDTO.RoleName = roles.FirstOrDefault();
                     userDTOs.Add(userDTO);
                 }
+
 
                 return ApiResponse<IEnumerable<UserDTO>>.Success(userDTOs);
             }
@@ -63,6 +77,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var userDTO = user.Adapt<UserDTO>();
                 userDTO.RoleName = roles.FirstOrDefault();
 
+                var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
+                    .SelectAsync(
+                        selector: x => x.SuperiorId,
+                        predicate: x => x.SubordinateId == id
+                    );
+
+                userDTO.SuperiorIds = superiorIds.ToList();
+
                 return ApiResponse<UserDTO>.Success(userDTO);
             }
             catch (Exception ex)
@@ -72,10 +94,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<UserDTO>> CreateUserAsync(CreateUserDTO createUserDTO)
+        public async Task<ApiResponse<UserDTO>> CreateUserAsync(CreateUserDTO createUserDTO, CancellationToken cancellationToken = default)
         {
             try
             {
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
                 // Username kontrolü
                 var existingUser = await _userManager.FindByNameAsync(createUserDTO.UserName);
                 if (existingUser != null)
@@ -92,7 +116,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<UserDTO>.Error(errors);
                 }
 
-                // Rol ata (eğer varsa)
                 if (!string.IsNullOrEmpty(createUserDTO.RoleName))
                 {
                     if (await _roleManager.RoleExistsAsync(createUserDTO.RoleName))
@@ -101,6 +124,33 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     }
                 }
 
+                // Birden fazla superior için hierarchy kayıtları oluştur
+                if (createUserDTO.SuperiorIds != null && createUserDTO.SuperiorIds.Any())
+                {
+                    var hierarchyList = new List<IdtUserHierarchy>();
+
+                    foreach (var superiorId in createUserDTO.SuperiorIds)
+                    {
+                        if (!string.IsNullOrEmpty(superiorId))
+                        {
+                            var userHierarchy = new IdtUserHierarchy
+                            {
+                                SubordinateId = user.Id,
+                                SuperiorId = superiorId,
+                            };
+                            hierarchyList.Add(userHierarchy);
+                        }
+                    }
+
+                    if (hierarchyList.Any())
+                    {
+                        await _unitOfWork.Repository<IdtUserHierarchy>().AddRangeAsync(hierarchyList);
+                    }
+                }
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
                 var userDTO = user.Adapt<UserDTO>();
                 userDTO.RoleName = createUserDTO.RoleName;
 
@@ -108,15 +158,18 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "CreateUserAsync işleminde hata oluştu");
                 return ApiResponse<UserDTO>.Error("Kullanıcı oluşturulurken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<UserDTO>> UpdateUserAsync(string id, UpdateUserDTO updateUserDTO)
+        public async Task<ApiResponse<UserDTO>> UpdateUserAsync(string id, UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default)
         {
             try
             {
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
                 var user = await _userManager.FindByIdAsync(id);
                 if (user == null)
                 {
@@ -140,7 +193,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     {
                         await _userManager.RemoveFromRolesAsync(user, currentRoles);
                     }
-                    await _userManager.AddToRoleAsync(user, updateUserDTO.RoleName);
+
+                    if (await _roleManager.RoleExistsAsync(updateUserDTO.RoleName))
+                    {
+                        await _userManager.AddToRoleAsync(user, updateUserDTO.RoleName);
+                    }
                 }
 
                 // Şifre güncelleme kontrolü
@@ -167,6 +224,31 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<UserDTO>.Error(errors);
                 }
 
+                var deleteResult = await _unitOfWork.Repository<IdtUserHierarchy>().DeleteRangeAsync(h => h.SubordinateId == user.Id, cancellationToken);
+
+                // Yeni hierarchy kayıtları oluştur
+                if (updateUserDTO.SuperiorIds != null && updateUserDTO.SuperiorIds.Any())
+                {
+                    var newHierarchies = new List<IdtUserHierarchy>();
+
+                    foreach (var superiorId in updateUserDTO.SuperiorIds.Where(id => !string.IsNullOrEmpty(id)))
+                    {
+                        var hierarchy = new IdtUserHierarchy
+                        {
+                            SubordinateId = user.Id,
+                            SuperiorId = superiorId,
+                        };
+                        newHierarchies.Add(hierarchy);
+                    }
+
+                    if (newHierarchies.Any())
+                    {
+                        await _unitOfWork.Repository<IdtUserHierarchy>().AddRangeAsync(newHierarchies);
+                    }
+                }
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
                 var roles = await _userManager.GetRolesAsync(user);
                 var userDTO = user.Adapt<UserDTO>();
                 userDTO.RoleName = roles.FirstOrDefault();
@@ -175,6 +257,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "UpdateUserAsync işleminde hata oluştu. UserId: {UserId}", id);
                 return ApiResponse<UserDTO>.Error("Kullanıcı güncellenirken hata oluştu");
             }
@@ -190,9 +273,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
                 }
 
-                //// Soft delete
-                //user.IsActive = false;
-                //var result = await _userManager.UpdateAsync(user);
                 var result = await _userManager.DeleteAsync(user);
                 if (!result.Succeeded)
                 {
@@ -327,6 +407,35 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "ChangePasswordAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<bool>.Error("Şifre değiştirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetActiveSuperiorUsersAsync()
+        {
+            try
+            {
+                var targetRoles = new[] { "Şef", "Yönetici",  "Admin" };
+                var userDTOs = new List<UserDTO>();
+
+                foreach (var role in targetRoles)
+                {
+                    var usersInRole = await _userManager.GetUsersInRoleAsync(role);
+
+                    foreach (var user in usersInRole.Where(x => x.IsActive == true))
+                    {
+                        var userDTO = user.Adapt<UserDTO>();
+                        userDTO.RoleName = role;
+                        userDTO.SuperiorIds = new();
+                        userDTOs.Add(userDTO);
+                    }
+                }
+
+                return ApiResponse<IEnumerable<UserDTO>>.Success(userDTOs);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetSuperiorUsersAsync işleminde hata oluştu");
+                return ApiResponse<IEnumerable<UserDTO>>.Error("Kullanıcılar getirilirken hata oluştu");
             }
         }
     }

@@ -9,9 +9,11 @@ namespace IdeKusgozManagement.Application.Interfaces
 
         Task<ApiResponse<UserDTO>> GetUserByIdAsync(string id);
 
-        Task<ApiResponse<UserDTO>> CreateUserAsync(CreateUserDTO createUserDTO);
+        Task<ApiResponse<IEnumerable<UserDTO>>> GetActiveSuperiorUsersAsync();
 
-        Task<ApiResponse<UserDTO>> UpdateUserAsync(string id, UpdateUserDTO updateUserDTO);
+        Task<ApiResponse<UserDTO>> CreateUserAsync(CreateUserDTO createUserDTO, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<UserDTO>> UpdateUserAsync(string id, UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> DeleteUserAsync(string id);
 

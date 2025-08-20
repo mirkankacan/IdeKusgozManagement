@@ -3,6 +3,11 @@
     ViewData["Title"] = "Puantaj Listesi";
 
 }
+@section Styles {
+
+    <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+
+}
 @Html.AntiForgeryToken()
 <div class="row">
     <div class="col-md-12">
@@ -92,6 +97,8 @@
 
 
 @section Scripts {
+    <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
+
     <script>
         let workRecordsTable;
 

@@ -1,8 +1,5 @@
-using System.Security.Claims;
 using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,10 +32,18 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [HttpGet("roller")]
+        [HttpGet("aktif-ust-kullanicilar")]
+        public async Task<IActionResult> GetActiveSuperiorUsers(CancellationToken cancellationToken = default)
+        {
+            var response = await _userApiService.GetActiveSuperiorUsersAsync(cancellationToken);
+
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [HttpGet("aktif-roller")]
         public async Task<IActionResult> GetRoles(CancellationToken cancellationToken = default)
         {
-            var response = await _roleApiService.GetAllRolesAsync(cancellationToken);
+            var response = await _roleApiService.GetActiveRolesAsync(cancellationToken);
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
@@ -67,8 +72,8 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             var response = await _userApiService.UpdateUserAsync(userId, model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
-
         }
+
         [HttpDelete("sil/{userId}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string userId, CancellationToken cancellationToken = default)

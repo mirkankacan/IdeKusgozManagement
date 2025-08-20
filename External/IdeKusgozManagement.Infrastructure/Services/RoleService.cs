@@ -31,7 +31,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 var roles = await _roleManager.Roles.ToListAsync();
-                var roleDTOs = roles.Select(role => role.Adapt<RoleDTO>()).ToList();
+                var orderedRoles = roles.OrderBy(role =>
+                role.Name == "Admin" ? 1 :
+                role.Name == "Yönetici" ? 2 :
+                role.Name == "Şef" ? 3 :
+                role.Name == "Personel" ? 4 : 5).ToList();
+                var roleDTOs = orderedRoles.Select(role => role.Adapt<RoleDTO>()).ToList();
 
                 return ApiResponse<IEnumerable<RoleDTO>>.Success(roleDTOs);
             }
@@ -291,6 +296,27 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "IsUserInRoleAsync işleminde hata oluştu. UserId:{userId} RoleName: {RoleName}", userId, roleName);
                 return ApiResponse<bool>.Error("Kullanıcı rol kontolü yapılırken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<RoleDTO>>> GetActiveRolesAsync()
+        {
+            try
+            {
+                var roles = await _roleManager.Roles.Where(x => x.IsActive == true).ToListAsync();
+                var orderedRoles = roles.OrderBy(role =>
+                role.Name == "Admin" ? 1 :
+                role.Name == "Yönetici" ? 2 :
+                role.Name == "Şef" ? 3 :
+                role.Name == "Personel" ? 4 : 5).ToList();
+                var roleDTOs = orderedRoles.Select(role => role.Adapt<RoleDTO>()).ToList();
+
+                return ApiResponse<IEnumerable<RoleDTO>>.Success(roleDTOs);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetActiveRolesAsync işleminde hata oluştu");
+                return ApiResponse<IEnumerable<RoleDTO>>.Error("Roller getirilirken hata oluştu");
             }
         }
     }

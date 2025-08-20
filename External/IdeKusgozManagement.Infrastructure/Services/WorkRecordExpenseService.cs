@@ -1,9 +1,9 @@
-﻿using System.Security.Claims;
-using IdeKusgozManagement.Application.Common;
+﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
 using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Domain.Enums;
+using IdeKusgozManagement.Infrastructure.Helpers;
 using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -54,7 +54,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var expenseDTO = createdExpense.Adapt<WorkRecordExpenseDTO>();
 
                 _logger.LogInformation("İş kaydına masraf başarıyla eklendi. WorkRecordId: {WorkRecordId}, ExpenseId: {ExpenseId}, EkleyenUserId: {UserId}",
-                    workRecordId, createdExpense.Id, GetCurrentUserId());
+                    workRecordId, createdExpense.Id, CurrentUserHelper.GetCurrentUserId());
 
                 return ApiResponse<WorkRecordExpenseDTO>.Success(expenseDTO, "Masraf başarıyla eklendi");
             }
@@ -142,7 +142,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var expenseDTO = updatedExpense.Adapt<WorkRecordExpenseDTO>();
 
-                _logger.LogInformation("Masraf kaydı başarıyla güncellendi. ExpenseId: {ExpenseId}, GüncelleyenUserId:{UserId}", expenseId, GetCurrentUserId());
+                _logger.LogInformation("Masraf kaydı başarıyla güncellendi. ExpenseId: {ExpenseId}, GüncelleyenUserId:{UserId}", expenseId, CurrentUserHelper.GetCurrentUserId());
 
                 return ApiResponse<WorkRecordExpenseDTO>.Success(expenseDTO, "Masraf kaydı başarıyla güncellendi");
             }
@@ -179,7 +179,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await _unitOfWork.Repository<IdtWorkRecordExpense>().DeleteAsync(expense, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Masraf kaydı başarıyla silindi. ExpenseId: {ExpenseId}, SilenUserId: {UserId}", expenseId, GetCurrentUserId());
+                _logger.LogInformation("Masraf kaydı başarıyla silindi. ExpenseId: {ExpenseId}, SilenUserId: {UserId}", expenseId, CurrentUserHelper.GetCurrentUserId());
 
                 return ApiResponse<bool>.Success(true, "Masraf kaydı başarıyla silindi");
             }
@@ -283,11 +283,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 _logger.LogError(ex, "GetAverageExpenseAmountAsync işleminde hata oluştu");
                 return ApiResponse<decimal>.Error("Ortalama masraf tutarı hesaplanırken hata oluştu");
             }
-        }
-
-        private string? GetCurrentUserId()
-        {
-            return _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
     }
 }

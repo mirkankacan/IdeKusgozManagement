@@ -30,6 +30,16 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
+        /// Admin, Şef, Yönetici rolüne sahip olan kullanıcıları getirir
+        /// </summary>
+        [HttpGet("active-superiors")]
+        public async Task<IActionResult> GetActiveSuperiorUsers()
+        {
+            var result = await _userService.GetActiveSuperiorUsersAsync();
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
         /// ID'ye göre kullanıcı getirir
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>

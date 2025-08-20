@@ -8,6 +8,8 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
     {
         Task<ApiResponse<IEnumerable<RoleViewModel>>> GetAllRolesAsync(CancellationToken cancellationToken = default);
 
+        Task<ApiResponse<IEnumerable<RoleViewModel>>> GetActiveRolesAsync(CancellationToken cancellationToken = default);
+
         Task<ApiResponse<RoleViewModel>> GetRoleByIdAsync(string id, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<RoleViewModel>> GetRoleByNameAsync(string name, CancellationToken cancellationToken = default);

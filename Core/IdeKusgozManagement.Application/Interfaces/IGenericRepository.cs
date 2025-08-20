@@ -117,5 +117,6 @@ namespace IdeKusgozManagement.Application.Interfaces
         Task<IEnumerable<TResult>> SelectDistinctAsync<TResult>(Expression<Func<T, TResult>> selector, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<IGrouping<TKey, T>>> GroupByAsync<TKey>(Expression<Func<T, TKey>> keySelector, CancellationToken cancellationToken = default);
+        Task<IEnumerable<TResult>> SelectAsync<TResult>(Expression<Func<T, TResult>> selector, Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
     }
 }

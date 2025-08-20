@@ -1,0 +1,42 @@
+﻿using System.ComponentModel.DataAnnotations;
+using IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels;
+
+namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
+{
+    public class CreateWorkRecordViewModel
+    {
+        [Required]
+        public DateTime Date { get; set; }
+
+        public bool IsWeekend { get; set; } = false;
+
+        [Required]
+        public TimeSpan StartTime { get; set; }
+
+        [Required]
+        public TimeSpan EndTime { get; set; }
+
+        [Required]
+        public string Project { get; set; }
+
+        [Required]
+        public string Equipment { get; set; }
+
+        [Required]
+        public string Province { get; set; }
+
+        [Required]
+        public string District { get; set; }
+
+        public string? Expense { get; set; } = null;
+
+        public bool HasBreakfast { get; set; } = false;
+
+        public bool HasLunch { get; set; } = false;
+
+        public bool HasDinner { get; set; } = false;
+
+        public bool HasNighMeal { get; set; } = false;
+        public List<CreateWorkRecordExpenseViewModel>? Expenses { get; set; } = new();
+    }
+}

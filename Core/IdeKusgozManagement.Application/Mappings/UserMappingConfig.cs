@@ -17,6 +17,7 @@ namespace IdeKusgozManagement.Application.Mappings
             TypeAdapterConfig<CreateUserDTO, ApplicationUser>
                 .NewConfig()
                 .Map(dest => dest.Email, src => src.UserName) // Username = Email
+                .Map(dest => dest.TCNo, src => src.UserName) // Username = Email
                 .Map(dest => dest.IsActive, src => true)
                 .Ignore(dest => dest.Id)
                 .Ignore(dest => dest.PasswordHash)
@@ -29,6 +30,7 @@ namespace IdeKusgozManagement.Application.Mappings
             TypeAdapterConfig<UpdateUserDTO, ApplicationUser>
                 .NewConfig()
                 .Map(dest => dest.Email, src => src.UserName) // Username = Email
+                .Map(dest => dest.TCNo, src => src.UserName) // Username = Email
                 .Ignore(dest => dest.Id)
                 .Ignore(dest => dest.PasswordHash)
                 .Ignore(dest => dest.SecurityStamp)

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
-using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
+﻿using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 

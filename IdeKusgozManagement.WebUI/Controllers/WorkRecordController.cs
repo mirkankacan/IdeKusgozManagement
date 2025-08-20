@@ -1,4 +1,5 @@
 using System.Text.Json;
+using IdeKusgozManagement.WebUI.Models.WorkRecordModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,7 +23,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin,Şef,Personel")]
         [HttpPost("ekle")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([FromBody] List<string> workRecords, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Create([FromBody] CreateWorkRecordViewModel model, CancellationToken cancellationToken = default)
         {
 
             if (!ModelState.IsValid)
@@ -30,10 +31,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Burada veritabanına kayıt işlemi yapılacak
-            // await _workRecordService.CreateAsync(workRecords, cancellationToken);
-
-            // Başarılı yanıt
+         
             return Ok();
 
         }

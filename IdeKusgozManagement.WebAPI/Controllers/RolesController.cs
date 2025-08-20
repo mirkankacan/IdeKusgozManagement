@@ -30,6 +30,16 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
+        /// Tüm aktif rolleri getirir
+        /// </summary>
+        [HttpGet("actives")]
+        public async Task<IActionResult> GetActiveRoles()
+        {
+            var result = await _roleService.GetActiveRolesAsync();
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
         /// ID'ye göre rol getirir
         /// </summary>
         /// <param name="id">Rol ID'si</param>

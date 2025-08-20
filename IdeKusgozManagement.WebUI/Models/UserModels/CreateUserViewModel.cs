@@ -18,5 +18,8 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
 
         [Required]
         public string RoleName { get; set; }
+
+        [Required]
+        public List<string> SuperiorIds { get; set; }
     }
 }

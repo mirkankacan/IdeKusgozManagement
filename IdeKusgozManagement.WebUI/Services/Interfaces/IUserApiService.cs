@@ -7,6 +7,8 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
     {
         Task<ApiResponse<IEnumerable<UserViewModel>>> GetAllUsersAsync(CancellationToken cancellationToken = default);
 
+        Task<ApiResponse<IEnumerable<UserViewModel>>> GetActiveSuperiorUsersAsync(CancellationToken cancellationToken = default);
+
         Task<ApiResponse<UserViewModel>> GetUserByIdAsync(string id, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<UserViewModel>> CreateUserAsync(CreateUserViewModel model, CancellationToken cancellationToken = default);

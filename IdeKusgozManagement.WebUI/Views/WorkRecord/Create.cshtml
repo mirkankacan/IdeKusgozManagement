@@ -482,7 +482,6 @@
             const workRecords = [];
 
             $('#workRecordsTableBody tr').each(function () {
-                const day = $(this).data('day');
                 const isWeekend = $(this).find('.weekend-checkbox').is(':checked');
                 const startTime = $(this).find('.start-time').val();
                 const endTime = $(this).find('.end-time').val();
@@ -490,32 +489,36 @@
                 const equipment = $(this).find('.equipment-select').val();
                 const province = $(this).find('.province-select').val();
                 const district = $(this).find('.district-select').val();
-                const expense = $(this).find('.expense-select').val();
-				const hasBreakfast = $(this).find('.meal-checkbox[data-meal="S"]').is(':checked');
+             const expenses = [];
+                     $(this).find('.expense-item').each(function() {
+                expenses.push({
+                    description: $(this).find('.expense-description').val(),
+                    amount: parseFloat($(this).find('.expense-amount').val()) || 0,
+                    receiptImageUrl: $(this).find('.expense-receipt').val()
+                });
+            });
+            const hasBreakfast = $(this).find('.meal-checkbox[data-meal="S"]').is(':checked');
 				const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
 				const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
 				const hasNighMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');             
 
                 workRecords.push({
-                    day: day,
-                    date: new Date(currentYear, currentMonth - 1, day),
-                    isWeekend: isWeekend,
-                    startTime: startTime,
-                    endTime: endTime,
-                    project: project,
-                    equipment: equipment,
-                    province: province,
-                    district: district,
-                    expense: expense,
-                    hasBreakfast: hasBreakfast,
-					hasLunch: hasLunch,
-                    hasDinner: hasDinner,
-					hasNighMeal: hasNighMeal
+                    Date: new Date(currentYear, currentMonth - 1, day),
+                    IsWeekend: isWeekend,
+                    StartTime: startTime,
+                    EndTime: endTime,
+                    Project: project,
+                    Equipment: equipment,
+                    Province: province,
+                    District: district,
+                    Expenses: expenses,
+                    HasBreakfast: hasBreakfast,
+					HasLunch: hasLunch,
+                    HasDinner: hasDinner,
+					HasNighMeal: hasNighMeal
                 });
             });
 
-            // Veriyi console'da göster (test için)
-            console.log('Kaydedilecek veriler:', workRecords);
 
             // AJAX ile backend'e gönder
             try {
@@ -538,7 +541,7 @@
                 console.error('Hata:', error);
                 toastr.error('Puantaj kaydedilirken bir hata oluştu.', 'Hata!');
             }
-        }
+        };
 
         // Yıl ve ay değiştiğinde tabloyu güncelle
         $('#yearSelect, #monthSelect').on('change', function () {

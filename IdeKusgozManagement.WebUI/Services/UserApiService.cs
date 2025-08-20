@@ -39,6 +39,28 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
+        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetActiveSuperiorUsersAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("api/users/active-superiors", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<UserViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetSuperiorUsersAsync işleminde hata oluştu");
+                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
         public async Task<ApiResponse<UserViewModel>> GetUserByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try
@@ -187,7 +209,6 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-
                 var response = await _httpClient.PostAsync($"api/users/{id}/deactivate", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
