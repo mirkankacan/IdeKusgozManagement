@@ -3,7 +3,6 @@ using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
 using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Domain.Enums;
-using IdeKusgozManagement.Infrastructure.Helpers;
 using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -15,15 +14,18 @@ namespace IdeKusgozManagement.Infrastructure.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<WorkRecordExpenseService> _logger;
+        private readonly ICurrentUserService _currentUserService;
 
         public WorkRecordExpenseService(
             IUnitOfWork unitOfWork,
             IHttpContextAccessor httpContextAccessor,
-            ILogger<WorkRecordExpenseService> logger)
+            ILogger<WorkRecordExpenseService> logger,
+            ICurrentUserService currentUserService)
         {
             _unitOfWork = unitOfWork;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ApiResponse<WorkRecordExpenseDTO>> AddExpenseToWorkRecordAsync(string workRecordId, CreateWorkRecordExpenseDTO createExpenseDTO, CancellationToken cancellationToken = default)
@@ -54,7 +56,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var expenseDTO = createdExpense.Adapt<WorkRecordExpenseDTO>();
 
                 _logger.LogInformation("İş kaydına masraf başarıyla eklendi. WorkRecordId: {WorkRecordId}, ExpenseId: {ExpenseId}, EkleyenUserId: {UserId}",
-                    workRecordId, createdExpense.Id, CurrentUserHelper.GetCurrentUserId());
+                    workRecordId, createdExpense.Id, _currentUserService.GetCurrentUserId());
 
                 return ApiResponse<WorkRecordExpenseDTO>.Success(expenseDTO, "Masraf başarıyla eklendi");
             }
@@ -142,7 +144,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var expenseDTO = updatedExpense.Adapt<WorkRecordExpenseDTO>();
 
-                _logger.LogInformation("Masraf kaydı başarıyla güncellendi. ExpenseId: {ExpenseId}, GüncelleyenUserId:{UserId}", expenseId, CurrentUserHelper.GetCurrentUserId());
+                _logger.LogInformation("Masraf kaydı başarıyla güncellendi. ExpenseId: {ExpenseId}, GüncelleyenUserId:{UserId}", expenseId, _currentUserService.GetCurrentUserId());
 
                 return ApiResponse<WorkRecordExpenseDTO>.Success(expenseDTO, "Masraf kaydı başarıyla güncellendi");
             }
@@ -179,7 +181,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await _unitOfWork.Repository<IdtWorkRecordExpense>().DeleteAsync(expense, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Masraf kaydı başarıyla silindi. ExpenseId: {ExpenseId}, SilenUserId: {UserId}", expenseId, CurrentUserHelper.GetCurrentUserId());
+                _logger.LogInformation("Masraf kaydı başarıyla silindi. ExpenseId: {ExpenseId}, SilenUserId: {UserId}", expenseId, _currentUserService.GetCurrentUserId());
 
                 return ApiResponse<bool>.Success(true, "Masraf kaydı başarıyla silindi");
             }

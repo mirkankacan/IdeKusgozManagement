@@ -36,7 +36,7 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
 
         public bool HasDinner { get; set; } = false;
 
-        public bool HasNighMeal { get; set; } = false;
+        public bool HasNightMeal { get; set; } = false;
         public List<CreateWorkRecordExpenseViewModel>? Expenses { get; set; } = new();
     }
 }

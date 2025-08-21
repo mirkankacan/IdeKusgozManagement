@@ -215,7 +215,7 @@
 <!-- Modal -->
 <div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true"
      data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="expenseModalLabel">
@@ -635,7 +635,7 @@
             await new Promise(resolve => setTimeout(resolve, 300));
 
             // Her gün için satır oluştur
-            for (let day = 1; day <= daysInMonth; day++) {
+            for (let day = 1; day <= 2; day++) {
                 const date = new Date(year, month - 1, day);
                 const dayOfWeek = getDayOfWeekTurkish(date.getDay());
                 const formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year} ${dayOfWeek}`;
@@ -677,12 +677,10 @@
                         </td>
                         <td>
                             <select class="form-select form-select-sm province-select" data-day="${day}">
-                                <option value="" selected disabled>İl seçin</option>
                             </select>
                         </td>
                         <td>
                             <select class="form-select form-select-sm district-select" data-day="${day}">
-                                <option value="" selected disabled>İlçe seçin</option>
                             </select>
                         </td>
                         <td>
@@ -799,7 +797,7 @@
                 const dayExpenses = expenseData[day] || [];
                 const expenses = dayExpenses.map(exp => ({
                     expense: exp.type,
-                    description: exp.description || '',
+                    description: exp.description || null,
                     amount: exp.amount,
                     receiptImageUrl: null // Fiş yükleme sonrası güncellenecek
                 }));
@@ -808,9 +806,10 @@
                 const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
                 const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
                 const hasNightMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');
+                    const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
                 workRecords.push({
-                    Date: new Date(currentYear, currentMonth - 1, day),
+                    Date: formattedDate,
                     IsWeekend: isWeekend,
                     StartTime: startTime,
                     EndTime: endTime,
@@ -825,7 +824,7 @@
                     Expenses: expenses
                 });
             });
-
+            console.log(workRecords);
             try {
                 const response = await $.ajax({
                     url: '/puantaj/toplu-ekle',
@@ -837,13 +836,9 @@
                     }
                 });
 
-                if (response.success) {
+                if (response.isSuccess) {
                     toastr.success(response.message, 'Başarılı!');
-                    // Masraf verilerini temizle
-                    expenseData = {};
-                    // Butonları sıfırla
-                    $('.expense-modal-btn').removeClass('btn-success').addClass('btn-outline-primary');
-                    $('.expense-count').text('0');
+                   
                 } else {
                     toastr.error(response.message, 'Hata!');
                 }

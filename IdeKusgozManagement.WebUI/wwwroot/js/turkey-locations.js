@@ -338,7 +338,7 @@ function populateProvinces(selectElement) {
     priorityProvinces.forEach(code => {
         if (turkeyLocations[code]) {
             const province = turkeyLocations[code];
-            selectElement.append(`<option value="${code}">${province.name}</option>`);
+            selectElement.append(`<option value="${province.name}" data-code="${code}">${province.name}</option>`);
         }
     });
     
@@ -348,13 +348,13 @@ function populateProvinces(selectElement) {
         .sort((a, b) => parseInt(a) - parseInt(b))
         .forEach(code => {
             const province = turkeyLocations[code];
-            selectElement.append(`<option value="${code}">${province.name}</option>`);
+            selectElement.append(`<option value="${province.name}" data-code="${code}">${province.name}</option>`);
         });
 }
 
 // Function to populate districts based on selected province
 function populateDistricts(provinceSelect, districtSelect) {
-    const selectedProvinceCode = provinceSelect.val();
+    const selectedProvinceCode = provinceSelect.find('option:selected').data('code');
     districtSelect.empty();
     districtSelect.append('<option value="" selected disabled>İlçe seçin</option>');
 

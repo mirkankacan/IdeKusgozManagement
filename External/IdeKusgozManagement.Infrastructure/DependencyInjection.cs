@@ -19,6 +19,7 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddDbContext<ApplicationDbContext>(opts =>
                 opts.UseSqlServer(connectionString));
 
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IAuthService, AuthService>();
