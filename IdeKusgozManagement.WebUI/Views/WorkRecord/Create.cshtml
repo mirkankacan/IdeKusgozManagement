@@ -129,8 +129,8 @@
                 <!-- Yıl ve Ay Seçimi -->
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        <label for="yearSelect" class="form-label">Yıl</label>
-                        <select id="yearSelect" class="form-select">
+                        <label for="year-select" class="form-label">Yıl</label>
+                        <select id="year-select" class="form-select">
                             @for (int year = DateTime.Now.Year - 2; year <= DateTime.Now.Year; year++)
                             {
                                 if (year == DateTime.Now.Year)
@@ -145,8 +145,8 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label for="monthSelect" class="form-label">Ay</label>
-                        <select id="monthSelect" class="form-select">
+                        <label for="month-select" class="form-label">Ay</label>
+                        <select id="month-select" class="form-select">
                             <option value="1">Ocak</option>
                             <option value="2">Şubat</option>
                             <option value="3">Mart</option>
@@ -163,7 +163,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">&nbsp;</label>
-                        <button type="button" class="btn btn-success d-block w-100 btnSaveWorkRecords">
+                        <button type="button" class="btn btn-info d-block w-100 btnSaveWorkRecords">
                             <i class="fas fa-save me-2"></i>Kaydet
                         </button>
                     </div>
@@ -203,7 +203,7 @@
                 </div>
                 <div class="col-md-12">
                     <label class="form-label">&nbsp;</label>
-                    <button type="button" class="btn btn-success d-block w-100 btnSaveWorkRecords">
+                    <button type="button" class="btn btn-info d-block w-100 btnSaveWorkRecords">
                         <i class="fas fa-save me-2"></i>Kaydet
                     </button>
                 </div>
@@ -304,8 +304,8 @@
             currentYear = new Date().getFullYear();
             currentMonth = new Date().getMonth() + 1;
 
-            $('#yearSelect').val(currentYear);
-            $('#monthSelect').val(currentMonth);
+            $('#year-select').val(currentYear);
+            $('#month-select').val(currentMonth);
 
             // Event listeners
             $('.btnSaveWorkRecords').on('click', saveWorkRecords);
@@ -617,8 +617,8 @@
               // Loading spinner'ı göster
             showTableLoading();
 
-            const year = parseInt($('#yearSelect').val());
-            const month = parseInt($('#monthSelect').val());
+            const year = parseInt($('#year-select').val());
+            const month = parseInt($('#month-select').val());
 
             currentYear = year;
             currentMonth = month;
@@ -635,7 +635,7 @@
             await new Promise(resolve => setTimeout(resolve, 300));
 
             // Her gün için satır oluştur
-            for (let day = 1; day <= 2; day++) {
+            for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month - 1, day);
                 const dayOfWeek = getDayOfWeekTurkish(date.getDay());
                 const formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year} ${dayOfWeek}`;
@@ -824,7 +824,6 @@
                     Expenses: expenses
                 });
             });
-            console.log(workRecords);
             try {
                 const response = await $.ajax({
                     url: '/puantaj/toplu-ekle',
@@ -849,7 +848,7 @@
         }
 
         // Yıl ve ay değiştiğinde tabloyu güncelle
-        $('#yearSelect, #monthSelect').on('change', function () {
+        $('#year-select, #month-select').on('change', function () {
             generateDynamicTable();
         });
     </script>

@@ -5,9 +5,11 @@ namespace IdeKusgozManagement.Application.Interfaces
 {
     public interface IUserService
     {
-        Task<ApiResponse<IEnumerable<UserDTO>>> GetAllUsersAsync();
+        Task<ApiResponse<IEnumerable<UserDTO>>> GetAllUsersAsync(CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<UserDTO>> GetUserByIdAsync(string id);
+        Task<ApiResponse<IEnumerable<UserDTO>>> GetAssignedUsersByIdAsync(string userId, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<UserDTO>> GetUserByIdAsync(string id, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<IEnumerable<UserDTO>>> GetActiveSuperiorUsersAsync();
 

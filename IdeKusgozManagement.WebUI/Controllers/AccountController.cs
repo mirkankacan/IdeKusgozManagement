@@ -154,8 +154,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize]
         public async Task<IActionResult> Profile(CancellationToken cancellationToken = default)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var response = await _userApiService.GetUserByIdAsync(userId, cancellationToken);
+            var response = await _userApiService.GetMyUserAsync(cancellationToken);
             return View(response);
         }
 

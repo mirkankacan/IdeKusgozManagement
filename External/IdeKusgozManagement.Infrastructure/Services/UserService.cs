@@ -28,13 +28,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetAllUsersAsync()
+        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetAllUsersAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var users = await _userManager.Users.ToListAsync();
-                var userIds = users.Select(u => u.Id).ToList();
-
+                var users = await _userManager.Users.ToListAsync(cancellationToken);
 
                 var userDTOs = new List<UserDTO>();
 
@@ -44,7 +42,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
                   .SelectAsync(
                       selector: x => x.SuperiorId,
-                      predicate: x => x.SubordinateId == user.Id
+                      predicate: x => x.SubordinateId == user.Id, cancellationToken
                   );
                     var roles = await _userManager.GetRolesAsync(user);
 
@@ -52,7 +50,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     userDTO.RoleName = roles.FirstOrDefault();
                     userDTOs.Add(userDTO);
                 }
-
 
                 return ApiResponse<IEnumerable<UserDTO>>.Success(userDTOs);
             }
@@ -63,7 +60,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<UserDTO>> GetUserByIdAsync(string id)
+        public async Task<ApiResponse<UserDTO>> GetUserByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -80,7 +77,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
                     .SelectAsync(
                         selector: x => x.SuperiorId,
-                        predicate: x => x.SubordinateId == id
+                        predicate: x => x.SubordinateId == id, cancellationToken
                     );
 
                 userDTO.SuperiorIds = superiorIds.ToList();
@@ -414,7 +411,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var targetRoles = new[] { "Şef", "Yönetici",  "Admin" };
+                var targetRoles = new[] { "Şef", "Yönetici", "Admin" };
                 var userDTOs = new List<UserDTO>();
 
                 foreach (var role in targetRoles)
@@ -436,6 +433,55 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "GetSuperiorUsersAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<UserDTO>>.Error("Kullanıcılar getirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetAssignedUsersByIdAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var subordinateIds = await _unitOfWork.Repository<IdtUserHierarchy>()
+                    .SelectAsync(
+                        selector: x => x.SubordinateId,
+                        predicate: x => x.SuperiorId == userId,
+                        cancellationToken
+                    );
+
+                // Eğer hiç astı yoksa boş liste döndür
+                if (!subordinateIds.Any())
+                {
+                    return ApiResponse<IEnumerable<UserDTO>>.Success(new List<UserDTO>());
+                }
+
+                var users = await _userManager.Users
+                    .Where(u => subordinateIds.Contains(u.Id))
+                    .ToListAsync(cancellationToken);
+
+                var userDTOs = new List<UserDTO>();
+
+                foreach (var user in users)
+                {
+                    var userDTO = user.Adapt<UserDTO>();
+
+                    var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
+                        .SelectAsync(
+                            selector: x => x.SuperiorId,
+                            predicate: x => x.SubordinateId == user.Id,
+                            cancellationToken
+                        );
+
+                    var roles = await _userManager.GetRolesAsync(user);
+                    userDTO.SuperiorIds = superiorIds.ToList();
+                    userDTO.RoleName = roles.FirstOrDefault();
+                    userDTOs.Add(userDTO);
+                }
+
+                return ApiResponse<IEnumerable<UserDTO>>.Success(userDTOs);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetAssignedUsersByIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                return ApiResponse<IEnumerable<UserDTO>>.Error("Atanmış kullanıcılar getirilirken hata oluştu");
             }
         }
     }

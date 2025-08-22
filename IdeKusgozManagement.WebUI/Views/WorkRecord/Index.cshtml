@@ -1,33 +1,136 @@
 @{
+    ViewData["Title"] = "Kullanıcıya Göre Puantaj Listesi";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Puantaj Listesi";
-
 }
+
 @section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
 
-    <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/css/bootstrap-material-datetimepicker.min.css"
+          rel="stylesheet">
 
+    <style>
+        .time-input {
+            text-align: center;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .fa-clock {
+            cursor: pointer;
+        }
+
+            .fa-clock:hover {
+                color: #007bff;
+            }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .table th {
+            vertical-align: middle;
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.1rem !important;
+            white-space: nowrap;
+        }
+
+        .table td {
+            vertical-align: middle;
+            text-align: center;
+            padding: 0.25rem 0.1rem !important;
+            font-size: 0.85rem;
+        }
+
+        .project-input {
+            font-size: 0.85rem;
+        }
+
+        .table .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
+            font-size: 0.85rem !important;
+        }
+
+        .table .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option {
+            font-size: 0.85rem
+        }
+
+        .table .select2-selection__rendered {
+            font-size: 0.85rem;
+        }
+
+        .table .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered .select2-selection__placeholder {
+            font-size: 0.85rem;
+        }
+
+        /* Masraf Modal Stilleri */
+        .expense-modal-btn {
+            font-size: 0.85rem;
+        }
+
+        .expense-count {
+            font-weight: bold;
+        }
+
+        .list-group-item {
+            border: 1px solid #dee2e6;
+            margin-bottom: 0.25rem;
+        }
+
+        .remove-expense-btn {
+            min-width: 35px;
+            height: 35px;
+        }
+
+        .meal-section {
+            display: flex;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .meal-item {
+            text-align: center;
+        }
+
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .fade-transition {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* Loading sırasında tablo başlıklarını gizle */
+        .table-loading #workRecordsTable {
+            display: none !important;
+        }
+    </style>
 }
+
 @Html.AntiForgeryToken()
+
 <div class="row">
     <div class="col-md-12">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="fas fa-hourglass-start me-2"></i>
-                    Puantaj Ekleme Tablosu
+                    <i class="fas fa-bars-staggered me-2"></i>
+                    Kullanıcıya Göre Puantaj Listesi
                 </h5>
 
                 <!-- Yıl ve Ay Seçimi -->
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        <label for="userSelect" class="form-label">Kullanıcı</label>
-                        <select id="userSelect" class="form-select">
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="yearSelect" class="form-label">Yıl</label>
-                        <select id="yearSelect" class="form-select">
+                        <label for="year-select" class="form-label">Yıl</label>
+                        <select id="year-select" class="form-select">
                             @for (int year = DateTime.Now.Year - 2; year <= DateTime.Now.Year; year++)
                             {
                                 if (year == DateTime.Now.Year)
@@ -42,8 +145,8 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label for="monthSelect" class="form-label">Ay</label>
-                        <select id="monthSelect" class="form-select">
+                        <label for="month-select" class="form-label">Ay</label>
+                        <select id="month-select" class="form-select">
                             <option value="1">Ocak</option>
                             <option value="2">Şubat</option>
                             <option value="3">Mart</option>
@@ -58,16 +161,39 @@
                             <option value="12">Aralık</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
+                        <label for="user-select" class="form-label">Kullanıcı</label>
+                        <select id="user-select" class="form-select user-select">
+                        </select>
+                    </div>
+                  
+                    <div class="col-md-3">
                         <label class="form-label">&nbsp;</label>
-                        <button type="button" id="saveBtn" class="btn btn-success d-block w-100">
-                            <i class="fas fa-save me-2"></i>Kaydet
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-warning flex-fill btnUpdateWorkRecords">
+                                <i class="fas fa-marker me-2"></i>Güncelle
+                            </button>
+                            <button type="button" class="btn btn-outline-success flex-fill">
+                                <i class="fas fa-thumbs-up me-2"></i>Onayla
+                            </button>
+                            <button type="button" class="btn btn-outline-danger flex-fill">
+                                <i class="fas fa-thumbs-down me-2"></i>Reddet
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Dinamik Tablo -->
                 <div id="dynamicTableContainer">
+                    <div id="tableLoadingSpinner" class="text-center py-5" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                        <div class="mt-3">
+                            <h6 class="text-muted">Tablo oluşturuluyor...</h6>
+                            <small class="text-muted">Lütfen bekleyiniz</small>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table id="workRecordsTable" class="table table-striped table-hover">
                             <thead class="table-dark">
@@ -82,6 +208,7 @@
                                     <th style="width: 150px;">ÇALIŞILAN<br /> İLÇE</th>
                                     <th>MASRAF</th>
                                     <th>YEMEK</th>
+                                    <th>DURUM</th>
                                 </tr>
                             </thead>
                             <tbody id="workRecordsTableBody">
@@ -89,284 +216,1030 @@
                         </table>
                     </div>
                 </div>
+                <div class="col-md-12">
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-warning flex-fill btnUpdateWorkRecords">
+                            <i class="fas fa-marker me-2"></i>Güncelle
+                        </button>
+                        <button type="button" class="btn btn-outline-success flex-fill">
+                            <i class="fas fa-thumbs-up me-2"></i>Onayla
+                        </button>
+                        <button type="button" class="btn btn-outline-danger flex-fill">
+                            <i class="fas fa-thumbs-down me-2"></i>Reddet
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="expenseModalLabel">
+                    <i class="fas fa-receipt me-2"></i>
+                    Masraf Bilgileri - <span id="modalDateInfo"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="expenseForm">
+                <div class="modal-body">
+                    <!-- Mevcut Masraflar Listesi -->
+                    <div id="currentExpensesList" class="mb-3" style="display: none;">
+                        <h6 class="text-muted">Mevcut Masraflar:</h6>
+                        <div id="expenseItemsList" class="list-group mb-3">
+                            <!-- Masraf listesi buraya gelecek -->
+                        </div>
+                    </div>
 
+                    <!-- Yeni Masraf Ekleme Formu -->
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="ddExpense" class="form-label">Masraf Türü</label>
+                            <select class="form-select ddExpense" id="ddExpense">
+                                <option value="">Masraf türü seçin</option>
+                                <option value="yol">Yol Masrafı</option>
+                                <option value="yemek">Yemek Masrafı</option>
+                                <option value="konaklama">Konaklama Masrafı</option>
+                                <option value="yakit">Yakıt Masrafı</option>
+                                <option value="otopark">Otopark Masrafı</option>
+                                <option value="diger">Diğer Masraf</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="txtAmount" class="form-label">Tutar (₺)</label>
+                            <input type="number" class="form-control" id="txtAmount" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-12">
+                            <label for="txtDescription" class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="txtDescription" placeholder="Opsiyonel"></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="fileReceiptImage" class="form-label">Fatura Fotoğrafı</label>
+                            <input type="file" class="form-control" id="fileReceiptImage" accept="image/*,.pdf">
+                        </div>
+                    </div>
+
+                    <!-- Toplam Masraf -->
+                    <div class="mt-3 p-2 bg-light rounded" id="totalExpenseSection" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Toplam Masraf:</span>
+                            <span class="fw-bold text-primary" id="totalExpenseAmount">0.00 ₺</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+                    <button class="btn btn-primary w-100" type="submit" id="btnSaveExpenses">
+                        <i class="fas fa-plus me-1"></i>Masraf Ekle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
-    <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/tr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js"></script>
+    <script src="~/js/turkey-locations.js"></script>
 
     <script>
         let workRecordsTable;
+        let currentYear;
+        let currentMonth;
+
+        // Masraf verilerini tutacak obje
+        let expenseData = {};
+        let currentEditingDay = null;
 
         $(document).ready(async function () {
-            await initializeDataTable();
+            $('body').addClass('sidebar-hidden');
 
+            // Sayfa yüklendiğinde mevcut yıl ve ayı seç
+            currentYear = new Date().getFullYear();
+            currentMonth = new Date().getMonth() + 1;
+
+            $('#year-select').val(currentYear);
+            $('#month-select').val(currentMonth);
+
+            // Event listeners
+            $('.btnUpdateWorkRecords').on('click', saveWorkRecords);
+
+            // Masraf modal setup
+            setupExpenseModal();
+
+            $('.user-select').select2({
+                placeholder: 'Kullanıcı seçin',
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            await getAssignedUsers();
+
+            // İlk başta boş tablo göster
+            showEmptyTable();
+
+            // Add event listener for user selection change
+            $('#user-select').on('change', function() {
+                if ($(this).val()) {
+                    loadWorkRecordsByUser();
+                } else {
+                    clearTableData();
+                }
+            });
+
+            // Approve button click event
+            $('.btn-outline-success').on('click', approveWorkRecords);
+
+            // Reject button click event
+            $('.btn-outline-danger').on('click', rejectWorkRecords);
         });
 
+        // Boş tablo mesajı göster
+        function showEmptyTable() {
+            const emptyMessage = `
+                <tr>
+                    <td colspan="11" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fas fa-info-circle fa-2x mb-3"></i>
+                            <h5>Kullanıcı Seçin</h5>
+                            <p>Puantaj verilerini görüntülemek için lütfen bir kullanıcı seçin.</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            $('#workRecordsTableBody').html(emptyMessage);
+        }
 
+        // Veri bulunamadığında gösterilecek mesaj
+        function showNoDataMessage(year,month) {
+            const noDataMessage = `
+                <tr>
+                    <td colspan="11" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fas fa-calendar-times fa-2x mb-3 text-warning"></i>
+                            <h5>Puantaj Verisi Bulunamadı</h5>
+                            <p>Seçili kullanıcının ${month}/${year} ayına ait puantaj kaydı bulunmamaktadır.</p>
+                            <small>Personel henüz bu ay için puantaj doldurmamış olabilir.</small>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            $('#workRecordsTableBody').html(noDataMessage);
+        }
 
-        async function initializeDataTable() {
-            workRecordsTable = $('#workRecordsTable').DataTable({
-                "processing": true,
-                "ajax": {
-                    "url": "/puantaj/liste",
-                    "type": "GET",
-                    "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
-                        }
-                        return [];
+        // Hata mesajı göster
+        function showErrorMessage() {
+            const errorMessage = `
+                <tr>
+                    <td colspan="10" class="text-center py-5">
+                        <div class="text-danger">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                            <h5>Veri Yükleme Hatası</h5>
+                            <p>Puantaj verileri yüklenirken bir hata oluştu.</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadWorkRecordsByUser()">
+                                <i class="fas fa-redo me-1"></i>Tekrar Dene
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            $('#workRecordsTableBody').html(errorMessage);
+        }
+
+        // Function to clear table data
+        function clearTableData() {
+            showEmptyTable();
+            expenseData = {};
+        }
+
+        // Güncellenmiş loadWorkRecordsByUser fonksiyonu
+        async function loadWorkRecordsByUser() {
+            const selectedUserId = $('#user-select').val();
+            const year = parseInt($('#year-select').val());
+            const month = parseInt($('#month-select').val());
+
+            if (!selectedUserId) {
+                showEmptyTable();
+                return;
+            }
+
+            try {
+                showTableLoading();
+
+                // Create date for the first day of the selected month
+                    const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(1).padStart(2, '0')}`;
+
+                const response = await $.ajax({
+                    url: '/puantaj/kullanici-listesi',
+                    type: 'GET',
+                    data: {
+                        date: formattedDate,
+                        userId: selectedUserId
                     },
-                    "error": function (xhr, error, code) {
-                        console.error('DataTables AJAX error:', error);
-                        let errorMessage = 'Veriler yüklenirken hata oluştu';
-                        try {
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMessage += ': ' + xhr.responseJSON.message;
-                            } else if (xhr.responseText) {
-                                errorMessage += ': ' + xhr.responseText;
-                            }
-                        } catch (e) {
-                            errorMessage += ': ' + error;
-                        }
-
-                        toastr.error(errorMessage);
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                     }
-                },
-                "columns": [
-                    {
-                        "data": null,
-                        "width": "5%",
-                        "orderable": false,
-                        "className": "text-center",
-                        "render": function (data, type, row, meta) {
-                            return '';
-                        }
-                    },
-                    {
-                        "data": "userName",
-                        "render": function (data) {
-                            return data ? `<strong>${data}</strong>` : '';
-                        }
-                    },
-                    {
-                        "data": "fullName",
-                        "render": function (data) {
-                            return data || '';
-                        }
-                    },
-                    {
-                        "data": "roleName",
-                        "render": function (data) {
-                            if (data == "Admin") {
-                                return `<span class="badge bg-primary">${data}</span>`;
-                            }
-                            else if (data == "Şef") {
-                                return `<span class="badge bg-info">${data}</span>`;
-                            }
-                            else if (data == "Personel") {
-                                return `<span class="badge bg-warning">${data}</span>`;
-                            }
-                            else {
-                                return `<span class="badge bg-secondary">${data}</span>`;
-                            }
-                        }
-                    },
-                    {
-                        "data": "isActive",
-                        "width": "10%",
-                        "className": "text-center",
-                        "render": function (data) {
-                            return data ?
-                                '<span class="badge bg-success">Evet</span>' :
-                                '<span class="badge bg-danger">Hayır</span>';
-                        }
-                    },
-                    {
-                        "data": null,
-                        "width": "10%",
-                        "orderable": false,
-                        "className": "text-center",
-                        "render": function (data, type, row) {
-                            const currentUserId = '@User.FindFirst(ClaimTypes.NameIdentifier)?.Value';
+                });
 
-                            if (row.id === currentUserId) {
-                                return '<span class="text-muted">-</span>';
-                            }
-                            const statusButton = row.isActive
-                                ? `<button type="button" class="btn btn-outline-secondary btn-sm"
-                                                onclick="deactivateUser('${row.id}')" title="Pasifleştir">
-                                                <i class="fas fa-user-slash"></i>
-                                               </button>`
-                                : `<button type="button" class="btn btn-outline-success btn-sm"
-                                                onclick="activateUser('${row.id}')" title="Aktifleştir">
-                                                <i class="fas fa-user-check"></i>
-                                               </button>`;
-                            return `
-                                            <div class="btn-group btn-group-sm" role="group">
-                                             <button type="button" class="btn btn-outline-warning btn-sm"
-                                               onclick="getUser('${row.id}')" title="Düzenle">
-                                              <i class="fas fa-edit"></i>
-                                             </button>
-                                             ${statusButton}
-                                             <button type="button" class="btn btn-outline-danger btn-sm"
-                                               onclick="deleteUser('${row.id}')" title="Sil">
-                                              <i class="fas fa-trash"></i>
-                                             </button>
-                                            </div>
-                                           `;
-                        }
-                    }
-                ],
-                "order": [[3, "asc"]],
-                "language": {
-                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
-                },
-                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
-                "pageLength": 10,
-                "responsive": true,
-                "searchDelay": 300,
-                "stateSave": true,
-                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                    '<"row"<"col-sm-12"tr>>' +
-                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                "initComplete": function () {
-                },
-                "drawCallback": function () {
-                    var api = this.api();
-                    var pageInfo = api.page.info();
+                if (response.isSuccess && response.data && response.data.length > 0) {
+                    // Veri varsa tabloyu doldur
+                    populateTableWithWorkRecords(response.data);
+                    toastr.success(`${response.data.length} puantaj kaydı yüklendi`, 'Başarılı!');
+                } else {
+                    // Veri yoksa uygun mesajı göster
+                    showNoDataMessage(year,month);
 
-                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
-                        cell.innerHTML = pageInfo.start + i + 1;
-                    });
-                    $('[title]').tooltip();
                 }
+            } catch (error) {
+                console.error('Puantaj verileri yüklenirken hata:', error);
+                showErrorMessage();
+                toastr.error('Puantaj verileri yüklenirken bir hata oluştu', 'Hata!');
+            } finally {
+                hideTableLoading();
+            }
+        }
+
+        function populateTableWithWorkRecords(workRecords) {
+            // Tablo body'sini temizle
+            $('#workRecordsTableBody').empty();
+
+            // Clear existing expense data
+            expenseData = {};
+
+            // Kayıtları tarihe göre sırala
+            workRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Her kayıt için bir satır oluştur
+            workRecords.forEach(record => {
+                const date = new Date(record.date);
+                const day = date.getDate();
+                const dayOfWeek = getDayOfWeekTurkish(date.getDay());
+                const formattedDate = `${day.toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()} ${dayOfWeek}`;
+
+                // Format time from TimeSpan to HH:mm
+                const startTime = formatTimeSpan(record.startTime);
+                const endTime = formatTimeSpan(record.endTime);
+
+                // Create status badge
+                const statusBadge = getStatusBadge(record.status, record.statusText);
+
+                const row = `
+                    <tr data-day="${day}" data-record-id="${record.id}">
+                        <td class="date-cell">
+                            <span class="badge bg-info">${formattedDate}</span>
+                          
+                        </td>
+                        <td>
+                            <div class="form-check d-flex justify-content-center">
+                                <input class="form-check-input weekend-checkbox" type="checkbox" id="weekend_${day}" ${record.isWeekend ? 'checked' : ''}>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="input-group">
+                                <input type="text" class="form-control time-input start-time" value="${startTime}" data-day="${day}" placeholder="08:00" readonly>
+                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="input-group">
+                                <input type="text" class="form-control time-input end-time" value="${endTime}" data-day="${day}" placeholder="17:00" readonly>
+                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                            </div>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control project-input" placeholder="Proje adı" data-day="${day}" value="${record.project || ''}">
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm equipment-select" data-day="${day}">
+                                <option value="">Ekipman seçin</option>
+                                <option value="excavator" ${record.equipment === 'excavator' ? 'selected' : ''}>Ekskavatör</option>
+                                <option value="bulldozer" ${record.equipment === 'bulldozer' ? 'selected' : ''}>Buldozer</option>
+                                <option value="loader" ${record.equipment === 'loader' ? 'selected' : ''}>Yükleyici</option>
+                                <option value="truck" ${record.equipment === 'truck' ? 'selected' : ''}>Kamyon</option>
+                                <option value="Crane" ${record.equipment === 'Crane' ? 'selected' : ''}>Vinç</option>
+                                <option value="other" ${record.equipment === 'other' ? 'selected' : ''}>Diğer</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm province-select" data-day="${day}">
+                                <option value="">İl seçin</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm district-select" data-day="${day}">
+                                <option value="">İlçe seçin</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-primary expense-modal-btn w-100"
+                                    data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal">
+                                <i class="fas fa-receipt me-1"></i>
+                                <span class="expense-count" data-day="${day}">0</span> Masraf
+                            </button>
+                        </td>
+                        <td>
+                            <div class="meal-section">
+                                <div class="meal-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}" data-meal="S" data-day="${day}" ${record.hasBreakfast ? 'checked' : ''}>
+                                        <label class="form-check-label" for="s_${day}">S</label>
+                                    </div>
+                                </div>
+                                <div class="meal-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}" data-meal="O" data-day="${day}" ${record.hasLunch ? 'checked' : ''}>
+                                        <label class="form-check-label" for="o_${day}">Ö</label>
+                                    </div>
+                                </div>
+                                <div class="meal-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}" data-meal="A" data-day="${day}" ${record.hasDinner ? 'checked' : ''}>
+                                        <label class="form-check-label" for="a_${day}">A</label>
+                                    </div>
+                                </div>
+                                <div class="meal-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}" data-meal="G" data-day="${day}" ${record.hasNightMeal ? 'checked' : ''}>
+                                        <label class="form-check-label" for="g_${day}">G</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                          ${statusBadge}
+                        </td>
+                    </tr>
+                `;
+
+                $('#workRecordsTableBody').append(row);
+
+                // If there are expenses, populate them
+                if (record.expenses && record.expenses.length > 0) {
+                    expenseData[day] = record.expenses;
+                    updateExpenseButton(day);
+                }
+            });
+
+            // İl ve ilçe select'lerini doldur ve değerleri seç
+            populateProvincesAndDistricts(workRecords);
+
+            // Select2'yi yeniden initialize et
+            initializeSelect2();
+            // Timepicker'ları yeniden initialize et
+            initializeTimepickers();
+        }
+
+        // İl ve ilçe değerlerini set et
+        function populateProvincesAndDistricts(workRecords) {
+            workRecords.forEach(record => {
+                const date = new Date(record.date);
+                const day = date.getDate();
+
+                // İl select'ini doldur
+                const provinceSelect = $(`.province-select[data-day="${day}"]`);
+                populateProvinces(provinceSelect);
+
+                // İl değerini set et
+                setTimeout(() => {
+                    provinceSelect.val(record.province || '').trigger('change');
+
+                    // İlçe select'ini doldur ve değerini set et
+                    setTimeout(() => {
+                        const districtSelect = $(`.district-select[data-day="${day}"]`);
+                        if (record.province) {
+                            populateDistricts(provinceSelect, districtSelect);
+                            setTimeout(() => {
+                                districtSelect.val(record.district || '').trigger('change');
+                            }, 100);
+                        }
+                    }, 100);
+                }, 50);
             });
         }
 
-        async function approveWorkRecord(userId) {
-            try {
-                const result = await Swal.fire({
-                    title: 'Puantajı Onayla',
-                    text: 'Bu puantajı onaylamak istediğinizden emin misiniz?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="fas fa-check"></i> Evet, Onayla',
-                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
-                    showLoaderOnConfirm: true,
-                    preConfirm: async () => {
-                        try {
-                            const response = await $.ajax({
-                                url: `/puantaj/onayla/${userId}`,
-                                type: 'POST',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
-                            });
-                            return response;
-                        } catch (error) {
+        // Helper function to format TimeSpan to HH:mm
+        function formatTimeSpan(timeSpan) {
+            if (!timeSpan) return '';
 
-                            let errorMessage = 'Onaylama başarısız';
+            // If timeSpan is already in HH:mm format, return as is
+            if (typeof timeSpan === 'string' && timeSpan.includes(':')) {
+                return timeSpan.substring(0, 5); // Get HH:mm part
+            }
 
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
-                            }
+            // If timeSpan is in .NET TimeSpan format (e.g., "08:00:00")
+            if (typeof timeSpan === 'string') {
+                const parts = timeSpan.split(':');
+                if (parts.length >= 2) {
+                    return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+                }
+            }
 
-                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
-                        }
-                    },
-                    allowOutsideClick: () => !Swal.isLoading()
-                });
+            return '';
+        }
 
-                if (result.isConfirmed) {
-                    await Swal.fire({
-                        title: 'Başarılı!',
-                        text: 'Puantaj başarıyla onaylandı.',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+        // Helper function to create status badge
+        function getStatusBadge(status, statusText) {
+            let badgeClass = 'bg-secondary';
+            let icon = 'fas fa-clock';
 
-                    workRecordsTable.ajax.reload(null, false);
+            switch (status) {
+                case 0: // Pending
+                    badgeClass = 'bg-warning text-dark';
+                    icon = 'fas fa-clock';
+                    break;
+                case 1: // Approved
+                    badgeClass = 'bg-success';
+                    icon = 'fas fa-check';
+                    break;
+                case 2: // Rejected
+                    badgeClass = 'bg-danger';
+                    icon = 'fas fa-times';
+                    break;
+            }
+
+            return `<small class="badge ${badgeClass}">
+                        <i class="${icon} me-1"></i>${statusText || 'Bekliyor'}
+                    </small>`;
+        }
+
+        // Masraf Modal Setup
+        function setupExpenseModal() {
+            // Masraf modal'ı açıldığında
+            $('#expenseModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                currentEditingDay = button.data('day');
+
+                if (currentEditingDay) {
+                    const date = new Date(currentYear, currentMonth - 1, currentEditingDay);
+                    const dateStr = `${currentEditingDay.toString().padStart(2, '0')}.${currentMonth.toString().padStart(2, '0')}.${currentYear} ${getDayOfWeekTurkish(date.getDay())}`;
+                    $('#modalDateInfo').text(dateStr);
+
+                    loadExpensesForDay(currentEditingDay);
+                    clearExpenseForm();
+                }
+            });
+
+            // Form submit işlemi
+            $('#expenseForm').on('submit', function(e) {
+                e.preventDefault();
+
+                if (this.checkValidity()) {
+                    addExpenseToDay();
                 }
 
+                $(this).addClass('was-validated');
+            });
+
+            // Masraf silme butonları
+            $(document).on('click', '.remove-expense-btn', function() {
+                const expenseIndex = $(this).data('index');
+                removeExpenseFromDay(expenseIndex);
+            });
+
+            // Masraf türü Select2 initialize
+            $('#ddExpense').select2({
+                placeholder: 'Masraf türü seçin',
+                theme: 'bootstrap-5',
+                dropdownParent: $('#expenseModal'),
+                width: '100%'
+            });
+        }
+
+        // Belirli bir gün için masrafları yükle ve göster
+        function loadExpensesForDay(day) {
+            if (!expenseData[day]) {
+                expenseData[day] = [];
+            }
+
+            displayCurrentExpenses(day);
+            updateTotalExpense(day);
+        }
+
+        // Mevcut masrafları listele
+        function displayCurrentExpenses(day) {
+            const expenses = expenseData[day] || [];
+            const expensesList = $('#expenseItemsList');
+            const currentExpensesSection = $('#currentExpensesList');
+
+            expensesList.empty();
+
+            if (expenses.length > 0) {
+                currentExpensesSection.show();
+
+                expenses.forEach((expense, index) => {
+                    const expenseTypeText = getExpenseTypeText(expense.type);
+                    const expenseItem = `
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${expenseTypeText}</h6>
+                                <p class="mb-1"><strong>${expense.amount.toFixed(2)} ₺</strong></p>
+                                ${expense.description ? `<small class="text-muted">${expense.description}</small>` : ''}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-expense-btn"
+                                    data-index="${index}" title="Masrafı Sil">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    expensesList.append(expenseItem);
+                });
+            } else {
+                currentExpensesSection.hide();
+            }
+        }
+
+        // Masraf türü metnini al
+        function getExpenseTypeText(type) {
+            const types = {
+                'yol': 'Yol Masrafı',
+                'yemek': 'Yemek Masrafı',
+                'konaklama': 'Konaklama Masrafı',
+                'yakit': 'Yakıt Masrafı',
+                'otopark': 'Otopark Masrafı',
+                'diger': 'Diğer Masraf'
+            };
+            return types[type] || type;
+        }
+
+        // Yeni masraf ekle
+        function addExpenseToDay() {
+            const expenseType = $('#ddExpense').val();
+            const amount = parseFloat($('#txtAmount').val());
+            const description = $('#txtDescription').val();
+            const receiptFile = $('#fileReceiptImage')[0].files[0];
+            if(expenseType == null || expenseType == undefined || isNaN(amount) || amount==null ){
+                toastr.warning("Masraf türünü ya da tutarı kontrol ediniz")
+                return;
+            }
+            if (!expenseData[currentEditingDay]) {
+                expenseData[currentEditingDay] = [];
+            }
+
+            const newExpense = {
+                type: expenseType,
+                amount: amount,
+                description: description,
+                receiptFile: receiptFile,
+                receiptName: receiptFile ? receiptFile.name : null,
+            };
+
+            expenseData[currentEditingDay].push(newExpense);
+
+            // Listeyi güncelle
+            displayCurrentExpenses(currentEditingDay);
+            updateTotalExpense(currentEditingDay);
+            updateExpenseButton(currentEditingDay);
+
+            // Formu temizle
+            clearExpenseForm();
+
+            toastr.success('Masraf eklendi!', 'Başarılı!');
+        }
+
+        // Masraf sil
+        function removeExpenseFromDay(index) {
+            if (expenseData[currentEditingDay] && expenseData[currentEditingDay][index]) {
+                expenseData[currentEditingDay].splice(index, 1);
+
+                displayCurrentExpenses(currentEditingDay);
+                updateTotalExpense(currentEditingDay);
+                updateExpenseButton(currentEditingDay);
+
+                toastr.info('Masraf silindi!', 'Bilgi');
+            }
+        }
+
+        // Toplam masrafı güncelle
+        function updateTotalExpense(day) {
+            const expenses = expenseData[day] || [];
+            const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+            $('#totalExpenseAmount').text(total.toFixed(2) + ' ₺');
+
+            if (total > 0) {
+                $('#totalExpenseSection').show();
+            } else {
+                $('#totalExpenseSection').hide();
+            }
+        }
+
+        // Masraf butonunu güncelle
+        function updateExpenseButton(day) {
+            const expenses = expenseData[day] || [];
+            const button = $(`.expense-modal-btn[data-day="${day}"]`);
+            const count = expenses.length;
+
+            button.find('.expense-count').text(count);
+
+            if (count > 0) {
+                button.removeClass('btn-outline-primary').addClass('btn-success');
+            } else {
+                button.removeClass('btn-success').addClass('btn-outline-primary');
+            }
+        }
+
+        // Formu temizle
+        function clearExpenseForm() {
+            $('#expenseForm')[0].reset();
+            $('#expenseForm').removeClass('was-validated');
+            $('#ddExpense').val('').trigger('change');
+        }
+
+        function initializeTimepickers() {
+            // Moment.js locale'ını Türkçe yap
+            moment.locale('tr');
+
+            // Başlama saati için bootstrap material datetimepicker
+            $('.start-time').each(function () {
+                $(this).bootstrapMaterialDatePicker({
+                    format: 'HH:mm',
+                    shortTime: false,
+                    date: false,
+                    time: true,
+                    monthPicker: false,
+                    yearPicker: false,
+                    dayPicker: false,
+                    hourPicker: true,
+                    minutePicker: true,
+                    minuteStep: 15,
+                    clearButton: true,
+                    nowButton: true,
+                    switchOnClick: true,
+                    ampm: false,
+                    okText: 'Tamam',
+                    cancelText: 'İptal',
+                    clearText: 'Temizle',
+                    nowText: 'Şimdi',
+                    lang: 'tr',
+                    currentDate: moment().startOf('day').add(8, 'hours'),
+                    showTodayBtn: false,
+                    showClear: true,
+                    showClose: true
+                }).on('change', function () {
+                    validateTimeInputs($(this));
+                });
+
+                $(this).closest('.input-group').find('.fa-clock').parent().on('click', function () {
+                    $(this).closest('.input-group').find('.start-time').focus();
+                });
+            });
+
+            // Bırakma saati için bootstrap material datetimepicker
+            $('.end-time').each(function () {
+                $(this).bootstrapMaterialDatePicker({
+                    format: 'HH:mm',
+                    shortTime: false,
+                    date: false,
+                    time: true,
+                    monthPicker: false,
+                    yearPicker: false,
+                    dayPicker: false,
+                    hourPicker: true,
+                    minutePicker: true,
+                    minuteStep: 15,
+                    clearButton: true,
+                    nowButton: true,
+                    switchOnClick: true,
+                    ampm: false,
+                    okText: 'Tamam',
+                    cancelText: 'İptal',
+                    clearText: 'Temizle',
+                    nowText: 'Şimdi',
+                    lang: 'tr',
+                    currentDate: moment().startOf('day').add(17, 'hours'),
+                    showTodayBtn: false,
+                    showClear: true,
+                    showClose: true
+                }).on('change', function () {
+                    validateTimeInputs($(this));
+                });
+
+                $(this).closest('.input-group').find('.fa-clock').parent().on('click', function () {
+                    $(this).closest('.input-group').find('.end-time').focus();
+                });
+            });
+        }
+
+        function validateTimeInputs(changedInput) {
+            const row = changedInput.closest('tr');
+            const startTimeInput = row.find('.start-time');
+            const endTimeInput = row.find('.end-time');
+
+            const startTime = startTimeInput.val();
+            const endTime = endTimeInput.val();
+
+            if (startTime && endTime) {
+                const startMoment = moment(startTime, 'HH:mm');
+                const endMoment = moment(endTime, 'HH:mm');
+
+                if (endMoment.isSameOrBefore(startMoment)) {
+                    toastr.warning('Bırakma saati başlama saatinden erken olamaz!', 'Uyarı!');
+
+                    if (changedInput.hasClass('end-time')) {
+                        const newEndTime = startMoment.add(1, 'hour').format('HH:mm');
+                        endTimeInput.val(newEndTime);
+                    }
+                    else if (changedInput.hasClass('start-time')) {
+                        const newEndTime = startMoment.add(1, 'hour').format('HH:mm');
+                        endTimeInput.val(newEndTime);
+                    }
+                }
+            }
+        }
+
+        function showTableLoading() {
+            $('#dynamicTableContainer').addClass('table-loading');
+            $('#tableLoadingSpinner').show();
+            $('#tableContent').hide();
+        }
+
+        // Loading spinner'ı gizle
+        function hideTableLoading() {
+            $('#dynamicTableContainer').removeClass('table-loading');
+            $('#tableLoadingSpinner').hide();
+            $('#tableContent').show();
+        }
+
+        function initializeSelect2() {
+            $('.equipment-select').select2({
+                placeholder: 'Ekipman seçin',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('.province-select').select2({
+                placeholder: 'İl seçin',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('.district-select').select2({
+                placeholder: 'İlçe seçin',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        function getDayOfWeekTurkish(day) {
+            const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+            return days[day];
+        }
+
+        async function saveWorkRecords() {
+            const workRecords = [];
+            const selectedUserId = $('#user-select').val();
+
+            if (!selectedUserId) {
+                toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
+                return;
+            }
+
+            $('#workRecordsTableBody tr').each(function () {
+                if ($(this).find('td').length === 1) return; // Skip message rows
+
+                const day = $(this).data('day');
+                const recordId = $(this).data('record-id') || null;
+                const isWeekend = $(this).find('.weekend-checkbox').is(':checked');
+                const startTime = $(this).find('.start-time').val();
+                const endTime = $(this).find('.end-time').val();
+                const project = $(this).find('.project-input').val();
+                const equipment = $(this).find('.equipment-select').val();
+                const province = $(this).find('.province-select').val();
+                const district = $(this).find('.district-select').val();
+
+                // Masraf bilgilerini al
+                const dayExpenses = expenseData[day] || [];
+                const expenses = dayExpenses.map(exp => ({
+                    expense: exp.type,
+                    description: exp.description || null,
+                    amount: exp.amount,
+                    receiptImageUrl: null // Fiş yükleme sonrası güncellenecek
+                }));
+
+                const hasBreakfast = $(this).find('.meal-checkbox[data-meal="S"]').is(':checked');
+                const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
+                const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
+                const hasNightMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');
+                const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                workRecords.push({
+                    Id: recordId,
+                    Date: formattedDate,
+                    IsWeekend: isWeekend,
+                    StartTime: startTime,
+                    EndTime: endTime,
+                    Project: project,
+                    Equipment: equipment,
+                    Province: province,
+                    District: district,
+                    HasBreakfast: hasBreakfast,
+                    HasLunch: hasLunch,
+                    HasDinner: hasDinner,
+                    HasNightMeal: hasNightMeal,
+                    Expenses: expenses,
+                    UserId: selectedUserId
+                });
+            });
+
+            try {
+                const response = await $.ajax({
+                    url: '/puantaj/toplu-ekle',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(workRecords),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                if (response.isSuccess) {
+                    toastr.success(response.message, 'Başarılı!');
+                    // Reload the data to show updated status
+                    await loadWorkRecordsByUser();
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                console.error('Hata:', error);
+                toastr.error('Puantaj kaydedilirken bir hata oluştu.', 'Hata!');
+            }
+        }
+
+        // Yıl ve ay değiştiğinde sadece kullanıcı seçiliyse veri yükle
+        $('#year-select, #month-select').on('change', function () {
+            const selectedUserId = $('#user-select').val();
+            if (selectedUserId) {
+                loadWorkRecordsByUser();
+            } else {
+                showEmptyTable();
+            }
+        });
+
+        async function getAssignedUsers() {
+            try {
+                const userSelects = $('.user-select');
+                if (!userSelects.length) {
+                    console.warn('User select elements not found');
+                    return;
+                }
+
+                // Select2'yi devre dışı bırak
+                userSelects.prop('disabled', true);
+
+                // Select2 için loading durumu
+                userSelects.each(function() {
+                    const currentSelect = $(this);
+                    currentSelect.empty();
+                    currentSelect.append('<option value="">Yükleniyor...</option>');
+
+                    // Eğer Select2 initialize edilmişse trigger et
+                    if (currentSelect.hasClass('select2-hidden-accessible')) {
+                        currentSelect.trigger('change');
+                    }
+                });
+
+                const response = await $.ajax({
+                    url: '/kullanici-yonetimi/liste',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    userSelects.each(function() {
+                        const currentSelect = $(this);
+                        currentSelect.empty();
+                        currentSelect.append('<option value="">Kullanıcı seçin</option>');
+
+                        response.data.forEach(user => {
+                            currentSelect.append(`<option value="${user.id}">${user.fullName}</option>`);
+                        });
+
+                        // Select2 için change event'ini trigger et
+                        if (currentSelect.hasClass('select2-hidden-accessible')) {
+                            currentSelect.trigger('change');
+                        }
+                    });
+                } else {
+                    throw new Error(response?.message || 'Atanmış kullanıcılar yüklenemedi');
+                }
+            } catch (error) {
+                console.error('Atanmış kullanıcılar yüklenirken hata:', error);
+
+                $('.user-select').each(function() {
+                    const currentSelect = $(this);
+                    currentSelect.html('<option value="">Kullanıcılar yüklenemedi</option>');
+
+                    // Select2 için change event'ini trigger et
+                    if (currentSelect.hasClass('select2-hidden-accessible')) {
+                        currentSelect.trigger('change');
+                    }
+                });
+
+                let errorMessage = 'Atanmış kullanıcılar yüklenirken hata oluştu';
+                if (error.responseJSON) {
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                toastr.error(errorMessage);
+            } finally {
+                $('.user-select').prop('disabled', false);
+            }
+        }
+
+        // Approve/Reject functions
+        async function approveWorkRecords() {
+            const selectedUserId = $('#user-select').val();
+            const year = parseInt($('#year-select').val());
+            const month = parseInt($('#month-select').val());
+
+            if (!selectedUserId) {
+                toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
+                return;
+            }
+
+            try {
+                const date = new Date(year, month - 1, 1);
+                const formattedDate = date.toISOString().split('T')[0];
+
+                const response = await $.ajax({
+                    url: '/puantaj/onayla',
+                    type: 'POST',
+                    data: {
+                        date: formattedDate,
+                        userId: selectedUserId
+                    },
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                if (response.isSuccess) {
+                    toastr.success('Puantaj onaylandı', 'Başarılı!');
+                    await loadWorkRecordsByUser();
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
             } catch (error) {
                 console.error('Onaylama hatası:', error);
-                throw error;
+                toastr.error('Onaylama sırasında bir hata oluştu', 'Hata!');
             }
         }
 
-        async function rejectWorkRecord(userId) {
+        async function rejectWorkRecords() {
+            const selectedUserId = $('#user-select').val();
+            const year = parseInt($('#year-select').val());
+            const month = parseInt($('#month-select').val());
+
+            if (!selectedUserId) {
+                toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
+                return;
+            }
+
             try {
-                const result = await Swal.fire({
-                    title: 'Puantajı Reddet',
-                    text: 'Bu puantajı reddetmek istediğinizden emin misiniz?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#ffc107',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="fas fa-user-slash"></i> Evet, Reddet',
-                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
-                    showLoaderOnConfirm: true,
-                    preConfirm: async () => {
-                        try {
-                            const response = await $.ajax({
-                                url: `/puantaj/red/${userId}`,
-                                type: 'POST',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
-                            });
-                            return response;
-                        } catch (error) {
+                const date = new Date(year, month - 1, 1);
+                const formattedDate = date.toISOString().split('T')[0];
 
-                            let errorMessage = 'Reddetme başarısız';
-
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
-                            }
-
-                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
-                        }
+                const response = await $.ajax({
+                    url: '/puantaj/reddet',
+                    type: 'POST',
+                    data: {
+                        date: formattedDate,
+                        userId: selectedUserId
                     },
-                    allowOutsideClick: () => !Swal.isLoading()
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
                 });
 
-                if (result.isConfirmed) {
-                    await Swal.fire({
-                        title: 'Başarılı!',
-                        text: 'Puantaj başarıyla reddedildi.',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-
-                    workRecordsTable.ajax.reload(null, false);
+                if (response.isSuccess) {
+                    toastr.success('Puantaj reddedildi', 'Başarılı!');
+                    await loadWorkRecordsByUser();
+                } else {
+                    toastr.error(response.message, 'Hata!');
                 }
-
             } catch (error) {
                 console.error('Reddetme hatası:', error);
-                throw error;
+                toastr.error('Reddetme sırasında bir hata oluştu', 'Hata!');
             }
         }
+
 
 
     </script>

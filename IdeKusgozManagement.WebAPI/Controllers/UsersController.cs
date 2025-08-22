@@ -6,32 +6,35 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebAPI.Controllers
 {
-    [RoleFilter("Admin")]
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, ICurrentUserService currentUserService)
         {
             _userService = userService;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
         /// Tüm kullanıcıları getirir
         /// </summary>
+        [RoleFilter("Admin", "Yönetici")]
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken = default)
         {
-            var result = await _userService.GetAllUsersAsync();
+            var result = await _userService.GetAllUsersAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// Admin, Şef, Yönetici rolüne sahip olan kullanıcıları getirir
         /// </summary>
+        [RoleFilter("Admin", "Yönetici")]
         [HttpGet("active-superiors")]
         public async Task<IActionResult> GetActiveSuperiorUsers()
         {
@@ -40,13 +43,41 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
+        /// ID'ye göre kendsine atanmış kullanıcıları getirir
+        /// </summary>
+        /// <param name="id">Kullanıcı ID'si</param>
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        [HttpGet("assigned-users")]
+        public async Task<IActionResult> GetAssignedUsersById([FromQuery] string id, CancellationToken cancellationToken = default)
+        {
+            var result = await _userService.GetAssignedUsersByIdAsync(id, cancellationToken);
+            return result.IsSuccess ? Ok(result) : NotFound(result);
+        }
+
+        /// <summary>
         /// ID'ye göre kullanıcı getirir
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>
+        [RoleFilter("Admin", "Yönetici")]
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetUserById(string id)
+        public async Task<IActionResult> GetUserById(string id, CancellationToken cancellationToken = default)
         {
-            var result = await _userService.GetUserByIdAsync(id);
+            var result = await _userService.GetUserByIdAsync(id, cancellationToken);
+            return result.IsSuccess ? Ok(result) : NotFound(result);
+        }
+
+        /// <summary>
+        /// Oturumda olan kullanıcının kendi bilgilerini getirir
+        /// </summary>
+        [HttpGet("my-user")]
+        public async Task<IActionResult> GetMyUser(CancellationToken cancellationToken = default)
+        {
+            var currentUserId = _currentUserService.GetCurrentUserId();
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return BadRequest("Kullanıcı kimliği bulunamadı");
+            }
+            var result = await _userService.GetUserByIdAsync(currentUserId, cancellationToken);
             return result.IsSuccess ? Ok(result) : NotFound(result);
         }
 
@@ -54,15 +85,16 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Yeni kullanıcı oluşturur
         /// </summary>
         /// <param name="createUserDTO">Kullanıcı bilgileri</param>
+        [RoleFilter("Admin", "Yönetici")]
         [HttpPost]
-        public async Task<IActionResult> CreateUser([FromBody] CreateUserDTO createUserDTO)
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDTO createUserDTO, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = await _userService.CreateUserAsync(createUserDTO);
+            var result = await _userService.CreateUserAsync(createUserDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -72,14 +104,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="id">Kullanıcı ID'si</param>
         /// <param name="updateUserDTO">Güncellenecek bilgiler</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDTO updateUserDTO)
+        public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = await _userService.UpdateUserAsync(id, updateUserDTO);
+            var result = await _userService.UpdateUserAsync(id, updateUserDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -87,6 +119,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Kullanıcıyı siler (soft delete)
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>
+        [RoleFilter("Admin", "Yönetici")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
@@ -98,6 +131,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Kullanıcıya rol atar
         /// </summary>
         /// <param name="assignRoleDTO">Rol atama bilgileri</param>
+        [RoleFilter("Admin", "Yönetici")]
         [HttpPost("assign-role")]
         public async Task<IActionResult> AssignRole([FromBody] AssignRoleDTO assignRoleDTO)
         {
@@ -114,6 +148,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Kullanıcıyı aktifleştirir
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>
+        [RoleFilter("Admin", "Yönetici")]
         [HttpPost("{id}/activate")]
         public async Task<IActionResult> ActivateUser(string id)
         {
@@ -125,6 +160,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Kullanıcıyı pasifleştirir
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>
+        [RoleFilter("Admin", "Yönetici")]
         [HttpPost("{id}/deactivate")]
         public async Task<IActionResult> DeactivateUser(string id)
         {
@@ -137,6 +173,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="userId">Kullanıcı ID'si</param>
         /// <param name="changePasswordDTO">Şifre değiştirme bilgileri</param>
+        [RoleFilter("Admin", "Yönetici")]
         [HttpPost("{userId}/change-password")]
         public async Task<IActionResult> ChangePassword(string userId, [FromBody] ChangePasswordDTO changePasswordDTO)
         {

@@ -1,3 +1,4 @@
+using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
 using IdeKusgozManagement.Domain.Enums;
 
 namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
@@ -30,5 +31,6 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
             WorkRecordStatus.Rejected => "Reddedildi",
             _ => "Bilinmiyor"
         };
+        public List<WorkRecordExpenseDTO>? Expenses { get; set; }
     }
 }

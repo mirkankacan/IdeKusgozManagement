@@ -23,7 +23,5 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
         Task<ApiResponse<bool>> ActivateRoleAsync(string id, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> DeactivateRoleAsync(string id, CancellationToken cancellationToken = default);
-
-        Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default);
     }
 }

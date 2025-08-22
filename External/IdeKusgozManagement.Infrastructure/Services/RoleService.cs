@@ -1,6 +1,5 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.RoleDTOs;
-using IdeKusgozManagement.Application.DTOs.UserDTOs;
 using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
@@ -24,6 +23,24 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _roleManager = roleManager;
             _userManager = userManager;
             _logger = logger;
+        }
+
+        public async Task<ApiResponse<bool>> IsUserInRoleAsync(string userId, string roleName)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
+
+                var isInRole = await _userManager.IsInRoleAsync(user, roleName);
+                return ApiResponse<bool>.Success(isInRole);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "IsUserInRoleAsync işleminde hata oluştu. UserId:{userId} RoleName: {RoleName}", userId, roleName);
+                return ApiResponse<bool>.Error("Kullanıcı rol kontolü yapılırken hata oluştu");
+            }
         }
 
         public async Task<ApiResponse<IEnumerable<RoleDTO>>> GetAllRolesAsync()
@@ -257,45 +274,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "DeactivateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
                 return ApiResponse<bool>.Error("Rol pasifleştirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetUsersInRoleAsync(string roleName)
-        {
-            try
-            {
-                var usersInRole = await _userManager.GetUsersInRoleAsync(roleName);
-                var userDTOs = usersInRole.Select(user =>
-                {
-                    var userDto = user.Adapt<UserDTO>();
-                    userDto.RoleName = roleName;
-                    return userDto;
-                }).ToList();
-
-                return ApiResponse<IEnumerable<UserDTO>>.Success(userDTOs);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetUsersInRoleAsync işleminde hata oluştu. RoleName: {RoleName}", roleName);
-                return ApiResponse<IEnumerable<UserDTO>>.Error("Role sahip kullanıcılar getirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<bool>> IsUserInRoleAsync(string userId, string roleName)
-        {
-            try
-            {
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                    return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
-
-                var isInRole = await _userManager.IsInRoleAsync(user, roleName);
-                return ApiResponse<bool>.Success(isInRole);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "IsUserInRoleAsync işleminde hata oluştu. UserId:{userId} RoleName: {RoleName}", userId, roleName);
-                return ApiResponse<bool>.Error("Kullanıcı rol kontolü yapılırken hata oluştu");
             }
         }
 

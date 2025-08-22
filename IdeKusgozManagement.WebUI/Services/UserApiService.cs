@@ -61,11 +61,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<UserViewModel>> GetUserByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<UserViewModel>> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/users/{id}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/users/{userId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -78,7 +78,7 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetUserByIdAsync işleminde hata oluştu. UserId: {UserId}", id);
+                _logger.LogError(ex, "GetUserByIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -109,14 +109,14 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<UserViewModel>> UpdateUserAsync(string id, UpdateUserViewModel model, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<UserViewModel>> UpdateUserAsync(string userId, UpdateUserViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"api/users/{id}", content, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/users/{userId}", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -130,16 +130,16 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "UpdateUserAsync işleminde hata oluştu. UserId: {UserId}", id);
+                _logger.LogError(ex, "UpdateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteUserAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DeleteUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"api/users/{id}", cancellationToken);
+                var response = await _httpClient.DeleteAsync($"api/users/{userId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -152,7 +152,7 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteUserAsync işleminde hata oluştu. UserId: {UserId}", id);
+                _logger.LogError(ex, "DeleteUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -183,11 +183,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateUserAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> ActivateUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/users/{id}/activate", null, cancellationToken);
+                var response = await _httpClient.PostAsync($"api/users/{userId}/activate", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -200,16 +200,16 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ActivateUserAsync işleminde hata oluştu. UserId: {UserId}", id);
+                _logger.LogError(ex, "ActivateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateUserAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DeactivateUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/users/{id}/deactivate", null, cancellationToken);
+                var response = await _httpClient.PostAsync($"api/users/{userId}/deactivate", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -222,7 +222,7 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeactivateUserAsync işleminde hata oluştu. UserId: {UserId}", id);
+                _logger.LogError(ex, "DeactivateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -250,6 +250,50 @@ namespace IdeKusgozManagement.WebUI.Services
             {
                 _logger.LogError(ex, "ChangePasswordAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetAssignedUsersByIdAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/users/assigned-users?id={userId}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<UserViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetAssignedUsersByIdAsync işleminde hata oluştu");
+                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<UserViewModel>> GetMyUserAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/users/my-user", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<UserViewModel>>(content);
+                    return apiResponse ?? new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Kullanıcı bulunamadı" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetMyUserAsync işleminde hata oluştu");
+                return new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
     }

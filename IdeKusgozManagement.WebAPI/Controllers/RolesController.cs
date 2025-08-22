@@ -126,16 +126,5 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             var result = await _roleService.DeactivateRoleAsync(id);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
-
-        /// <summary>
-        /// Role sahip kullanıcıları getirir
-        /// </summary>
-        /// <param name="roleName">Rol adı</param>
-        [HttpGet("{roleName}/users")]
-        public async Task<IActionResult> GetUsersInRole(string roleName)
-        {
-            var result = await _roleService.GetUsersInRoleAsync(roleName);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
     }
 }

@@ -1,6 +1,8 @@
+using System.Threading.Tasks;
 using IdeKusgozManagement.WebUI.Models.WorkRecordModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Controllers
@@ -9,12 +11,9 @@ namespace IdeKusgozManagement.WebUI.Controllers
     public class WorkRecordController : Controller
     {
         private readonly IWorkRecordApiService _workRecordApiService;
-        private readonly IWorkRecordExpenseApiService _workRecordExpenseApiService;
-
-        public WorkRecordController(IWorkRecordApiService workRecordApiService, IWorkRecordExpenseApiService workRecordExpenseApiService)
+        public WorkRecordController(IWorkRecordApiService workRecordApiService)
         {
             _workRecordApiService = workRecordApiService;
-            _workRecordExpenseApiService = workRecordExpenseApiService;
         }
 
         [Authorize(Roles = "Admin,Yönetici,Şef")]
@@ -22,6 +21,13 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+        [Authorize(Roles = "Admin,Yönetici,Şef")]
+        [HttpGet("kullanici-listesi")]
+        public async Task<IActionResult> GetListByDateAndUser(DateTime date, string userId, CancellationToken cancellationToken = default)
+        {
+            var response = await _workRecordApiService.GetWorkRecordsByDateAndUserAsync(date,userId,cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
         [Authorize]

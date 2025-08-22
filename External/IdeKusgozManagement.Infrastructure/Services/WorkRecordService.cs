@@ -12,18 +12,15 @@ namespace IdeKusgozManagement.Infrastructure.Services
     public class WorkRecordService : IWorkRecordService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<WorkRecordService> _logger;
         private readonly ICurrentUserService _currentUserService;
 
         public WorkRecordService(
             IUnitOfWork unitOfWork,
-            IHttpContextAccessor httpContextAccessor,
             ILogger<WorkRecordService> logger,
             ICurrentUserService currentUserService)
         {
             _unitOfWork = unitOfWork;
-            _httpContextAccessor = httpContextAccessor;
             _logger = logger;
             _currentUserService = currentUserService;
         }
@@ -106,55 +103,149 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                var workRecords = createWorkRecordDTOs.Select(dto =>
+                var currentUserId = _currentUserService.GetCurrentUserId();
+                if (string.IsNullOrEmpty(currentUserId))
                 {
-                    var workRecord = dto.Adapt<IdtWorkRecord>();
-                    workRecord.Status = WorkRecordStatus.Pending;
-                    return workRecord;
-                }).ToList();
+                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcı kimliği bulunamadı");
+                }
 
-                var createdWorkRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .AddRangeAsync(workRecords, cancellationToken);
+                // Tüm tarihler için mevcut kayıtları bir seferde al
+                var dates = createWorkRecordDTOs.Select(dto => dto.Date.Date).Distinct().ToList();
+                var existingWorkRecords = await _unitOfWork.Repository<IdtWorkRecord>()
+                    .FindAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == currentUserId, cancellationToken);
 
-                // Tüm masrafları topla ve ekle
-                var allExpenses = new List<IdtWorkRecordExpense>();
-                for (int i = 0; i < createWorkRecordDTOs.Count; i++)
+                var existingRecordsDict = existingWorkRecords.ToDictionary(wr => wr.Date.Date);
+
+                var recordsToUpdate = new List<IdtWorkRecord>();
+                var recordsToAdd = new List<IdtWorkRecord>();
+                var expensesToDelete = new List<string>(); // WorkRecord ID'leri
+                var allExpensesToAdd = new List<IdtWorkRecordExpense>();
+                var resultWorkRecords = new List<WorkRecordDTO>();
+
+                foreach (var createDTO in createWorkRecordDTOs)
                 {
-                    if (createWorkRecordDTOs[i].Expenses != null && createWorkRecordDTOs[i].Expenses.Any())
+                    var dateKey = createDTO.Date.Date;
+
+                    if (existingRecordsDict.TryGetValue(dateKey, out var existingWorkRecord))
                     {
-                        var expenses = createWorkRecordDTOs[i].Expenses.Select(exp =>
+                        // Onaylanmış kayıtları atla
+                        if (existingWorkRecord.Status == WorkRecordStatus.Approved)
                         {
-                            var expense = exp.Adapt<IdtWorkRecordExpense>();
-                            expense.WorkRecordId = workRecords[i].Id;
-                            return expense;
-                        });
-                        allExpenses.AddRange(expenses);
+                            continue;
+                        }
+
+                        // Güncelleme için hazırla
+                        existingWorkRecord.IsWeekend = createDTO.IsWeekend;
+                        existingWorkRecord.StartTime = createDTO.StartTime;
+                        existingWorkRecord.EndTime = createDTO.EndTime;
+                        existingWorkRecord.Project = createDTO.Project;
+                        existingWorkRecord.Equipment = createDTO.Equipment;
+                        existingWorkRecord.Province = createDTO.Province;
+                        existingWorkRecord.District = createDTO.District;
+                        existingWorkRecord.HasBreakfast = createDTO.HasBreakfast;
+                        existingWorkRecord.HasLunch = createDTO.HasLunch;
+                        existingWorkRecord.HasDinner = createDTO.HasDinner;
+                        existingWorkRecord.HasNightMeal = createDTO.HasNightMeal;
+                        existingWorkRecord.Status = WorkRecordStatus.Pending; // Güncelleme sonrası tekrar pending yap
+
+                        recordsToUpdate.Add(existingWorkRecord);
+
+                        // Mevcut masrafları silmek için işaretle
+                        expensesToDelete.Add(existingWorkRecord.Id);
+
+                        // Yeni masrafları hazırla
+                        if (createDTO.Expenses != null && createDTO.Expenses.Any())
+                        {
+                            var expenses = createDTO.Expenses.Select(exp =>
+                            {
+                                var expense = exp.Adapt<IdtWorkRecordExpense>();
+                                expense.WorkRecordId = existingWorkRecord.Id;
+                                return expense;
+                            });
+                            allExpensesToAdd.AddRange(expenses);
+                        }
+
+                        resultWorkRecords.Add(existingWorkRecord.Adapt<WorkRecordDTO>());
+                    }
+                    else
+                    {
+                        // Yeni kayıt oluşturmak için hazırla
+                        var workRecord = createDTO.Adapt<IdtWorkRecord>();
+                        workRecord.Status = WorkRecordStatus.Pending;
+
+                        recordsToAdd.Add(workRecord);
+
+                        // Masrafları sonra eklemek için hazırla (workRecord ID'si henüz yok)
+                        resultWorkRecords.Add(workRecord.Adapt<WorkRecordDTO>());
                     }
                 }
 
-                if (allExpenses.Any())
+                // Toplu güncelleme işlemleri
+                if (recordsToUpdate.Any())
                 {
-                    await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .AddRangeAsync(allExpenses, cancellationToken);
+                    await _unitOfWork.Repository<IdtWorkRecord>().UpdateRangeAsync(recordsToUpdate, cancellationToken);
+                }
+
+                // Toplu ekleme işlemleri
+                IEnumerable<IdtWorkRecord> addedRecords = new List<IdtWorkRecord>();
+                if (recordsToAdd.Any())
+                {
+                    addedRecords = await _unitOfWork.Repository<IdtWorkRecord>().AddRangeAsync(recordsToAdd, cancellationToken);
+                }
+
+                // Mevcut masrafları toplu silme
+                if (expensesToDelete.Any())
+                {
+                    foreach (var workRecordId in expensesToDelete)
+                    {
+                        await _unitOfWork.Repository<IdtWorkRecordExpense>()
+                            .DeleteRangeAsync(exp => exp.WorkRecordId == workRecordId, cancellationToken);
+                    }
+                }
+
+                // Yeni eklenen kayıtlar için masrafları hazırla
+                var addedRecordsList = addedRecords.ToList();
+                for (int i = 0; i < addedRecordsList.Count; i++)
+                {
+                    var correspondingDTO = createWorkRecordDTOs
+                        .Where(dto => !existingRecordsDict.ContainsKey(dto.Date.Date))
+                        .Skip(i)
+                        .FirstOrDefault();
+
+                    if (correspondingDTO?.Expenses != null && correspondingDTO.Expenses.Any())
+                    {
+                        var expenses = correspondingDTO.Expenses.Select(exp =>
+                        {
+                            var expense = exp.Adapt<IdtWorkRecordExpense>();
+                            expense.WorkRecordId = addedRecordsList[i].Id;
+                            return expense;
+                        });
+                        allExpensesToAdd.AddRange(expenses);
+                    }
+                }
+
+                // Tüm masrafları toplu ekleme
+                if (allExpensesToAdd.Any())
+                {
+                    await _unitOfWork.Repository<IdtWorkRecordExpense>().AddRangeAsync(allExpensesToAdd, cancellationToken);
                 }
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                var workRecordDTOs = createdWorkRecords.Select(wr => wr.Adapt<WorkRecordDTO>()).ToList();
+                _logger.LogInformation("Toplu iş kaydı işlemi başarıyla tamamlandı. İşlenen kayıt sayısı: {Count}, Güncellenen: {UpdatedCount}, Yeni eklenen: {AddedCount}, UserId: {UserId}",
+                    resultWorkRecords.Count, recordsToUpdate.Count, recordsToAdd.Count, currentUserId);
 
-                _logger.LogInformation("Toplu iş kaydı başarıyla oluşturuldu. Kayıt sayısı: {Count}, EkleyenUserId: {UserId}", createdWorkRecords.Count(), _currentUserService.GetCurrentUserId());
-
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs, "Toplu iş kayıtları başarıyla oluşturuldu");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(resultWorkRecords,
+                    $"Toplu iş kayıtları başarıyla işlendi. {recordsToUpdate.Count} kayıt güncellendi, {recordsToAdd.Count} yeni kayıt eklendi.");
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "BatchCreateWorkRecordsAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu iş kayıtları oluşturulurken hata oluştu");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu iş kayıtları işlenirken hata oluştu");
             }
         }
-
         public async Task<ApiResponse<WorkRecordDTO>> UpdateWorkRecordAsync(string id, UpdateWorkRecordDTO updateWorkRecordDTO, CancellationToken cancellationToken = default)
         {
             try

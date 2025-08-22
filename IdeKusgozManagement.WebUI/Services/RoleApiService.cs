@@ -223,27 +223,5 @@ namespace IdeKusgozManagement.WebUI.Services
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
-
-        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/roles/{roleName}/users", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<UserViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Kullanıcılar getirilemedi" };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetUsersInRoleAsync işleminde hata oluştu. RoleName: {RoleName}", roleName);
-                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
-        }
     }
 }

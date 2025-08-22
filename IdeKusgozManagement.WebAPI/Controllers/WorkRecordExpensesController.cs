@@ -2,6 +2,7 @@
 using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
 using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,10 +14,11 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class WorkRecordExpensesController : ControllerBase
     {
         private readonly IWorkRecordExpenseService _workRecordExpenseService;
-
-        public WorkRecordExpensesController(IWorkRecordExpenseService workRecordExpenseService)
+        private readonly ICurrentUserService _currentUserService;
+        public WorkRecordExpensesController(IWorkRecordExpenseService workRecordExpenseService, ICurrentUserService currentUserService)
         {
             _workRecordExpenseService = workRecordExpenseService;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -118,7 +120,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet("my-expenses")]
         public async Task<IActionResult> GetMyExpenses(CancellationToken cancellationToken = default)
         {
-            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserId = _currentUserService.GetCurrentUserId();
+
             if (string.IsNullOrEmpty(currentUserId))
             {
                 return BadRequest("Kullanıcı kimliği bulunamadı");

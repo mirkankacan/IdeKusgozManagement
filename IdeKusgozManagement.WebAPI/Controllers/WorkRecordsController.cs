@@ -3,6 +3,7 @@ using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,10 +15,11 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class WorkRecordsController : ControllerBase
     {
         private readonly IWorkRecordService _workRecordService;
-
-        public WorkRecordsController(IWorkRecordService workRecordService)
+        private readonly ICurrentUserService _currentUserService;
+        public WorkRecordsController(IWorkRecordService workRecordService, ICurrentUserService currentUserService)
         {
             _workRecordService = workRecordService;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -49,7 +51,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet("my-records")]
         public async Task<IActionResult> GetMyWorkRecords(CancellationToken cancellationToken = default)
         {
-            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserId = _currentUserService.GetCurrentUserId();
             if (string.IsNullOrEmpty(currentUserId))
             {
                 return BadRequest("Kullanıcı kimliği bulunamadı");

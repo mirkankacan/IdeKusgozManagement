@@ -1,4 +1,6 @@
-﻿namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
+﻿using IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels;
+
+namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
 {
     public class WorkRecordViewModel
     {
@@ -23,5 +25,6 @@
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public string? UpdatedBy { get; set; }
+        public List<WorkRecordExpenseViewModel>? Expenses { get; set; }
     }
 }
