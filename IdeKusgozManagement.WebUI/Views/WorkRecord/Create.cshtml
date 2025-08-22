@@ -799,14 +799,14 @@
                     expense: exp.type,
                     description: exp.description || null,
                     amount: exp.amount,
-                    receiptImageUrl: null // Fiş yükleme sonrası güncellenecek
+                    receiptImageUrl: null
                 }));
 
                 const hasBreakfast = $(this).find('.meal-checkbox[data-meal="S"]').is(':checked');
                 const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
                 const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
                 const hasNightMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');
-                    const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
                 workRecords.push({
                     Date: formattedDate,

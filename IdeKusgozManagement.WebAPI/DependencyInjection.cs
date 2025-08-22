@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.ObjectModel;
+using System.Data;
 using System.Net;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Data.Context;
@@ -17,33 +18,67 @@ namespace IdeKusgozManagement.WebAPI
     {
         public static IServiceCollection AddWebAPIServices(this IServiceCollection services, IConfiguration configuration, IHostBuilder host)
         {
+            var connectionString = configuration.GetConnectionString("SqlConnection");
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
             Log.Logger = new LoggerConfiguration()
-           .MinimumLevel.Information()
-           .Enrich.FromLogContext()
-           .Enrich.WithProperty("Application", "IdeKusgoz.WebAPI")
-           .Enrich.WithProperty("Environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production")
-           .Enrich.WithClientIp()
-           .WriteTo.Console(
-               restrictedToMinimumLevel: LogEventLevel.Information,
-               outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
+             .MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Application", "IdeKusgoz.WebAPI")
+            .Enrich.WithProperty("Environment", environment)
+            .Enrich.WithClientIp()
+            .Enrich.WithMachineName()
+            .Enrich.WithThreadId()
+            // Console - only in Development
+            .WriteTo.Logger(lc =>
+            {
+                if (environment == "Development")
+                {
+                    lc.WriteTo.Console(
+                        restrictedToMinimumLevel: LogEventLevel.Information,
+                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}");
+                }
+            })
            .WriteTo.File("logs/api-application-.log",
                restrictedToMinimumLevel: LogEventLevel.Information,
                rollingInterval: RollingInterval.Day,
                retainedFileCountLimit: 30,
                fileSizeLimitBytes: 10_000_000,
                rollOnFileSizeLimit: true,
+               shared: true,
                outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-           .WriteTo.MSSqlServer(
-               connectionString: configuration.GetConnectionString("SqlConnection"),
-               sinkOptions: new Serilog.Sinks.MSSqlServer.MSSqlServerSinkOptions
-               {
-                   TableName = "Logs",
-                   AutoCreateSqlTable = true,
-                   BatchPostingLimit = 50,
-                   BatchPeriod = TimeSpan.FromSeconds(5)
-               },
-               restrictedToMinimumLevel: LogEventLevel.Information,
-               columnOptions: GetColumnOptions())
+        // Information Logs - Separate table with filter
+        .WriteTo.Logger(lc => lc
+            .Filter.ByIncludingOnly(evt => evt.Level == LogEventLevel.Information || evt.Level == LogEventLevel.Debug)
+            .WriteTo.MSSqlServer(
+                connectionString: connectionString,
+                sinkOptions: new MSSqlServerSinkOptions
+                {
+                    TableName = "InformationLogs",
+                    SchemaName = "dbo",
+                    AutoCreateSqlTable = true,
+                    BatchPostingLimit = 1000, // Higher for better performance
+                    BatchPeriod = TimeSpan.FromSeconds(30) // Less frequent writes
+                },
+                columnOptions: GetInformationColumnOptions()))
+
+        // Error/Warning Logs - Separate table
+        .WriteTo.Logger(lc => lc
+            .Filter.ByIncludingOnly(evt => evt.Level >= LogEventLevel.Warning)
+            .WriteTo.MSSqlServer(
+                connectionString: connectionString,
+                sinkOptions: new MSSqlServerSinkOptions
+                {
+                    TableName = "ErrorLogs",
+                    SchemaName = "dbo",
+                    AutoCreateSqlTable = true,
+                    BatchPostingLimit = 100, // Smaller batch for urgent errors
+                    BatchPeriod = TimeSpan.FromSeconds(10) // More frequent for errors
+                },
+                columnOptions: GetErrorColumnOptions()))
            .WriteTo.Email(
                from: configuration["EmailConfiguration:FromEmail"],
                to: GetEmailRecipients(configuration),
@@ -55,7 +90,7 @@ namespace IdeKusgozManagement.WebAPI
                    configuration["EmailConfiguration:Password"]
                ),
                subject: "🚨 Kuşgöz API Hata Bildirimi - {Level} - {Timestamp:yyyy-MM-dd HH:mm}",
-               restrictedToMinimumLevel: LogEventLevel.Warning
+               restrictedToMinimumLevel: LogEventLevel.Error
 
                )
            .CreateLogger();
@@ -142,25 +177,103 @@ namespace IdeKusgozManagement.WebAPI
             return services;
         }
 
-        private static ColumnOptions GetColumnOptions()
+        private static ColumnOptions GetInformationColumnOptions()
         {
             var columnOptions = new ColumnOptions();
 
-            // Varsayılan kolonları kaldır
             columnOptions.Store.Remove(StandardColumn.MessageTemplate);
             columnOptions.Store.Remove(StandardColumn.Properties);
+            columnOptions.Store.Add(StandardColumn.LogEvent);
 
-            // Custom kolonlar ekle
-            columnOptions.AdditionalColumns = new List<SqlColumn>
-            {
-                new SqlColumn("UserId", SqlDbType.NVarChar, dataLength: 50),
-                new SqlColumn("UserName", SqlDbType.NVarChar, dataLength: 100),
-                new SqlColumn("RequestPath", SqlDbType.NVarChar, dataLength: 255),
-                new SqlColumn("RequestMethod", SqlDbType.NVarChar, dataLength: 10),
-                new SqlColumn("TraceId", SqlDbType.NVarChar, dataLength: 50),
-                new SqlColumn("MachineName", SqlDbType.NVarChar, dataLength: 50),
-                new SqlColumn("Environment", SqlDbType.NVarChar, dataLength: 20)
-            };
+            columnOptions.DisableTriggers = true;
+
+            columnOptions.AdditionalColumns = new Collection<SqlColumn>
+    {
+        new SqlColumn
+        {
+            ColumnName = "UserId",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 50,
+            AllowNull = true
+        },
+        new SqlColumn
+        {
+            ColumnName = "Action",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 100,
+            AllowNull = true
+        },
+        new SqlColumn
+        {
+            ColumnName = "Module",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 100,
+            AllowNull = true
+        },
+        new SqlColumn
+        {
+            ColumnName = "ClientIP",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 45,
+            AllowNull = true
+        }
+    };
+
+            return columnOptions;
+        }
+
+        private static ColumnOptions GetErrorColumnOptions()
+        {
+            var columnOptions = new ColumnOptions();
+
+            columnOptions.Store.Add(StandardColumn.LogEvent);
+            columnOptions.DisableTriggers = true;
+
+            columnOptions.AdditionalColumns = new Collection<SqlColumn>
+    {
+        new SqlColumn
+        {
+            ColumnName = "UserId",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 50,
+            AllowNull = true
+        },
+        new SqlColumn
+        {
+            ColumnName = "Action",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 100,
+            AllowNull = true
+        },
+        new SqlColumn
+        {
+            ColumnName = "Module",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 100,
+            AllowNull = true
+        },
+        new SqlColumn
+        {
+            ColumnName = "ClientIP",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 45,
+            AllowNull = true
+        },
+        new SqlColumn
+        {
+            ColumnName = "UserAgent",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 500,
+            AllowNull = true
+        },
+        new SqlColumn
+        {
+            ColumnName = "RequestId",
+            DataType = SqlDbType.NVarChar,
+            DataLength = 50,
+            AllowNull = true
+        }
+    };
 
             return columnOptions;
         }

@@ -235,8 +235,7 @@
 </div>
 
 <!-- Modal -->
-<div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true"
-     data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -256,34 +255,6 @@
                         </div>
                     </div>
 
-                    <!-- Yeni Masraf Ekleme Formu -->
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="ddExpense" class="form-label">Masraf Türü</label>
-                            <select class="form-select ddExpense" id="ddExpense">
-                                <option value="">Masraf türü seçin</option>
-                                <option value="yol">Yol Masrafı</option>
-                                <option value="yemek">Yemek Masrafı</option>
-                                <option value="konaklama">Konaklama Masrafı</option>
-                                <option value="yakit">Yakıt Masrafı</option>
-                                <option value="otopark">Otopark Masrafı</option>
-                                <option value="diger">Diğer Masraf</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="txtAmount" class="form-label">Tutar (₺)</label>
-                            <input type="number" class="form-control" id="txtAmount" step="0.01" min="0">
-                        </div>
-                        <div class="col-md-12">
-                            <label for="txtDescription" class="form-label">Açıklama</label>
-                            <textarea class="form-control" id="txtDescription" placeholder="Opsiyonel"></textarea>
-                        </div>
-                        <div class="col-md-12">
-                            <label for="fileReceiptImage" class="form-label">Fatura Fotoğrafı</label>
-                            <input type="file" class="form-control" id="fileReceiptImage" accept="image/*,.pdf">
-                        </div>
-                    </div>
-
                     <!-- Toplam Masraf -->
                     <div class="mt-3 p-2 bg-light rounded" id="totalExpenseSection" style="display: none;">
                         <div class="d-flex justify-content-between align-items-center">
@@ -293,10 +264,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
-                    <button class="btn btn-primary w-100" type="submit" id="btnSaveExpenses">
-                        <i class="fas fa-plus me-1"></i>Masraf Ekle
-                    </button>
+                
                 </div>
             </form>
         </div>
@@ -433,8 +401,6 @@
 
             try {
                 showTableLoading();
-
-                // Create date for the first day of the selected month
                     const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(1).padStart(2, '0')}`;
 
                 const response = await $.ajax({
@@ -450,11 +416,9 @@
                 });
 
                 if (response.isSuccess && response.data && response.data.length > 0) {
-                    // Veri varsa tabloyu doldur
                     populateTableWithWorkRecords(response.data);
                     toastr.success(`${response.data.length} puantaj kaydı yüklendi`, 'Başarılı!');
                 } else {
-                    // Veri yoksa uygun mesajı göster
                     showNoDataMessage(year,month);
 
                 }
@@ -645,7 +609,6 @@
             return '';
         }
 
-        // Helper function to create status badge
         function getStatusBadge(status, statusText) {
             let badgeClass = 'bg-secondary';
             let icon = 'fas fa-clock';
@@ -735,11 +698,10 @@
                 currentExpensesSection.show();
 
                 expenses.forEach((expense, index) => {
-                    const expenseTypeText = getExpenseTypeText(expense.type);
                     const expenseItem = `
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-1">${expenseTypeText}</h6>
+                                <h6 class="mb-1">${expense.expense}</h6>
                                 <p class="mb-1"><strong>${expense.amount.toFixed(2)} ₺</strong></p>
                                 ${expense.description ? `<small class="text-muted">${expense.description}</small>` : ''}
                             </div>
@@ -756,53 +718,40 @@
             }
         }
 
-        // Masraf türü metnini al
-        function getExpenseTypeText(type) {
-            const types = {
-                'yol': 'Yol Masrafı',
-                'yemek': 'Yemek Masrafı',
-                'konaklama': 'Konaklama Masrafı',
-                'yakit': 'Yakıt Masrafı',
-                'otopark': 'Otopark Masrafı',
-                'diger': 'Diğer Masraf'
-            };
-            return types[type] || type;
-        }
+        // // Yeni masraf ekle
+        // function addExpenseToDay() {
+        //     const expenseType = $('#ddExpense').val();
+        //     const amount = parseFloat($('#txtAmount').val());
+        //     const description = $('#txtDescription').val();
+        //     const receiptFile = $('#fileReceiptImage')[0].files[0];
+        //     if(expenseType == null || expenseType == undefined || isNaN(amount) || amount==null ){
+        //         toastr.warning("Masraf türünü ya da tutarı kontrol ediniz")
+        //         return;
+        //     }
+        //     if (!expenseData[currentEditingDay]) {
+        //         expenseData[currentEditingDay] = [];
+        //     }
 
-        // Yeni masraf ekle
-        function addExpenseToDay() {
-            const expenseType = $('#ddExpense').val();
-            const amount = parseFloat($('#txtAmount').val());
-            const description = $('#txtDescription').val();
-            const receiptFile = $('#fileReceiptImage')[0].files[0];
-            if(expenseType == null || expenseType == undefined || isNaN(amount) || amount==null ){
-                toastr.warning("Masraf türünü ya da tutarı kontrol ediniz")
-                return;
-            }
-            if (!expenseData[currentEditingDay]) {
-                expenseData[currentEditingDay] = [];
-            }
+        //     const newExpense = {
+        //         type: expenseType,
+        //         amount: amount,
+        //         description: description,
+        //         receiptFile: receiptFile,
+        //         receiptName: receiptFile ? receiptFile.name : null,
+        //     };
 
-            const newExpense = {
-                type: expenseType,
-                amount: amount,
-                description: description,
-                receiptFile: receiptFile,
-                receiptName: receiptFile ? receiptFile.name : null,
-            };
+        //     expenseData[currentEditingDay].push(newExpense);
 
-            expenseData[currentEditingDay].push(newExpense);
+        //     // Listeyi güncelle
+        //     displayCurrentExpenses(currentEditingDay);
+        //     updateTotalExpense(currentEditingDay);
+        //     updateExpenseButton(currentEditingDay);
 
-            // Listeyi güncelle
-            displayCurrentExpenses(currentEditingDay);
-            updateTotalExpense(currentEditingDay);
-            updateExpenseButton(currentEditingDay);
+        //     // Formu temizle
+        //     clearExpenseForm();
 
-            // Formu temizle
-            clearExpenseForm();
-
-            toastr.success('Masraf eklendi!', 'Başarılı!');
-        }
+        //     toastr.success('Masraf eklendi!', 'Başarılı!');
+        // }
 
         // Masraf sil
         function removeExpenseFromDay(index) {
@@ -1163,7 +1112,6 @@
             }
         }
 
-        // Approve/Reject functions
         async function approveWorkRecords() {
             const selectedUserId = $('#user-select').val();
             const year = parseInt($('#year-select').val());
@@ -1175,30 +1123,63 @@
             }
 
             try {
-                const date = new Date(year, month - 1, 1);
-                const formattedDate = date.toISOString().split('T')[0];
+                const result = await Swal.fire({
+                    title: 'Puantajı Onayla',
+                    text: `Bu kullanıcının  ${month}/${year} puantajını onaylamak istediğinizden emin misiniz?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-check"></i> Evet, Onayla',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(1).padStart(2, '0')}`;
 
-                const response = await $.ajax({
-                    url: '/puantaj/onayla',
-                    type: 'POST',
-                    data: {
-                        date: formattedDate,
-                        userId: selectedUserId
+                            const response = await $.ajax({
+                                url: '/puantaj/toplu-onayla',
+                                type: 'POST',
+                                data: {
+                                   userId: selectedUserId,
+                                   date: formattedDate
+                                },
+                                headers: {
+                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                }
+                            });
+
+                            if (!response.isSuccess) {
+                                Swal.showValidationMessage(`Hata: ${response.message}`);
+                                throw new Error(response.message);
+                            }
+
+                            return response;
+                        } catch (error) {
+                            let errorMessage = 'Onaylama başarısız';
+                            if (error.responseJSON) {
+                                if (error.responseJSON.message) {
+                                    errorMessage = error.responseJSON.message;
+                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                                    errorMessage = error.responseJSON.errors.join(', ');
+                                }
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            throw error;
+                        }
                     },
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    allowOutsideClick: () => !Swal.isLoading()
                 });
 
-                if (response.isSuccess) {
-                    toastr.success('Puantaj onaylandı', 'Başarılı!');
+                if (result.isConfirmed) {
+              
+                     toastr.success('Puantaj başarıyla onaylandı', 'Başarılı!');
+
                     await loadWorkRecordsByUser();
-                } else {
-                    toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
                 console.error('Onaylama hatası:', error);
-                toastr.error('Onaylama sırasında bir hata oluştu', 'Hata!');
+                throw error;
             }
         }
 
@@ -1213,34 +1194,65 @@
             }
 
             try {
-                const date = new Date(year, month - 1, 1);
-                const formattedDate = date.toISOString().split('T')[0];
+                const result = await Swal.fire({
+                    title: 'Puantajı Reddet',
+                    text: `Bu kullanıcının  ${month}/${year} puantajını reddetmek istediğinizden emin misiniz?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-times"></i> Evet, Reddet',
+                    cancelButtonText: '<i class="fas fa-ban"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                    const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(1).padStart(2, '0')}`;
 
-                const response = await $.ajax({
-                    url: '/puantaj/reddet',
-                    type: 'POST',
-                    data: {
-                        date: formattedDate,
-                        userId: selectedUserId
+                            const response = await $.ajax({
+                                url: '/puantaj/toplu-reddet',
+                                type: 'POST',
+                                data: {
+                                    date: formattedDate,
+                                    userId: selectedUserId
+                                },
+                                headers: {
+                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                }
+                            });
+
+                            if (!response.isSuccess) {
+                                Swal.showValidationMessage(`Hata: ${response.message}`);
+                                throw new Error(response.message);
+                            }
+
+                            return response;
+                        } catch (error) {
+                            let errorMessage = 'Reddetme başarısız';
+                            if (error.responseJSON) {
+                                if (error.responseJSON.message) {
+                                    errorMessage = error.responseJSON.message;
+                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                                    errorMessage = error.responseJSON.errors.join(', ');
+                                }
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            throw error;
+                        }
                     },
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    allowOutsideClick: () => !Swal.isLoading()
                 });
 
-                if (response.isSuccess) {
-                    toastr.success('Puantaj reddedildi', 'Başarılı!');
+                if (result.isConfirmed) {
+                  
+                                    toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');
+
                     await loadWorkRecordsByUser();
-                } else {
-                    toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
                 console.error('Reddetme hatası:', error);
-                toastr.error('Reddetme sırasında bir hata oluştu', 'Hata!');
+                throw error;
             }
         }
-
-
 
     </script>
 }

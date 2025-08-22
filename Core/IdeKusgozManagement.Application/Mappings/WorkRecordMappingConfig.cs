@@ -1,4 +1,5 @@
 ﻿using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
+using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 
@@ -10,7 +11,8 @@ namespace IdeKusgozManagement.Application.Mappings
         {
             // IdtWorkRecord -> WorkRecordDTO
             TypeAdapterConfig<IdtWorkRecord, WorkRecordDTO>
-                .NewConfig();
+                .NewConfig()
+                .Map(dest => dest.Expenses, src => (List<WorkRecordExpenseDTO>?)null); // Varsayılan olarak null, servis tarafında doldurulacak
 
             // CreateWorkRecordDTO -> IdtWorkRecord
             TypeAdapterConfig<CreateWorkRecordDTO, IdtWorkRecord>

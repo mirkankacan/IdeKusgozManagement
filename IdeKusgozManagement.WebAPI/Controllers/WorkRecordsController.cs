@@ -1,9 +1,7 @@
-﻿using System.Security.Claims;
-using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
+﻿using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
-using IdeKusgozManagement.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +14,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     {
         private readonly IWorkRecordService _workRecordService;
         private readonly ICurrentUserService _currentUserService;
+
         public WorkRecordsController(IWorkRecordService workRecordService, ICurrentUserService currentUserService)
         {
             _workRecordService = workRecordService;
@@ -48,8 +47,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <summary>
         /// Mevcut kullanıcının iş kayıtlarını getirir
         /// </summary>
-        [HttpGet("my-records")]
-        public async Task<IActionResult> GetMyWorkRecords(CancellationToken cancellationToken = default)
+        [HttpGet("my-records-by-date")]
+        public async Task<IActionResult> GetMyWorkRecordsByDate([FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
             var currentUserId = _currentUserService.GetCurrentUserId();
             if (string.IsNullOrEmpty(currentUserId))
@@ -57,7 +56,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
 
-            var result = await _workRecordService.GetWorkRecordsByUserIdAsync(currentUserId, cancellationToken);
+            var result = await _workRecordService.GetWorkRecordsByDateAndUserAsync(date, currentUserId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -111,19 +110,19 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
-        /// İş kaydını günceller
+        /// Toplu iş kaydını günceller
         /// </summary>
-        /// <param name="id">İş kaydı ID'si</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
         /// <param name="updateWorkRecordDTO">Güncellenecek bilgiler</param>
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateWorkRecord(string id, [FromBody] UpdateWorkRecordDTO updateWorkRecordDTO, CancellationToken cancellationToken = default)
+        [HttpPut]
+        public async Task<IActionResult> BatchUpdateWorkRecordByUser([FromQuery] string userId, [FromBody] List<UpdateWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = await _workRecordService.UpdateWorkRecordAsync(id, updateWorkRecordDTO, cancellationToken);
+            var result = await _workRecordService.BatchUpdateWorkRecordByUserAsync(userId, updateWorkRecordDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

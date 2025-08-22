@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.Domain.Entities.Base;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using IdeKusgozManagement.Domain.Entities.Base;
 
 namespace IdeKusgozManagement.Domain.Entities
 {
@@ -7,7 +8,10 @@ namespace IdeKusgozManagement.Domain.Entities
         public string WorkRecordId { get; set; }
         public string Expense { get; set; }
         public string? Description { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
+
         public string? ReceiptImageUrl { get; set; }
     }
 }

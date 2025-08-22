@@ -9,7 +9,7 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
 
         Task<ApiResponse<WorkRecordViewModel>> GetWorkRecordByIdAsync(string id, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetMyWorkRecordsAsync(CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetMyWorkRecordsByDateAsync(DateTime date, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetWorkRecordsByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
@@ -17,7 +17,7 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
 
         Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchCreateWorkRecordsAsync(List<CreateWorkRecordViewModel> createWorkRecordViewModels, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<WorkRecordViewModel>> UpdateWorkRecordAsync(string id, UpdateWorkRecordViewModel updateWorkRecordViewModel, CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchUpdateWorkRecordByUserAsync(string userId, List<UpdateWorkRecordViewModel> updateWorkRecordViewModel, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> BatchApproveWorkRecordsByUserAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default);
 

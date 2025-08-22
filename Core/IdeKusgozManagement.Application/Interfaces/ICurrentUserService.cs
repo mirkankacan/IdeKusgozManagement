@@ -7,5 +7,7 @@
         string? GetCurrentUserName();
 
         string? GetCurrentUserRole();
+
+        string? GetUserIpAddress();
     }
 }

@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 {
-    
     [Route("kullanici-yonetimi")]
     public class UserManagementController : Controller
     {
@@ -19,12 +18,14 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             _userApiService = userApiService;
             _roleApiService = roleApiService;
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("")]
         public IActionResult Index()
         {
             return View();
         }
+
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("liste")]
         public async Task<IActionResult> GetUsers(CancellationToken cancellationToken = default)
@@ -33,7 +34,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             var roleClaim = User.FindFirst(ClaimTypes.Role);
             if (roleClaim == null)
             {
-                return BadRequest("Role bilgisi bulunamadı.");
+                return BadRequest("Rol bilgisi bulunamadı.");
             }
 
             ApiResponse<IEnumerable<UserViewModel>> response;
@@ -55,11 +56,12 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
                     break;
 
                 default:
-                    return BadRequest("Yetkisiz erişim.");
+                    return Forbid("Yetkisiz erişim.");
             }
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("aktif-ust-kullanicilar")]
         public async Task<IActionResult> GetActiveSuperiorUsers(CancellationToken cancellationToken = default)
@@ -68,6 +70,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("aktif-roller")]
         public async Task<IActionResult> GetRoles(CancellationToken cancellationToken = default)
@@ -76,6 +79,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost("olustur")]
         [ValidateAntiForgeryToken]
@@ -89,6 +93,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             var response = await _userApiService.CreateUserAsync(model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize]
         [HttpPut("guncelle/{userId}")]
         [ValidateAntiForgeryToken]
@@ -102,6 +107,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             var response = await _userApiService.UpdateUserAsync(userId, model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpDelete("sil/{userId}")]
         [ValidateAntiForgeryToken]
@@ -110,6 +116,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             var response = await _userApiService.DeleteUserAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost("aktif/{userId}")]
         [ValidateAntiForgeryToken]
@@ -118,6 +125,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             var response = await _userApiService.ActivateUserAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost("pasif/{userId}")]
         [ValidateAntiForgeryToken]
@@ -126,6 +134,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             var response = await _userApiService.DeactivateUserAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost("rol-ata")]
         [ValidateAntiForgeryToken]
@@ -139,6 +148,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             var response = await _userApiService.AssignRoleToUserAsync(model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("detay/{userId}")]
         public async Task<IActionResult> Get(string userId, CancellationToken cancellationToken = default)

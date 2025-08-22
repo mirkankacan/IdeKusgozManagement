@@ -61,11 +61,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetMyWorkRecordsAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetMyWorkRecordsByDateAsync(DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/workrecords/my-records", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/workrecords/my-records-by-date?date={date}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -153,29 +153,29 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<WorkRecordViewModel>> UpdateWorkRecordAsync(string id, UpdateWorkRecordViewModel updateWorkRecordViewModel, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchUpdateWorkRecordByUserAsync(string userId, List<UpdateWorkRecordViewModel> updateWorkRecordViewModel, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(updateWorkRecordViewModel);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"api/workrecords/{id}", content, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/workrecords?userId={userId}", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(responseContent);
-                    return apiResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(responseContent);
+                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(responseContent);
-                return errorResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "İş kaydı güncellenemedi" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(responseContent);
+                return errorResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "İş kayıtları güncellenemedi" };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "UpdateWorkRecordAsync işleminde hata oluştu. WorkRecordId: {WorkRecordId}", id);
-                return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
+                _logger.LogError(ex, "BatchUpdateWorkRecordByUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 

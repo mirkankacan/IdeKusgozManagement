@@ -16,11 +16,11 @@ namespace IdeKusgozManagement.Application.Interfaces
 
         Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchCreateWorkRecordsAsync(List<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<WorkRecordDTO>> UpdateWorkRecordAsync(string id, UpdateWorkRecordDTO updateWorkRecordDTO, CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchUpdateWorkRecordByUserAsync(string userId, List<UpdateWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> BatchApproveWorkRecordsByUserAndMonthAsync(string userId, DateTime date, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<bool>> BatchRejectWorkRecordsByUserAndMonthAsync(string userId, DateTime date,  CancellationToken cancellationToken = default);
+        Task<ApiResponse<bool>> BatchRejectWorkRecordsByUserAndMonthAsync(string userId, DateTime date, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<int>> GetWorkRecordCountByStatusAsync(WorkRecordStatus status, CancellationToken cancellationToken = default);
 
