@@ -8,12 +8,14 @@
 	<meta name="author" content="İdeaktif Danışmanlık ve Yazılım Ltd.">
 	<!-- The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 	<!-- Title -->
-	<title>Kuşgöz İzmir Vinç - @ViewData["Title"]</title>
+	<title>Kuşgöz İzmir Vinç • @ViewData["Title"]</title>
 
 	<!-- Styles -->
 	<link href="https://fonts.googleapis.com/css?family=Poppins:400,500,700,800&display=swap" rel="stylesheet">
 	<link href="~/theme/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+		integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
 	<link href="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.css" rel="stylesheet">
 	@await RenderSectionAsync("CalendarCss", required: false)
 	<!-- Theme Styles -->
@@ -82,27 +84,22 @@
 				<li class="@(Context.Request.Path == "/takvim" ? "active-page" : "")">
 					<a href="/takvim"><i data-feather="calendar"></i>Takvim</a>
 				</li>
-				@if (User.IsInRole("Admin"))
+				@if (User.IsInRole("Admin") || User.IsInRole("Yönetici"))
 				{
 					<li class="sidebar-title">
-						Kullanıcı Yönetimi
+						Yönetici İşlemleri
 					</li>
 					<li class="@(Context.Request.Path == "/kullanici-yonetimi" ? "active-page" : "")">
 						<a href="/kullanici-yonetimi"><i data-feather="users"></i>Kullanıcılar</a>
 					</li>
-
-				}
-
-
-				@if (User.IsInRole("Personel"))
-				{
-					<li class="sidebar-title">
-						Personel İşlemleri
+					<li class="@(Context.Request.Path == "/ekipman-yonetimi" ? "active-page" : "")">
+						<a href="/ekipman-yonetimi"><i data-feather="tool"></i>Ekipmanlar</a>
 					</li>
-					<li class="@(Context.Request.Path == "/puantaj/ekle" ? "active-page" : "")">
-						<a href="/puantaj/ekle"><i data-feather="clock"></i>Puantaj Gir</a>
+					<li class="@(Context.Request.Path == "/masraf-yonetimi" ? "active-page" : "")">
+						<a href="/masraf-yonetimi"><i data-feather="tag"></i>Masraflar</a>
 					</li>
 				}
+
 				<li class="sidebar-title">
 					Puantaj İşlemleri
 				</li>
@@ -112,7 +109,7 @@
 				@if (User.IsInRole("Şef") || User.IsInRole("Admin"))
 				{
 					<li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
-						<a href="/puantaj"><i data-feather="bar-chart-2"></i>Puantaj Listesi</a>
+						<a href="/puantaj"><i data-feather="list"></i>Puantaj Listesi</a>
 					</li>
 				}
 
@@ -152,6 +149,7 @@
 	<script src="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/toastr/toastr.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 	<script src="~/theme/assets/plugins/blockui/jquery.blockUI.js"></script>
 	<script src="~/theme/assets/js/main.min.js"></script>
 

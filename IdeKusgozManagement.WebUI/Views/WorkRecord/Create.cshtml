@@ -6,12 +6,13 @@
 @section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/css/bootstrap-material-datetimepicker.min.css"
-          rel="stylesheet">
+    <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/css/bootstrap-material-datetimepicker.min.css"
+        rel="stylesheet">
 
     <style>
         .time-input {
@@ -25,9 +26,9 @@
             cursor: pointer;
         }
 
-            .fa-clock:hover {
-                color: #007bff;
-            }
+        .fa-clock:hover {
+            color: #007bff;
+        }
 
         input[type="checkbox"] {
             width: 16px;
@@ -98,7 +99,6 @@
             text-align: center;
         }
 
-
         .spinner-border {
             width: 3rem;
             height: 3rem;
@@ -112,6 +112,13 @@
         .table-loading #workRecordsTable {
             display: none !important;
         }
+
+        /* Approved/readonly row styles */
+        :disabled,
+        .disabled {
+            opacity: 0.8;
+            cursor: not-allowed !important;
+        }
     </style>
 }
 
@@ -123,8 +130,14 @@
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="fas fa-hourglass-start me-2"></i>
-                    Puantaj Ekleme Tablosu
+                    Puantaj Ekleme/Düzenleme Tablosu
                 </h5>
+
+                <!-- Info Alert -->
+                <div id="infoAlert" class="alert alert-info d-none" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span id="infoMessage"></span>
+                </div>
 
                 <!-- Yıl ve Ay Seçimi -->
                 <div class="row mb-4">
@@ -194,6 +207,7 @@
                                     <th style="width: 150px;">ÇALIŞILAN<br /> İLÇE</th>
                                     <th>MASRAF</th>
                                     <th>YEMEK</th>
+                                    <th>DURUM</th>
                                 </tr>
                             </thead>
                             <tbody id="workRecordsTableBody">
@@ -214,7 +228,7 @@
 
 <!-- Modal -->
 <div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true"
-     data-bs-backdrop="static" data-bs-keyboard="false">
+    data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -224,7 +238,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form  id="expenseForm">
+            <form id="expenseForm">
                 <div class="modal-body">
                     <!-- Mevcut Masraflar Listesi -->
                     <div id="currentExpensesList" class="mb-3" style="display: none;">
@@ -235,17 +249,10 @@
                     </div>
 
                     <!-- Yeni Masraf Ekleme Formu -->
-                    <div class="row g-3">
+                    <div id="addExpenseForm" class="row g-3">
                         <div class="col-md-6">
-                            <label for="ddExpense" class="form-label">Masraf Türü</label>
-                            <select class="form-select ddExpense" id="ddExpense" >
-                                <option value="">Masraf türü seçin</option>
-                                <option value="yol">Yol Masrafı</option>
-                                <option value="yemek">Yemek Masrafı</option>
-                                <option value="konaklama">Konaklama Masrafı</option>
-                                <option value="yakit">Yakıt Masrafı</option>
-                                <option value="otopark">Otopark Masrafı</option>
-                                <option value="diger">Diğer Masraf</option>
+                            <label for="expense-select" class="form-label">Masraf Türü</label>
+                            <select class="form-select expense-select" id="expense-select">
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -283,508 +290,365 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/tr.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js"></script>
     <script src="~/js/turkey-locations.js"></script>
+    <script src="~/js/puantaj-common.js"></script>
 
     <script>
+        // Page-specific variables
         let workRecordsTable;
-        let currentYear;
-        let currentMonth;
+        let existingWorkRecords = {};
+        let hasApprovedRecords = false;
 
-        // Masraf verilerini tutacak obje
-        let expenseData = {};
-        let currentEditingDay = null;
+        // Disable auto-initialization of common components
+        window.autoInitializePuantajCommon = false;
 
         $(document).ready(async function () {
-            $('body').addClass('sidebar-hidden');
-
-            // Sayfa yüklendiğinde mevcut yıl ve ayı seç
-            currentYear = new Date().getFullYear();
-            currentMonth = new Date().getMonth() + 1;
-
-            $('#year-select').val(currentYear);
-            $('#month-select').val(currentMonth);
-
-            // Event listeners
-            $('.btnSaveWorkRecords').on('click', saveWorkRecords);
-
-            // Masraf modal setup
-            setupExpenseModal();
-
-            // Sayfa yüklendiğinde otomatik olarak tabloyu oluştur
-            await generateDynamicTable();
+            await initializePage();
         });
 
-        // Masraf Modal Setup
-        function setupExpenseModal() {
-            // Masraf modal'ı açıldığında
-            $('#expenseModal').on('show.bs.modal', function (event) {
-                const button = $(event.relatedTarget);
-                currentEditingDay = button.data('day');
+        async function initializePage() {
+            $('body').addClass('sidebar-hidden');
 
-                if (currentEditingDay) {
-                    const date = new Date(currentYear, currentMonth - 1, currentEditingDay);
-                    const dateStr = `${currentEditingDay.toString().padStart(2, '0')}.${currentMonth.toString().padStart(2, '0')}.${currentYear} ${getDayOfWeekTurkish(date.getDay())}`;
+            // Set current year and month
+            PuantajCommon.setCurrentYear(new Date().getFullYear());
+            PuantajCommon.setCurrentMonth(new Date().getMonth() + 1);
+
+            $('#year-select').val(PuantajCommon.getCurrentYear());
+            $('#month-select').val(PuantajCommon.getCurrentMonth());
+
+            // Initialize common components
+            await PuantajCommon.initialize();
+
+            // Page-specific event listeners
+            setupPageEventListeners();
+
+            // Auto-generate table on page load
+            await generateDynamicTable();
+        }
+
+        function setupPageEventListeners() {
+            $('.btnSaveWorkRecords').on('click', saveWorkRecords);
+            $('#year-select, #month-select').on('change', generateDynamicTable);
+
+            // Override expense modal setup for Create page specific behavior
+            setupCreatePageExpenseModal();
+        }
+
+        function setupCreatePageExpenseModal() {
+            // Additional setup specific to Create page
+            $('#expenseModal').off('show.bs.modal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const day = button.data('day');
+                PuantajCommon.setCurrentEditingDay(day);
+
+                if (day) {
+                    const date = new Date(PuantajCommon.getCurrentYear(), PuantajCommon.getCurrentMonth() - 1, day);
+                    const dateStr = `${day.toString().padStart(2, '0')}.${PuantajCommon.getCurrentMonth().toString().padStart(2, '0')}.${PuantajCommon.getCurrentYear()} ${PuantajCommon.Utils.getDayOfWeekTurkish(date.getDay())}`;
                     $('#modalDateInfo').text(dateStr);
 
-                    loadExpensesForDay(currentEditingDay);
-                    clearExpenseForm();
+                    // Check if this day's record is approved
+                    const existingRecord = existingWorkRecords[day];
+                    const isApproved = existingRecord && existingRecord.status === 1;
+
+                    PuantajCommon.ExpenseManager.loadExpensesForDay(day);
+                    PuantajCommon.Utils.clearExpenseForm();
+
+                    // Show/hide expense form based on approval status
+                    toggleExpenseFormElements(isApproved);
+
+                    // Update expenses display with approval status
+                    PuantajCommon.ExpenseManager.displayCurrentExpenses(day, isApproved);
                 }
             });
-
-            // Form submit işlemi
-            $('#expenseForm').on('submit', function(e) {
-                e.preventDefault();
-
-                if (this.checkValidity()) {
-                    addExpenseToDay();
-                }
-
-                $(this).addClass('was-validated');
-            });
-
-            // Masraf silme butonları
-            $(document).on('click', '.remove-expense-btn', function() {
-                const expenseIndex = $(this).data('index');
-                removeExpenseFromDay(expenseIndex);
-            });
-
-            // Masraf türü Select2 initialize
-            $('#ddExpense').select2({
-                placeholder: 'Masraf türü seçin',
-                theme: 'bootstrap-5',
-                dropdownParent: $('#expenseModal'),
-                width: '100%'
-            });
         }
 
-        // Belirli bir gün için masrafları yükle ve göster
-        function loadExpensesForDay(day) {
-            if (!expenseData[day]) {
-                expenseData[day] = [];
-            }
-
-            displayCurrentExpenses(day);
-            updateTotalExpense(day);
-        }
-
-        // Mevcut masrafları listele
-        function displayCurrentExpenses(day) {
-            const expenses = expenseData[day] || [];
-            const expensesList = $('#expenseItemsList');
-            const currentExpensesSection = $('#currentExpensesList');
-
-            expensesList.empty();
-
-            if (expenses.length > 0) {
-                currentExpensesSection.show();
-
-                expenses.forEach((expense, index) => {
-                    const expenseTypeText = getExpenseTypeText(expense.type);
-                    const expenseItem = `
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">${expenseTypeText}</h6>
-                                <p class="mb-1"><strong>${expense.amount.toFixed(2)} ₺</strong></p>
-                                ${expense.description ? `<small class="text-muted">${expense.description}</small>` : ''}
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-expense-btn"
-                                    data-index="${index}" title="Masrafı Sil">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `;
-                    expensesList.append(expenseItem);
-                });
-            } else {
-                currentExpensesSection.hide();
-            }
-        }
-
-        // Masraf türü metnini al
-        function getExpenseTypeText(type) {
-            const types = {
-                'yol': 'Yol Masrafı',
-                'yemek': 'Yemek Masrafı',
-                'konaklama': 'Konaklama Masrafı',
-                'yakit': 'Yakıt Masrafı',
-                'otopark': 'Otopark Masrafı',
-                'diger': 'Diğer Masraf'
-            };
-            return types[type] || type;
-        }
-
-        // Yeni masraf ekle
-        function addExpenseToDay() {
-            const expenseType = $('#ddExpense').val();
-            const amount = parseFloat($('#txtAmount').val());
-            const description = $('#txtDescription').val();
-            const receiptFile = $('#fileReceiptImage')[0].files[0];
-            if(expenseType == null || expenseType == undefined || isNaN(amount) || amount==null ){
-                toastr.warning("Masraf türünü ya da tutarı kontrol ediniz")
-                return;
-            }
-            if (!expenseData[currentEditingDay]) {
-                expenseData[currentEditingDay] = [];
-            }
-
-            const newExpense = {
-                type: expenseType,
-                amount: amount,
-                description: description,
-                receiptFile: receiptFile,
-                receiptName: receiptFile ? receiptFile.name : null,
-            };
-
-            expenseData[currentEditingDay].push(newExpense);
-
-            // Listeyi güncelle
-            displayCurrentExpenses(currentEditingDay);
-            updateTotalExpense(currentEditingDay);
-            updateExpenseButton(currentEditingDay);
-
-            // Formu temizle
-            clearExpenseForm();
-
-            toastr.success('Masraf eklendi!', 'Başarılı!');
-        }
-
-        // Masraf sil
-        function removeExpenseFromDay(index) {
-            if (expenseData[currentEditingDay] && expenseData[currentEditingDay][index]) {
-                expenseData[currentEditingDay].splice(index, 1);
-
-                displayCurrentExpenses(currentEditingDay);
-                updateTotalExpense(currentEditingDay);
-                updateExpenseButton(currentEditingDay);
-
-                toastr.info('Masraf silindi!', 'Bilgi');
-            }
-        }
-
-        // Toplam masrafı güncelle
-        function updateTotalExpense(day) {
-            const expenses = expenseData[day] || [];
-            const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-
-            $('#totalExpenseAmount').text(total.toFixed(2) + ' ₺');
-
-            if (total > 0) {
-                $('#totalExpenseSection').show();
-            } else {
-                $('#totalExpenseSection').hide();
-            }
-        }
-
-        // Masraf butonunu güncelle
-        function updateExpenseButton(day) {
-            const expenses = expenseData[day] || [];
-            const button = $(`.expense-modal-btn[data-day="${day}"]`);
-            const count = expenses.length;
-
-            button.find('.expense-count').text(count);
-
-            if (count > 0) {
-                button.removeClass('btn-outline-primary').addClass('btn-success');
-            } else {
-                button.removeClass('btn-success').addClass('btn-outline-primary');
-            }
-        }
-
-        // Formu temizle
-        function clearExpenseForm() {
-            $('#expenseForm')[0].reset();
-            $('#expenseForm').removeClass('was-validated');
-            $('#ddExpense').val('').trigger('change');
-        }
-
-        function initializeTimepickers() {
-            // Moment.js locale'ını Türkçe yap
-            moment.locale('tr');
-
-            // Başlama saati için bootstrap material datetimepicker
-            $('.start-time').each(function () {
-                $(this).bootstrapMaterialDatePicker({
-                    format: 'HH:mm',
-                    shortTime: false,
-                    date: false,
-                    time: true,
-                    monthPicker: false,
-                    yearPicker: false,
-                    dayPicker: false,
-                    hourPicker: true,
-                    minutePicker: true,
-                    minuteStep: 15,
-                    clearButton: true,
-                    nowButton: true,
-                    switchOnClick: true,
-                    ampm: false,
-                    okText: 'Tamam',
-                    cancelText: 'İptal',
-                    clearText: 'Temizle',
-                    nowText: 'Şimdi',
-                    lang: 'tr',
-                    currentDate: moment().startOf('day').add(8, 'hours'),
-                    showTodayBtn: false,
-                    showClear: true,
-                    showClose: true
-                }).on('change', function () {
-                    validateTimeInputs($(this));
+        // Create page specific functions
+        async function loadExistingWorkRecords(year, month) {
+            try {
+                const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
+                const response = await $.ajax({
+                    url: '/puantaj/listem',
+                    type: 'GET',
+                    data: { date: formattedDate }
                 });
 
-                $(this).closest('.input-group').find('.fa-clock').parent().on('click', function () {
-                    $(this).closest('.input-group').find('.start-time').focus();
-                });
-            });
+                if (response.isSuccess && response.data && response.data.length > 0) {
+                    existingWorkRecords = {};
+                    hasApprovedRecords = false;
 
-            // Bırakma saati için bootstrap material datetimepicker
-            $('.end-time').each(function () {
-                $(this).bootstrapMaterialDatePicker({
-                    format: 'HH:mm',
-                    shortTime: false,
-                    date: false,
-                    time: true,
-                    monthPicker: false,
-                    yearPicker: false,
-                    dayPicker: false,
-                    hourPicker: true,
-                    minutePicker: true,
-                    minuteStep: 15,
-                    clearButton: true,
-                    nowButton: true,
-                    switchOnClick: true,
-                    ampm: false,
-                    okText: 'Tamam',
-                    cancelText: 'İptal',
-                    clearText: 'Temizle',
-                    nowText: 'Şimdi',
-                    lang: 'tr',
-                    currentDate: moment().startOf('day').add(17, 'hours'),
-                    showTodayBtn: false,
-                    showClear: true,
-                    showClose: true
-                }).on('change', function () {
-                    validateTimeInputs($(this));
-                });
+                    const expenseData = PuantajCommon.getExpenseData();
 
-                $(this).closest('.input-group').find('.fa-clock').parent().on('click', function () {
-                    $(this).closest('.input-group').find('.end-time').focus();
-                });
-            });
-        }
+                    response.data.forEach(record => {
+                        const date = new Date(record.date);
+                        const day = date.getDate();
+                        existingWorkRecords[day] = record;
 
-        function validateTimeInputs(changedInput) {
-            const row = changedInput.closest('tr');
-            const startTimeInput = row.find('.start-time');
-            const endTimeInput = row.find('.end-time');
+                        if (record.status === 1) {
+                            hasApprovedRecords = true;
+                        }
 
-            const startTime = startTimeInput.val();
-            const endTime = endTimeInput.val();
+                        if (record.expenses && record.expenses.length > 0) {
+                            expenseData[day] = record.expenses;
+                        }
+                    });
 
-            if (startTime && endTime) {
-                const startMoment = moment(startTime, 'HH:mm');
-                const endMoment = moment(endTime, 'HH:mm');
+                    PuantajCommon.setExpenseData(expenseData);
 
-                if (endMoment.isSameOrBefore(startMoment)) {
-                    toastr.warning('Bırakma saati başlama saatinden erken olamaz!', 'Uyarı!');
-
-                    if (changedInput.hasClass('end-time')) {
-                        const newEndTime = startMoment.add(1, 'hour').format('HH:mm');
-                        endTimeInput.val(newEndTime);
+                    if (hasApprovedRecords) {
+                        showInfoMessage('Bu ay için onaylanmış kayıtlar bulunmaktadır. Onaylanmış kayıtlar düzenlenemez.', 'warning');
+                    } else {
+                        showInfoMessage('Bu ay için daha önce girilen veriler yüklenmiştir. Değişiklik yapabilirsiniz.', 'info');
                     }
-                    else if (changedInput.hasClass('start-time')) {
-                        const newEndTime = startMoment.add(1, 'hour').format('HH:mm');
-                        endTimeInput.val(newEndTime);
-                    }
+
+                    return true;
+                } else {
+                    existingWorkRecords = {};
+                    PuantajCommon.setExpenseData({});
+                    hasApprovedRecords = false;
+                    hideInfoMessage();
+                    return false;
                 }
+            } catch (error) {
+                console.error('Mevcut kayıtlar yüklenirken hata:', error);
+                existingWorkRecords = {};
+                PuantajCommon.setExpenseData({});
+                hasApprovedRecords = false;
+                hideInfoMessage();
+                return false;
             }
         }
-          function showTableLoading() {
-            $('#dynamicTableContainer').addClass('table-loading');
-            $('#tableLoadingSpinner').show();
-            $('#tableContent').hide();
+
+        function showInfoMessage(message, type = 'info') {
+            const alertClass = type === 'warning' ? 'alert-warning' : 'alert-info';
+            const icon = type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+
+            $('#infoAlert')
+                .removeClass('alert-info alert-warning alert-success')
+                .addClass(alertClass)
+                .removeClass('d-none');
+
+            $('#infoAlert i')
+                .removeClass('fas fa-info-circle fas fa-exclamation-triangle fas fa-check-circle')
+                .addClass(icon);
+
+            $('#infoMessage').text(message);
         }
 
-        // Loading spinner'ı gizle
-        function hideTableLoading() {
-            $('#dynamicTableContainer').removeClass('table-loading');
-            $('#tableLoadingSpinner').hide();
-            $('#tableContent').show();
+        function hideInfoMessage() {
+            $('#infoAlert').addClass('d-none');
         }
+
+        function toggleExpenseFormElements(disable) {
+            // Show/hide the entire add expense form section
+            if (disable) {
+                $('#addExpenseForm').hide();
+            } else {
+                $('#addExpenseForm').show();
+            }
+
+            // Still disable form elements for safety
+            $('#addExpenseForm input, #addExpenseForm select, #addExpenseForm textarea').prop('disabled', disable);
+            $('#btnSaveExpenses').prop('disabled', disable);
+            $('.remove-expense-btn').prop('disabled', disable);
+
+            if (disable) {
+                $('#btnSaveExpenses').html('<i class="fas fa-lock me-1"></i>Onaylandı');
+                $('#btnSaveExpenses').removeClass('btn-primary').addClass('btn-secondary');
+            } else {
+                $('#btnSaveExpenses').html('<i class="fas fa-plus me-1"></i>Masraf Ekle');
+                $('#btnSaveExpenses').removeClass('btn-secondary').addClass('btn-primary');
+            }
+        }
+
         async function generateDynamicTable() {
-              // Loading spinner'ı göster
-            showTableLoading();
+            PuantajCommon.Utils.showTableLoading();
 
             const year = parseInt($('#year-select').val());
             const month = parseInt($('#month-select').val());
 
-            currentYear = year;
-            currentMonth = month;
+            PuantajCommon.setCurrentYear(year);
+            PuantajCommon.setCurrentMonth(month);
 
-            // Ayın kaç gün çektiğini hesapla
+            await loadExistingWorkRecords(year, month);
+
             const daysInMonth = new Date(year, month, 0).getDate();
-
-            // Tablo body'sini temizle
             $('#workRecordsTableBody').empty();
-
-            // Masraf verilerini temizle (yeni ay/yıl seçildiğinde)
-            expenseData = {};
 
             await new Promise(resolve => setTimeout(resolve, 300));
 
-            // Her gün için satır oluştur
+            // Generate table rows
+            const expenseData = PuantajCommon.getExpenseData();
+
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month - 1, day);
-                const dayOfWeek = getDayOfWeekTurkish(date.getDay());
+                const dayOfWeek = PuantajCommon.Utils.getDayOfWeekTurkish(date.getDay());
                 const formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year} ${dayOfWeek}`;
-                const row = `
-                    <tr data-day="${day}">
-                        <td class="date-cell">
-                            <span class="badge bg-info">${formattedDate}</span>
-                        </td>
-                        <td>
-                            <div class="form-check d-flex justify-content-center">
-                                <input class="form-check-input weekend-checkbox" type="checkbox" id="weekend_${day}">
-                            </div>
-                        </td>
-                        <td>
-                            <div class="input-group">
-                                <input type="text" class="form-control time-input start-time" value="08:00" data-day="${day}" placeholder="08:00" readonly>
-                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="input-group">
-                                <input type="text" class="form-control time-input end-time" value="17:00" data-day="${day}" placeholder="17:00" readonly>
-                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                            </div>
-                        </td>
-                        <td>
-                            <input type="text" class="form-control project-input" placeholder="Proje adı" data-day="${day}">
-                        </td>
-                        <td>
-                            <select class="form-select form-select-sm equipment-select" data-day="${day}">
-                                <option value="">Ekipman seçin</option>
-                                <option value="excavator">Ekskavatör</option>
-                                <option value="bulldozer">Buldozer</option>
-                                <option value="loader">Yükleyici</option>
-                                <option value="truck">Kamyon</option>
-                                <option value="crane">Vinç</option>
-                                <option value="other">Diğer</option>
-                            </select>
-                        </td>
-                        <td>
-                            <select class="form-select form-select-sm province-select" data-day="${day}">
-                            </select>
-                        </td>
-                        <td>
-                            <select class="form-select form-select-sm district-select" data-day="${day}">
-                            </select>
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-primary expense-modal-btn w-100"
-                                    data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal">
-                                <i class="fas fa-receipt me-1"></i>
-                                <span class="expense-count" data-day="${day}">0</span> Masraf
-                            </button>
-                        </td>
-                        <td>
-                            <div class="meal-section">
-                                <div class="meal-item">
-                                    <div class="form-check">
-                                        <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}" data-meal="S" data-day="${day}">
-                                        <label class="form-check-label" for="s_${day}">S</label>
-                                    </div>
-                                </div>
-                                <div class="meal-item">
-                                    <div class="form-check">
-                                        <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}" data-meal="O" data-day="${day}">
-                                        <label class="form-check-label" for="o_${day}">Ö</label>
-                                    </div>
-                                </div>
-                                <div class="meal-item">
-                                    <div class="form-check">
-                                        <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}" data-meal="A" data-day="${day}">
-                                        <label class="form-check-label" for="a_${day}">A</label>
-                                    </div>
-                                </div>
-                                <div class="meal-item">
-                                    <div class="form-check">
-                                        <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}" data-meal="G" data-day="${day}">
-                                        <label class="form-check-label" for="g_${day}">G</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                `;
 
+                const existingRecord = existingWorkRecords[day];
+                const isApproved = existingRecord && existingRecord.status === 1;
+                const isPending = existingRecord && existingRecord.status === 0;
+                const isRejected = existingRecord && existingRecord.status === 2;
+
+                const defaultValues = {
+                    isWeekend: existingRecord?.isWeekend || false,
+                    startTime: existingRecord ? PuantajCommon.Utils.formatTimeSpan(existingRecord.startTime) : '08:00',
+                    endTime: existingRecord ? PuantajCommon.Utils.formatTimeSpan(existingRecord.endTime) : '17:00',
+                    project: existingRecord?.project || '',
+                    equipment: existingRecord?.equipment || '',
+                    province: existingRecord?.province || '',
+                    district: existingRecord?.district || '',
+                    hasBreakfast: existingRecord?.hasBreakfast || false,
+                    hasLunch: existingRecord?.hasLunch || false,
+                    hasDinner: existingRecord?.hasDinner || false,
+                    hasNightMeal: existingRecord?.hasNightMeal || false
+                };
+
+                let statusBadge = PuantajCommon.StatusBadge.generate(null, 'Yeni');
+                if (isApproved) {
+                    statusBadge = PuantajCommon.StatusBadge.generate(1);
+                } else if (isPending) {
+                    statusBadge = PuantajCommon.StatusBadge.generate(0);
+                } else if (isRejected) {
+                    statusBadge = PuantajCommon.StatusBadge.generate(2);
+                }
+
+                const disabledAttr = isApproved ? 'disabled' : '';
+
+                const row = createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr);
                 $('#workRecordsTableBody').append(row);
+
+                // Update expense button if needed
+                if (expenseData[day] && expenseData[day].length > 0) {
+                    PuantajCommon.ExpenseManager.updateExpenseButton(day);
+                }
             }
 
-            // İl ve ilçe select'lerini doldur
-            await populateAllProvinces();
+            await PuantajCommon.LocationManager.populateProvincesAndDistricts(existingWorkRecords);
 
-            // İl değiştiğinde ilçeleri güncelle
-            setupProvinceDistrictChangeHandlers();
+            await PuantajCommon.Select2Manager.initialize();
+            PuantajCommon.TimePicker.initialize();
 
-            initializeSelect2();
-            initializeTimepickers();
-
-            hideTableLoading();
+            updateSaveButtonsState();
+            PuantajCommon.Utils.hideTableLoading();
         }
 
-        // Tüm il select'lerini doldur
-        async function populateAllProvinces() {
-            $('.province-select').each(function () {
-                populateProvinces($(this));
-            });
+        function createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr) {
+            return `
+                                <tr data-day="${day}" data-record-id="${existingWorkRecords[day]?.id || ''}" >
+                                    <td class="date-cell">
+                                        <span class="badge bg-info">${formattedDate}</span>
+                                    </td>
+                                    <td>
+                                        <div class="form-check d-flex justify-content-center">
+                                            <input class="form-check-input weekend-checkbox" type="checkbox" id="weekend_${day}"
+                                                   ${defaultValues.isWeekend ? 'checked' : ''} ${disabledAttr}>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control time-input start-time" value="${defaultValues.startTime}"
+                                                   data-day="${day}" placeholder="08:00" ${disabledAttr}>
+                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control time-input end-time" value="${defaultValues.endTime}"
+                                                   data-day="${day}" placeholder="17:00" ${disabledAttr}>
+                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control project-input" placeholder="Proje adı"
+                                               data-day="${day}" value="${defaultValues.project}" ${disabledAttr}>
+                                    </td>
+                                                                <td>
+                                <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${defaultValues.equipment}" ${disabledAttr}>
+                                    <option value="">Ekipman seçin</option>
+                                </select>
+                            </td>
+                                    <td>
+                                        <select class="form-select form-select-sm province-select" data-day="${day}" ${disabledAttr}>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm district-select" data-day="${day}" ${disabledAttr}>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary expense-modal-btn w-100"
+                                                data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal" >
+                                            <i class="fas fa-receipt me-1"></i>
+                                            <span class="expense-count" data-day="${day}">0</span> Masraf
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="meal-section">
+                                            <div class="meal-item">
+                                                <div class="form-check">
+                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}"
+                                                           data-meal="S" data-day="${day}" ${defaultValues.hasBreakfast ? 'checked' : ''} ${disabledAttr}>
+                                                    <label class="form-check-label" for="s_${day}">S</label>
+                                                </div>
+                                            </div>
+                                            <div class="meal-item">
+                                                <div class="form-check">
+                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}"
+                                                           data-meal="O" data-day="${day}" ${defaultValues.hasLunch ? 'checked' : ''} ${disabledAttr}>
+                                                    <label class="form-check-label" for="o_${day}">Ö</label>
+                                                </div>
+                                            </div>
+                                            <div class="meal-item">
+                                                <div class="form-check">
+                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}"
+                                                           data-meal="A" data-day="${day}" ${defaultValues.hasDinner ? 'checked' : ''} ${disabledAttr}>
+                                                    <label class="form-check-label" for="a_${day}">A</label>
+                                                </div>
+                                            </div>
+                                            <div class="meal-item">
+                                                <div class="form-check">
+                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}"
+                                                           data-meal="G" data-day="${day}" ${defaultValues.hasNightMeal ? 'checked' : ''} ${disabledAttr}>
+                                                    <label class="form-check-label" for="g_${day}">G</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        ${statusBadge}
+                                    </td>
+                                </tr>
+                            `;
         }
 
-        // İl değiştiğinde ilçeleri güncelle
-        function setupProvinceDistrictChangeHandlers() {
-            $(document).on('change', '.province-select', function () {
-                const row = $(this).closest('tr');
-                const districtSelect = row.find('.district-select');
-                populateDistricts($(this), districtSelect);
-            });
-        }
-
-        function initializeSelect2() {
-            $('.equipment-select').select2({
-                placeholder: 'Ekipman seçin',
-                theme: 'bootstrap-5',
-                allowClear: true,
-                width: '100%'
-            });
-
-            $('.province-select').select2({
-                placeholder: 'İl seçin',
-                theme: 'bootstrap-5',
-                allowClear: true,
-                width: '100%'
-            });
-
-            $('.district-select').select2({
-                placeholder: 'İlçe seçin',
-                theme: 'bootstrap-5',
-                allowClear: true,
-                width: '100%'
-            });
-        }
-
-        function getDayOfWeekTurkish(day) {
-            const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
-            return days[day];
+        function updateSaveButtonsState() {
+            if (hasApprovedRecords) {
+                $('.btnSaveWorkRecords').prop('disabled', true)
+                    .html('<i class="fas fa-lock me-2"></i>Onaylanmış kayıtlar var')
+                    .removeClass('btn-info')
+                    .addClass('btn-secondary');
+            } else {
+                $('.btnSaveWorkRecords').prop('disabled', false)
+                    .html('<i class="fas fa-save me-2"></i>Kaydet')
+                    .removeClass('btn-secondary')
+                    .addClass('btn-info');
+            }
         }
 
         async function saveWorkRecords() {
+            if (hasApprovedRecords) {
+                toastr.warning('Onaylanmış kayıtlar bulunduğu için değişiklik yapılamaz!', 'Uyarı!');
+                return;
+            }
+
             const workRecords = [];
+            const expenseData = PuantajCommon.getExpenseData();
 
             $('#workRecordsTableBody tr').each(function () {
                 const day = $(this).data('day');
+                const recordId = $(this).data('record-id') || null;
                 const isWeekend = $(this).find('.weekend-checkbox').is(':checked');
                 const startTime = $(this).find('.start-time').val();
                 const endTime = $(this).find('.end-time').val();
@@ -793,10 +657,9 @@
                 const province = $(this).find('.province-select').val();
                 const district = $(this).find('.district-select').val();
 
-                // Masraf bilgilerini al
                 const dayExpenses = expenseData[day] || [];
                 const expenses = dayExpenses.map(exp => ({
-                    expense: exp.type,
+                    expense: exp.expense || exp.type,
                     description: exp.description || null,
                     amount: exp.amount,
                     receiptImageUrl: null
@@ -806,9 +669,10 @@
                 const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
                 const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
                 const hasNightMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');
-                const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const formattedDate = `${PuantajCommon.getCurrentYear()}-${String(PuantajCommon.getCurrentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
                 workRecords.push({
+                    Id: recordId,
                     Date: formattedDate,
                     IsWeekend: isWeekend,
                     StartTime: startTime,
@@ -824,7 +688,11 @@
                     Expenses: expenses
                 });
             });
+
             try {
+                $('.btnSaveWorkRecords').prop('disabled', true)
+                    .html('<i class="fas fa-spinner fa-spin me-2"></i>Kaydediliyor...');
+
                 const response = await $.ajax({
                     url: '/puantaj/toplu-ekle',
                     type: 'POST',
@@ -837,19 +705,15 @@
 
                 if (response.isSuccess) {
                     toastr.success(response.message, 'Başarılı!');
-                   
+                    await generateDynamicTable();
                 } else {
                     toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
-                console.error('Hata:', error);
-                toastr.error('Puantaj kaydedilirken bir hata oluştu.', 'Hata!');
+                PuantajCommon.AjaxHelper.handleError(error, 'Puantaj kaydedilirken bir hata oluştu.');
+            } finally {
+                updateSaveButtonsState();
             }
         }
-
-        // Yıl ve ay değiştiğinde tabloyu güncelle
-        $('#year-select, #month-select').on('change', function () {
-            generateDynamicTable();
-        });
     </script>
 }

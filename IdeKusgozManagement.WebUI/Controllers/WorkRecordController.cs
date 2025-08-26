@@ -25,7 +25,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin,Yönetici,Şef")]
-        [HttpGet("kullanici-listesi")]
+        [HttpGet("liste")]
         public async Task<IActionResult> GetListByDateAndUser([FromQuery] DateTime date, [FromQuery] string userId, CancellationToken cancellationToken = default)
         {
             var response = await _workRecordApiService.GetWorkRecordsByDateAndUserAsync(date, userId, cancellationToken);

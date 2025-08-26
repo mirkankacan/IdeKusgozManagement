@@ -23,11 +23,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Name)?.Value;
         }
 
-        public bool IsAuthenticated()
-        {
-            return _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
-        }
-
         public string? GetCurrentUserRole()
         {
             return _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role)?.Value;

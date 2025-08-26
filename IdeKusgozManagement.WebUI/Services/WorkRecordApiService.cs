@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.WorkRecordModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
@@ -65,7 +66,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/workrecords/my-records-by-date?date={date}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/workrecords/my-records-by-date?date={date:yyyy-MM-dd}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -109,6 +110,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
+
                 var response = await _httpClient.GetAsync($"api/workrecords/by-date-and-user?date={date:yyyy-MM-dd}&userId={userId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 

@@ -79,7 +79,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                    .FindAsync(exp => exp.WorkRecordId == workRecordId, cancellationToken);
+                    .GetWhereAsync(exp => exp.WorkRecordId == workRecordId, cancellationToken);
 
                 var expenseDTOs = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
 
@@ -197,7 +197,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                    .FindAsync(exp => exp.CreatedBy == userId, cancellationToken);
+                    .GetWhereAsync(exp => exp.CreatedBy == userId, cancellationToken);
 
                 var expenseDTOs = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
 
@@ -221,7 +221,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<decimal>.Error("İş kaydı bulunamadı");
                 }
 
-                var totalAmount = await _unitOfWork.Repository<IdtWorkRecordExpense>()
+                decimal totalAmount = await _unitOfWork.Repository<IdtWorkRecordExpense>()
                     .SumAsync(exp => exp.Amount, exp => exp.WorkRecordId == workRecordId, cancellationToken);
 
                 return ApiResponse<decimal>.Success(totalAmount);

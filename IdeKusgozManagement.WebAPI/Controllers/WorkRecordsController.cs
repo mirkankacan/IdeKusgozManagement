@@ -50,6 +50,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet("my-records-by-date")]
         public async Task<IActionResult> GetMyWorkRecordsByDate([FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
+
             var currentUserId = _currentUserService.GetCurrentUserId();
             if (string.IsNullOrEmpty(currentUserId))
             {

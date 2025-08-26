@@ -38,7 +38,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     // Expenses'leri getir
                     var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .FindAsync(exp => exp.WorkRecordId == workRecord.Id, cancellationToken);
+                        .GetWhereAsync(exp => exp.WorkRecordId == workRecord.Id, cancellationToken);
 
                     workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
                     workRecordDTOs.Add(workRecordDTO);
@@ -67,7 +67,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 // Expenses'leri getir
                 var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                    .FindAsync(exp => exp.WorkRecordId == id, cancellationToken);
+                    .GetWhereAsync(exp => exp.WorkRecordId == id, cancellationToken);
 
                 workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
 
@@ -85,7 +85,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .FindAsync(wr => wr.CreatedBy == userId, cancellationToken);
+                    .GetWhereAsync(wr => wr.CreatedBy == userId, cancellationToken);
 
                 var workRecordDTOs = new List<WorkRecordDTO>();
 
@@ -95,7 +95,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     // Expenses'leri getir
                     var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .FindAsync(exp => exp.WorkRecordId == workRecord.Id, cancellationToken);
+                        .GetWhereAsync(exp => exp.WorkRecordId == workRecord.Id, cancellationToken);
 
                     workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
                     workRecordDTOs.Add(workRecordDTO);
@@ -115,7 +115,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .FindAsync(wr => wr.Date.Year == date.Date.Year && wr.Date.Month == date.Date.Month && wr.CreatedBy == userId, cancellationToken);
+                    .GetWhereAsync(wr => wr.Date.Year == date.Date.Year && wr.Date.Month == date.Date.Month && wr.CreatedBy == userId, cancellationToken);
 
                 var workRecordDTOs = new List<WorkRecordDTO>();
 
@@ -125,7 +125,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     // Expenses'leri getir
                     var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .FindAsync(exp => exp.WorkRecordId == workRecord.Id, cancellationToken);
+                        .GetWhereAsync(exp => exp.WorkRecordId == workRecord.Id, cancellationToken);
 
                     workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
                     workRecordDTOs.Add(workRecordDTO);
@@ -155,7 +155,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 // Tüm tarihler için mevcut kayıtları bir seferde al
                 var dates = createWorkRecordDTOs.Select(dto => dto.Date.Date).Distinct().ToList();
                 var existingWorkRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .FindAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == currentUserId, cancellationToken);
+                    .GetWhereAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == currentUserId, cancellationToken);
 
                 var existingRecordsDict = existingWorkRecords.ToDictionary(wr => wr.Date.Date);
 
@@ -305,7 +305,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 // Kullanıcının bu tarihlerdeki mevcut kayıtlarını getir
                 var existingWorkRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .FindAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == userId, cancellationToken);
+                    .GetWhereAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == userId, cancellationToken);
 
                 var existingRecordsDict = existingWorkRecords.ToDictionary(wr => wr.Date.Date);
 
@@ -384,7 +384,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                         // Güncel expenses'leri getir ve DTO'ya ekle
                         var currentExpenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                            .FindAsync(exp => exp.WorkRecordId == existingWorkRecord.Id, cancellationToken);
+                            .GetWhereAsync(exp => exp.WorkRecordId == existingWorkRecord.Id, cancellationToken);
 
                         var workRecordDTO = existingWorkRecord.Adapt<WorkRecordDTO>();
                         workRecordDTO.Expenses = currentExpenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
@@ -429,14 +429,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 // Güncellenmiş kayıtları yeniden getir (expenses ile birlikte)
                 var updatedRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .FindAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == userId, cancellationToken);
+                    .GetWhereAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == userId, cancellationToken);
 
                 var finalResult = new List<WorkRecordDTO>();
                 foreach (var record in updatedRecords)
                 {
                     var workRecordDTO = record.Adapt<WorkRecordDTO>();
                     var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .FindAsync(exp => exp.WorkRecordId == record.Id, cancellationToken);
+                        .GetWhereAsync(exp => exp.WorkRecordId == record.Id, cancellationToken);
                     workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
                     finalResult.Add(workRecordDTO);
                 }
@@ -459,7 +459,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .FindAsync(wr => wr.CreatedBy == userId &&
+                    .GetWhereAsync(wr => wr.CreatedBy == userId &&
                                    wr.Date.Year == date.Date.Year &&
                                    wr.Date.Month == date.Date.Month, cancellationToken);
 
@@ -502,7 +502,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                      .FindAsync(wr => wr.CreatedBy == userId &&
+                      .GetWhereAsync(wr => wr.CreatedBy == userId &&
                                      wr.Date.Year == date.Date.Year &&
                                      wr.Date.Month == date.Date.Month, cancellationToken);
 

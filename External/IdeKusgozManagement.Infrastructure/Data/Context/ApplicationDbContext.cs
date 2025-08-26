@@ -23,6 +23,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         public DbSet<IdtLeaveRequest> IdtLeaveRequests => Set<IdtLeaveRequest>();
         public DbSet<IdtWorkRecordExpense> IdtWorkRecordExpenses => Set<IdtWorkRecordExpense>();
         public DbSet<IdtUserHierarchy> IdtUserHierarchies => Set<IdtUserHierarchy>();
+        public DbSet<IdtExpense> IdtExpenses => Set<IdtExpense>();
+        public DbSet<IdtEquipment> IdtEquipments => Set<IdtEquipment>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

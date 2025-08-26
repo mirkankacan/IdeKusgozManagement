@@ -26,6 +26,8 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IJwtProvider, JwtProvider>();
             services.AddScoped<IWorkRecordService, WorkRecordService>();
             services.AddScoped<IWorkRecordExpenseService, WorkRecordExpenseService>();
+            services.AddScoped<IEquipmentService, EquipmentService>();
+            services.AddScoped<IExpenseService, ExpenseService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.ConfigureOptions<JwtOptionsSetup>();

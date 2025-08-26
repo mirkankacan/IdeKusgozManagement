@@ -1,0 +1,333 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Masraf Türü Yönetimi";
+}
+
+@section Styles {
+    <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+}
+
+@Html.AntiForgeryToken()
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-receipt me-2"></i>
+                    Masraf Türü Yönetimi
+                </h5>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createExpenseModal">
+                    <i class="fas fa-plus me-2"></i>Masraf Türü Ekle
+                </button>
+                <br />
+                <br />
+                <div class="table-responsive">
+                    <table id="expensesTable" class="table table-striped table-hover display" style="width:100%">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>MASRAF TÜRÜ ADI</th>
+                                <th>OLUŞTURMA TARİHİ</th>
+                                <th>OLUŞTURAN</th>
+                                <th>İŞLEMLER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- DataTables will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Expense Modal -->
+<div class="modal fade" id="createExpenseModal" tabindex="-1" aria-labelledby="createExpenseModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Masraf Türü Ekleme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form class="needs-validation" novalidate id="createExpenseForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="txtCName" class="form-label">Masraf Türü Adı</label>
+                            <input type="text" class="form-control" id="txtCName" required>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli bir masraf türü adı giriniz.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Expense Modal -->
+<div class="modal fade" id="updateExpenseModal" tabindex="-1" aria-labelledby="updateExpenseModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Masraf Türü Güncelleme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form class="needs-validation" novalidate id="updateExpenseForm">
+                <div class="modal-body">
+                    <input type="hidden" id="txtUId">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="txtUName" class="form-label">Masraf Türü Adı</label>
+                            <input type="text" class="form-control" id="txtUName" required>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli bir masraf türü adı giriniz.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        let expensesTable;
+
+        $(document).ready(function () {
+            initializeDataTable();
+            setupEventListeners();
+        });
+
+        function initializeDataTable() {
+            expensesTable = $('#expensesTable').DataTable({
+                "processing": true,
+                "serverSide": false,
+                "ajax": {
+                    "url": "/masraf-yonetimi/liste",
+                    "type": "GET",
+                    "headers": {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    "dataSrc": function (json) {
+                        if (json.isSuccess) {
+                            return json.data;
+                        } else {
+                            toastr.error(json.message, 'Hata!');
+                            return [];
+                        }
+                    }
+                },
+                "columns": [
+                    {
+                        "data": null,
+                        "render": function (data, type, row, meta) {
+                            return meta.row + 1;
+                        }
+                    },
+                    { "data": "name" },
+                    {
+                        "data": "createdDate",
+                        "render": function (data) {
+                            return new Date(data).toLocaleDateString('tr-TR');
+                        }
+                    },
+                    { "data": "createdBy" },
+                    {
+                        "data": null,
+                        "render": function (data, type, row) {
+                            return `
+                                <button class="btn btn-sm btn-outline-primary edit-expense" data-id="${row.id}" title="Düzenle">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-expense" data-id="${row.id}" title="Sil">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            `;
+                        }
+                    }
+                ],
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json"
+                },
+                "responsive": true,
+                "autoWidth": false
+            });
+        }
+
+        function setupEventListeners() {
+            // Create expense form
+            $('#createExpenseForm').on('submit', function (e) {
+                e.preventDefault();
+                if (this.checkValidity()) {
+                    createExpense();
+                }
+                $(this).addClass('was-validated');
+            });
+
+            // Update expense form
+            $('#updateExpenseForm').on('submit', function (e) {
+                e.preventDefault();
+                if (this.checkValidity()) {
+                    updateExpense();
+                }
+                $(this).addClass('was-validated');
+            });
+
+            // Edit button click
+            $(document).on('click', '.edit-expense', function () {
+                const expenseId = $(this).data('id');
+                loadExpenseForEdit(expenseId);
+            });
+
+            // Delete button click
+            $(document).on('click', '.delete-expense', function () {
+                const expenseId = $(this).data('id');
+                deleteExpense(expenseId);
+            });
+
+            // Clear forms when modals hide
+            $('#createExpenseModal').on('hidden.bs.modal', function () {
+                $('#createExpenseForm')[0].reset();
+                $('#createExpenseForm').removeClass('was-validated');
+            });
+
+            $('#updateExpenseModal').on('hidden.bs.modal', function () {
+                $('#updateExpenseForm')[0].reset();
+                $('#updateExpenseForm').removeClass('was-validated');
+            });
+        }
+
+        async function createExpense() {
+            const expenseData = {
+                name: $('#txtCName').val()
+            };
+
+            try {
+                const response = await $.ajax({
+                    url: '/masraf-yonetimi',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(expenseData),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                if (response.isSuccess) {
+                    toastr.success(response.message, 'Başarılı!');
+                    $('#createExpenseModal').modal('hide');
+                    expensesTable.ajax.reload();
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                console.error('Create expense error:', error);
+                toastr.error('Masraf türü oluşturulurken bir hata oluştu', 'Hata!');
+            }
+        }
+
+        async function loadExpenseForEdit(expenseId) {
+            try {
+                const response = await $.ajax({
+                    url: `/masraf-yonetimi/${expenseId}`,
+                    type: 'GET',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                if (response.isSuccess) {
+                    $('#txtUId').val(response.data.id);
+                    $('#txtUName').val(response.data.name);
+                    $('#updateExpenseModal').modal('show');
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                console.error('Load expense error:', error);
+                toastr.error('Masraf türü bilgileri yüklenirken bir hata oluştu', 'Hata!');
+            }
+        }
+
+        async function updateExpense() {
+            const expenseId = $('#txtUId').val();
+            const expenseData = {
+                name: $('#txtUName').val()
+            };
+
+            try {
+                const response = await $.ajax({
+                    url: `/masraf-yonetimi/${expenseId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(expenseData),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                if (response.isSuccess) {
+                    toastr.success(response.message, 'Başarılı!');
+                    $('#updateExpenseModal').modal('hide');
+                    expensesTable.ajax.reload();
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                console.error('Update expense error:', error);
+                toastr.error('Masraf türü güncellenirken bir hata oluştu', 'Hata!');
+            }
+        }
+
+        async function deleteExpense(expenseId) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu masraf türü silinecek ve geri alınamayacak!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Evet, Sil!',
+                cancelButtonText: 'İptal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await $.ajax({
+                            url: `/masraf-yonetimi/${expenseId}`,
+                            type: 'DELETE',
+                            headers: {
+                                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                            }
+                        });
+
+                        if (response.isSuccess) {
+                            toastr.success(response.message, 'Başarılı!');
+                            expensesTable.ajax.reload();
+                        } else {
+                            toastr.error(response.message, 'Hata!');
+                        }
+                    } catch (error) {
+                        console.error('Delete expense error:', error);
+                        toastr.error('Masraf türü silinirken bir hata oluştu', 'Hata!');
+                    }
+                }
+            });
+        }
+    </script>
+}

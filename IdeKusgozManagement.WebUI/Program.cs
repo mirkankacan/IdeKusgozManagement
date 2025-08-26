@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
 builder.Services.AddSession(options =>
@@ -58,7 +59,23 @@ builder.Services.AddHttpClient<IWorkRecordExpenseApiService, WorkRecordExpenseAp
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
+
+builder.Services.AddHttpClient<IEquipmentApiService, EquipmentApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<JwtTokenHandler>();
+
+builder.Services.AddHttpClient<IExpenseApiService, ExpenseApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<JwtTokenHandler>();
+
 builder.Services.AddScoped<IAuthApiService, AuthApiService>();
+
 
 builder.Services.AddHttpClient("AuthApiWithToken", client =>
 {

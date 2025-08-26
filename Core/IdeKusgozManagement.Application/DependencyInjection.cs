@@ -13,6 +13,8 @@ namespace IdeKusgozManagement.Application
             RoleMappingConfig.Configure();
             WorkRecordMappingConfig.Configure();
             WorkRecordExpenseMappingConfig.Configure();
+            EquipmentMappingConfig.Configure();
+            ExpenseMappingConfig.Configure();
             return services;
         }
     }

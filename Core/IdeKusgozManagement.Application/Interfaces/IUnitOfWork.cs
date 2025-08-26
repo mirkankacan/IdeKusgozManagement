@@ -9,3 +9,4 @@ namespace IdeKusgozManagement.Application.Interfaces
         Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
     }
 }
+
