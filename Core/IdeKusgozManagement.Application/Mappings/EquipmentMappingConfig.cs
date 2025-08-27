@@ -9,11 +9,7 @@ namespace IdeKusgozManagement.Application.Mappings
         public static void Configure()
         {
             // IdtEquipment -> EquipmentListDTO
-            TypeAdapterConfig<IdtEquipment, EquipmentListDTO>
-                .NewConfig();
-
-            // IdtEquipment -> EquipmentDetailDTO
-            TypeAdapterConfig<IdtEquipment, EquipmentDetailDTO>
+            TypeAdapterConfig<IdtEquipment, EquipmentDTO>
                 .NewConfig();
 
             // CreateEquipmentDTO -> IdtEquipment

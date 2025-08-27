@@ -30,8 +30,6 @@
                             <tr>
                                 <th>#</th>
                                 <th>MASRAF TÜRÜ ADI</th>
-                                <th>OLUŞTURMA TARİHİ</th>
-                                <th>OLUŞTURAN</th>
                                 <th>AKTİF Mİ</th>
                                 <th>İŞLEMLER</th>
                             </tr>
@@ -157,17 +155,6 @@
                         "data": "name",
                         "render": function (data) {
                             return data ? `<strong>${data}</strong>` : '';
-                        }
-                    },
-                    {
-                        "data": "createdDate",
-                        "render": function (data) {
-                            return new Date(data).toLocaleDateString('tr-TR');
-                        }
-                    },
-                    {
-                        "data": "createdByFullName", "render": function (data) {
-                            return data ? data : '';         
                         }
                     },
                     {

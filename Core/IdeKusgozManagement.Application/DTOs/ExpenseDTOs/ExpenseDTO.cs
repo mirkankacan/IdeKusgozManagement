@@ -1,6 +1,6 @@
-namespace IdeKusgozManagement.WebUI.Models.ExpenseModels
+namespace IdeKusgozManagement.Application.DTOs.ExpenseDTOs
 {
-    public class ExpenseViewModel
+    public class ExpenseDTO
     {
         public string Id { get; set; }
         public string Name { get; set; }

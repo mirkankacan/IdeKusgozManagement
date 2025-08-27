@@ -11,5 +11,6 @@ namespace IdeKusgozManagement.Domain.Entities
 
         public string Name { get; set; }
         public bool IsActive { get; set; }
+        public virtual ICollection<IdtWorkRecordExpense> WorkRecordExpenses { get; set; } = new List<IdtWorkRecordExpense>();
     }
 }

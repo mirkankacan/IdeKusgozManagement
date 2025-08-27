@@ -13,5 +13,8 @@ namespace IdeKusgozManagement.Domain.Entities
         public decimal Amount { get; set; }
 
         public string? ReceiptImageUrl { get; set; }
+
+        public virtual IdtWorkRecord WorkRecord { get; set; }
+        public virtual IdtExpense Expense { get; set; }
     }
 }

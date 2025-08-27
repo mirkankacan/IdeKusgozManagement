@@ -28,6 +28,24 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<IdtWorkRecordExpense>()
+               .HasOne(wre => wre.WorkRecord)
+               .WithMany(wr => wr.Expenses)
+               .HasForeignKey(wre => wre.WorkRecordId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<IdtWorkRecord>()
+              .HasOne(wr => wr.Equipment)
+              .WithMany(e => e.WorkRecords)
+              .HasForeignKey(wr => wr.EquipmentId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdtWorkRecordExpense>()
+             .HasOne(wre => wre.Expense)
+             .WithMany(e => e.WorkRecordExpenses)
+             .HasForeignKey(wre => wre.ExpenseId)
+             .OnDelete(DeleteBehavior.Restrict);
+
             base.OnModelCreating(modelBuilder);
         }
 

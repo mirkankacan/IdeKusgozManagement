@@ -9,11 +9,7 @@ namespace IdeKusgozManagement.Application.Mappings
         public static void Configure()
         {
             // IdtExpense -> ExpenseListDTO
-            TypeAdapterConfig<IdtExpense, ExpenseListDTO>
-                .NewConfig();
-
-            // IdtExpense -> ExpenseDetailDTO
-            TypeAdapterConfig<IdtExpense, ExpenseDetailDTO>
+            TypeAdapterConfig<IdtExpense, ExpenseDTO>
                 .NewConfig();
 
             // CreateExpenseDTO -> IdtExpense

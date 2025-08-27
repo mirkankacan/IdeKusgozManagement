@@ -4,8 +4,6 @@ namespace IdeKusgozManagement.Application.DTOs.EquipmentDTOs
 {
     public class CreateEquipmentDTO
     {
-        [Required(ErrorMessage = "Ekipman adı zorunludur")]
-        [StringLength(100, ErrorMessage = "Ekipman adı en fazla 100 karakter olabilir")]
         public string Name { get; set; }
     }
 }

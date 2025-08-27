@@ -19,5 +19,8 @@ namespace IdeKusgozManagement.Domain.Entities
         public bool HasNightMeal { get; set; }
 
         public WorkRecordStatus Status { get; set; } // 0 = Pending, 1 = Approved, 2 = Rejected
+
+        public virtual IdtEquipment Equipment { get; set; }
+        public virtual ICollection<IdtWorkRecordExpense> Expenses { get; set; } = new List<IdtWorkRecordExpense>();
     }
 }

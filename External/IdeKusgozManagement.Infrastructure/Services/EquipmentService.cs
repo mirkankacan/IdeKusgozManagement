@@ -2,9 +2,8 @@ using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.EquipmentDTOs;
 using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Mapster;
+using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
@@ -19,7 +18,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<EquipmentListDTO>>> GetAllEquipmentsAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<EquipmentDTO>>> GetAllEquipmentsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -27,19 +26,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .GetAllAsync(cancellationToken);
 
                 var equipmentDTOs = equipments
-                    .Adapt<IEnumerable<EquipmentListDTO>>()
+                    .Adapt<IEnumerable<EquipmentDTO>>()
                     .OrderBy(e => e.Name);
 
-                return ApiResponse<IEnumerable<EquipmentListDTO>>.Success(equipmentDTOs, "Ekipman listesi başarıyla getirildi");
+                return ApiResponse<IEnumerable<EquipmentDTO>>.Success(equipmentDTOs, "Ekipman listesi başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ekipman listesi getirilirken hata oluştu");
-                return ApiResponse<IEnumerable<EquipmentListDTO>>.Error("Ekipman listesi getirilirken hata oluştu");
+                return ApiResponse<IEnumerable<EquipmentDTO>>.Error("Ekipman listesi getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<EquipmentDetailDTO>> GetEquipmentByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<EquipmentDTO>> GetEquipmentByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -48,17 +47,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (equipment == null)
                 {
-                    return ApiResponse<EquipmentDetailDTO>.Error("Ekipman bulunamadı");
+                    return ApiResponse<EquipmentDTO>.Error("Ekipman bulunamadı");
                 }
 
-                var equipmentDTO = equipment.Adapt<EquipmentDetailDTO>();
+                var equipmentDTO = equipment.Adapt<EquipmentDTO>();
 
-                return ApiResponse<EquipmentDetailDTO>.Success(equipmentDTO, "Ekipman başarıyla getirildi");
+                return ApiResponse<EquipmentDTO>.Success(equipmentDTO, "Ekipman başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ekipman getirilirken hata oluştu. Id: {Id}", id);
-                return ApiResponse<EquipmentDetailDTO>.Error("Ekipman getirilirken hata oluştu");
+                return ApiResponse<EquipmentDTO>.Error("Ekipman getirilirken hata oluştu");
             }
         }
 

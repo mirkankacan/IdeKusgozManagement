@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace IdeKusgozManagement.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class init_mig : Migration
+    public partial class InitMig : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -58,6 +58,40 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "IdtEquipments",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IdtEquipments", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "IdtExpenses",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IdtExpenses", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "IdtLeaveRequests",
                 columns: table => new
                 {
@@ -70,7 +104,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     DocumentUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -79,50 +113,20 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "IdtWorkRecordExpenses",
+                name: "IdtUserHierarchies",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    WorkRecordId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ReceiptImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SubordinateId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SuperiorId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_IdtWorkRecordExpenses", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "IdtWorkRecords",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsWeekend = table.Column<bool>(type: "bit", nullable: false),
-                    StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
-                    EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
-                    Project = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Equipment = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Province = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    District = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    HasBreakfast = table.Column<bool>(type: "bit", nullable: false),
-                    HasLunch = table.Column<bool>(type: "bit", nullable: false),
-                    HasDinner = table.Column<bool>(type: "bit", nullable: false),
-                    HasNightMeal = table.Column<bool>(type: "bit", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_IdtWorkRecords", x => x.Id);
+                    table.PrimaryKey("PK_IdtUserHierarchies", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -231,6 +235,72 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "IdtWorkRecords",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsWeekend = table.Column<bool>(type: "bit", nullable: false),
+                    StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    Project = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EquipmentId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Province = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    District = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    HasBreakfast = table.Column<bool>(type: "bit", nullable: false),
+                    HasLunch = table.Column<bool>(type: "bit", nullable: false),
+                    HasDinner = table.Column<bool>(type: "bit", nullable: false),
+                    HasNightMeal = table.Column<bool>(type: "bit", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IdtWorkRecords", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_IdtWorkRecords_IdtEquipments_EquipmentId",
+                        column: x => x.EquipmentId,
+                        principalTable: "IdtEquipments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "IdtWorkRecordExpenses",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    WorkRecordId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ExpenseId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ReceiptImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IdtWorkRecordExpenses", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_IdtWorkRecordExpenses_IdtExpenses_ExpenseId",
+                        column: x => x.ExpenseId,
+                        principalTable: "IdtExpenses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_IdtWorkRecordExpenses_IdtWorkRecords_WorkRecordId",
+                        column: x => x.WorkRecordId,
+                        principalTable: "IdtWorkRecords",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -269,6 +339,21 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IdtWorkRecordExpenses_ExpenseId",
+                table: "IdtWorkRecordExpenses",
+                column: "ExpenseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IdtWorkRecordExpenses_WorkRecordId",
+                table: "IdtWorkRecordExpenses",
+                column: "WorkRecordId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IdtWorkRecords_EquipmentId",
+                table: "IdtWorkRecords",
+                column: "EquipmentId");
         }
 
         /// <inheritdoc />
@@ -293,16 +378,25 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                 name: "IdtLeaveRequests");
 
             migrationBuilder.DropTable(
-                name: "IdtWorkRecordExpenses");
+                name: "IdtUserHierarchies");
 
             migrationBuilder.DropTable(
-                name: "IdtWorkRecords");
+                name: "IdtWorkRecordExpenses");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "IdtExpenses");
+
+            migrationBuilder.DropTable(
+                name: "IdtWorkRecords");
+
+            migrationBuilder.DropTable(
+                name: "IdtEquipments");
         }
     }
 }

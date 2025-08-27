@@ -18,26 +18,26 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<ExpenseListDTO>>> GetAllExpensesAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<ExpenseDTO>>> GetAllExpensesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 var expenses = await _unitOfWork.Repository<IdtExpense>().GetAllAsync(cancellationToken, e => e.CreatedBy);
 
                 var expenseDTOs = expenses
-                    .Adapt<IEnumerable<ExpenseListDTO>>()
+                    .Adapt<IEnumerable<ExpenseDTO>>()
                     .OrderBy(e => e.Name);
 
-                return ApiResponse<IEnumerable<ExpenseListDTO>>.Success(expenseDTOs, "Masraf türü listesi başarıyla getirildi");
+                return ApiResponse<IEnumerable<ExpenseDTO>>.Success(expenseDTOs, "Masraf türü listesi başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Masraf türü listesi getirilirken hata oluştu");
-                return ApiResponse<IEnumerable<ExpenseListDTO>>.Error("Masraf türü listesi getirilirken hata oluştu");
+                return ApiResponse<IEnumerable<ExpenseDTO>>.Error("Masraf türü listesi getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<ExpenseDetailDTO>> GetExpenseByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<ExpenseDTO>> GetExpenseByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -46,17 +46,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (expense == null)
                 {
-                    return ApiResponse<ExpenseDetailDTO>.Error("Masraf türü bulunamadı");
+                    return ApiResponse<ExpenseDTO>.Error("Masraf türü bulunamadı");
                 }
 
-                var expenseDTO = expense.Adapt<ExpenseDetailDTO>();
+                var expenseDTO = expense.Adapt<ExpenseDTO>();
 
-                return ApiResponse<ExpenseDetailDTO>.Success(expenseDTO, "Masraf türü başarıyla getirildi");
+                return ApiResponse<ExpenseDTO>.Success(expenseDTO, "Masraf türü başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Masraf türü getirilirken hata oluştu. Id: {Id}", id);
-                return ApiResponse<ExpenseDetailDTO>.Error("Masraf türü getirilirken hata oluştu");
+                return ApiResponse<ExpenseDTO>.Error("Masraf türü getirilirken hata oluştu");
             }
         }
 
