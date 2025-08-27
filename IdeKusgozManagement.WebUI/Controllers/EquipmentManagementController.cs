@@ -30,6 +30,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
+        [Authorize]
+        [HttpGet("aktif-liste")]
+        public async Task<IActionResult> GetActiveEquipments(CancellationToken cancellationToken = default)
+        {
+            var response = await _equipmentApiService.GetAllActiveEquipmentsAsync(cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetEquipmentById(string id, CancellationToken cancellationToken = default)
@@ -84,6 +92,32 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _equipmentApiService.DeleteEquipmentAsync(id, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize(Roles = "Admin, Yönetici")]
+        [HttpPut("{id}/aktif-et")]
+        public async Task<IActionResult> ActivateEquipment(string id, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return BadRequest("Ekipman ID'si gereklidir");
+            }
+
+            var response = await _equipmentApiService.ActivateEquipmentAsync(id, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize(Roles = "Admin, Yönetici")]
+        [HttpPut("{id}/pasif-et")]
+        public async Task<IActionResult> DeactivateEquipment(string id, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return BadRequest("Ekipman ID'si gereklidir");
+            }
+
+            var response = await _equipmentApiService.DeactivateEquipmentAsync(id, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
     }

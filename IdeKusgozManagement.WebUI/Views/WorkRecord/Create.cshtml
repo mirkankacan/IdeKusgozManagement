@@ -279,7 +279,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
-                    <button class="btn btn-primary w-100" type="submit" id="btnSaveExpenses">
+                    <button class="btn btn-primary w-100" type="submit" id="btnAddExpense">
                         <i class="fas fa-plus me-1"></i>Masraf Ekle
                     </button>
                 </div>
@@ -450,15 +450,15 @@
 
             // Still disable form elements for safety
             $('#addExpenseForm input, #addExpenseForm select, #addExpenseForm textarea').prop('disabled', disable);
-            $('#btnSaveExpenses').prop('disabled', disable);
+            $('#btnAddExpense').prop('disabled', disable);
             $('.remove-expense-btn').prop('disabled', disable);
 
             if (disable) {
-                $('#btnSaveExpenses').html('<i class="fas fa-lock me-1"></i>Onaylandı');
-                $('#btnSaveExpenses').removeClass('btn-primary').addClass('btn-secondary');
+                $('#btnAddExpense').html('<i class="fas fa-lock me-1"></i>Onaylandı');
+                $('#btnAddExpense').removeClass('btn-primary').addClass('btn-secondary');
             } else {
-                $('#btnSaveExpenses').html('<i class="fas fa-plus me-1"></i>Masraf Ekle');
-                $('#btnSaveExpenses').removeClass('btn-secondary').addClass('btn-primary');
+                $('#btnAddExpense').html('<i class="fas fa-plus me-1"></i>Masraf Ekle');
+                $('#btnAddExpense').removeClass('btn-secondary').addClass('btn-primary');
             }
         }
 

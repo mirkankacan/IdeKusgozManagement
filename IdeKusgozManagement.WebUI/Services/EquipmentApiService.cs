@@ -137,5 +137,74 @@ namespace IdeKusgozManagement.WebUI.Services
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
+
+        public async Task<ApiResponse<IEnumerable<EquipmentViewModel>>> GetAllActiveEquipmentsAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("api/equipments/active-equipments", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<EquipmentViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<EquipmentViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<EquipmentViewModel>>>(content);
+                return errorResponse ?? new ApiResponse<IEnumerable<EquipmentViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetAllActiveEquipmentsAsync işleminde hata oluştu");
+                return new ApiResponse<IEnumerable<EquipmentViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> ActivateEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"api/equipments/{id}/activate", null, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ActivateEquipmentAsync işleminde hata oluştu. Id: {Id}", id);
+                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> DeactivateEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"api/equipments/{id}/deactivate", null, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DeactivateEquipmentAsync işleminde hata oluştu. Id: {Id}", id);
+                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
     }
 }

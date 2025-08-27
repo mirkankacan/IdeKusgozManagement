@@ -174,6 +174,12 @@
                 "${workspaceFolder}/IdeKusgozManagement.sln"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "start-both-background",
+            "dependsOrder": "parallel",
+            "dependsOn": ["start-webapi", "start-webui"],
+            "group": "build"
         }
     ]
 }

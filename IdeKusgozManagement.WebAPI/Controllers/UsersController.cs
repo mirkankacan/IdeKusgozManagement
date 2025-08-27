@@ -149,7 +149,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici")]
-        [HttpPost("{id}/activate")]
+        [HttpPut("{id}/activate")]
         public async Task<IActionResult> ActivateUser(string id)
         {
             var result = await _userService.ActivateUserAsync(id);
@@ -161,7 +161,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici")]
-        [HttpPost("{id}/deactivate")]
+        [HttpPut("{id}/deactivate")]
         public async Task<IActionResult> DeactivateUser(string id)
         {
             var result = await _userService.DeactivateUserAsync(id);

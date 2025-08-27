@@ -29,6 +29,40 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
+        /// Aktif tüm masraf türlerini getirir
+        /// </summary>
+        [HttpGet("active-expenses")]
+        public async Task<IActionResult> GetAllActiveExpenses(CancellationToken cancellationToken = default)
+        {
+            var result = await _expenseService.GetAllActiveExpensesAsync(cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Masraf türünü aktifleştirir
+        /// </summary>
+        /// <param name="id">Ekipman ID'si</param>
+        [RoleFilter("Admin", "Yönetici")]
+        [HttpPut("{id}/activate")]
+        public async Task<IActionResult> ActivateExpense(string id)
+        {
+            var result = await _expenseService.ActivateExpenseAsync(id);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Masraf türünü pasifleştirir
+        /// </summary>
+        /// <param name="id">Ekipman ID'si</param>
+        [RoleFilter("Admin", "Yönetici")]
+        [HttpPut("{id}/deactivate")]
+        public async Task<IActionResult> DeactivateExpense(string id)
+        {
+            var result = await _expenseService.DeactivateExpenseAsync(id);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
         /// ID'ye göre masraf türü getirir
         /// </summary>
         /// <param name="id">Masraf türü ID'si</param>

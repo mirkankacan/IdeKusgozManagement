@@ -30,6 +30,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
+        [Authorize]
+        [HttpGet("aktif-liste")]
+        public async Task<IActionResult> GetActiveExpenses(CancellationToken cancellationToken = default)
+        {
+            var response = await _expenseApiService.GetAllActiveExpensesAsync(cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetExpenseById(string id, CancellationToken cancellationToken = default)
@@ -84,6 +92,32 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _expenseApiService.DeleteExpenseAsync(id, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize(Roles = "Admin, Yönetici")]
+        [HttpPut("{id}/aktif-et")]
+        public async Task<IActionResult> ActivateExpense(string id, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return BadRequest("Masraf türü ID'si gereklidir");
+            }
+
+            var response = await _expenseApiService.ActivateExpenseAsync(id, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize(Roles = "Admin, Yönetici")]
+        [HttpPut("{id}/pasif-et")]
+        public async Task<IActionResult> DeactivateExpense(string id, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return BadRequest("Masraf türü ID'si gereklidir");
+            }
+
+            var response = await _expenseApiService.DeactivateExpenseAsync(id, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
     }

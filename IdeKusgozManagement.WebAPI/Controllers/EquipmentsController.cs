@@ -22,9 +22,44 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Tüm ekipmanları getirir
         /// </summary>
         [HttpGet]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> GetAllEquipments(CancellationToken cancellationToken = default)
         {
             var result = await _equipmentService.GetAllEquipmentsAsync(cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Aktif tüm ekipmanları getirir
+        /// </summary>
+        [HttpGet("active-equipments")]
+        public async Task<IActionResult> GetAllActiveEquipments(CancellationToken cancellationToken = default)
+        {
+            var result = await _equipmentService.GetAllActiveEquipmentsAsync(cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Ekipmanı aktifleştirir
+        /// </summary>
+        /// <param name="id">Ekipman ID'si</param>
+        [RoleFilter("Admin", "Yönetici")]
+        [HttpPut("{id}/activate")]
+        public async Task<IActionResult> ActivateEquipment(string id)
+        {
+            var result = await _equipmentService.ActivateEquipmentAsync(id);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Ekipmanı pasifleştirir
+        /// </summary>
+        /// <param name="id">Ekipman ID'si</param>
+        [RoleFilter("Admin", "Yönetici")]
+        [HttpPut("{id}/deactivate")]
+        public async Task<IActionResult> DeactivateEquipment(string id)
+        {
+            var result = await _equipmentService.DeactivateEquipmentAsync(id);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -33,6 +68,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">Ekipman ID'si</param>
         [HttpGet("{id}")]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> GetEquipmentById(string id, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(id))

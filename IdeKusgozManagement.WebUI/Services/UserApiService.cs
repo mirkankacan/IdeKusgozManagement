@@ -187,7 +187,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/users/{userId}/activate", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/users/{userId}/activate", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -209,7 +209,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/users/{userId}/deactivate", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/users/{userId}/deactivate", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

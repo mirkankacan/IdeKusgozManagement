@@ -8,10 +8,10 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <!-- Or for RTL support -->
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
 }
 @Html.AntiForgeryToken()
 <div class="row">
@@ -115,7 +115,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="ddCSuperior" class="form-label">Atanacak</label>
-                            <select class="form-select ddSuperior" id="ddCSuperior" required="">
+                            <select class="form-select superior-select" id="ddCSuperior" required="">
                             </select>
                             <div class="valid-feedback">
                                 İyi görünüyor!
@@ -128,7 +128,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
-                    <button class="btn btn-primary w-100" type="submit" id="btnCreateUser">Oluştur</button>
+                    <button class="btn btn-primary w-100" type="submit" id="btnCreateUser"><i
+                            class="fas fa-user-plus me-1"></i>Oluştur</button>
                 </div>
             </form>
         </div>
@@ -205,7 +206,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="ddUSuperior" class="form-label">Atanacak</label>
-                            <select class="form-select ddSuperior" id="ddUSuperior" required="">
+                            <select class="form-select superior-select" id="ddUSuperior" required="">
                             </select>
                             <div class="valid-feedback">
                                 İyi görünüyor!
@@ -257,7 +258,7 @@
             $('#createUserModal').on('hidden.bs.modal', function () {
                 clearCreateUserForm();
             });
-              $('#updateUserModal').on('hidden.bs.modal', function () {
+            $('#updateUserModal').on('hidden.bs.modal', function () {
                 clearUpdateUserForm();
             });
             $(document).on('click', '#btnUpdateUser', async function (e) {
@@ -272,15 +273,15 @@
                 await createUser();
             });
         });
-         function initializeSelect2() {
-            $('.ddSuperior').select2({
+        function initializeSelect2() {
+            $('.superior-select').select2({
                 placeholder: 'Atanacak kullanıcı(lar) seçin',
                 theme: 'bootstrap-5',
                 multiple: true,
                 width: '100%'
             });
-         }
-        function clearCreateUserForm(){
+        }
+        function clearCreateUserForm() {
             $('#txtCUsername').val('');
             $('#txtCPassword').val('');
             $('#txtCName').val('');
@@ -290,7 +291,7 @@
             $('#ddCRole').val('').trigger('change');
             $('#ddCSuperior').val('').trigger('change');
         }
-          function clearUpdateUserForm(){
+        function clearUpdateUserForm() {
             $('#txtUUsername').val('');
             $('#txtUPassword').val('');
             $('#txtUName').val('');
@@ -363,7 +364,7 @@
                             else if (data == "Personel") {
                                 return `<span class="badge bg-warning">${data}</span>`;
                             }
-                             else if (data=="Yönetici"){
+                            else if (data == "Yönetici") {
                                 return `<span class="badge bg-danger">${data}</span>`;
                             }
                             else {
@@ -393,27 +394,27 @@
                                 return '<span class="text-muted">-</span>';
                             }
                             const statusButton = row.isActive
-                                ? `<button type="button" class="btn btn-outline-secondary btn-sm"
-                            onclick="deactivateUser('${row.id}')" title="Pasifleştir">
-                            <i class="fas fa-user-slash"></i>
-                           </button>`
-                                : `<button type="button" class="btn btn-outline-success btn-sm"
-                            onclick="activateUser('${row.id}')" title="Aktifleştir">
-                            <i class="fas fa-user-check"></i>
-                           </button>`;
+                                ? `<button type="button" class="btn btn-outline-success btn-sm"
+                                                    onclick="deactivateUser('${row.id}')" title="Pasifleştir">
+                                                    <i class="fas fa-toggle-on"></i>
+                                                   </button>`
+                                : `<button type="button" class="btn btn-outline-secondary btn-sm"
+                                                    onclick="activateUser('${row.id}')" title="Aktifleştir">
+                                                    <i class="fas  fa-toggle-off"></i>
+                                                   </button>`;
                             return `
-                        <div class="btn-group btn-group-sm" role="group">
-                         <button type="button" class="btn btn-outline-warning btn-sm"
-                           onclick="getUser('${row.id}')" title="Düzenle">
-                          <i class="fas fa-edit"></i>
-                         </button>
-                         ${statusButton}
-                         <button type="button" class="btn btn-outline-danger btn-sm"
-                           onclick="deleteUser('${row.id}')" title="Sil">
-                          <i class="fas fa-trash"></i>
-                         </button>
-                        </div>
-                       `;
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                 <button type="button" class="btn btn-outline-warning btn-sm"
+                                                   onclick="getUser('${row.id}')" title="Düzenle">
+                                                  <i class="fas fa-edit"></i>
+                                                 </button>
+                                                 ${statusButton}
+                                                 <button type="button" class="btn btn-outline-danger btn-sm"
+                                                   onclick="deleteUser('${row.id}')" title="Sil">
+                                                  <i class="fas fa-trash"></i>
+                                                 </button>
+                                                </div>
+                                               `;
                         }
                     }
                 ],
@@ -517,7 +518,7 @@
                     Surname: $('#txtUSurname').val().trim(),
                     RoleName: $('#ddURole').val(),
                     IsActive: $('#ddUStatus').val() === "true",
-                    SuperiorIds : $('#ddUSuperior').val() || []
+                    SuperiorIds: $('#ddUSuperior').val() || []
                 };
 
                 if (!userData.Id) {
@@ -584,8 +585,8 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/kullanici-yonetimi/aktif/${userId}`,
-                                type: 'POST',
+                                url: `/kullanici-yonetimi/aktif-et/${userId}`,
+                                type: 'PUT',
                                 contentType: 'application/json',
                                 headers: {
                                     'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
@@ -644,8 +645,8 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/kullanici-yonetimi/pasif/${userId}`,
-                                type: 'POST',
+                                url: `/kullanici-yonetimi/pasif-et/${userId}`,
+                                type: 'PUT',
                                 contentType: 'application/json',
                                 headers: {
                                     'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
@@ -754,13 +755,13 @@
                 if ($('#updateUserModal').length > 0) {
                     $('#updateUserModal input, #updateUserModal select, #updateUserModal button').prop('disabled', true);
                     $('#updateUserModal .modal-body').prepend(`
-                                        <div id="formLoader" class="text-center py-3">
-                                            <div class="spinner-border text-primary" role="status">
-                                                <span class="visually-hidden">Yükleniyor...</span>
-                                            </div>
-                                            <div class="mt-2">Kullanıcı bilgileri getiriliyor...</div>
-                                        </div>
-                                    `);
+                                                                <div id="formLoader" class="text-center py-3">
+                                                                    <div class="spinner-border text-primary" role="status">
+                                                                        <span class="visually-hidden">Yükleniyor...</span>
+                                                                    </div>
+                                                                    <div class="mt-2">Kullanıcı bilgileri getiriliyor...</div>
+                                                                </div>
+                                                            `);
                 }
 
                 const response = await $.ajax({
@@ -768,7 +769,7 @@
                     type: 'GET',
                     contentType: 'application/json'
                 });
-                                    console.log(response)
+                console.log(response)
 
                 if (response) {
                     const userData = response;
@@ -780,7 +781,7 @@
                     $('#txtUSurname').val(userData.surname || '');
                     $('#ddURole').val(userData.roleName);
                     $('#ddUStatus').val(userData.isActive ? "true" : "false");
-                        if (userData.superiorIds && Array.isArray(userData.superiorIds) && userData.superiorIds.length > 0) {
+                    if (userData.superiorIds && Array.isArray(userData.superiorIds) && userData.superiorIds.length > 0) {
                         $('#ddUSuperior').val(userData.superiorIds).trigger('change');
                     } else {
                         $('#ddUSuperior').val([]).trigger('change'); // Boş array - hiçbiri seçili değil
@@ -842,8 +843,8 @@
                         currentSelect.append('<option selected disabled value="">Rol seçiniz...</option>');
 
                         response.data.forEach(role => {
-                                currentSelect.append(`<option value="${role.name}">${role.name}</option>`);
-                            
+                            currentSelect.append(`<option value="${role.name}">${role.name}</option>`);
+
                         });
                     });
 
@@ -874,9 +875,9 @@
                 $('.ddRole').prop('disabled', false);
             }
         }
-            async function getSuperiorUsers() {
+        async function getSuperiorUsers() {
             try {
-                const superiorSelects = $('.ddSuperior');
+                const superiorSelects = $('.superior-select');
                 if (!superiorSelects.length) {
                     console.warn('Superior select elements not found');
                     return;
@@ -886,7 +887,7 @@
                 superiorSelects.prop('disabled', true);
 
                 // Select2 için loading durumu
-                superiorSelects.each(function() {
+                superiorSelects.each(function () {
                     const currentSelect = $(this);
                     currentSelect.empty();
                     currentSelect.append('<option value="">Yükleniyor...</option>');
@@ -903,13 +904,13 @@
                     dataType: 'json'
                 });
                 if (response && response.isSuccess && response.data) {
-                    superiorSelects.each(function() {
+                    superiorSelects.each(function () {
                         const currentSelect = $(this);
                         currentSelect.empty();
 
                         response.data.forEach(user => {
-                                currentSelect.append(`<option value="${user.id}">${user.fullName}</option>`);
-                            
+                            currentSelect.append(`<option value="${user.id}">${user.fullName}</option>`);
+
                         });
 
                         // Select2 için change event'ini trigger et
@@ -923,7 +924,7 @@
             } catch (error) {
                 console.error('Üst kullanıcılar yüklenirken hata:', error);
 
-                $('.ddSuperior').each(function() {
+                $('.superior-select').each(function () {
                     const currentSelect = $(this);
                     currentSelect.html('<option value="">Kullanıcılar yüklenemedi</option>');
 
@@ -946,7 +947,7 @@
 
                 toastr.error(errorMessage);
             } finally {
-                $('.ddSuperior').prop('disabled', false);
+                $('.superior-select').prop('disabled', false);
             }
         }
     </script>

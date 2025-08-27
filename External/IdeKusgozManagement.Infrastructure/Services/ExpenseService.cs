@@ -22,11 +22,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var expenses = await _unitOfWork.Repository<IdtExpense>().GetAllAsync(cancellationToken, e => e.CreatedBy);
+                var expenses = await _unitOfWork.Repository<IdtExpense>().GetAllAsync(cancellationToken);
 
                 var expenseDTOs = expenses
                     .Adapt<IEnumerable<ExpenseDTO>>()
-                    .OrderBy(e => e.Name);
+                    .OrderByDescending(e => e.CreatedDate);
 
                 return ApiResponse<IEnumerable<ExpenseDTO>>.Success(expenseDTOs, "Masraf türü listesi başarıyla getirildi");
             }
@@ -154,6 +154,77 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "Masraf türü silinirken hata oluştu. Id: {Id}", id);
                 return ApiResponse<bool>.Error("Masraf türü silinirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<ExpenseDTO>>> GetAllActiveExpensesAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var expenses = await _unitOfWork.Repository<IdtExpense>().GetWhereAsync(x => x.IsActive == true, cancellationToken);
+
+                var expenseDTOs = expenses
+                    .Adapt<IEnumerable<ExpenseDTO>>()
+                    .OrderByDescending(e => e.CreatedDate);
+
+                return ApiResponse<IEnumerable<ExpenseDTO>>.Success(expenseDTOs, "Aktif masraf türü listesi başarıyla getirildi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Aktif masraf türü listesi getirilirken hata oluştu");
+                return ApiResponse<IEnumerable<ExpenseDTO>>.Error("Aktif masraf türü listesi getirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<bool>> ActivateExpenseAsync(string id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var expense = await _unitOfWork.Repository<IdtExpense>()
+                    .GetByIdAsync(id, cancellationToken);
+
+                if (expense == null)
+                {
+                    return ApiResponse<bool>.Error("Masraf türü bulunamadı");
+                }
+
+                expense.IsActive = true;
+
+                await _unitOfWork.Repository<IdtExpense>().UpdateAsync(expense, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return ApiResponse<bool>.Success(true, "Masraf türü başarıyla aktif duruma getirildi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Masraf türü aktif duruma getirilirken hata oluştu. Id: {Id}", id);
+                return ApiResponse<bool>.Error("Masraf türü aktif duruma getirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<bool>> DeactivateExpenseAsync(string id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var expense = await _unitOfWork.Repository<IdtExpense>()
+                    .GetByIdAsync(id, cancellationToken);
+
+                if (expense == null)
+                {
+                    return ApiResponse<bool>.Error("Masraf türü bulunamadı");
+                }
+
+                expense.IsActive = false;
+
+                await _unitOfWork.Repository<IdtExpense>().UpdateAsync(expense, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return ApiResponse<bool>.Success(true, "Masraf türü başarıyla pasif duruma getirildi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Masraf türü pasif duruma getirilirken hata oluştu. Id: {Id}", id);
+                return ApiResponse<bool>.Error("Masraf türü pasif duruma getirilirken hata oluştu");
             }
         }
     }

@@ -73,7 +73,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("aktif-roller")]
-        public async Task<IActionResult> GetRoles(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveRoles(CancellationToken cancellationToken = default)
         {
             var response = await _roleApiService.GetActiveRolesAsync(cancellationToken);
 
@@ -118,7 +118,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
-        [HttpPost("aktif/{userId}")]
+        [HttpPut("aktif-et/{userId}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Activate(string userId, CancellationToken cancellationToken = default)
         {
@@ -127,7 +127,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
-        [HttpPost("pasif/{userId}")]
+        [HttpPut("pasif-et/{userId}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Deactivate(string userId, CancellationToken cancellationToken = default)
         {

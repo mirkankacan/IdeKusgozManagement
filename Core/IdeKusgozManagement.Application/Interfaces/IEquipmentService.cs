@@ -6,7 +6,11 @@ namespace IdeKusgozManagement.Application.Interfaces
     public interface IEquipmentService
     {
         Task<ApiResponse<IEnumerable<EquipmentDTO>>> GetAllEquipmentsAsync(CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<EquipmentDTO>>> GetAllActiveEquipmentsAsync(CancellationToken cancellationToken = default);
 
+        Task<ApiResponse<bool>> ActivateEquipmentAsync(string id, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<bool>> DeactivateEquipmentAsync(string id, CancellationToken cancellationToken = default);
         Task<ApiResponse<EquipmentDTO>> GetEquipmentByIdAsync(string id, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<string>> CreateEquipmentAsync(CreateEquipmentDTO createEquipmentDTO, CancellationToken cancellationToken = default);

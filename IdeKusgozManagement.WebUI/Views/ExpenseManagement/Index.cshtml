@@ -6,7 +6,8 @@
 @section Styles {
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 }
 
 @Html.AntiForgeryToken()
@@ -19,7 +20,8 @@
                     <i class="fas fa-receipt me-2"></i>
                     Masraf Türü Yönetimi
                 </h5>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createExpenseModal">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                    data-bs-target="#createExpenseModal">
                     <i class="fas fa-plus me-2"></i>Masraf Türü Ekle
                 </button>
                 <br />
@@ -45,7 +47,8 @@
 </div>
 
 <!-- Create Expense Modal -->
-<div class="modal fade" id="createExpenseModal" tabindex="-1" aria-labelledby="createExpenseModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal fade" id="createExpenseModal" tabindex="-1" aria-labelledby="createExpenseModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -64,8 +67,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
-                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i>Ekle</button>
                 </div>
             </form>
         </div>
@@ -73,7 +76,8 @@
 </div>
 
 <!-- Update Expense Modal -->
-<div class="modal fade" id="updateExpenseModal" tabindex="-1" aria-labelledby="updateExpenseModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal fade" id="updateExpenseModal" tabindex="-1" aria-labelledby="updateExpenseModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -93,8 +97,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
-                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-pen me-1"></i>Güncelle</button>
                 </div>
             </form>
         </div>
@@ -109,11 +113,11 @@
         let expensesTable;
 
         $(document).ready(async function () {
-           await  initializeDataTable();
             setupEventListeners();
-        });
 
-         async function initializeDataTable() {
+            await initializeDataTable();
+        });
+        async function initializeDataTable() {
             expensesTable = $('#expensesTable').DataTable({
                 "processing": true,
                 "ajax": {
@@ -173,29 +177,29 @@
                         "orderable": false,
                         "className": "text-center",
                         "render": function (data, type, row) {
-                           
+
                             const statusButton = row.isActive
-                                ? `<button type="button" class="btn btn-outline-secondary btn-sm"
-                            onclick="deactivateExpense('${row.id}')" title="Pasifleştir">
-                            <i class="fas fa-user-slash"></i>
-                           </button>`
-                                : `<button type="button" class="btn btn-outline-success btn-sm"
-                            onclick="activateExpense('${row.id}')" title="Aktifleştir">
-                            <i class="fas fa-user-check"></i>
-                           </button>`;
+                                ? `<button type="button" class="btn btn-outline-success btn-sm"
+                                        onclick="deactivateExpense('${row.id}')" title="Pasifleştir">
+                                        <i class="fas fa-toggle-on"></i>
+                                       </button>`
+                                : `<button type="button" class="btn btn-outline-secondary btn-sm"
+                                        onclick="activateExpense('${row.id}')" title="Aktifleştir">
+                                        <i class="fas  fa-toggle-off"></i>
+                                       </button>`;
                             return `
-                                <div class="btn-group btn-group-sm" role="group">
-                                 <button type="button" class="btn btn-outline-warning btn-sm"
-                                   onclick="loadExpenseForEdit('${row.id}')" title="Düzenle">
-                                  <i class="fas fa-edit"></i>
-                                 </button>
-                                 ${statusButton}
-                                 <button type="button" class="btn btn-outline-danger btn-sm"
-                                   onclick="deleteExpense('${row.id}')" title="Sil">
-                                  <i class="fas fa-trash"></i>
-                                 </button>
-                                </div>
-                           `;
+                                            <div class="btn-group btn-group-sm" role="group">
+                                             <button type="button" class="btn btn-outline-warning btn-sm"
+                                               onclick="loadExpenseForEdit('${row.id}')" title="Düzenle">
+                                              <i class="fas fa-edit"></i>
+                                             </button>
+                                             ${statusButton}
+                                             <button type="button" class="btn btn-outline-danger btn-sm"
+                                               onclick="deleteExpense('${row.id}')" title="Sil">
+                                              <i class="fas fa-trash"></i>
+                                             </button>
+                                            </div>
+                                       `;
                         }
                     }
                 ],
@@ -243,7 +247,7 @@
                 $(this).addClass('was-validated');
             });
 
-       
+
 
             // Clear forms when modals hide
             $('#createExpenseModal').on('hidden.bs.modal', function () {
@@ -282,7 +286,7 @@
                 }
             } catch (error) {
                 console.error('Create expense error:', error);
-                toastr.error('Masraf türü oluşturulurken bir hata oluştu', 'Hata!');
+                toastr.error(error.responseJSON.message, 'Hata!');
             }
         }
 
@@ -302,7 +306,7 @@
                 }
             } catch (error) {
                 console.error('Load expense error:', error);
-                toastr.error('Masraf türü bilgileri yüklenirken bir hata oluştu', 'Hata!');
+                toastr.error(error.responseJSON.message, 'Hata!');
             }
         }
 
@@ -332,7 +336,7 @@
                 }
             } catch (error) {
                 console.error('Update expense error:', error);
-                toastr.error('Masraf türü güncellenirken bir hata oluştu', 'Hata!');
+                toastr.error(error.responseJSON.message, 'Hata!');
             }
         }
 
@@ -365,10 +369,124 @@
                         }
                     } catch (error) {
                         console.error('Delete expense error:', error);
-                        toastr.error('Masraf türü silinirken bir hata oluştu', 'Hata!');
+                        toastr.error(error.responseJSON.message, 'Hata!');
                     }
                 }
             });
+        }
+
+        async function activateExpense(expenseId) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Masraf Türünü Aktifleştir',
+                    text: 'Bu masraf türünü aktifleştirmek istediğinizden emin misiniz?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-check"></i> Evet, Aktifleştir',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await $.ajax({
+                                url: `/masraf-yonetimi/${expenseId}/aktif-et`,
+                                type: 'PUT',
+                                contentType: 'application/json',
+                                headers: {
+                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                }
+                            });
+                            return response;
+                        } catch (error) {
+                            let errorMessage = 'Aktifleştirme başarısız';
+                            if (error.responseJSON) {
+                                if (error.responseJSON.message) {
+                                    errorMessage = error.responseJSON.message;
+                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                                    errorMessage = error.responseJSON.errors.join(', ');
+                                }
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            throw error;
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Masraf türü başarıyla aktifleştirildi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    expensesTable.ajax.reload(null, false);
+                }
+
+            } catch (error) {
+                console.error('Aktifleştirme hatası:', error);
+                throw error;
+            }
+        }
+
+        async function deactivateExpense(expenseId) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Masraf Türünü Pasifleştir',
+                    text: 'Bu masraf türünü pasifleştirmek istediğinizden emin misiniz?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ffc107',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-user-slash"></i> Evet, Pasifleştir',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await $.ajax({
+                                url: `/masraf-yonetimi/${expenseId}/pasif-et`,
+                                type: 'PUT',
+                                contentType: 'application/json',
+                                headers: {
+                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                }
+                            });
+                            return response;
+                        } catch (error) {
+                            let errorMessage = 'Pasifleştirme başarısız';
+                            if (error.responseJSON) {
+                                if (error.responseJSON.message) {
+                                    errorMessage = error.responseJSON.message;
+                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                                    errorMessage = error.responseJSON.errors.join(', ');
+                                }
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            throw error;
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Masraf türü başarıyla pasifleştirildi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    expensesTable.ajax.reload(null, false);
+                }
+
+            } catch (error) {
+                console.error('Pasifleştirme hatası:', error);
+                throw error;
+            }
         }
     </script>
 }

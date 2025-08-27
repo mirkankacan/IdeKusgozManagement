@@ -329,8 +329,8 @@ const ExpenseManager = {
 
         if (expenses.length > 0) {
             currentExpensesSection.show();
-
             expenses.forEach((expense, index) => {
+
                 const actionButton = isApproved
                     ? `<span class="badge bg-success">
                             <i class="fas fa-check me-1"></i>Onaylandı
@@ -359,6 +359,7 @@ const ExpenseManager = {
 
     addExpenseToDay: function () {
         const expenseId = $('#expense-select').val();
+        const expenseText = $('#expense-select').find('option:selected').text();
         const amount = parseFloat($('#txtAmount').val());
         const description = $('#txtDescription').val();
         const receiptFile = $('#fileReceiptImage')[0].files[0];
@@ -374,6 +375,7 @@ const ExpenseManager = {
 
         const newExpense = {
             expenseId: expenseId,
+            expenseName: expenseText,
             amount: amount,
             description: description,
             receiptFile: receiptFile

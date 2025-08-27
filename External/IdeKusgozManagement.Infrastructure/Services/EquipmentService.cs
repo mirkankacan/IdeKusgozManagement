@@ -22,12 +22,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var equipments = await _unitOfWork.Repository<IdtEquipment>()
-                    .GetAllAsync(cancellationToken);
+                var equipments = await _unitOfWork.Repository<IdtEquipment>().GetAllAsync(cancellationToken);
 
                 var equipmentDTOs = equipments
                     .Adapt<IEnumerable<EquipmentDTO>>()
-                    .OrderBy(e => e.Name);
+                    .OrderByDescending(e => e.CreatedDate);
 
                 return ApiResponse<IEnumerable<EquipmentDTO>>.Success(equipmentDTOs, "Ekipman listesi başarıyla getirildi");
             }
@@ -65,7 +64,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                // Check if equipment with same name already exists
                 var existingEquipment = await _unitOfWork.Repository<IdtEquipment>()
                     .FirstOrDefaultAsync(e => e.Name.ToLower() == createEquipmentDTO.Name.ToLower(), cancellationToken);
 
@@ -101,7 +99,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<bool>.Error("Ekipman bulunamadı");
                 }
 
-                // Check if another equipment with same name already exists
                 var existingEquipment = await _unitOfWork.Repository<IdtEquipment>()
                     .FirstOrDefaultAsync(e => e.Name.ToLower() == updateEquipmentDTO.Name.ToLower() && e.Id != id, cancellationToken);
 
@@ -137,7 +134,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<bool>.Error("Ekipman bulunamadı");
                 }
 
-                // Check if equipment is used in any work records
                 var isEquipmentUsed = await _unitOfWork.Repository<IdtWorkRecord>()
                     .AnyAsync(wr => wr.EquipmentId == equipment.Id, cancellationToken);
 
@@ -155,6 +151,77 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "Ekipman silinirken hata oluştu. Id: {Id}", id);
                 return ApiResponse<bool>.Error("Ekipman silinirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<EquipmentDTO>>> GetAllActiveEquipmentsAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var equipments = await _unitOfWork.Repository<IdtEquipment>().GetWhereAsync(x => x.IsActive == true, cancellationToken);
+
+                var equipmentDTOs = equipments
+                    .Adapt<IEnumerable<EquipmentDTO>>()
+                    .OrderByDescending(e => e.CreatedDate);
+
+                return ApiResponse<IEnumerable<EquipmentDTO>>.Success(equipmentDTOs, "Aktif ekipman listesi başarıyla getirildi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Aktif ekipman listesi getirilirken hata oluştu");
+                return ApiResponse<IEnumerable<EquipmentDTO>>.Error("Aktif ekipman listesi getirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<bool>> DeactivateEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var expense = await _unitOfWork.Repository<IdtEquipment>()
+                    .GetByIdAsync(id, cancellationToken);
+
+                if (expense == null)
+                {
+                    return ApiResponse<bool>.Error("Ekipman bulunamadı");
+                }
+
+                expense.IsActive = false;
+
+                await _unitOfWork.Repository<IdtEquipment>().UpdateAsync(expense, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return ApiResponse<bool>.Success(true, "Ekipman başarıyla pasif duruma getirildi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ekipman pasif duruma getirilirken hata oluştu. Id: {Id}", id);
+                return ApiResponse<bool>.Error("Ekipman pasif duruma getirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<bool>> ActivateEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var expense = await _unitOfWork.Repository<IdtEquipment>()
+                    .GetByIdAsync(id, cancellationToken);
+
+                if (expense == null)
+                {
+                    return ApiResponse<bool>.Error("Ekipman bulunamadı");
+                }
+
+                expense.IsActive = true;
+
+                await _unitOfWork.Repository<IdtEquipment>().UpdateAsync(expense, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return ApiResponse<bool>.Success(true, "Ekipman başarıyla aktif duruma getirildi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ekipman aktif duruma getirilirken hata oluştu. Id: {Id}", id);
+                return ApiResponse<bool>.Error("Ekipman aktif duruma getirilirken hata oluştu");
             }
         }
     }
