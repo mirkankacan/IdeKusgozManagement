@@ -39,10 +39,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<WorkRecordExpenseDTO>.Error("İş kaydı bulunamadı");
                 }
 
-                // Sadece Pending durumundaki iş kayıtlarına masraf eklenebilir
-                if (workRecord.Status != WorkRecordStatus.Pending)
+                if (workRecord.Status == WorkRecordStatus.Approved)
                 {
-                    return ApiResponse<WorkRecordExpenseDTO>.Error("Sadece beklemede olan iş kayıtlarına masraf eklenebilir");
+                    return ApiResponse<WorkRecordExpenseDTO>.Error("Sadece reddedilmiş ve beklemede olan iş kayıtlarına masraf eklenebilir");
                 }
 
                 var expense = createExpenseDTO.Adapt<IdtWorkRecordExpense>();
@@ -130,9 +129,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 // Sadece Pending durumundaki iş kayıtlarının masrafları güncellenebilir
-                if (workRecord.Status != WorkRecordStatus.Pending)
+                if (workRecord.Status == WorkRecordStatus.Approved)
                 {
-                    return ApiResponse<WorkRecordExpenseDTO>.Error("Sadece beklemede olan iş kayıtlarının masrafları güncellenebilir");
+                    return ApiResponse<WorkRecordExpenseDTO>.Error("Sadece reddedilmiş ve beklemede olan iş kayıtlarının masrafları güncellenebilir");
                 }
 
                 updateExpenseDTO.Adapt(expense);
@@ -173,7 +172,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 // Sadece Pending ve Rejected durumundaki iş kayıtlarının masrafları silinebilir
-                if (workRecord.Status != WorkRecordStatus.Pending && workRecord.Status != WorkRecordStatus.Rejected)
+                if (workRecord.Status == WorkRecordStatus.Approved)
                 {
                     return ApiResponse<bool>.Error("Sadece reddedilen ve beklemede olan iş kayıtlarının masrafları silinebilir");
                 }

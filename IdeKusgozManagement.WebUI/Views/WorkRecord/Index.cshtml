@@ -542,7 +542,7 @@
                                             <input type="text" class="form-control project-input" placeholder="Proje adı" data-day="${day}" value="${record.project || ''}">
                                         </td>
                                                             <td>
-                                    <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${record.equipment || ''}">
+                                    <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${record.equipmentId || ''}">
                                         <option value="">Ekipman seçin</option>
                                     </select>
                                 </td>
@@ -681,13 +681,13 @@
                 const startTime = $(this).find('.start-time').val();
                 const endTime = $(this).find('.end-time').val();
                 const project = $(this).find('.project-input').val();
-                const equipment = $(this).find('.equipment-select').val();
+                const equipmentId = $(this).find('.equipment-select').val();
                 const province = $(this).find('.province-select').val();
                 const district = $(this).find('.district-select').val();
 
                 const dayExpenses = expenseData[day] || [];
                 const expenses = dayExpenses.map(exp => ({
-                    expense: exp.type || exp.expense,
+                    expenseId:exp.expenseId,
                     description: exp.description || null,
                     amount: exp.amount,
                     receiptImageUrl: exp.receiptImageUrl || null
@@ -706,7 +706,7 @@
                     StartTime: startTime,
                     EndTime: endTime,
                     Project: project,
-                    Equipment: equipment,
+                    EquipmentId: equipmentId,
                     Province: province,
                     District: district,
                     HasBreakfast: hasBreakfast,

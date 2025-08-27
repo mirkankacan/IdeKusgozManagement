@@ -138,7 +138,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 // Check if expense is used in any work record expenses
                 var isExpenseUsed = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                    .AnyAsync(wre => wre.Expense == expense.Name, cancellationToken);
+                    .AnyAsync(wre => wre.ExpenseId == expense.Id, cancellationToken);
 
                 if (isExpenseUsed)
                 {

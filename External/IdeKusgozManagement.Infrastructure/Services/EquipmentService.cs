@@ -140,7 +140,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 // Check if equipment is used in any work records
                 var isEquipmentUsed = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .AnyAsync(wr => wr.Equipment == equipment.Name, cancellationToken);
+                    .AnyAsync(wr => wr.EquipmentId == equipment.Id, cancellationToken);
 
                 if (isEquipmentUsed)
                 {

@@ -29,9 +29,10 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
-                                <th>EKIPMAN ADI</th>
+                                <th>EKİPMAN ADI</th>
                                 <th>OLUŞTURMA TARİHİ</th>
                                 <th>OLUŞTURAN</th>
+                                <th>AKTİF Mİ</th>
                                 <th>İŞLEMLER</th>
                             </tr>
                         </thead>
@@ -109,64 +110,130 @@
     <script>
         let equipmentsTable;
 
-        $(document).ready(function () {
-            initializeDataTable();
+        $(document).ready(async function () {
+           await initializeDataTable();
             setupEventListeners();
         });
 
-        function initializeDataTable() {
+           async function initializeDataTable() {
             equipmentsTable = $('#equipmentsTable').DataTable({
                 "processing": true,
-                "serverSide": false,
                 "ajax": {
-                    "url": "/ekipman-yonetimi/liste",
+                    "url": "/masraf-yonetimi/liste",
                     "type": "GET",
-                    "headers": {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    },
                     "dataSrc": function (json) {
-                        if (json.isSuccess) {
+                        if (json && json.isSuccess && json.data) {
                             return json.data;
-                        } else {
-                            toastr.error(json.message, 'Hata!');
-                            return [];
                         }
+                        return [];
+                    },
+                    "error": function (xhr, error, code) {
+                        console.error('DataTables AJAX error:', error);
+                        let errorMessage = 'Veriler yüklenirken hata oluştu';
+                        try {
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage += ': ' + xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                errorMessage += ': ' + xhr.responseText;
+                            }
+                        } catch (e) {
+                            errorMessage += ': ' + error;
+                        }
+
+                        toastr.error(errorMessage);
                     }
                 },
                 "columns": [
                     {
                         "data": null,
+                        "width": "5%",
+                        "orderable": false,
+                        "className": "text-center",
                         "render": function (data, type, row, meta) {
-                            return meta.row + 1;
+                            return '';
                         }
                     },
-                    { "data": "name" },
+                    {
+                        "data": "name",
+                        "render": function (data) {
+                            return data ? `<strong>${data}</strong>` : '';
+                        }
+                    },
                     {
                         "data": "createdDate",
                         "render": function (data) {
                             return new Date(data).toLocaleDateString('tr-TR');
                         }
                     },
-                    { "data": "createdBy" },
+                    {
+                        "data": "createdByFullName", "render": function (data) {
+                            return data ? data : '';
+                        }
+                    },
+                    {
+                        "data": "isActive",
+                        "width": "10%",
+                        "className": "text-center",
+                        "render": function (data) {
+                            return data ?
+                                '<span class="badge bg-success">Evet</span>' :
+                                '<span class="badge bg-danger">Hayır</span>';
+                        }
+                    },
                     {
                         "data": null,
+                        "width": "10%",
+                        "orderable": false,
+                        "className": "text-center",
                         "render": function (data, type, row) {
+
+                            const statusButton = row.isActive
+                                ? `<button type="button" class="btn btn-outline-secondary btn-sm"
+                            onclick="deactivateEquipment('${row.id}')" title="Pasifleştir">
+                            <i class="fas fa-user-slash"></i>
+                           </button>`
+                                : `<button type="button" class="btn btn-outline-success btn-sm"
+                            onclick="activateEquipment('${row.id}')" title="Aktifleştir">
+                            <i class="fas fa-user-check"></i>
+                           </button>`;
                             return `
-                                <button class="btn btn-sm btn-outline-primary edit-equipment" data-id="${row.id}" title="Düzenle">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger delete-equipment" data-id="${row.id}" title="Sil">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            `;
+                                <div class="btn-group btn-group-sm" role="group">
+                                 <button type="button" class="btn btn-outline-warning btn-sm"
+                                   onclick="loadEquipmentForEdit('${row.id}')" title="Düzenle">
+                                  <i class="fas fa-edit"></i>
+                                 </button>
+                                 ${statusButton}
+                                 <button type="button" class="btn btn-outline-danger btn-sm"
+                                   onclick="deleteEquipment('${row.id}')" title="Sil">
+                                  <i class="fas fa-trash"></i>
+                                 </button>
+                                </div>
+                           `;
                         }
                     }
                 ],
                 "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json"
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
                 "responsive": true,
-                "autoWidth": false
+                "searchDelay": 300,
+                "stateSave": true,
+                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                    '<"row"<"col-sm-12"tr>>' +
+                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                "initComplete": function () {
+                },
+                "drawCallback": function () {
+                    var api = this.api();
+                    var pageInfo = api.page.info();
+
+                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                        cell.innerHTML = pageInfo.start + i + 1;
+                    });
+                    $('[title]').tooltip();
+                }
             });
         }
 
@@ -189,17 +256,7 @@
                 $(this).addClass('was-validated');
             });
 
-            // Edit button click
-            $(document).on('click', '.edit-equipment', function () {
-                const equipmentId = $(this).data('id');
-                loadEquipmentForEdit(equipmentId);
-            });
-
-            // Delete button click
-            $(document).on('click', '.delete-equipment', function () {
-                const equipmentId = $(this).data('id');
-                deleteEquipment(equipmentId);
-            });
+   
 
             // Clear forms when modals hide
             $('#createEquipmentModal').on('hidden.bs.modal', function () {
@@ -246,10 +303,8 @@
             try {
                 const response = await $.ajax({
                     url: `/ekipman-yonetimi/${equipmentId}`,
-                    type: 'GET',
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    type: 'GET'
+                    
                 });
 
                 if (response.isSuccess) {

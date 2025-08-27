@@ -16,7 +16,7 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         public string Project { get; set; }
 
         [Required]
-        public string Equipment { get; set; }
+        public string EquipmentId { get; set; }
 
         [Required]
         public string Province { get; set; }

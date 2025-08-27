@@ -9,7 +9,7 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
         public string Project { get; set; }
-        public string Equipment { get; set; }
+        public string EquipmentId { get; set; }
         public string Province { get; set; }
         public string District { get; set; }
         public bool HasBreakfast { get; set; }

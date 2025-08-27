@@ -1,8 +1,12 @@
-﻿namespace IdeKusgozManagement.Domain.Entities.Base
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace IdeKusgozManagement.Domain.Entities.Base
 {
     public abstract class BaseEntity
     {
+        [Key]
         public string Id { get; private set; }
+
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public string? CreatedBy { get; set; }

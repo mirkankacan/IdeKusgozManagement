@@ -496,7 +496,7 @@
                     startTime: existingRecord ? PuantajCommon.Utils.formatTimeSpan(existingRecord.startTime) : '08:00',
                     endTime: existingRecord ? PuantajCommon.Utils.formatTimeSpan(existingRecord.endTime) : '17:00',
                     project: existingRecord?.project || '',
-                    equipment: existingRecord?.equipment || '',
+                    equipmentId: existingRecord?.equipmentId || '',
                     province: existingRecord?.province || '',
                     district: existingRecord?.district || '',
                     hasBreakfast: existingRecord?.hasBreakfast || false,
@@ -565,7 +565,7 @@
                                                data-day="${day}" value="${defaultValues.project}" ${disabledAttr}>
                                     </td>
                                                                 <td>
-                                <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${defaultValues.equipment}" ${disabledAttr}>
+                                <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${defaultValues.equipmentId}" ${disabledAttr}>
                                     <option value="">Ekipman seçin</option>
                                 </select>
                             </td>
@@ -653,7 +653,7 @@
                 const startTime = $(this).find('.start-time').val();
                 const endTime = $(this).find('.end-time').val();
                 const project = $(this).find('.project-input').val();
-                const equipment = $(this).find('.equipment-select').val();
+                const equipmentId = $(this).find('.equipment-select').val();
                 const province = $(this).find('.province-select').val();
                 const district = $(this).find('.district-select').val();
 
@@ -678,7 +678,7 @@
                     StartTime: startTime,
                     EndTime: endTime,
                     Project: project,
-                    Equipment: equipment,
+                    EquipmentId: equipmentId,
                     Province: province,
                     District: district,
                     HasBreakfast: hasBreakfast,

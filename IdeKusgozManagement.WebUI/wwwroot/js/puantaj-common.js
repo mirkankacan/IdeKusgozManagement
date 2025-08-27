@@ -14,13 +14,13 @@ let currentEditingDay = null;
  */
 const PuantajUtils = {
     // Turkish day names
-    getDayOfWeekTurkish: function(day) {
+    getDayOfWeekTurkish: function (day) {
         const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
         return days[day];
     },
 
     // Format TimeSpan to HH:mm
-    formatTimeSpan: function(timeSpan) {
+    formatTimeSpan: function (timeSpan) {
         if (!timeSpan) return '';
 
         // If timeSpan is already in HH:mm format, return as is
@@ -39,34 +39,21 @@ const PuantajUtils = {
         return '';
     },
 
-    // Get expense type text
-    getExpenseTypeText: function(type) {
-        const types = {
-            'yol': 'Yol Masrafı',
-            'yemek': 'Yemek Masrafı',
-            'konaklama': 'Konaklama Masrafı',
-            'yakit': 'Yakıt Masrafı',
-            'otopark': 'Otopark Masrafı',
-            'diger': 'Diğer Masraf'
-        };
-        return types[type] || type;
-    },
-
     // Clear expense form
-    clearExpenseForm: function() {
+    clearExpenseForm: function () {
         $('#expenseForm')[0].reset();
         $('#expenseForm').removeClass('was-validated');
         $('#expense-select').val('').trigger('change');
     },
 
     // Show/hide table loading
-    showTableLoading: function() {
+    showTableLoading: function () {
         $('#dynamicTableContainer').addClass('table-loading');
         $('#tableLoadingSpinner').show();
         $('#tableContent').hide();
     },
 
-    hideTableLoading: function() {
+    hideTableLoading: function () {
         $('#dynamicTableContainer').removeClass('table-loading');
         $('#tableLoadingSpinner').hide();
         $('#tableContent').show();
@@ -77,12 +64,12 @@ const PuantajUtils = {
  * Time Picker Management
  */
 const TimePicker = {
-    initialize: function() {
+    initialize: function () {
         this.initializeStartTime();
         this.initializeEndTime();
     },
 
-    initializeStartTime: function() {
+    initializeStartTime: function () {
         $('.start-time:not(.dtp-initialized)').each(function () {
             $(this).addClass('dtp-initialized').bootstrapMaterialDatePicker({
                 format: 'HH:mm',
@@ -118,7 +105,7 @@ const TimePicker = {
         });
     },
 
-    initializeEndTime: function() {
+    initializeEndTime: function () {
         $('.end-time:not(.dtp-initialized)').each(function () {
             $(this).addClass('dtp-initialized').bootstrapMaterialDatePicker({
                 format: 'HH:mm',
@@ -154,7 +141,7 @@ const TimePicker = {
         });
     },
 
-    validateTimeInputs: function(changedInput) {
+    validateTimeInputs: function (changedInput) {
         const row = changedInput.closest('tr');
         const startTimeInput = row.find('.start-time');
         const endTimeInput = row.find('.end-time');
@@ -186,13 +173,13 @@ const TimePicker = {
  * Select2 Management
  */
 const Select2Manager = {
-    initialize: async function() {
+    initialize: async function () {
         await this.initializeEquipmentSelect();
         this.initializeLocationSelects();
         await this.initializeExpenseSelect();
     },
 
-    initializeEquipmentSelect: async function() {
+    initializeEquipmentSelect: async function () {
         try {
             const response = await $.ajax({
                 url: '/ekipman-yonetimi/liste',
@@ -201,15 +188,15 @@ const Select2Manager = {
             });
 
             if (response && response.isSuccess && response.data) {
-                $('.equipment-select').each(function() {
+                $('.equipment-select').each(function () {
                     const currentSelect = $(this);
-                    const currentValue = currentSelect.data('current-value') || currentSelect.val();
-                    
+                    const currentValue = currentSelect.data('current-value');
+
                     currentSelect.empty();
                     currentSelect.append('<option value="">Ekipman seçin</option>');
                     response.data.forEach(equipment => {
-                        const isSelected = currentValue === equipment.name;
-                        currentSelect.append(`<option value="${equipment.name}" ${isSelected ? 'selected' : ''}>${equipment.name}</option>`);
+                        const isSelected = currentValue === equipment.id;
+                        currentSelect.append(`<option value="${equipment.id}" ${isSelected ? 'selected' : ''}>${equipment.name}</option>`);
                     });
                 });
             }
@@ -226,7 +213,7 @@ const Select2Manager = {
         }
     },
 
-    initializeLocationSelects: function() {
+    initializeLocationSelects: function () {
         $('.province-select').select2({
             placeholder: 'İl seçin',
             theme: 'bootstrap-5',
@@ -242,7 +229,7 @@ const Select2Manager = {
         });
     },
 
-    initializeExpenseSelect: async function() {
+    initializeExpenseSelect: async function () {
         try {
             const response = await $.ajax({
                 url: '/masraf-yonetimi/liste',
@@ -255,7 +242,7 @@ const Select2Manager = {
                 $('#expense-select').append('<option value="">Masraf türü seçin</option>');
 
                 response.data.forEach(expenseType => {
-                    $('#expense-select').append(`<option value="${expenseType.name}">${expenseType.name}</option>`);
+                    $('#expense-select').append(`<option value="${expenseType.id}">${expenseType.name}</option>`);
                 });
             }
 
@@ -271,7 +258,7 @@ const Select2Manager = {
         }
     },
 
-    initializeUserSelect: function() {
+    initializeUserSelect: function () {
         $('.user-select').select2({
             placeholder: 'Kullanıcı seçin',
             theme: 'bootstrap-5',
@@ -284,12 +271,12 @@ const Select2Manager = {
  * Expense Management
  */
 const ExpenseManager = {
-    setup: function() {
+    setup: function () {
         this.setupModal();
         this.setupEventListeners();
     },
 
-    setupModal: function() {
+    setupModal: function () {
         $('#expenseModal').on('show.bs.modal', function (event) {
             const button = $(event.relatedTarget);
             currentEditingDay = button.data('day');
@@ -305,9 +292,9 @@ const ExpenseManager = {
         });
     },
 
-    setupEventListeners: function() {
+    setupEventListeners: function () {
         // Form submit işlemi
-        $('#expenseForm').on('submit', function(e) {
+        $('#expenseForm').on('submit', function (e) {
             e.preventDefault();
 
             if (this.checkValidity()) {
@@ -318,13 +305,13 @@ const ExpenseManager = {
         });
 
         // Masraf silme butonları
-        $(document).on('click', '.remove-expense-btn', function() {
+        $(document).on('click', '.remove-expense-btn', function () {
             const expenseIndex = $(this).data('index');
             ExpenseManager.removeExpenseFromDay(expenseIndex);
         });
     },
 
-    loadExpensesForDay: function(day) {
+    loadExpensesForDay: function (day) {
         if (!expenseData[day]) {
             expenseData[day] = [];
         }
@@ -333,52 +320,50 @@ const ExpenseManager = {
         this.updateTotalExpense(day);
     },
 
-    displayCurrentExpenses: function(day, isApproved = false) {
-         const expenses = expenseData[day] || [];
-         const expensesList = $('#expenseItemsList');
-         const currentExpensesSection = $('#currentExpensesList');
- 
-         expensesList.empty();
- 
-         if (expenses.length > 0) {
-             currentExpensesSection.show();
- 
-             expenses.forEach((expense, index) => {
-                 const expenseTypeText = PuantajUtils.getExpenseTypeText(expense.expense || expense.type);
-                 
-                 const actionButton = isApproved 
-                     ? `<span class="badge bg-success">
+    displayCurrentExpenses: function (day, isApproved = false) {
+        const expenses = expenseData[day] || [];
+        const expensesList = $('#expenseItemsList');
+        const currentExpensesSection = $('#currentExpensesList');
+
+        expensesList.empty();
+
+        if (expenses.length > 0) {
+            currentExpensesSection.show();
+
+            expenses.forEach((expense, index) => {
+                const actionButton = isApproved
+                    ? `<span class="badge bg-success">
                             <i class="fas fa-check me-1"></i>Onaylandı
                         </span>`
-                     : `<button type="button" class="btn btn-sm btn-outline-danger remove-expense-btn"
+                    : `<button type="button" class="btn btn-sm btn-outline-danger remove-expense-btn"
                                 data-index="${index}" title="Masrafı Sil">
                             <i class="fas fa-trash"></i>
                         </button>`;
-                 
-                 const expenseItem = `
+
+                const expenseItem = `
                      <div class="list-group-item d-flex justify-content-between align-items-center">
                          <div>
-                             <h6 class="mb-1">${expenseTypeText}</h6>
+                             <h6 class="mb-1">${expense.expenseName}</h6>
                              <p class="mb-1"><strong>${expense.amount.toFixed(2)} ₺</strong></p>
                              ${expense.description ? `<small class="text-muted">${expense.description}</small>` : ''}
                          </div>
                          ${actionButton}
                      </div>
                  `;
-                 expensesList.append(expenseItem);
-             });
-         } else {
-             currentExpensesSection.hide();
-         }
-     },
+                expensesList.append(expenseItem);
+            });
+        } else {
+            currentExpensesSection.hide();
+        }
+    },
 
-    addExpenseToDay: function() {
-        const expenseType = $('#expense-select').val();
+    addExpenseToDay: function () {
+        const expenseId = $('#expense-select').val();
         const amount = parseFloat($('#txtAmount').val());
         const description = $('#txtDescription').val();
         const receiptFile = $('#fileReceiptImage')[0].files[0];
 
-        if(expenseType == null || expenseType == undefined || isNaN(amount) || amount == null ){
+        if (expenseId == null || expenseId == undefined || isNaN(amount) || amount == null) {
             toastr.warning("Masraf türünü ya da tutarı kontrol ediniz");
             return;
         }
@@ -388,8 +373,7 @@ const ExpenseManager = {
         }
 
         const newExpense = {
-            type: expenseType,
-            expense: expenseType,
+            expenseId: expenseId,
             amount: amount,
             description: description,
             receiptFile: receiptFile
@@ -408,7 +392,7 @@ const ExpenseManager = {
         toastr.success('Masraf eklendi!', 'Başarılı!');
     },
 
-    removeExpenseFromDay: function(index) {
+    removeExpenseFromDay: function (index) {
         if (expenseData[currentEditingDay] && expenseData[currentEditingDay][index]) {
             expenseData[currentEditingDay].splice(index, 1);
 
@@ -420,7 +404,7 @@ const ExpenseManager = {
         }
     },
 
-    updateTotalExpense: function(day) {
+    updateTotalExpense: function (day) {
         const expenses = expenseData[day] || [];
         const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
@@ -433,7 +417,7 @@ const ExpenseManager = {
         }
     },
 
-    updateExpenseButton: function(day) {
+    updateExpenseButton: function (day) {
         const expenses = expenseData[day] || [];
         const button = $(`.expense-modal-btn[data-day="${day}"]`);
         const count = expenses.length;
@@ -452,17 +436,17 @@ const ExpenseManager = {
  * Location Management (extends turkey-locations.js)
  */
 const LocationManager = {
-    populateProvincesAndDistricts: async function(workRecords) {
+    populateProvincesAndDistricts: async function (workRecords) {
         const recordsArray = Array.isArray(workRecords) ? workRecords : Object.values(workRecords);
-        
+
         // İl seçeneklerini her zaman doldur
-        $('.province-select').each(function() {
+        $('.province-select').each(function () {
             populateProvinces($(this));
         });
-        
+
         // Event handler'ları ayarla
         this.setupLocationEventListeners();
-        
+
         if (recordsArray.length > 0) {
             recordsArray.forEach(record => {
                 const date = new Date(record.date);
@@ -491,21 +475,21 @@ const LocationManager = {
         }
     },
 
-    setupLocationEventListeners: function() {
+    setupLocationEventListeners: function () {
         // İl değişikliği event handler'ı - sadece bir kez bağla
-        $(document).off('change', '.province-select').on('change', '.province-select', function() {
+        $(document).off('change', '.province-select').on('change', '.province-select', function () {
             const provinceSelect = $(this);
             const day = provinceSelect.data('day');
             const districtSelect = $(`.district-select[data-day="${day}"]`);
-            
+
             // İlçe select'ini temizle ve doldur
             districtSelect.empty();
             districtSelect.append('<option value="">İlçe seçin</option>');
-            
+
             if (provinceSelect.val()) {
                 populateDistricts(provinceSelect, districtSelect);
             }
-            
+
             // Select2'yi yeniden başlat
             if (districtSelect.hasClass('select2-hidden-accessible')) {
                 districtSelect.select2('destroy');
@@ -525,7 +509,7 @@ const LocationManager = {
  */
 const AjaxHelper = {
     // Common request configuration
-    getRequestConfig: function(additionalHeaders = {}) {
+    getRequestConfig: function (additionalHeaders = {}) {
         return {
             headers: {
                 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val(),
@@ -535,9 +519,9 @@ const AjaxHelper = {
     },
 
     // Handle common error responses
-    handleError: function(error, defaultMessage = 'Bir hata oluştu') {
+    handleError: function (error, defaultMessage = 'Bir hata oluştu') {
         console.error('Ajax Error:', error);
-        
+
         let errorMessage = defaultMessage;
         if (error.responseJSON) {
             if (error.responseJSON.message) {
@@ -548,7 +532,7 @@ const AjaxHelper = {
         } else if (error.message) {
             errorMessage = error.message;
         }
-        
+
         toastr.error(errorMessage, 'Hata!');
         return errorMessage;
     }
@@ -558,7 +542,7 @@ const AjaxHelper = {
  * Status Badge Helper
  */
 const StatusBadge = {
-    generate: function(status, statusText) {
+    generate: function (status, statusText) {
         let badgeClass = 'bg-secondary';
         let icon = 'fas fa-clock';
 
@@ -608,7 +592,7 @@ async function initializeCommonComponents() {
 
 // Auto-initialize when DOM is ready (if jQuery is available)
 if (typeof $ !== 'undefined') {
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Auto-initialize only if explicitly requested
         if (window.autoInitializePuantajCommon !== false) {
             initializeCommonComponents();

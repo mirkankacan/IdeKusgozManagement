@@ -5,7 +5,7 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels
     public class UpdateWorkRecordExpenseViewModel
     {
         [Required]
-        public string Expense { get; set; }
+        public string ExpenseId { get; set; }
 
         public string? Description { get; set; } = null;
 

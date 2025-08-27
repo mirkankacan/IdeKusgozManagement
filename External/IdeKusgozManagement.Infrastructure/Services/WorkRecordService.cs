@@ -182,7 +182,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         existingWorkRecord.StartTime = createDTO.StartTime;
                         existingWorkRecord.EndTime = createDTO.EndTime;
                         existingWorkRecord.Project = createDTO.Project;
-                        existingWorkRecord.Equipment = createDTO.Equipment;
+                        existingWorkRecord.EquipmentId = createDTO.EquipmentId;
                         existingWorkRecord.Province = createDTO.Province;
                         existingWorkRecord.District = createDTO.District;
                         existingWorkRecord.HasBreakfast = createDTO.HasBreakfast;
@@ -322,7 +322,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     {
                         if (existingWorkRecord.Status == WorkRecordStatus.Approved)
                         {
-                            _logger.LogWarning("Onaylanmış  iş kaydı güncelleme girişimi. WorkRecordId: {WorkRecordId}, Status: {Status}",
+                            _logger.LogWarning("Onaylanmış iş kaydı güncelleme girişimi. " +
+                                "WorkRecordId: {WorkRecordId}, Status: {Status}",
                                 existingWorkRecord.Id, existingWorkRecord.Status);
                             continue; // Bu kaydı atla, diğerlerini işlemeye devam et
                         }
@@ -334,7 +335,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                             existingWorkRecord.StartTime != updateDTO.StartTime ||
                             existingWorkRecord.EndTime != updateDTO.EndTime ||
                             existingWorkRecord.Project != updateDTO.Project ||
-                            existingWorkRecord.Equipment != updateDTO.Equipment ||
+                            existingWorkRecord.EquipmentId != updateDTO.EquipmentId ||
                             existingWorkRecord.Province != updateDTO.Province ||
                             existingWorkRecord.District != updateDTO.District ||
                             existingWorkRecord.HasBreakfast != updateDTO.HasBreakfast ||
@@ -352,7 +353,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                             existingWorkRecord.StartTime = updateDTO.StartTime;
                             existingWorkRecord.EndTime = updateDTO.EndTime;
                             existingWorkRecord.Project = updateDTO.Project;
-                            existingWorkRecord.Equipment = updateDTO.Equipment;
+                            existingWorkRecord.EquipmentId = updateDTO.EquipmentId;
                             existingWorkRecord.Province = updateDTO.Province;
                             existingWorkRecord.District = updateDTO.District;
                             existingWorkRecord.HasBreakfast = updateDTO.HasBreakfast;
