@@ -1,9 +1,8 @@
-﻿using IdeKusgozManagement.Domain.Entities.Base;
-using IdeKusgozManagement.Domain.Enums;
+﻿using IdeKusgozManagement.Domain.Enums;
 
-namespace IdeKusgozManagement.Domain.Entities
+namespace IdeKusgozManagement.Application.DTOs.LeaveRequestDTOs
 {
-    public class IdtLeaveRequest : BaseEntity
+    public class CreateLeaveRequestDTO
     {
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }

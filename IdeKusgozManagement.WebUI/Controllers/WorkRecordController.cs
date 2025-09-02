@@ -63,7 +63,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPost("toplu-reddet")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Reject([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchReject([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -76,7 +76,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPost("toplu-onayla")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchApprove([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -87,8 +87,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
-        [HttpPut("guncelle")]
-        public async Task<IActionResult> Update([FromQuery] string userId, [FromBody] List<UpdateWorkRecordViewModel> model, CancellationToken cancellationToken = default)
+        [HttpPut("toplu-guncelle")]
+        public async Task<IActionResult> BatchUpdate([FromQuery] string userId, [FromBody] List<UpdateWorkRecordViewModel> model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {

@@ -162,7 +162,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var equipmentDTOs = equipments
                     .Adapt<IEnumerable<EquipmentDTO>>()
-                    .OrderByDescending(e => e.CreatedDate);
+                    .OrderBy(e => e.Name);
 
                 return ApiResponse<IEnumerable<EquipmentDTO>>.Success(equipmentDTOs, "Aktif ekipman listesi başarıyla getirildi");
             }

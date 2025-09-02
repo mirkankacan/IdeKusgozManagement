@@ -165,7 +165,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var expenseDTOs = expenses
                     .Adapt<IEnumerable<ExpenseDTO>>()
-                    .OrderByDescending(e => e.CreatedDate);
+                    .OrderBy(e => e.Name);
 
                 return ApiResponse<IEnumerable<ExpenseDTO>>.Success(expenseDTOs, "Aktif masraf türü listesi başarıyla getirildi");
             }

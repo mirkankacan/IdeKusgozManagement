@@ -263,10 +263,10 @@
                             <label for="txtDescription" class="form-label">Açıklama</label>
                             <textarea class="form-control" id="txtDescription" placeholder="Opsiyonel"></textarea>
                         </div>
-                        <div class="col-md-12">
+                      @*   <div class="col-md-12">
                             <label for="fileReceiptImage" class="form-label">Fatura Fotoğrafı</label>
                             <input type="file" class="form-control" id="fileReceiptImage" accept="image/*,.pdf">
-                        </div>
+                        </div> *@
                     </div>
 
                     <!-- Toplam Masraf -->
@@ -530,7 +530,6 @@
             await PuantajCommon.Select2Manager.initialize();
             PuantajCommon.TimePicker.initialize();
 
-            updateSaveButtonsState();
             PuantajCommon.Utils.hideTableLoading();
         }
 
@@ -623,21 +622,9 @@
                             `;
         }
 
-        function updateSaveButtonsState() {
-            if (hasApprovedRecords) {
-                $('.btnSaveWorkRecords').prop('disabled', true)
-                    .html('<i class="fas fa-lock me-2"></i>Onaylanmış kayıtlar var')
-                    .removeClass('btn-info')
-                    .addClass('btn-secondary');
-            } else {
-                $('.btnSaveWorkRecords').prop('disabled', false)
-                    .html('<i class="fas fa-save me-2"></i>Kaydet')
-                    .removeClass('btn-secondary')
-                    .addClass('btn-info');
-            }
-        }
+    
 
-        async function saveWorkRecords() {
+                  async function saveWorkRecords() {
             if (hasApprovedRecords) {
                 toastr.warning('Onaylanmış kayıtlar bulunduğu için değişiklik yapılamaz!', 'Uyarı!');
                 return;
@@ -656,10 +643,22 @@
                 const equipmentId = $(this).find('.equipment-select').val();
                 const province = $(this).find('.province-select').val();
                 const district = $(this).find('.district-select').val();
+                     
+                // Sadece en az bir alanı dolu olan satırları işle
+                  const hasRequiredData = (startTime && startTime.trim() !== '') &&
+                               (endTime && endTime.trim() !== '') &&
+                               (project && project.trim() !== '') &&
+                               (equipmentId && equipmentId !== '') &&
+                               (province && province !== '') &&
+                               (district && district !== '');
 
+                    if (!hasRequiredData) {
+                        return; // Bu satırı atla, boş satır
+                    }
+            
                 const dayExpenses = expenseData[day] || [];
                 const expenses = dayExpenses.map(exp => ({
-                    expense: exp.expense || exp.type,
+                    expenseId: exp.expenseId,
                     description: exp.description || null,
                     amount: exp.amount,
                     receiptImageUrl: null
@@ -669,6 +668,7 @@
                 const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
                 const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
                 const hasNightMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');
+
                 const formattedDate = `${PuantajCommon.getCurrentYear()}-${String(PuantajCommon.getCurrentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
                 workRecords.push({
@@ -688,6 +688,12 @@
                     Expenses: expenses
                 });
             });
+
+            // Eğer hiç kayıt yoksa uyarı ver
+            if (workRecords.length === 0) {
+                toastr.warning('Kaydedilecek veri bulunamadı!', 'Uyarı!');
+                return;
+            }
 
             try {
                 $('.btnSaveWorkRecords').prop('disabled', true)
@@ -712,7 +718,6 @@
             } catch (error) {
                 PuantajCommon.AjaxHelper.handleError(error, 'Puantaj kaydedilirken bir hata oluştu.');
             } finally {
-                updateSaveButtonsState();
             }
         }
     </script>

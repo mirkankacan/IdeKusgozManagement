@@ -676,7 +676,6 @@
                 if ($(this).find('td').length === 1) return; // Skip message rows
 
                 const day = $(this).data('day');
-                const recordId = $(this).data('record-id') || null;
                 const isWeekend = $(this).find('.weekend-checkbox').is(':checked');
                 const startTime = $(this).find('.start-time').val();
                 const endTime = $(this).find('.end-time').val();
@@ -700,7 +699,6 @@
                 const formattedDate = `${PuantajCommon.getCurrentYear()}-${String(PuantajCommon.getCurrentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
                 workRecords.push({
-                    Id: recordId,
                     Date: formattedDate,
                     IsWeekend: isWeekend,
                     StartTime: startTime,
@@ -766,12 +764,9 @@
                             const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
                             const response = await $.ajax({
-                                url: '/puantaj/toplu-onayla',
+                                url: `/puantaj/toplu-onayla?userId=${selectedUserId}&date=${formattedDate}`,
                                 type: 'POST',
-                                data: {
-                                    userId: selectedUserId,
-                                    date: formattedDate
-                                },
+                               
                                 headers: {
                                     'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                                 }
@@ -827,12 +822,9 @@
                             const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
                             const response = await $.ajax({
-                                url: '/puantaj/toplu-reddet',
+                                url: `/puantaj/toplu-reddet?userId=${selectedUserId}&date=${formattedDate}`,
                                 type: 'POST',
-                                data: {
-                                    date: formattedDate,
-                                    userId: selectedUserId
-                                },
+                            
                                 headers: {
                                     'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                                 }
