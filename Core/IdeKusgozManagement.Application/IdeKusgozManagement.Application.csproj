@@ -19,4 +19,8 @@
     <ProjectReference Include="..\IdeKusgozManagement.Domain\IdeKusgozManagement.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\HolidayDTOs\" />
+  </ItemGroup>
+
 </Project>

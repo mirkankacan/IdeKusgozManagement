@@ -1,9 +1,8 @@
-﻿using System.Security.Claims;
-using IdeKusgozManagement.Application.Common;
+﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.AuthDTOs;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Providers;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Entities;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
@@ -14,24 +13,24 @@ namespace IdeKusgozManagement.Infrastructure.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtProvider _jwtProvider;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<AuthService> _logger;
+        private readonly ICurrentUserService _currentUserService;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IJwtProvider jwtProvider,
-            IHttpContextAccessor httpContextAccessor,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            ICurrentUserService currentUserService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtProvider = jwtProvider;
-            _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _currentUserService = currentUserService;
         }
 
-        public async Task<ApiResponse<TokenDTO>> LoginAsync(LoginDTO loginDTO)
+        public async Task<ApiResponse<TokenDTO>> LoginAsync(LoginDTO loginDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -72,11 +71,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> LogoutAsync()
+        public async Task<ApiResponse<bool>> LogoutAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var userId = GetCurrentUserId();
+                var userId = _currentUserService.GetCurrentUserId();
                 if (!string.IsNullOrEmpty(userId))
                 {
                     var user = await _userManager.FindByIdAsync(userId);
@@ -101,7 +100,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<TokenDTO>> RefreshTokenAsync(CreateTokenByRefreshTokenDTO createTokenByRefreshTokenDTO)
+        public async Task<ApiResponse<TokenDTO>> RefreshTokenAsync(CreateTokenByRefreshTokenDTO createTokenByRefreshTokenDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -122,7 +121,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 // Refresh token kontrolü
                 if (user.RefreshToken != createTokenByRefreshTokenDTO.RefreshToken)
                 {
-                    _logger.LogWarning("Refresh token denemesi başarısız. Geçersiz refresh token User Id: {UserId} | Database Refresh Token: {DbRefreshToken} | From UI Refresh Token: {UiRefreshToken}", createTokenByRefreshTokenDTO.UserId, user.RefreshToken,createTokenByRefreshTokenDTO.RefreshToken);
+                    _logger.LogWarning("Refresh token denemesi başarısız. Geçersiz refresh token User Id: {UserId} | Database Refresh Token: {DbRefreshToken} | From UI Refresh Token: {UiRefreshToken}", createTokenByRefreshTokenDTO.UserId, user.RefreshToken, createTokenByRefreshTokenDTO.RefreshToken);
                     return ApiResponse<TokenDTO>.Error("Geçersiz refresh token");
                 }
 
@@ -145,49 +144,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 _logger.LogError(ex, "RefreshTokenAsync işleminde hata oluştu. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
                 return ApiResponse<TokenDTO>.Error("Token yenileme işlemi sırasında bir hata oluştu");
             }
-        }
-
-        public async Task<ApiResponse<bool>> IsAuthenticatedAsync()
-        {
-            try
-            {
-                var httpContext = _httpContextAccessor.HttpContext;
-                if (httpContext?.User?.Identity?.IsAuthenticated != true)
-                {
-                    return ApiResponse<bool>.Success(false, "Kullanıcı oturumu açık değil");
-                }
-
-                var userId = GetCurrentUserId();
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return ApiResponse<bool>.Success(false, "Kullanıcı ID'si bulunamadı");
-                }
-
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                {
-                    _logger.LogWarning("Kimlik doğrulama kontrolünde kullanıcı bulunamadı: {UserId}", userId);
-                    return ApiResponse<bool>.Success(false, "Kullanıcı bulunamadı");
-                }
-
-                if (!user.IsActive)
-                {
-                    _logger.LogWarning("Kimlik doğrulama kontrolünde kullanıcı pasif: {UserId}", userId);
-                    return ApiResponse<bool>.Success(false, "Kullanıcı hesabı pasif");
-                }
-
-                return ApiResponse<bool>.Success(true, "Kullanıcı kimliği doğrulandı");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "IsAuthenticatedAsync işleminde hata oluştu");
-                return ApiResponse<bool>.Error("Kimlik doğrulama kontrolü sırasında bir hata oluştu");
-            }
-        }
-
-        private string? GetCurrentUserId()
-        {
-            return _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
     }
 }

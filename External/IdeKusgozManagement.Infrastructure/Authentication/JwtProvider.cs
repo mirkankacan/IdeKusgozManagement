@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using IdeKusgozManagement.Application.DTOs.AuthDTOs;
 using IdeKusgozManagement.Application.DTOs.OptionDTOs;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Providers;
 using IdeKusgozManagement.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;

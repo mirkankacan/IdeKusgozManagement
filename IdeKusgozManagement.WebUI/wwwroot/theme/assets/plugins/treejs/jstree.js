@@ -5968,7 +5968,7 @@
 /**
  * ### Conditionalselect plugin
  *
- * This plugin allows defining a callback to allow or deny node selection by user input (activate node method).
+ * This plugin allows defining a callback to allow or deny node selection by user input (enable node method).
  */
 
 	/**

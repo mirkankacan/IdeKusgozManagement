@@ -182,7 +182,7 @@ const Select2Manager = {
     initializeEquipmentSelect: async function () {
         try {
             const response = await $.ajax({
-                url: '/ekipman-yonetimi/liste',
+                url: '/ekipman-yonetimi/aktif-liste',
                 type: 'GET',
                 dataType: 'json'
             });
@@ -232,7 +232,7 @@ const Select2Manager = {
     initializeExpenseSelect: async function () {
         try {
             const response = await $.ajax({
-                url: '/masraf-yonetimi/liste',
+                url: '/masraf-yonetimi/aktif-liste',
                 type: 'GET',
                 dataType: 'json'
             });
@@ -330,7 +330,8 @@ const ExpenseManager = {
         if (expenses.length > 0) {
             currentExpensesSection.show();
             expenses.forEach((expense, index) => {
-
+                const expenseName = expense.expenseName
+                    ?? $('#expense-select option[value="' + expense.expenseId + '"]').text();
                 const actionButton = isApproved
                     ? `<span class="badge bg-success">
                             <i class="fas fa-check me-1"></i>Onaylandı
@@ -339,11 +340,10 @@ const ExpenseManager = {
                                 data-index="${index}" title="Masrafı Sil">
                             <i class="fas fa-trash"></i>
                         </button>`;
-
                 const expenseItem = `
                      <div class="list-group-item d-flex justify-content-between align-items-center">
                          <div>
-                             <h6 class="mb-1">${expense.expenseName}</h6>
+                             <h6 class="mb-1">${expenseName}</h6>
                              <p class="mb-1"><strong>${expense.amount.toFixed(2)} ₺</strong></p>
                              ${expense.description ? `<small class="text-muted">${expense.description}</small>` : ''}
                          </div>
@@ -359,10 +359,9 @@ const ExpenseManager = {
 
     addExpenseToDay: function () {
         const expenseId = $('#expense-select').val();
-        const expenseText = $('#expense-select').find('option:selected').text();
         const amount = parseFloat($('#txtAmount').val());
         const description = $('#txtDescription').val();
-        const receiptFile = $('#fileReceiptImage')[0].files[0];
+        const receiptFile = $('#fileReceiptImage')[0].files[0] ?? null;
 
         if (expenseId == null || expenseId == undefined || isNaN(amount) || amount == null) {
             toastr.warning("Masraf türünü ya da tutarı kontrol ediniz");
@@ -375,7 +374,6 @@ const ExpenseManager = {
 
         const newExpense = {
             expenseId: expenseId,
-            expenseName: expenseText,
             amount: amount,
             description: description,
             receiptFile: receiptFile

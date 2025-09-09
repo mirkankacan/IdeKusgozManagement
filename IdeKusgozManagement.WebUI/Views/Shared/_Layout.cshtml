@@ -28,6 +28,13 @@
 		.modal-footer {
 			flex-wrap: nowrap !important;
 		}
+
+		/* Approved/readonly row styles */
+		:disabled,
+		.disabled {
+			opacity: 0.8;
+			cursor: not-allowed !important;
+		}
 	</style>
 </head>
 
@@ -98,22 +105,30 @@
 					<li class="@(Context.Request.Path == "/masraf-yonetimi" ? "active-page" : "")">
 						<a href="/masraf-yonetimi"><i data-feather="tag"></i>Masraflar</a>
 					</li>
+					<li class="@(Context.Request.Path == "/izinn-yonetimi" ? "active-page" : "")">
+						<a href="/izin-yonetimi"><i data-feather="navigation"></i>İzinler</a>
+					</li>
+				}
+				@if (User.IsInRole("Admin") || User.IsInRole("Şef"))
+				{
+					<li class="sidebar-title">
+						Şef İşlemleri
+					</li>
+					<li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
+						<a href="/puantaj"><i data-feather="list"></i>Puantajlar</a>
+					</li>
 				}
 
 				<li class="sidebar-title">
-					Puantaj İşlemleri
+					Personel İşlemleri
 				</li>
 				<li class="@(Context.Request.Path == "/puantaj/ekle" ? "active-page" : "")">
 					<a href="/puantaj/ekle"><i data-feather="clock"></i>Puantaj Gir</a>
 				</li>
-				@if (User.IsInRole("Şef") || User.IsInRole("Admin"))
-				{
-					<li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
-						<a href="/puantaj"><i data-feather="list"></i>Puantaj Listesi</a>
-					</li>
-				}
-
-
+				<li class="@(Context.Request.Path == "/izin/olustur" ? "active-page" : "")">
+					<a href="/izin/olustur"><i data-feather="flag"></i>İzinlerim</a>
+				</li>
+				<li><br/></li>
 
 			</ul>
 		</div>

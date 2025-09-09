@@ -9,36 +9,10 @@ namespace IdeKusgozManagement.WebUI.Services
     public class AuthApiService : IAuthApiService
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger<AuthApiService> _logger;
 
-        public AuthApiService(IHttpClientFactory httpClientFactory, ILogger<AuthApiService> logger)
+        public AuthApiService(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
-            _logger = logger;
-        }
-
-        public async Task<ApiResponse<bool>> CheckAuthAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var httpClient = _httpClientFactory.CreateClient("AuthApiWithToken");
-
-                var response = await httpClient.GetAsync("api/auth/check-auth", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(content);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "CheckAuthAsync işleminde hata oluştu");
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
         }
 
         public async Task<ApiResponse<TokenViewModel>> LoginAsync(LoginViewModel model, CancellationToken cancellationToken = default)
@@ -64,7 +38,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "LoginAsync işleminde hata oluştu");
                 return new ApiResponse<TokenViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -88,7 +61,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "LogoutAsync işleminde hata oluştu");
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -115,7 +87,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "RefreshTokenAsync işleminde hata oluştu");
                 return new ApiResponse<TokenViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }

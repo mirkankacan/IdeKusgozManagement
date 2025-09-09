@@ -1,7 +1,8 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Repositories;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Domain.Enums;
 using Mapster;
@@ -25,122 +26,33 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _currentUserService = currentUserService;
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> GetAllWorkRecordsAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var workRecords = await _unitOfWork.Repository<IdtWorkRecord>().GetAllAsync(cancellationToken);
-                var workRecordDTOs = new List<WorkRecordDTO>();
-
-                foreach (var workRecord in workRecords)
-                {
-                    var workRecordDTO = workRecord.Adapt<WorkRecordDTO>();
-
-                    // Expenses'leri getir
-                    var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .GetWhereAsync(exp => exp.WorkRecordId == workRecord.Id, cancellationToken);
-
-                    workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
-                    workRecordDTOs.Add(workRecordDTO);
-                }
-
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetAllWorkRecordsAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("İş kayıtları getirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<WorkRecordDTO>> GetWorkRecordByIdAsync(string id, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var workRecord = await _unitOfWork.Repository<IdtWorkRecord>().GetByIdAsync(id, cancellationToken);
-                if (workRecord == null)
-                {
-                    return ApiResponse<WorkRecordDTO>.Error("İş kaydı bulunamadı");
-                }
-
-                var workRecordDTO = workRecord.Adapt<WorkRecordDTO>();
-
-                // Expenses'leri getir
-                var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                    .GetWhereAsync(exp => exp.WorkRecordId == id, cancellationToken);
-
-                workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
-
-                return ApiResponse<WorkRecordDTO>.Success(workRecordDTO);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetWorkRecordByIdAsync işleminde hata oluştu. WorkRecordId: {WorkRecordId}", id);
-                return ApiResponse<WorkRecordDTO>.Error("İş kaydı getirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .GetWhereAsync(wr => wr.CreatedBy == userId, cancellationToken);
+                    .GetWhereNoTrackingAsync(
+                        wr => wr.Date.Year == date.Date.Year && wr.Date.Month == date.Date.Month && wr.CreatedBy == userId,
+                        cancellationToken,
+                        wr => wr.WorkRecordExpenses);
 
-                var workRecordDTOs = new List<WorkRecordDTO>();
-
-                foreach (var workRecord in workRecords)
+                var workRecordDTOs = workRecords.Select(workRecord =>
                 {
                     var workRecordDTO = workRecord.Adapt<WorkRecordDTO>();
-
-                    // Expenses'leri getir
-                    var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .GetWhereAsync(exp => exp.WorkRecordId == workRecord.Id, cancellationToken);
-
-                    workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
-                    workRecordDTOs.Add(workRecordDTO);
-                }
+                    workRecordDTO.Expenses = workRecord.WorkRecordExpenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
+                    return workRecordDTO;
+                }).ToList();
 
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetWorkRecordsByUserIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcının iş kayıtları getirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByDateAndUserAsync(DateTime date, string userId, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .GetWhereAsync(wr => wr.Date.Year == date.Date.Year && wr.Date.Month == date.Date.Month && wr.CreatedBy == userId, cancellationToken);
-
-                var workRecordDTOs = new List<WorkRecordDTO>();
-
-                foreach (var workRecord in workRecords)
-                {
-                    var workRecordDTO = workRecord.Adapt<WorkRecordDTO>();
-
-                    // Expenses'leri getir
-                    var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .GetWhereAsync(exp => exp.WorkRecordId == workRecord.Id, cancellationToken);
-
-                    workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
-                    workRecordDTOs.Add(workRecordDTO);
-                }
-
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetWorkRecordsByDateAndUserAsync işleminde hata oluştu. Date: {Date}, UserId: {UserId}", date, userId);
+                _logger.LogError(ex, "GetWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. Date: {Date}, UserId: {UserId}", date, userId);
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Tarih ve kullanıcıya göre iş kayıtları getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchCreateWorkRecordsAsync(List<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchCreateWorkRecordsAsync(IEnumerable<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -155,7 +67,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 // Tüm tarihler için mevcut kayıtları bir seferde al
                 var dates = createWorkRecordDTOs.Select(dto => dto.Date.Date).Distinct().ToList();
                 var existingWorkRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .GetWhereAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == currentUserId, cancellationToken);
+                    .GetWhereNoTrackingAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == currentUserId, cancellationToken);
 
                 var existingRecordsDict = existingWorkRecords.ToDictionary(wr => wr.Date.Date);
 
@@ -294,7 +206,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchUpdateWorkRecordByUserAsync(string userId, List<UpdateWorkRecordDTO> updateWorkRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchUpdateWorkRecordsByUserIdAsync(string userId, IEnumerable<UpdateWorkRecordDTO> updateWorkRecordDTOs, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -305,7 +217,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 // Kullanıcının bu tarihlerdeki mevcut kayıtlarını getir
                 var existingWorkRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .GetWhereAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == userId, cancellationToken);
+                    .GetWhereNoTrackingAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == userId, cancellationToken);
 
                 var existingRecordsDict = existingWorkRecords.ToDictionary(wr => wr.Date.Date);
 
@@ -375,7 +287,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                                 {
                                     var expense = exp.Adapt<IdtWorkRecordExpense>();
                                     expense.WorkRecordId = existingWorkRecord.Id;
-                                    expense.CreatedBy = _currentUserService.GetCurrentUserId();
+                                    expense.CreatedBy = _currentUserService.GetCurrentUserId() ?? string.Empty;
                                     expense.CreatedDate = DateTime.UtcNow;
                                     return expense;
                                 });
@@ -385,7 +297,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                         // Güncel expenses'leri getir ve DTO'ya ekle
                         var currentExpenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                            .GetWhereAsync(exp => exp.WorkRecordId == existingWorkRecord.Id, cancellationToken);
+                            .GetWhereNoTrackingAsync(exp => exp.WorkRecordId == existingWorkRecord.Id, cancellationToken);
 
                         var workRecordDTO = existingWorkRecord.Adapt<WorkRecordDTO>();
                         workRecordDTO.Expenses = currentExpenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
@@ -430,14 +342,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 // Güncellenmiş kayıtları yeniden getir (expenses ile birlikte)
                 var updatedRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .GetWhereAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == userId, cancellationToken);
+                    .GetWhereNoTrackingAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == userId, cancellationToken);
 
                 var finalResult = new List<WorkRecordDTO>();
                 foreach (var record in updatedRecords)
                 {
                     var workRecordDTO = record.Adapt<WorkRecordDTO>();
                     var expenses = await _unitOfWork.Repository<IdtWorkRecordExpense>()
-                        .GetWhereAsync(exp => exp.WorkRecordId == record.Id, cancellationToken);
+                        .GetWhereNoTrackingAsync(exp => exp.WorkRecordId == record.Id, cancellationToken);
                     workRecordDTO.Expenses = expenses.Select(exp => exp.Adapt<WorkRecordExpenseDTO>()).ToList();
                     finalResult.Add(workRecordDTO);
                 }
@@ -453,14 +365,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> BatchApproveWorkRecordsByUserAndMonthAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .GetWhereAsync(wr => wr.CreatedBy == userId &&
+                    .GetWhereNoTrackingAsync(wr => wr.CreatedBy == userId &&
                                    wr.Date.Year == date.Date.Year &&
                                    wr.Date.Month == date.Date.Month, cancellationToken);
 
@@ -491,19 +403,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                _logger.LogError(ex, "BatchApproveWorkRecordsByUserAndMonthAsync işleminde hata oluştu. UserId: {UserId}, Year: {Year}, Month: {Month}", userId, date.Date.Year, date.Date.Month);
+                _logger.LogError(ex, "BatchApproveWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. UserId: {UserId}, Year: {Year}, Month: {Month}", userId, date.Date.Year, date.Date.Month);
                 return ApiResponse<bool>.Error("Toplu iş kaydı onaylanırken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> BatchRejectWorkRecordsByUserAndMonthAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                      .GetWhereAsync(wr => wr.CreatedBy == userId &&
+                      .GetWhereNoTrackingAsync(wr => wr.CreatedBy == userId &&
                                      wr.Date.Year == date.Date.Year &&
                                      wr.Date.Month == date.Date.Month, cancellationToken);
 
@@ -533,38 +445,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                _logger.LogError(ex, "BatchRejectWorkRecordsByUserAndMonthAsync işleminde hata oluştu. UserId: {UserId}, Year: {Year}, Month: {Month}", userId, date.Date.Year, date.Date.Month);
+                _logger.LogError(ex, "BatchRejectWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. UserId: {UserId}, Year: {Year}, Month: {Month}", userId, date.Date.Year, date.Date.Month);
                 return ApiResponse<bool>.Error("Toplu iş kaydı reddedilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<int>> GetWorkRecordCountAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var count = await _unitOfWork.Repository<IdtWorkRecord>().CountAsync(cancellationToken);
-                return ApiResponse<int>.Success(count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetWorkRecordCountAsync işleminde hata oluştu");
-                return ApiResponse<int>.Error("İş kaydı sayısı hesaplanırken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<int>> GetWorkRecordCountByStatusAsync(WorkRecordStatus status, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var count = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .CountAsync(wr => wr.Status == status, cancellationToken);
-
-                return ApiResponse<int>.Success(count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetWorkRecordCountByStatusAsync işleminde hata oluştu. Status: {Status}", status);
-                return ApiResponse<int>.Error("Duruma göre iş kaydı sayısı hesaplanırken hata oluştu");
             }
         }
     }

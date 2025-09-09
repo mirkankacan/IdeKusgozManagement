@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
 builder.Services.AddSession(options =>
@@ -17,6 +16,7 @@ builder.Services.AddSession(options =>
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -34,6 +34,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddTransient<JwtTokenHandler>();
 
+// HTTP Client Services
 builder.Services.AddHttpClient<IUserApiService, UserApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
@@ -47,13 +48,8 @@ builder.Services.AddHttpClient<IRoleApiService, RoleApiService>(client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
+
 builder.Services.AddHttpClient<IWorkRecordApiService, WorkRecordApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-builder.Services.AddHttpClient<IWorkRecordExpenseApiService, WorkRecordExpenseApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
@@ -74,8 +70,14 @@ builder.Services.AddHttpClient<IExpenseApiService, ExpenseApiService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
-builder.Services.AddScoped<IAuthApiService, AuthApiService>();
+builder.Services.AddHttpClient<ILeaveRequestApiService, LeaveRequestApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<JwtTokenHandler>();
 
+builder.Services.AddScoped<IAuthApiService, AuthApiService>();
 
 builder.Services.AddHttpClient("AuthApiWithToken", client =>
 {
@@ -90,14 +92,19 @@ builder.Services.AddHttpClient("AuthApiWithoutToken", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseHttpsRedirection(); // Added for production security
+}
+else
+{
+    app.UseDeveloperExceptionPage(); // Better error handling in development
 }
 
 app.UseStaticFiles();
@@ -108,6 +115,7 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Redirect root to login
 app.Use(async (context, next) =>
 {
     if (context.Request.Path == "/")
@@ -117,17 +125,10 @@ app.Use(async (context, next) =>
     }
     await next();
 });
+
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllerRoute(
-      name: "areas",
-      pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}"
-    );
-});
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

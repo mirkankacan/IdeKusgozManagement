@@ -6566,7 +6566,7 @@
 	
 	
 	/**
-	 * Bind an event handers to allow a click or return key to activate the callback.
+	 * Bind an event handers to allow a click or return key to enable the callback.
 	 * This is good for accessibility since a return on the keyboard will have the
 	 * same effect as a click, if the element has focus.
 	 *  @param {element} n Element to bind the action to
@@ -11245,7 +11245,7 @@
 		/**
 		 * By default DataTables allows keyboard navigation of the table (sorting, paging,
 		 * and filtering) by adding a `tabindex` attribute to the required elements. This
-		 * allows you to tab through the controls and press the enter key to activate them.
+		 * allows you to tab through the controls and press the enter key to enable them.
 		 * The tabindex is default 0, meaning that the tab follows the flow of the document.
 		 * You can overrule this using this parameter if you wish. Use a value of -1 to
 		 * disable built-in keyboard navigation.
@@ -11297,7 +11297,7 @@
 				 * sorted ascending by activing the column (click or return when focused).
 				 * Note that the column header is prefixed to this string.
 				 *  @type string
-				 *  @default : activate to sort column ascending
+				 *  @default : enable to sort column ascending
 				 *
 				 *  @dtopt Language
 				 *  @name DataTable.defaults.language.aria.sortAscending
@@ -11313,14 +11313,14 @@
 				 *      } );
 				 *    } );
 				 */
-				"sSortAscending": ": activate to sort column ascending",
+				"sSortAscending": ": enable to sort column ascending",
 	
 				/**
 				 * ARIA label that is added to the table headers when the column may be
 				 * sorted descending by activing the column (click or return when focused).
 				 * Note that the column header is prefixed to this string.
 				 *  @type string
-				 *  @default : activate to sort column ascending
+				 *  @default : enable to sort column ascending
 				 *
 				 *  @dtopt Language
 				 *  @name DataTable.defaults.language.aria.sortDescending
@@ -11336,7 +11336,7 @@
 				 *      } );
 				 *    } );
 				 */
-				"sSortDescending": ": activate to sort column descending"
+				"sSortDescending": ": enable to sort column descending"
 			},
 	
 			/**

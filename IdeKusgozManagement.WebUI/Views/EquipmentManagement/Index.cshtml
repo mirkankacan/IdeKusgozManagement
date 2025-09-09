@@ -52,7 +52,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Ekipman Ekleme</h5>
+                <h5 class="modal-title">Ekipman Ekleme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form class="needs-validation" novalidate id="createEquipmentForm">
@@ -81,7 +81,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Ekipman Güncelleme</h5>
+                <h5 class="modal-title">Ekipman Güncelleme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form class="needs-validation" novalidate id="updateEquipmentForm">
@@ -204,19 +204,14 @@
                         }
                     }
                 ],
-                "language": {
+                  "language": {
                     url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
                 "pageLength": 10,
                 "responsive": true,
                 "searchDelay": 300,
-                "stateSave": true,
-                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                    '<"row"<"col-sm-12"tr>>' +
-                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                "initComplete": function () {
-                },
+                "order": [[2, "asc"]],
                 "drawCallback": function () {
                     var api = this.api();
                     var pageInfo = api.page.info();

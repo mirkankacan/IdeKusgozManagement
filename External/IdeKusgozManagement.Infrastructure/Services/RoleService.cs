@@ -1,6 +1,6 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.RoleDTOs;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 using Microsoft.AspNetCore.Identity;
@@ -25,7 +25,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<ApiResponse<bool>> IsUserInRoleAsync(string userId, string roleName)
+        public async Task<ApiResponse<bool>> IsUserInRoleAsync(string userId, string roleName, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -43,7 +43,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<RoleDTO>>> GetAllRolesAsync()
+        public async Task<ApiResponse<IEnumerable<RoleDTO>>> GetRolesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -64,11 +64,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<RoleDTO>> GetRoleByIdAsync(string id)
+        public async Task<ApiResponse<RoleDTO>> GetRoleByIdAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var role = await _roleManager.FindByIdAsync(id);
+                var role = await _roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
                     return ApiResponse<RoleDTO>.Error("Rol bulunamadı");
@@ -80,16 +80,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetRoleByIdAsync işleminde hata oluştu. RoleId: {RoleId}", id);
+                _logger.LogError(ex, "GetRoleByIdAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
                 return ApiResponse<RoleDTO>.Error("Rol getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<RoleDTO>> GetRoleByNameAsync(string name)
+        public async Task<ApiResponse<RoleDTO>> GetRoleByNameAsync(string roleName, CancellationToken cancellationToken = default)
         {
             try
             {
-                var role = await _roleManager.FindByNameAsync(name);
+                var role = await _roleManager.FindByNameAsync(roleName);
                 if (role == null)
                 {
                     return ApiResponse<RoleDTO>.Error("Rol bulunamadı");
@@ -101,12 +101,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetRoleByNameAsync işleminde hata oluştu. RoleName: {RoleName}", name);
+                _logger.LogError(ex, "GetRoleByNameAsync işleminde hata oluştu. RoleName: {RoleName}", roleName);
                 return ApiResponse<RoleDTO>.Error("Rol getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<RoleDTO>> CreateRoleAsync(CreateRoleDTO createRoleDTO)
+        public async Task<ApiResponse<RoleDTO>> CreateRoleAsync(CreateRoleDTO createRoleDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -137,11 +137,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<RoleDTO>> UpdateRoleAsync(string id, UpdateRoleDTO updateRoleDTO)
+        public async Task<ApiResponse<RoleDTO>> UpdateRoleAsync(string roleId, UpdateRoleDTO updateRoleDTO, CancellationToken cancellationToken = default)
         {
             try
             {
-                var role = await _roleManager.FindByIdAsync(id);
+                var role = await _roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
                     return ApiResponse<RoleDTO>.Error("Rol bulunamadı");
@@ -151,9 +151,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (role.Name != updateRoleDTO.Name)
                 {
                     var existingRole = await _roleManager.FindByNameAsync(updateRoleDTO.Name);
-                    if (existingRole != null && existingRole.Id != id)
+                    if (existingRole != null && existingRole.Id != roleId)
                     {
-                        return ApiResponse<RoleDTO>.Error("Bu rol adı zaten kullanılıyor");
+                        return ApiResponse<RoleDTO>.Error("Bu rol adı kullanılıyor");
                     }
                 }
 
@@ -173,16 +173,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "UpdateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", id);
+                _logger.LogError(ex, "UpdateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
                 return ApiResponse<RoleDTO>.Error("Rol güncellenirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteRoleAsync(string id)
+        public async Task<ApiResponse<bool>> DeleteRoleAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var role = await _roleManager.FindByIdAsync(id);
+                var role = await _roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
                     return ApiResponse<bool>.Error("Rol bulunamadı");
@@ -209,12 +209,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteRoleAsync işleminde hata oluştu. RoleId: {RoleId}", id);
+                _logger.LogError(ex, "DeleteRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
                 return ApiResponse<bool>.Error("Rol silinirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateRoleAsync(string roleId)
+        public async Task<ApiResponse<bool>> EnableRoleAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -242,7 +242,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateRoleAsync(string roleId)
+        public async Task<ApiResponse<bool>> DisableRoleAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -277,7 +277,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<RoleDTO>>> GetActiveRolesAsync()
+        public async Task<ApiResponse<IEnumerable<RoleDTO>>> GetActiveRolesAsync(CancellationToken cancellationToken = default)
         {
             try
             {

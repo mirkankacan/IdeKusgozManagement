@@ -1,4 +1,4 @@
-namespace IdeKusgozManagement.Application.Interfaces
+namespace IdeKusgozManagement.Application.Interfaces.Repositories
 {
     public interface IUnitOfWork : IDisposable
     {

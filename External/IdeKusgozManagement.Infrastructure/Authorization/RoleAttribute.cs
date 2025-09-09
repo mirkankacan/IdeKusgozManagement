@@ -1,5 +1,5 @@
 ﻿using System.Security.Claims;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;

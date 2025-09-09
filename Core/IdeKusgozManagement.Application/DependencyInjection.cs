@@ -15,6 +15,7 @@ namespace IdeKusgozManagement.Application
             WorkRecordExpenseMappingConfig.Configure();
             EquipmentMappingConfig.Configure();
             ExpenseMappingConfig.Configure();
+            LeaveRequestMappingConfig.Configure();
             return services;
         }
     }

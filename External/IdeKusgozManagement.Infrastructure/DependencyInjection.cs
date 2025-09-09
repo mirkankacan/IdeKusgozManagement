@@ -1,4 +1,6 @@
-﻿using IdeKusgozManagement.Application.Interfaces;
+﻿using IdeKusgozManagement.Application.Interfaces.Providers;
+using IdeKusgozManagement.Application.Interfaces.Repositories;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authentication;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using IdeKusgozManagement.Infrastructure.OptionsSetup;
@@ -18,20 +20,26 @@ namespace IdeKusgozManagement.Infrastructure
 
             services.AddDbContext<ApplicationDbContext>(opts =>
                 opts.UseSqlServer(connectionString));
-
-            services.AddScoped<ICurrentUserService, CurrentUserService>();
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IRoleService, RoleService>();
-            services.AddScoped<IAuthService, AuthService>();
+            // Providers
             services.AddScoped<IJwtProvider, JwtProvider>();
-            services.AddScoped<IWorkRecordService, WorkRecordService>();
-            services.AddScoped<IWorkRecordExpenseService, WorkRecordExpenseService>();
+            // Repositories
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            // Services
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IEquipmentService, EquipmentService>();
             services.AddScoped<IExpenseService, ExpenseService>();
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+            services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IWorkRecordService, WorkRecordService>();
 
             services.ConfigureOptions<JwtOptionsSetup>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();
+            services.ConfigureOptions<HolidayApiOptionsSetup>();
+
+            services.AddMemoryCache();
 
             return services;
         }

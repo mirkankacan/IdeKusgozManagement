@@ -15,18 +15,18 @@ namespace IdeKusgozManagement.WebUI.Controllers
             _equipmentApiService = equipmentApiService;
         }
 
-        [Authorize(Roles = "Admin, Yönetici")]
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("")]
         public IActionResult Index()
         {
             return View();
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("liste")]
         public async Task<IActionResult> GetEquipments(CancellationToken cancellationToken = default)
         {
-            var response = await _equipmentApiService.GetAllEquipmentsAsync(cancellationToken);
+            var response = await _equipmentApiService.GetEquipmentsAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
@@ -34,24 +34,24 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [HttpGet("aktif-liste")]
         public async Task<IActionResult> GetActiveEquipments(CancellationToken cancellationToken = default)
         {
-            var response = await _equipmentApiService.GetAllActiveEquipmentsAsync(cancellationToken);
+            var response = await _equipmentApiService.GetActiveEquipmentsAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [Authorize(Roles = "Admin, Yönetici")]
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetEquipmentById(string id, CancellationToken cancellationToken = default)
+        [Authorize]
+        [HttpGet("{equipmentId}")]
+        public async Task<IActionResult> GetEquipmentById(string equipmentId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(equipmentId))
             {
                 return BadRequest("Ekipman ID'si gereklidir");
             }
 
-            var response = await _equipmentApiService.GetEquipmentByIdAsync(id, cancellationToken);
+            var response = await _equipmentApiService.GetEquipmentByIdAsync(equipmentId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [Authorize(Roles = "Admin, Yönetici")]
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpPost("")]
         public async Task<IActionResult> CreateEquipment([FromBody] CreateEquipmentViewModel model, CancellationToken cancellationToken = default)
         {
@@ -64,11 +64,11 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [Authorize(Roles = "Admin, Yönetici")]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEquipment(string id, [FromBody] UpdateEquipmentViewModel model, CancellationToken cancellationToken = default)
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [HttpPut("{equipmentId}")]
+        public async Task<IActionResult> UpdateEquipment(string equipmentId, [FromBody] UpdateEquipmentViewModel model, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(equipmentId))
             {
                 return BadRequest("Ekipman ID'si gereklidir");
             }
@@ -78,46 +78,46 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var response = await _equipmentApiService.UpdateEquipmentAsync(id, model, cancellationToken);
+            var response = await _equipmentApiService.UpdateEquipmentAsync(equipmentId, model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [Authorize(Roles = "Admin, Yönetici")]
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEquipment(string id, CancellationToken cancellationToken = default)
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [HttpDelete("{equipmentId}")]
+        public async Task<IActionResult> DeleteEquipment(string equipmentId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(equipmentId))
             {
                 return BadRequest("Ekipman ID'si gereklidir");
             }
 
-            var response = await _equipmentApiService.DeleteEquipmentAsync(id, cancellationToken);
+            var response = await _equipmentApiService.DeleteEquipmentAsync(equipmentId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [Authorize(Roles = "Admin, Yönetici")]
-        [HttpPut("{id}/aktif-et")]
-        public async Task<IActionResult> ActivateEquipment(string id, CancellationToken cancellationToken = default)
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [HttpPut("{equipmentId}/aktif-et")]
+        public async Task<IActionResult> EnableEquipment(string equipmentId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(equipmentId))
             {
                 return BadRequest("Ekipman ID'si gereklidir");
             }
 
-            var response = await _equipmentApiService.ActivateEquipmentAsync(id, cancellationToken);
+            var response = await _equipmentApiService.EnableEquipmentAsync(equipmentId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [Authorize(Roles = "Admin, Yönetici")]
-        [HttpPut("{id}/pasif-et")]
-        public async Task<IActionResult> DeactivateEquipment(string id, CancellationToken cancellationToken = default)
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [HttpPut("{equipmentId}/pasif-et")]
+        public async Task<IActionResult> DisableEquipment(string equipmentId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(equipmentId))
             {
                 return BadRequest("Ekipman ID'si gereklidir");
             }
 
-            var response = await _equipmentApiService.DeactivateEquipmentAsync(id, cancellationToken);
+            var response = await _equipmentApiService.DisableEquipmentAsync(equipmentId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
     }

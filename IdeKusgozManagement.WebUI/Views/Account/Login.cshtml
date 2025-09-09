@@ -4,6 +4,7 @@
 
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -20,6 +21,7 @@
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
 
 </head>
+
 <body class="login-page">
 	<div class='loader'>
 		<div class='spinner-grow text-primary' role='status'>
@@ -42,14 +44,16 @@
 						<form id="loginForm">
 							<div class="mb-3">
 								<div class="form-floating">
-									<input type="text" class="form-control" id="txtUsername" placeholder="Kullanıcı adı giriniz..." required>
+									<input type="text" class="form-control" id="txtUsername"
+										placeholder="Kullanıcı adı giriniz..." required>
 									<label for="txtUsername">Kullanıcı Adı</label>
 								</div>
 							</div>
 
 							<div class="mb-3">
 								<div class="form-floating">
-									<input type="password" class="form-control" id="txtPassword" placeholder="Şifre giriniz..." required>
+									<input type="password" class="form-control" id="txtPassword"
+										placeholder="Şifre giriniz..." required>
 									<label for="txtPassword">Şifre</label>
 								</div>
 							</div>
@@ -82,7 +86,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 	<script>
-			$("#loginForm").on("submit", function (e) {
+		$("#loginForm").on("submit", function (e) {
 			e.preventDefault();
 			const loginDto = {
 				Username: $("#txtUsername").val(),
@@ -99,7 +103,7 @@
 				data: JSON.stringify(loginDto),
 				success: function (response) {
 					toastr.success("Giriş başarılı.", "Başarılı");
-					const redirectUrl = response; 
+					const redirectUrl = response;
 					setTimeout(() => window.location.href = redirectUrl, 1000);
 				},
 				error: function (xhr) {
@@ -122,4 +126,5 @@
 		});
 	</script>
 </body>
+
 </html>

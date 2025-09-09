@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Interfaces;
+﻿using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Domain.Entities.Base;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -30,7 +30,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         {
             modelBuilder.Entity<IdtWorkRecordExpense>()
                .HasOne(wre => wre.WorkRecord)
-               .WithMany(wr => wr.Expenses)
+               .WithMany(wr => wr.WorkRecordExpenses)
                .HasForeignKey(wre => wre.WorkRecordId)
                .OnDelete(DeleteBehavior.Cascade);
 
@@ -45,6 +45,18 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
              .WithMany(e => e.WorkRecordExpenses)
              .HasForeignKey(wre => wre.ExpenseId)
              .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdtLeaveRequest>()
+                .HasOne(lr => lr.CreatedByUser)
+                .WithMany(u => u.CreatedLeaveRequests)
+                .HasForeignKey(lr => lr.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdtLeaveRequest>()
+                .HasOne(lr => lr.UpdatedByUser)
+                .WithMany(u => u.UpdatedLeaveRequests)
+                .HasForeignKey(lr => lr.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
 
             base.OnModelCreating(modelBuilder);
         }

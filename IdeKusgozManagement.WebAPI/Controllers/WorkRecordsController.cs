@@ -1,6 +1,5 @@
 ﻿using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
-using IdeKusgozManagement.Application.Interfaces;
-using IdeKusgozManagement.Domain.Enums;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,54 +21,18 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
-        /// Tüm iş kayıtlarını getirir (Sadece yetkili kullanıcılar)
-        /// </summary>
-        [HttpGet]
-        [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetAllWorkRecords(CancellationToken cancellationToken = default)
-        {
-            var result = await _workRecordService.GetAllWorkRecordsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// ID'ye göre iş kaydı getirir
-        /// </summary>
-        /// <param name="id">İş kaydı ID'si</param>
-        [HttpGet("{id}")]
-        [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetWorkRecordById(string id, CancellationToken cancellationToken = default)
-        {
-            var result = await _workRecordService.GetWorkRecordByIdAsync(id, cancellationToken);
-            return result.IsSuccess ? Ok(result) : NotFound(result);
-        }
-
-        /// <summary>
         /// Mevcut kullanıcının iş kayıtlarını getirir
         /// </summary>
         [HttpGet("my-records-by-date")]
         public async Task<IActionResult> GetMyWorkRecordsByDate([FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
-
             var currentUserId = _currentUserService.GetCurrentUserId();
             if (string.IsNullOrEmpty(currentUserId))
             {
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
 
-            var result = await _workRecordService.GetWorkRecordsByDateAndUserAsync(date, currentUserId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// Kullanıcının iş kayıtlarını getirir (Sadece yetkili kullanıcılar)
-        /// </summary>
-        /// <param name="userId">Kullanıcı ID'si</param>
-        [HttpGet("user/{userId}")]
-        [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetWorkRecordsByUserId(string userId, CancellationToken cancellationToken = default)
-        {
-            var result = await _workRecordService.GetWorkRecordsByUserIdAsync(userId, cancellationToken);
+            var result = await _workRecordService.GetWorkRecordsByUserIdAndDateAsync(currentUserId, date, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -78,14 +41,15 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="date">Tarih</param>
         /// <param name="userId">Kullanıcı ID'si</param>
-        [HttpGet("by-date-and-user")]
+        [HttpGet("by-user-and-date")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetWorkRecordsByDateAndUser(
-            [FromQuery] DateTime date,
-            [FromQuery] string userId,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetWorkRecordsByDateAndUser([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.GetWorkRecordsByDateAndUserAsync(date, userId, cancellationToken);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await _workRecordService.GetWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -118,59 +82,50 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpPut]
         public async Task<IActionResult> BatchUpdateWorkRecordByUser([FromQuery] string userId, [FromBody] List<UpdateWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = await _workRecordService.BatchUpdateWorkRecordByUserAsync(userId, updateWorkRecordDTO, cancellationToken);
+            var result = await _workRecordService.BatchUpdateWorkRecordsByUserIdAsync(userId, updateWorkRecordDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
-        /// İş kaydını onaylar (Sadece yetkili kullanıcılar)
+        /// İş kaydını onaylar
         /// </summary>
-        /// <param name="id">İş kaydı ID'si</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
+        /// <param name="date">Tarih</param>
         [HttpPost("approve")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> BatchApproveWorkRecordByUserAndDate([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.BatchApproveWorkRecordsByUserAndMonthAsync(userId, date, cancellationToken);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await _workRecordService.BatchApproveWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
-        /// İş kaydını reddeder (Sadece yetkili kullanıcılar)
+        /// İş kaydını reddeder
         /// </summary>
-        /// <param name="id">İş kaydı ID'si</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
+        /// <param name="date">Tarih</param>
         [HttpPost("reject")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> BatchRejectWorkRecordByUserAndDate([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
         {
-            var result = await _workRecordService.BatchRejectWorkRecordsByUserAndMonthAsync(userId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// Toplam iş kaydı sayısını getirir
-        /// </summary>
-        [HttpGet("count")]
-        [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetWorkRecordCount(CancellationToken cancellationToken = default)
-        {
-            var result = await _workRecordService.GetWorkRecordCountAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// Duruma göre iş kaydı sayısını getirir
-        /// </summary>
-        /// <param name="status">İş kaydı durumu</param>
-        [HttpGet("count/by-status/{status}")]
-        [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetWorkRecordCountByStatus(WorkRecordStatus status, CancellationToken cancellationToken = default)
-        {
-            var result = await _workRecordService.GetWorkRecordCountByStatusAsync(status, cancellationToken);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await _workRecordService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

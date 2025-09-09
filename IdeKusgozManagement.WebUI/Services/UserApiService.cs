@@ -9,15 +9,13 @@ namespace IdeKusgozManagement.WebUI.Services
     public class UserApiService : IUserApiService
     {
         private readonly HttpClient _httpClient;
-        private readonly ILogger<UserApiService> _logger;
 
-        public UserApiService(HttpClient httpClient, ILogger<UserApiService> logger)
+        public UserApiService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -34,12 +32,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllUsersAsync işleminde hata oluştu");
                 return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetActiveSuperiorUsersAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetActiveSuperiorsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -56,7 +53,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetSuperiorUsersAsync işleminde hata oluştu");
                 return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -78,7 +74,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetUserByIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -104,7 +99,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "CreateUserAsync işleminde hata oluştu");
                 return new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -130,7 +124,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "UpdateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -152,7 +145,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -178,16 +170,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "AssignRoleToUserAsync işleminde hata oluştu");
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateUserAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> EnableUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/users/{userId}/activate", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/users/{userId}/enable", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -200,16 +191,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ActivateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateUserAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DisableUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/users/{userId}/deactivate", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/users/{userId}/disable", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -222,7 +212,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeactivateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -248,16 +237,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ChangePasswordAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetAssignedUsersByIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetSubordinatesByUserIdAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/users/assigned-users?id={userId}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/users/subordiantes?id={userId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -270,7 +258,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAssignedUsersByIdAsync işleminde hata oluştu");
                 return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -292,7 +279,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetMyUserAsync işleminde hata oluştu");
                 return new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }

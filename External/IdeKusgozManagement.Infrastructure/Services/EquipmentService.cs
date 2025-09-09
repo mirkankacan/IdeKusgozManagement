@@ -1,6 +1,7 @@
 using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.EquipmentDTOs;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Repositories;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 using Microsoft.Extensions.Logging;
@@ -18,11 +19,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<EquipmentDTO>>> GetAllEquipmentsAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<EquipmentDTO>>> GetEquipmentsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var equipments = await _unitOfWork.Repository<IdtEquipment>().GetAllAsync(cancellationToken);
+                var equipments = await _unitOfWork.Repository<IdtEquipment>().GetAllNoTrackingAsync(cancellationToken);
 
                 var equipmentDTOs = equipments
                     .Adapt<IEnumerable<EquipmentDTO>>()
@@ -32,17 +33,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ekipman listesi getirilirken hata oluştu");
+                _logger.LogError(ex, "GetEquipmentsAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<EquipmentDTO>>.Error("Ekipman listesi getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<EquipmentDTO>> GetEquipmentByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<EquipmentDTO>> GetEquipmentByIdAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var equipment = await _unitOfWork.Repository<IdtEquipment>()
-                    .GetByIdAsync(id, cancellationToken);
+                    .GetByIdNoTrackingAsync(equipmentId, cancellationToken);
 
                 if (equipment == null)
                 {
@@ -55,7 +56,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ekipman getirilirken hata oluştu. Id: {Id}", id);
+                _logger.LogError(ex, "GetEquipmentByIdAsync işleminde hata oluştu");
                 return ApiResponse<EquipmentDTO>.Error("Ekipman getirilirken hata oluştu");
             }
         }
@@ -65,7 +66,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 var existingEquipment = await _unitOfWork.Repository<IdtEquipment>()
-                    .FirstOrDefaultAsync(e => e.Name.ToLower() == createEquipmentDTO.Name.ToLower(), cancellationToken);
+                    .FirstOrDefaultNoTrackingAsync(e => e.Name.ToLower() == createEquipmentDTO.Name.ToLower(), cancellationToken);
 
                 if (existingEquipment != null)
                 {
@@ -82,17 +83,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ekipman oluşturulurken hata oluştu. Name: {Name}", createEquipmentDTO.Name);
+                _logger.LogError(ex, "CreateEquipmentAsync işleminde hata oluştu");
                 return ApiResponse<string>.Error("Ekipman oluşturulurken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> UpdateEquipmentAsync(string id, UpdateEquipmentDTO updateEquipmentDTO, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> UpdateEquipmentAsync(string equipmentId, UpdateEquipmentDTO updateEquipmentDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 var equipment = await _unitOfWork.Repository<IdtEquipment>()
-                    .GetByIdAsync(id, cancellationToken);
+                    .GetByIdAsync(equipmentId, cancellationToken);
 
                 if (equipment == null)
                 {
@@ -100,7 +101,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 var existingEquipment = await _unitOfWork.Repository<IdtEquipment>()
-                    .FirstOrDefaultAsync(e => e.Name.ToLower() == updateEquipmentDTO.Name.ToLower() && e.Id != id, cancellationToken);
+                    .FirstOrDefaultNoTrackingAsync(e => e.Name.ToLower() == updateEquipmentDTO.Name.ToLower() && e.Id != equipmentId, cancellationToken);
 
                 if (existingEquipment != null)
                 {
@@ -117,17 +118,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ekipman güncellenirken hata oluştu. Id: {Id}", id);
+                _logger.LogError(ex, "UpdateEquipmentAsync işleminde hata oluştu");
                 return ApiResponse<bool>.Error("Ekipman güncellenirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DeleteEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var equipment = await _unitOfWork.Repository<IdtEquipment>()
-                    .GetByIdAsync(id, cancellationToken);
+                    .GetByIdAsync(equipmentId, cancellationToken);
 
                 if (equipment == null)
                 {
@@ -135,7 +136,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 var isEquipmentUsed = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .AnyAsync(wr => wr.EquipmentId == equipment.Id, cancellationToken);
+                    .AnyNoTrackingAsync(wr => wr.EquipmentId == equipment.Id, cancellationToken);
 
                 if (isEquipmentUsed)
                 {
@@ -149,16 +150,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ekipman silinirken hata oluştu. Id: {Id}", id);
+                _logger.LogError(ex, "DeleteEquipmentAsync işleminde hata oluştu");
                 return ApiResponse<bool>.Error("Ekipman silinirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<EquipmentDTO>>> GetAllActiveEquipmentsAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<EquipmentDTO>>> GetActiveEquipmentsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var equipments = await _unitOfWork.Repository<IdtEquipment>().GetWhereAsync(x => x.IsActive == true, cancellationToken);
+                var equipments = await _unitOfWork.Repository<IdtEquipment>().GetWhereNoTrackingAsync(x => x.IsActive == true, cancellationToken);
 
                 var equipmentDTOs = equipments
                     .Adapt<IEnumerable<EquipmentDTO>>()
@@ -168,17 +169,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Aktif ekipman listesi getirilirken hata oluştu");
+                _logger.LogError(ex, "GetActiveEquipmentsAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<EquipmentDTO>>.Error("Aktif ekipman listesi getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DisableEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var expense = await _unitOfWork.Repository<IdtEquipment>()
-                    .GetByIdAsync(id, cancellationToken);
+                    .GetByIdAsync(equipmentId, cancellationToken);
 
                 if (expense == null)
                 {
@@ -194,17 +195,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ekipman pasif duruma getirilirken hata oluştu. Id: {Id}", id);
+                _logger.LogError(ex, "DisableEquipmentAsync işleminde hata oluştu");
                 return ApiResponse<bool>.Error("Ekipman pasif duruma getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> EnableEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var expense = await _unitOfWork.Repository<IdtEquipment>()
-                    .GetByIdAsync(id, cancellationToken);
+                    .GetByIdAsync(equipmentId, cancellationToken);
 
                 if (expense == null)
                 {
@@ -220,7 +221,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ekipman aktif duruma getirilirken hata oluştu. Id: {Id}", id);
+                _logger.LogError(ex, "EnableEquipmentAsync işleminde hata oluştu");
                 return ApiResponse<bool>.Error("Ekipman aktif duruma getirilirken hata oluştu");
             }
         }

@@ -26,7 +26,29 @@
                 initialView: 'dayGridMonth',
                 locale: 'tr',
                 firstDay: 1,
-                events: 'https://fullcalendar.io/demo-events.json?overload-day'
+                  events: function(fetchInfo, successCallback, failureCallback) {
+                    fetch('/takvim/izinler')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.isSuccess && data.data) {
+                                const events = data.data.map(leave => ({
+                                    id: leave.id,
+                                    title: leave.createdByName + ' - ' + leave.reason,
+                                    start: leave.startDate,
+                                    end: new Date(new Date(leave.endDate).getTime() + 24 * 60 * 60 * 1000),
+                                    className: 'leave-status-' + leave.status
+                                }));
+                                successCallback(events);
+                            } else {
+                                console.error('API hatasý:', data.message);
+                                failureCallback();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Veri yükleme hatasý:', error);
+                            failureCallback();
+                        });
+                }
             });
             calendar.render();
         });

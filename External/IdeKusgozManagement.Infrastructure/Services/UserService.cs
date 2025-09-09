@@ -1,6 +1,7 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.UserDTOs;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Repositories;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 using Microsoft.AspNetCore.Identity;
@@ -28,7 +29,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetUsersAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -40,7 +41,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     var userDTO = user.Adapt<UserDTO>();
                     var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
-                  .SelectAsync(
+                  .SelectNoTrackingAsync(
                       selector: x => x.SuperiorId,
                       predicate: x => x.SubordinateId == user.Id, cancellationToken
                   );
@@ -55,16 +56,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllUsersAsync işleminde hata oluştu");
+                _logger.LogError(ex, "GetUsersAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<UserDTO>>.Error("Kullanıcılar getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<UserDTO>> GetUserByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<UserDTO>> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(id);
+                var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ApiResponse<UserDTO>.Error("Kullanıcı bulunamadı");
@@ -75,9 +76,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 userDTO.RoleName = roles.FirstOrDefault();
 
                 var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
-                    .SelectAsync(
+                    .SelectNoTrackingAsync(
                         selector: x => x.SuperiorId,
-                        predicate: x => x.SubordinateId == id, cancellationToken
+                        predicate: x => x.SubordinateId == userId, cancellationToken
                     );
 
                 userDTO.SuperiorIds = superiorIds.ToList();
@@ -86,7 +87,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetUserByIdAsync işleminde hata oluştu. UserId: {UserId}", id);
+                _logger.LogError(ex, "GetUserByIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<UserDTO>.Error("Kullanıcı getirilirken hata oluştu");
             }
         }
@@ -161,13 +162,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<UserDTO>> UpdateUserAsync(string id, UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<UserDTO>> UpdateUserAsync(string userId, UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                var user = await _userManager.FindByIdAsync(id);
+                var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ApiResponse<UserDTO>.Error("Kullanıcı bulunamadı");
@@ -177,9 +178,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (user.UserName != updateUserDTO.UserName)
                 {
                     var existingUser = await _userManager.FindByNameAsync(updateUserDTO.UserName);
-                    if (existingUser != null && existingUser.Id != id)
+                    if (existingUser != null && existingUser.Id != userId)
                     {
-                        return ApiResponse<UserDTO>.Error("Bu kullanıcı adı zaten kullanılıyor");
+                        return ApiResponse<UserDTO>.Error("Bu kullanıcı adı kullanılıyor");
                     }
                 }
 
@@ -255,16 +256,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                _logger.LogError(ex, "UpdateUserAsync işleminde hata oluştu. UserId: {UserId}", id);
+                _logger.LogError(ex, "UpdateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<UserDTO>.Error("Kullanıcı güncellenirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteUserAsync(string id)
+        public async Task<ApiResponse<bool>> DeleteUserAsync(string userId)
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(id);
+                var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
@@ -281,7 +282,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteUserAsync işleminde hata oluştu. UserId: {UserId}", id);
+                _logger.LogError(ex, "DeleteUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<bool>.Error("Kullanıcı silinirken hata oluştu");
             }
         }
@@ -325,7 +326,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateUserAsync(string userId)
+        public async Task<ApiResponse<bool>> EnableUserAsync(string userId)
         {
             try
             {
@@ -348,12 +349,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ActivateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                _logger.LogError(ex, "EnableUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<bool>.Error("Kullanıcı aktifleştirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateUserAsync(string userId)
+        public async Task<ApiResponse<bool>> DisableUserAsync(string userId)
         {
             try
             {
@@ -376,7 +377,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeactivateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                _logger.LogError(ex, "DisableUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<bool>.Error("Kullanıcı pasifleştirilirken hata oluştu");
             }
         }
@@ -407,7 +408,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetActiveSuperiorUsersAsync()
+        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetActiveSuperiorsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -431,17 +432,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetSuperiorUsersAsync işleminde hata oluştu");
+                _logger.LogError(ex, "GetActiveSuperiorsAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<UserDTO>>.Error("Kullanıcılar getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetAssignedUsersByIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetSubordinatesByUserIdAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var subordinateIds = await _unitOfWork.Repository<IdtUserHierarchy>()
-                    .SelectAsync(
+                    .SelectNoTrackingAsync(
                         selector: x => x.SubordinateId,
                         predicate: x => x.SuperiorId == userId,
                         cancellationToken
@@ -464,7 +465,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     var userDTO = user.Adapt<UserDTO>();
 
                     var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
-                        .SelectAsync(
+                        .SelectNoTrackingAsync(
                             selector: x => x.SuperiorId,
                             predicate: x => x.SubordinateId == user.Id,
                             cancellationToken
@@ -480,7 +481,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAssignedUsersByIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                _logger.LogError(ex, "GetSubordinatesByUserId işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<IEnumerable<UserDTO>>.Error("Atanmış kullanıcılar getirilirken hata oluştu");
             }
         }

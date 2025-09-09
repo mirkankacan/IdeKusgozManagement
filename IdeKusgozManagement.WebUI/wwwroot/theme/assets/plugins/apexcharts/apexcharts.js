@@ -18276,9 +18276,9 @@
             this.barSeriesHeight = this.tooltipUtil.getBarsHeight(bars);
 
             if (this.barSeriesHeight > 0) {
-              // hover state, activate snap filter
+              // hover state, enable snap filter
               var graphics = new Graphics(this.ctx);
-              var paths = w.globals.dom.Paper.select(".apexcharts-bar-area[j='".concat(j, "']")); // de-activate first
+              var paths = w.globals.dom.Paper.select(".apexcharts-bar-area[j='".concat(j, "']")); // de-enable first
 
               this.deactivateHoverFilter();
               this.tooltipPosition.moveStickyTooltipOverBars(j);

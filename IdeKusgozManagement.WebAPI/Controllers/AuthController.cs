@@ -1,5 +1,6 @@
 ﻿using IdeKusgozManagement.Application.DTOs.AuthDTOs;
 using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -60,17 +61,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await _authService.RefreshTokenAsync(refreshTokenDTO);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// Kullanıcının oturum durumunu kontrol eder
-        /// </summary>
-        [HttpGet("check-auth")]
-        [Authorize]
-        public async Task<IActionResult> CheckAuth()
-        {
-            var result = await _authService.IsAuthenticatedAsync();
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

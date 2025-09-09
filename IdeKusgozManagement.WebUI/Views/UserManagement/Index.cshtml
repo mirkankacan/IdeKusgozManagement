@@ -115,14 +115,9 @@
                         </div>
                         <div class="col-md-6">
                             <label for="ddCSuperior" class="form-label">Atanacak</label>
-                            <select class="form-select superior-select" id="ddCSuperior" required="">
+                            <select class="form-select superior-select" id="ddCSuperior">
                             </select>
-                            <div class="valid-feedback">
-                                İyi görünüyor!
-                            </div>
-                            <div class="invalid-feedback">
-                                Geçerli bir kullanıcı seçiniz.
-                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -206,14 +201,9 @@
                         </div>
                         <div class="col-md-6">
                             <label for="ddUSuperior" class="form-label">Atanacak</label>
-                            <select class="form-select superior-select" id="ddUSuperior" required="">
+                            <select class="form-select superior-select" id="ddUSuperior">
                             </select>
-                            <div class="valid-feedback">
-                                İyi görünüyor!
-                            </div>
-                            <div class="invalid-feedback">
-                                Geçerli bir kullanıcı seçiniz.
-                            </div>
+                           
                         </div>
                         <div class="col-md-12">
                             <label for="ddUStatus" class="form-label">Durum</label>
@@ -418,19 +408,14 @@
                         }
                     }
                 ],
-                "language": {
+                  "language": {
                     url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
                 "pageLength": 10,
                 "responsive": true,
                 "searchDelay": 300,
-                "stateSave": true,
-                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                    '<"row"<"col-sm-12"tr>>' +
-                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                "initComplete": function () {
-                },
+                "order": [[3, "asc"]],
                 "drawCallback": function () {
                     var api = this.api();
                     var pageInfo = api.page.info();
@@ -765,7 +750,7 @@
                 }
 
                 const response = await $.ajax({
-                    url: `/kullanici-yonetimi/detay/${userId}`,
+                    url: `/kullanici-yonetimi/${userId}`,
                     type: 'GET',
                     contentType: 'application/json'
                 });

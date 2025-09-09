@@ -1,5 +1,5 @@
 ﻿using IdeKusgozManagement.Application.DTOs.UserDTOs;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,9 +25,9 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         [RoleFilter("Admin", "Yönetici")]
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUsers(CancellationToken cancellationToken = default)
         {
-            var result = await _userService.GetAllUsersAsync(cancellationToken);
+            var result = await _userService.GetUsersAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -36,34 +36,42 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         [RoleFilter("Admin", "Yönetici")]
         [HttpGet("active-superiors")]
-        public async Task<IActionResult> GetActiveSuperiorUsers()
+        public async Task<IActionResult> GetActiveSuperiors()
         {
-            var result = await _userService.GetActiveSuperiorUsersAsync();
+            var result = await _userService.GetActiveSuperiorsAsync();
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// ID'ye göre kendsine atanmış kullanıcıları getirir
         /// </summary>
-        /// <param name="id">Kullanıcı ID'si</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        [HttpGet("assigned-users")]
-        public async Task<IActionResult> GetAssignedUsersById([FromQuery] string id, CancellationToken cancellationToken = default)
+        [HttpGet("subordiantes")]
+        public async Task<IActionResult> GetSubordinatesByUserId([FromQuery] string userId, CancellationToken cancellationToken = default)
         {
-            var result = await _userService.GetAssignedUsersByIdAsync(id, cancellationToken);
-            return result.IsSuccess ? Ok(result) : NotFound(result);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await _userService.GetSubordinatesByUserIdAsync(userId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// ID'ye göre kullanıcı getirir
         /// </summary>
-        /// <param name="id">Kullanıcı ID'si</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici")]
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetUserById(string id, CancellationToken cancellationToken = default)
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> GetUserById(string userId, CancellationToken cancellationToken = default)
         {
-            var result = await _userService.GetUserByIdAsync(id, cancellationToken);
-            return result.IsSuccess ? Ok(result) : NotFound(result);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await _userService.GetUserByIdAsync(userId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -78,7 +86,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
             var result = await _userService.GetUserByIdAsync(currentUserId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : NotFound(result);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -101,29 +109,37 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <summary>
         /// Kullanıcı bilgilerini günceller
         /// </summary>
-        /// <param name="id">Kullanıcı ID'si</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
         /// <param name="updateUserDTO">Güncellenecek bilgiler</param>
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default)
+        [HttpPut("{userId}")]
+        public async Task<IActionResult> UpdateUser(string userId, [FromBody] UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = await _userService.UpdateUserAsync(id, updateUserDTO, cancellationToken);
+            var result = await _userService.UpdateUserAsync(userId, updateUserDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
-        /// Kullanıcıyı siler (soft delete)
+        /// Kullanıcıyı siler
         /// </summary>
-        /// <param name="id">Kullanıcı ID'si</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici")]
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(string id)
+        [HttpDelete("{userId}")]
+        public async Task<IActionResult> DeleteUser(string userId)
         {
-            var result = await _userService.DeleteUserAsync(id);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await _userService.DeleteUserAsync(userId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -149,10 +165,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici")]
-        [HttpPut("{id}/activate")]
-        public async Task<IActionResult> ActivateUser(string id)
+        [HttpPut("{userId}/enable")]
+        public async Task<IActionResult> EnableUser(string userId)
         {
-            var result = await _userService.ActivateUserAsync(id);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await _userService.EnableUserAsync(userId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -161,10 +181,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici")]
-        [HttpPut("{id}/deactivate")]
-        public async Task<IActionResult> DeactivateUser(string id)
+        [HttpPut("{userId}/disable")]
+        public async Task<IActionResult> DeactivateUser(string userId)
         {
-            var result = await _userService.DeactivateUserAsync(id);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await _userService.DisableUserAsync(userId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -177,6 +201,11 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpPost("{userId}/change-password")]
         public async Task<IActionResult> ChangePassword(string userId, [FromBody] ChangePasswordDTO changePasswordDTO)
         {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);

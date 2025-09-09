@@ -9,15 +9,13 @@ namespace IdeKusgozManagement.WebUI.Services
     public class EquipmentApiService : IEquipmentApiService
     {
         private readonly HttpClient _httpClient;
-        private readonly ILogger<EquipmentApiService> _logger;
 
-        public EquipmentApiService(HttpClient httpClient, ILogger<EquipmentApiService> logger)
+        public EquipmentApiService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<EquipmentViewModel>>> GetAllEquipmentsAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<EquipmentViewModel>>> GetEquipmentsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -35,16 +33,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllEquipmentsAsync işleminde hata oluştu");
                 return new ApiResponse<IEnumerable<EquipmentViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<EquipmentViewModel>> GetEquipmentByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<EquipmentViewModel>> GetEquipmentByIdAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/equipments/{id}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/equipments/{equipmentId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -58,7 +55,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetEquipmentByIdAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<EquipmentViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -84,19 +80,18 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "CreateEquipmentAsync işleminde hata oluştu");
                 return new ApiResponse<string> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> UpdateEquipmentAsync(string id, UpdateEquipmentViewModel model, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> UpdateEquipmentAsync(string equipmentId, UpdateEquipmentViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"api/equipments/{id}", content, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/equipments/{equipmentId}", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -110,16 +105,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "UpdateEquipmentAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DeleteEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"api/equipments/{id}", cancellationToken);
+                var response = await _httpClient.DeleteAsync($"api/equipments/{equipmentId}", cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -133,12 +127,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteEquipmentAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<EquipmentViewModel>>> GetAllActiveEquipmentsAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<EquipmentViewModel>>> GetActiveEquipmentsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -156,16 +149,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllActiveEquipmentsAsync işleminde hata oluştu");
                 return new ApiResponse<IEnumerable<EquipmentViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> EnableEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/equipments/{id}/activate", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/equipments/{equipmentId}/enable", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -179,16 +171,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ActivateEquipmentAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateEquipmentAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DisableEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/equipments/{id}/deactivate", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/equipments/{equipmentId}/disable", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -202,7 +193,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeactivateEquipmentAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }

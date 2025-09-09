@@ -223,9 +223,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         {
             return role switch
             {
-                "Admin" => "/admin/ana-sayfa",
-                "Şef" => "/sef/ana-sayfa",
-                "Personel" => "/personel/ana-sayfa",
+                "Admin" or "Yönetici" or "Şef" or "Personel" => "/ana-sayfa",
                 _ => "/erisim-engellendi"
             };
         }

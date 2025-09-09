@@ -1,4 +1,4 @@
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Repositories;
 using IdeKusgozManagement.Domain.Entities.Base;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore.Storage;

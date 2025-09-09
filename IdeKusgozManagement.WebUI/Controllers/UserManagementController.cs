@@ -43,7 +43,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             {
                 case "Admin":
                 case "Yönetici":
-                    response = await _userApiService.GetAllUsersAsync(cancellationToken);
+                    response = await _userApiService.GetUsersAsync(cancellationToken);
                     break;
 
                 case "Şef":
@@ -52,7 +52,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
                     {
                         return BadRequest("Kullanıcı ID'si bulunamadı.");
                     }
-                    response = await _userApiService.GetAssignedUsersByIdAsync(userId, cancellationToken);
+                    response = await _userApiService.GetSubordinatesByUserIdAsync(userId, cancellationToken);
                     break;
 
                 default:
@@ -64,9 +64,9 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("aktif-ust-kullanicilar")]
-        public async Task<IActionResult> GetActiveSuperiorUsers(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveSuperiors(CancellationToken cancellationToken = default)
         {
-            var response = await _userApiService.GetActiveSuperiorUsersAsync(cancellationToken);
+            var response = await _userApiService.GetActiveSuperiorsAsync(cancellationToken);
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
@@ -83,7 +83,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost("olustur")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([FromBody] CreateUserViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
@@ -97,8 +97,12 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize]
         [HttpPut("guncelle/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(string userId, [FromBody] UpdateUserViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateUser(string userId, [FromBody] UpdateUserViewModel model, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -111,8 +115,12 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpDelete("sil/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteUser(string userId, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
             var response = await _userApiService.DeleteUserAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
@@ -120,25 +128,33 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPut("aktif-et/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Activate(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> EnableUser(string userId, CancellationToken cancellationToken = default)
         {
-            var response = await _userApiService.ActivateUserAsync(userId, cancellationToken);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var response = await _userApiService.EnableUserAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPut("pasif-et/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Deactivate(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DisableUser(string userId, CancellationToken cancellationToken = default)
         {
-            var response = await _userApiService.DeactivateUserAsync(userId, cancellationToken);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var response = await _userApiService.DisableUserAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost("rol-ata")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AssignRole([FromBody] AssignRoleViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> AssignRoleToUser([FromBody] AssignRoleViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
@@ -150,9 +166,13 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
-        [HttpGet("detay/{userId}")]
-        public async Task<IActionResult> Get(string userId, CancellationToken cancellationToken = default)
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> GetUserById(string userId, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
             var response = await _userApiService.GetUserByIdAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response.Data) : BadRequest(response);
         }

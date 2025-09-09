@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.RoleModels;
-using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Newtonsoft.Json;
 
@@ -10,15 +9,13 @@ namespace IdeKusgozManagement.WebUI.Services
     public class RoleApiService : IRoleApiService
     {
         private readonly HttpClient _httpClient;
-        private readonly ILogger<RoleApiService> _logger;
 
-        public RoleApiService(HttpClient httpClient, ILogger<RoleApiService> logger)
+        public RoleApiService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<RoleViewModel>>> GetAllRolesAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<RoleViewModel>>> GetRolesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -35,7 +32,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllRolesAsync işleminde hata oluştu");
                 return new ApiResponse<IEnumerable<RoleViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -44,7 +40,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/roles/actives", cancellationToken);
+                var response = await _httpClient.GetAsync("api/roles/active-roles", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -57,16 +53,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllRolesAsync işleminde hata oluştu");
                 return new ApiResponse<IEnumerable<RoleViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<RoleViewModel>> GetRoleByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<RoleViewModel>> GetRoleByIdAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/roles/{id}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/roles/{roleId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -79,16 +74,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetRoleByIdAsync işleminde hata oluştu. RoleId: {RoleId}", id);
                 return new ApiResponse<RoleViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<RoleViewModel>> GetRoleByNameAsync(string name, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<RoleViewModel>> GetRoleByNameAsync(string roleName, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/roles/by-name/{name}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/roles/name/{roleName}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -101,7 +95,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetRoleByNameAsync işleminde hata oluştu. RoleName: {RoleName}", name);
                 return new ApiResponse<RoleViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -127,19 +120,18 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "CreateRoleAsync işleminde hata oluştu");
                 return new ApiResponse<RoleViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<RoleViewModel>> UpdateRoleAsync(string id, UpdateRoleViewModel model, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<RoleViewModel>> UpdateRoleAsync(string roleId, UpdateRoleViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"api/roles/{id}", content, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/roles/{roleId}", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -153,16 +145,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "UpdateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", id);
                 return new ApiResponse<RoleViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteRoleAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DeleteRoleAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"api/roles/{id}", cancellationToken);
+                var response = await _httpClient.DeleteAsync($"api/roles/{roleId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -175,16 +166,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteRoleAsync işleminde hata oluştu. RoleId: {RoleId}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateRoleAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> EnableRoleAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/roles/{id}/activate", null, cancellationToken);
+                var response = await _httpClient.PostAsync($"api/roles/{roleId}/enable", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -197,16 +187,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ActivateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateRoleAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DisableRoleAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/roles/{id}/deactivate", null, cancellationToken);
+                var response = await _httpClient.PostAsync($"api/roles/{roleId}/disable", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -219,7 +208,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeactivateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }

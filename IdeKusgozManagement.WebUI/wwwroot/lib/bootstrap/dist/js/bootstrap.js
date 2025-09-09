@@ -2248,7 +2248,7 @@
     }
 
     // Public
-    activate() {
+    enable() {
       if (this._isActive) {
         return;
       }
@@ -2260,7 +2260,7 @@
       EventHandler.on(document, EVENT_KEYDOWN_TAB, event => this._handleKeydown(event));
       this._isActive = true;
     }
-    deactivate() {
+    disable() {
       if (!this._isActive) {
         return;
       }
@@ -2495,7 +2495,7 @@
       }
       this._isShown = false;
       this._isTransitioning = true;
-      this._focustrap.deactivate();
+      this._focustrap.disable();
       this._element.classList.remove(CLASS_NAME_SHOW$4);
       this._queueCallback(() => this._hideModal(), this._element, this._isAnimated());
     }
@@ -2503,7 +2503,7 @@
       EventHandler.off(window, EVENT_KEY$4);
       EventHandler.off(this._dialog, EVENT_KEY$4);
       this._backdrop.dispose();
-      this._focustrap.deactivate();
+      this._focustrap.disable();
       super.dispose();
     }
     handleUpdate() {
@@ -2541,7 +2541,7 @@
       this._element.classList.add(CLASS_NAME_SHOW$4);
       const transitionComplete = () => {
         if (this._config.focus) {
-          this._focustrap.activate();
+          this._focustrap.enable();
         }
         this._isTransitioning = false;
         EventHandler.trigger(this._element, EVENT_SHOWN$4, {
@@ -2787,7 +2787,7 @@
       this._element.classList.add(CLASS_NAME_SHOWING$1);
       const completeCallBack = () => {
         if (!this._config.scroll || this._config.backdrop) {
-          this._focustrap.activate();
+          this._focustrap.enable();
         }
         this._element.classList.add(CLASS_NAME_SHOW$3);
         this._element.classList.remove(CLASS_NAME_SHOWING$1);
@@ -2805,7 +2805,7 @@
       if (hideEvent.defaultPrevented) {
         return;
       }
-      this._focustrap.deactivate();
+      this._focustrap.disable();
       this._element.blur();
       this._isShown = false;
       this._element.classList.add(CLASS_NAME_HIDING);
@@ -2823,7 +2823,7 @@
     }
     dispose() {
       this._backdrop.dispose();
-      this._focustrap.deactivate();
+      this._focustrap.disable();
       super.dispose();
     }
 
@@ -3899,7 +3899,7 @@
     // The logic of selection
     _observerCallback(entries) {
       const targetElement = entry => this._targetLinks.get(`#${entry.target.id}`);
-      const activate = entry => {
+      const enable = entry => {
         this._previousScrollData.visibleEntryTop = entry.target.offsetTop;
         this._process(targetElement(entry));
       };
@@ -3915,7 +3915,7 @@
         const entryIsLowerThanPrevious = entry.target.offsetTop >= this._previousScrollData.visibleEntryTop;
         // if we are scrolling down, pick the bigger offsetTop
         if (userScrollsDown && entryIsLowerThanPrevious) {
-          activate(entry);
+          enable(entry);
           // if parent isn't scrolled, let's keep the first visible item, breaking the iteration
           if (!parentScrollTop) {
             return;
@@ -3925,7 +3925,7 @@
 
         // if we are scrolling up, pick the smallest offsetTop
         if (!userScrollsDown && !entryIsLowerThanPrevious) {
-          activate(entry);
+          enable(entry);
         }
       }
     }
@@ -3960,7 +3960,7 @@
       });
     }
     _activateParents(target) {
-      // Activate dropdown parents
+      // Enable dropdown parents
       if (target.classList.contains(CLASS_NAME_DROPDOWN_ITEM)) {
         SelectorEngine.findOne(SELECTOR_DROPDOWN_TOGGLE$1, target.closest(SELECTOR_DROPDOWN)).classList.add(CLASS_NAME_ACTIVE$1);
         return;
@@ -4080,13 +4080,13 @@
 
     // Public
     show() {
-      // Shows this elem and deactivate the active sibling if exists
+      // Shows this elem and disable the active sibling if exists
       const innerElem = this._element;
       if (this._elemIsActive(innerElem)) {
         return;
       }
 
-      // Search for active tab on same parent to deactivate it
+      // Search for active tab on same parent to disable it
       const active = this._getActiveElem();
       const hideEvent = active ? EventHandler.trigger(active, EVENT_HIDE$1, {
         relatedTarget: innerElem
@@ -4107,7 +4107,7 @@
         return;
       }
       element.classList.add(CLASS_NAME_ACTIVE);
-      this._activate(SelectorEngine.getElementFromSelector(element)); // Search and activate/show the proper section
+      this._activate(SelectorEngine.getElementFromSelector(element)); // Search and enable/show the proper section
 
       const complete = () => {
         if (element.getAttribute('role') !== 'tab') {
@@ -4129,7 +4129,7 @@
       }
       element.classList.remove(CLASS_NAME_ACTIVE);
       element.blur();
-      this._deactivate(SelectorEngine.getElementFromSelector(element)); // Search and deactivate the shown section too
+      this._deactivate(SelectorEngine.getElementFromSelector(element)); // Search and disable the shown section too
 
       const complete = () => {
         if (element.getAttribute('role') !== 'tab') {

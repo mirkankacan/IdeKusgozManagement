@@ -17,7 +17,6 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
 
         public bool? IsActive { get; set; }
         public string? RoleName { get; set; }
-        [Required]
-        public List<string> SuperiorIds { get; set; }
+        public List<string>? SuperiorIds { get; set; } = new();
     }
 }

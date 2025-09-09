@@ -5,9 +5,6 @@
 
 @section Styles {
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 }
 
 @Html.AntiForgeryToken()
@@ -52,7 +49,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Masraf Türü Ekleme</h5>
+                <h5 class="modal-title">Masraf Türü Ekleme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form class="needs-validation" novalidate id="createExpenseForm">
@@ -81,7 +78,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Masraf Türü Güncelleme</h5>
+                <h5 class="modal-title">Masraf Türü Güncelleme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form class="needs-validation" novalidate id="updateExpenseForm">
@@ -107,7 +104,6 @@
 
 @section Scripts {
     <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
         let expensesTable;
@@ -187,8 +183,7 @@
                                         onclick="activateExpense('${row.id}')" title="Aktifleştir">
                                         <i class="fas  fa-toggle-off"></i>
                                        </button>`;
-                            return `
-                                            <div class="btn-group btn-group-sm" role="group">
+                            return `<div class="btn-group btn-group-sm" role="group">
                                              <button type="button" class="btn btn-outline-warning btn-sm"
                                                onclick="loadExpenseForEdit('${row.id}')" title="Düzenle">
                                               <i class="fas fa-edit"></i>
@@ -203,19 +198,14 @@
                         }
                     }
                 ],
-                "language": {
+                 "language": {
                     url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
                 "pageLength": 10,
                 "responsive": true,
                 "searchDelay": 300,
-                "stateSave": true,
-                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                    '<"row"<"col-sm-12"tr>>' +
-                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                "initComplete": function () {
-                },
+                "order": [[2, "asc"]], 
                 "drawCallback": function () {
                     var api = this.api();
                     var pageInfo = api.page.info();
@@ -263,7 +253,7 @@
 
         async function createExpense() {
             const expenseData = {
-                name: $('#txtCName').val()
+                name: $('#txtCName').val().trim()
             };
 
             try {

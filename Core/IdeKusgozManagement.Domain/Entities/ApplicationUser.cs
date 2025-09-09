@@ -16,5 +16,7 @@ namespace IdeKusgozManagement.Domain.Entities
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpires { get; set; }
         public string TCNo { get; set; }
+        public virtual ICollection<IdtLeaveRequest> CreatedLeaveRequests { get; set; } = new List<IdtLeaveRequest>();
+        public virtual ICollection<IdtLeaveRequest> UpdatedLeaveRequests { get; set; } = new List<IdtLeaveRequest>();
     }
 }

@@ -1,5 +1,5 @@
 using IdeKusgozManagement.Application.DTOs.ExpenseDTOs;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +22,9 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Tüm masraf türlerini getirir
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAllExpenses(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetExpenses(CancellationToken cancellationToken = default)
         {
-            var result = await _expenseService.GetAllExpensesAsync(cancellationToken);
+            var result = await _expenseService.GetExpensesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -32,49 +32,57 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Aktif tüm masraf türlerini getirir
         /// </summary>
         [HttpGet("active-expenses")]
-        public async Task<IActionResult> GetAllActiveExpenses(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveExpenses(CancellationToken cancellationToken = default)
         {
-            var result = await _expenseService.GetAllActiveExpensesAsync(cancellationToken);
+            var result = await _expenseService.GetActiveExpensesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// Masraf türünü aktifleştirir
         /// </summary>
-        /// <param name="id">Ekipman ID'si</param>
-        [RoleFilter("Admin", "Yönetici")]
-        [HttpPut("{id}/activate")]
-        public async Task<IActionResult> ActivateExpense(string id)
+        /// <param name="expenseId">Masraf ID'si</param>
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        [HttpPut("{expenseId}/enable")]
+        public async Task<IActionResult> EnableExpense(string expenseId)
         {
-            var result = await _expenseService.ActivateExpenseAsync(id);
+            if (string.IsNullOrWhiteSpace(expenseId))
+            {
+                return BadRequest("Masraf türü ID'si gereklidir");
+            }
+            var result = await _expenseService.EnableExpenseAsync(expenseId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// Masraf türünü pasifleştirir
         /// </summary>
-        /// <param name="id">Ekipman ID'si</param>
-        [RoleFilter("Admin", "Yönetici")]
-        [HttpPut("{id}/deactivate")]
-        public async Task<IActionResult> DeactivateExpense(string id)
+        /// <param name="expenseId">Masraf ID'si</param>
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        [HttpPut("{expenseId}/disable")]
+        public async Task<IActionResult> DisableExpense(string expenseId)
         {
-            var result = await _expenseService.DeactivateExpenseAsync(id);
+            if (string.IsNullOrWhiteSpace(expenseId))
+            {
+                return BadRequest("Masraf türü ID'si gereklidir");
+            }
+            var result = await _expenseService.DisableExpenseAsync(expenseId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// ID'ye göre masraf türü getirir
         /// </summary>
-        /// <param name="id">Masraf türü ID'si</param>
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetExpenseById(string id, CancellationToken cancellationToken = default)
+        /// <param name="expenseId">Masraf türü ID'si</param>
+        [HttpGet("{expenseId}")]
+        public async Task<IActionResult> GetExpenseById(string expenseId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(expenseId))
             {
                 return BadRequest("Masraf türü ID'si gereklidir");
             }
 
-            var result = await _expenseService.GetExpenseByIdAsync(id, cancellationToken);
+            var result = await _expenseService.GetExpenseByIdAsync(expenseId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -83,7 +91,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="createExpenseDTO">Masraf türü bilgileri</param>
         [HttpPost]
-        [RoleFilter("Admin", "Yönetici")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> CreateExpense([FromBody] CreateExpenseDTO createExpenseDTO, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
@@ -92,19 +100,19 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await _expenseService.CreateExpenseAsync(createExpenseDTO, cancellationToken);
-            return result.IsSuccess ? CreatedAtAction(nameof(GetExpenseById), new { id = result.Data }, result) : BadRequest(result);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// Masraf türü günceller
         /// </summary>
-        /// <param name="id">Masraf türü ID'si</param>
+        /// <param name="expenseId">Masraf türü ID'si</param>
         /// <param name="updateExpenseDTO">Güncellenecek masraf türü bilgileri</param>
-        [HttpPut("{id}")]
-        [RoleFilter("Admin", "Yönetici")]
-        public async Task<IActionResult> UpdateExpense(string id, [FromBody] UpdateExpenseDTO updateExpenseDTO, CancellationToken cancellationToken = default)
+        [HttpPut("{expenseId}")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> UpdateExpense(string expenseId, [FromBody] UpdateExpenseDTO updateExpenseDTO, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(expenseId))
             {
                 return BadRequest("Masraf türü ID'si gereklidir");
             }
@@ -114,24 +122,24 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _expenseService.UpdateExpenseAsync(id, updateExpenseDTO, cancellationToken);
+            var result = await _expenseService.UpdateExpenseAsync(expenseId, updateExpenseDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// Masraf türü siler
         /// </summary>
-        /// <param name="id">Masraf türü ID'si</param>
-        [HttpDelete("{id}")]
-        [RoleFilter("Admin", "Yönetici")]
-        public async Task<IActionResult> DeleteExpense(string id, CancellationToken cancellationToken = default)
+        /// <param name="expenseId">Masraf türü ID'si</param>
+        [HttpDelete("{expenseId}")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> DeleteExpense(string expenseId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(expenseId))
             {
                 return BadRequest("Masraf türü ID'si gereklidir");
             }
 
-            var result = await _expenseService.DeleteExpenseAsync(id, cancellationToken);
+            var result = await _expenseService.DeleteExpenseAsync(expenseId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

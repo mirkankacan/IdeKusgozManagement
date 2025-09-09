@@ -9,15 +9,13 @@ namespace IdeKusgozManagement.WebUI.Services
     public class ExpenseApiService : IExpenseApiService
     {
         private readonly HttpClient _httpClient;
-        private readonly ILogger<ExpenseApiService> _logger;
 
-        public ExpenseApiService(HttpClient httpClient, ILogger<ExpenseApiService> logger)
+        public ExpenseApiService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<ExpenseViewModel>>> GetAllExpensesAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<ExpenseViewModel>>> GetExpensesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -35,16 +33,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllExpensesAsync işleminde hata oluştu");
                 return new ApiResponse<IEnumerable<ExpenseViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<ExpenseViewModel>> GetExpenseByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<ExpenseViewModel>> GetExpenseByIdAsync(string expenseId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/expenses/{id}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/expenses/{expenseId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -58,7 +55,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetExpenseByIdAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<ExpenseViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
@@ -84,19 +80,18 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "CreateExpenseAsync işleminde hata oluştu");
                 return new ApiResponse<string> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> UpdateExpenseAsync(string id, UpdateExpenseViewModel model, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> UpdateExpenseAsync(string expenseId, UpdateExpenseViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"api/expenses/{id}", content, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/expenses/{expenseId}", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -110,16 +105,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "UpdateExpenseAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteExpenseAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DeleteExpenseAsync(string expenseId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"api/expenses/{id}", cancellationToken);
+                var response = await _httpClient.DeleteAsync($"api/expenses/{expenseId}", cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -133,12 +127,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteExpenseAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<ExpenseViewModel>>> GetAllActiveExpensesAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<ExpenseViewModel>>> GetActiveExpensesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -156,16 +149,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllActiveExpensesAsync işleminde hata oluştu");
                 return new ApiResponse<IEnumerable<ExpenseViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> ActivateExpenseAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> EnableExpenseAsync(string expenseId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/expenses/{id}/activate", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/expenses/{expenseId}/enable", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -179,16 +171,15 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ActivateExpenseAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> DeactivateExpenseAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> DisableExpenseAsync(string expenseId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/expenses/{id}/deactivate", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/expenses/{expenseId}/disable", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -202,7 +193,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeactivateExpenseAsync işleminde hata oluştu. Id: {Id}", id);
                 return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }

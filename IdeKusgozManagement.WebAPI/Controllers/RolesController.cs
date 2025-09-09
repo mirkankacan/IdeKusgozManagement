@@ -1,5 +1,5 @@
 ﻿using IdeKusgozManagement.Application.DTOs.RoleDTOs;
-using IdeKusgozManagement.Application.Interfaces;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,16 +23,16 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Tüm rolleri getirir
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAllRoles()
+        public async Task<IActionResult> GetRoles()
         {
-            var result = await _roleService.GetAllRolesAsync();
+            var result = await _roleService.GetRolesAsync();
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// Tüm aktif rolleri getirir
         /// </summary>
-        [HttpGet("actives")]
+        [HttpGet("active-roles")]
         public async Task<IActionResult> GetActiveRoles()
         {
             var result = await _roleService.GetActiveRolesAsync();
@@ -42,23 +42,31 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <summary>
         /// ID'ye göre rol getirir
         /// </summary>
-        /// <param name="id">Rol ID'si</param>
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetRoleById(string id)
+        /// <param name="roleId">Rol ID'si</param>
+        [HttpGet("{roleId}")]
+        public async Task<IActionResult> GetRoleById(string roleId)
         {
-            var result = await _roleService.GetRoleByIdAsync(id);
-            return result.IsSuccess ? Ok(result) : NotFound(result);
+            if (string.IsNullOrEmpty(roleId))
+            {
+                return BadRequest("Rol ID'si gereklidir");
+            }
+            var result = await _roleService.GetRoleByIdAsync(roleId);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
         /// İsme göre rol getirir
         /// </summary>
         /// <param name="name">Rol adı</param>
-        [HttpGet("by-name/{name}")]
-        public async Task<IActionResult> GetRoleByName(string name)
+        [HttpGet("name/{roleName}")]
+        public async Task<IActionResult> GetRoleByName(string roleName)
         {
-            var result = await _roleService.GetRoleByNameAsync(name);
-            return result.IsSuccess ? Ok(result) : NotFound(result);
+            if (string.IsNullOrEmpty(roleName))
+            {
+                return BadRequest("Rol adı gereklidir");
+            }
+            var result = await _roleService.GetRoleByNameAsync(roleName);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -80,17 +88,21 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <summary>
         /// Rol bilgilerini günceller
         /// </summary>
-        /// <param name="id">Rol ID'si</param>
+        /// <param name="roleId">Rol ID'si</param>
         /// <param name="updateRoleDTO">Güncellenecek bilgiler</param>
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateRole(string id, [FromBody] UpdateRoleDTO updateRoleDTO)
+        [HttpPut("{roleId}")]
+        public async Task<IActionResult> UpdateRole(string roleId, [FromBody] UpdateRoleDTO updateRoleDTO)
         {
+            if (string.IsNullOrEmpty(roleId))
+            {
+                return BadRequest("Rol ID'si gereklidir");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = await _roleService.UpdateRoleAsync(id, updateRoleDTO);
+            var result = await _roleService.UpdateRoleAsync(roleId, updateRoleDTO);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -98,10 +110,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Rolü siler (soft delete)
         /// </summary>
         /// <param name="id">Rol ID'si</param>
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRole(string id)
+        [HttpDelete("{roleId}")]
+        public async Task<IActionResult> DeleteRole(string roleId)
         {
-            var result = await _roleService.DeleteRoleAsync(id);
+            if (string.IsNullOrEmpty(roleId))
+            {
+                return BadRequest("Rol ID'si gereklidir");
+            }
+            var result = await _roleService.DeleteRoleAsync(roleId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -109,10 +125,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Rolü aktifleştirir
         /// </summary>
         /// <param name="id">Rol ID'si</param>
-        [HttpPost("{id}/activate")]
-        public async Task<IActionResult> ActivateRole(string id)
+        [HttpPost("{roleId}/enable")]
+        public async Task<IActionResult> EnableRole(string roleId)
         {
-            var result = await _roleService.ActivateRoleAsync(id);
+            if (string.IsNullOrEmpty(roleId))
+            {
+                return BadRequest("Rol ID'si gereklidir");
+            }
+            var result = await _roleService.EnableRoleAsync(roleId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -120,10 +140,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Rolü pasifleştirir
         /// </summary>
         /// <param name="id">Rol ID'si</param>
-        [HttpPost("{id}/deactivate")]
-        public async Task<IActionResult> DeactivateRole(string id)
+        [HttpPost("{roleId}/disable")]
+        public async Task<IActionResult> DisableRole(string roleId)
         {
-            var result = await _roleService.DeactivateRoleAsync(id);
+            if (string.IsNullOrEmpty(roleId))
+            {
+                return BadRequest("Rol ID'si gereklidir");
+            }
+            var result = await _roleService.DisableRoleAsync(roleId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }
