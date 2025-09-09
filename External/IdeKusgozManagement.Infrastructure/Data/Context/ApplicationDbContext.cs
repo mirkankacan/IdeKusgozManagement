@@ -26,6 +26,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         public DbSet<IdtExpense> IdtExpenses => Set<IdtExpense>();
         public DbSet<IdtEquipment> IdtEquipments => Set<IdtEquipment>();
         public DbSet<IdtMessage> IdtMessages => Set<IdtMessage>();
+        public DbSet<IdtNotification> IdtNotifications => Set<IdtNotification>();
+        public DbSet<IdtNotificationRead> IdtNotificationReads => Set<IdtNotificationRead>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -64,6 +66,25 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
                .WithMany()
                .HasForeignKey(m => m.CreatedBy)
                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdtNotification>()
+               .HasOne(n => n.CreatedByUser)
+               .WithMany()
+               .HasForeignKey(n => n.CreatedBy)
+               .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdtNotificationRead>()
+               .HasOne(nr => nr.Notification)
+               .WithMany(n => n.NotificationReads)
+               .HasForeignKey(nr => nr.NotificationId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<IdtNotificationRead>()
+               .HasOne(nr => nr.CreatedByUser)
+               .WithMany()
+               .HasForeignKey(nr => nr.CreatedBy)
+               .OnDelete(DeleteBehavior.Cascade);
+
 
             base.OnModelCreating(modelBuilder);
         }

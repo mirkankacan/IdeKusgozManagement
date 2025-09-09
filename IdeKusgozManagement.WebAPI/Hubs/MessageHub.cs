@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace IdeKusgozManagement.WebAPI.Hubs
 {
+    //[Authorize] // Geçici olarak kapatıldı
     public class MessageHub : Hub
     {
         public async Task JoinGroup(string groupName)

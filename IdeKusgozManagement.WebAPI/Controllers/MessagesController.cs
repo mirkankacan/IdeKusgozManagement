@@ -1,4 +1,5 @@
 ﻿using IdeKusgozManagement.Application.DTOs.MessageDTOs;
+using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using IdeKusgozManagement.WebAPI.Hubs;
@@ -14,11 +15,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class MessagesController : ControllerBase
     {
         private readonly IMessageService _messageService;
+        private readonly INotificationService _notificationService;
         private readonly IHubContext<MessageHub> _hubContext;
 
-        public MessagesController(IMessageService messageService, IHubContext<MessageHub> hubContext)
+        public MessagesController(IMessageService messageService, INotificationService notificationService, IHubContext<MessageHub> hubContext)
         {
             _messageService = messageService;
+            _notificationService = notificationService;
             _hubContext = hubContext;
         }
 
@@ -59,8 +62,22 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
             if (result.IsSuccess && result.Data != null)
             {
-                // Send real-time notification to all connected clients
+                // Send real-time message to all connected clients
                 await _hubContext.Clients.Group("Messages").SendAsync("NewMessage", result.Data);
+
+                // Create notification
+                var notificationDTO = new CreateNotificationDTO
+                {
+                    Message = $"{result.Data.CreatedByName} yeni bir mesaj gönderdi"
+                };
+
+                var notificationResult = await _notificationService.CreateNotificationAsync(notificationDTO, cancellationToken);
+
+                if (notificationResult.IsSuccess && notificationResult.Data != null)
+                {
+                    // Send real-time notification to all connected clients
+                    await _hubContext.Clients.Group("Messages").SendAsync("NewNotification", notificationResult.Data);
+                }
             }
 
             return result.IsSuccess ? Ok(result) : BadRequest(result);

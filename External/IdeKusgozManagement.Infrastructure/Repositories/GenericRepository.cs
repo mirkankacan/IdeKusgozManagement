@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Interfaces.Repositories;
 using IdeKusgozManagement.Domain.Entities.Base;
 using IdeKusgozManagement.Infrastructure.Data.Context;
@@ -362,6 +363,78 @@ namespace IdeKusgozManagement.Infrastructure.Repositories
                 query = query.Include(include);
             }
             return query;
+        }
+
+        public async Task<PagedResult<T>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includeProperties)
+        {
+            var query = _dbSet.AsQueryable();
+
+            // Include properties
+            if (includeProperties?.Length > 0)
+            {
+                foreach (var includeProperty in includeProperties)
+                {
+                    query = query.Include(includeProperty);
+                }
+            }
+
+            // Total count
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            // Calculate pagination
+            var skip = (pageNumber - 1) * pageSize;
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            // Get paged data
+            var data = await query
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedResult<T>
+            {
+                Data = data,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<PagedResult<T>> GetPagedNoTrackingAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includeProperties)
+        {
+            var query = _dbSet.AsNoTracking().AsQueryable();
+
+            // Include properties
+            if (includeProperties?.Length > 0)
+            {
+                foreach (var includeProperty in includeProperties)
+                {
+                    query = query.Include(includeProperty);
+                }
+            }
+
+            // Total count
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            // Calculate pagination
+            var skip = (pageNumber - 1) * pageSize;
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            // Get paged data
+            var data = await query
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedResult<T>
+            {
+                Data = data,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = totalPages
+            };
         }
     }
 }

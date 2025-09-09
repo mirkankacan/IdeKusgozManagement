@@ -35,6 +35,7 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IWorkRecordService, WorkRecordService>();
             services.AddScoped<IMessageService, MessageService>();
+            services.AddScoped<INotificationService, NotificationService>();
 
             services.ConfigureOptions<JwtOptionsSetup>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();

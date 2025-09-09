@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Data;
 using System.Net;
+using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -21,79 +22,75 @@ namespace IdeKusgozManagement.WebAPI
             var connectionString = configuration.GetConnectionString("SqlConnection");
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
+            // Serilog configuration (unchanged for brevity)
             Log.Logger = new LoggerConfiguration()
-             .MinimumLevel.Information()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-            .MinimumLevel.Override("System", LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
-            .Enrich.FromLogContext()
-            .Enrich.WithProperty("Application", "IdeKusgoz.WebAPI")
-            .Enrich.WithProperty("Environment", environment)
-            .Enrich.WithClientIp()
-            .Enrich.WithMachineName()
-            .Enrich.WithThreadId()
-            // Console - only in Development
-            .WriteTo.Logger(lc =>
-            {
-                if (environment == "Development")
+                .MinimumLevel.Information()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                .MinimumLevel.Override("System", LogEventLevel.Warning)
+                .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .Enrich.WithProperty("Application", "IdeKusgoz.WebAPI")
+                .Enrich.WithProperty("Environment", environment)
+                .Enrich.WithClientIp()
+                .Enrich.WithMachineName()
+                .Enrich.WithThreadId()
+                .WriteTo.Logger(lc =>
                 {
-                    lc.WriteTo.Console(
-                        restrictedToMinimumLevel: LogEventLevel.Information,
-                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}");
-                }
-            })
-           .WriteTo.File("logs/api-application-.log",
-               restrictedToMinimumLevel: LogEventLevel.Information,
-               rollingInterval: RollingInterval.Day,
-               retainedFileCountLimit: 30,
-               fileSizeLimitBytes: 10_000_000,
-               rollOnFileSizeLimit: true,
-               shared: true,
-               outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-        // Information Logs - Separate table with filter
-        .WriteTo.Logger(lc => lc
-            .Filter.ByIncludingOnly(evt => evt.Level == LogEventLevel.Information || evt.Level == LogEventLevel.Debug)
-            .WriteTo.MSSqlServer(
-                connectionString: connectionString,
-                sinkOptions: new MSSqlServerSinkOptions
-                {
-                    TableName = "InformationLogs",
-                    SchemaName = "dbo",
-                    AutoCreateSqlTable = true,
-                    BatchPostingLimit = 1000, // Higher for better performance
-                    BatchPeriod = TimeSpan.FromSeconds(30) // Less frequent writes
-                },
-                columnOptions: GetInformationColumnOptions()))
-
-        // Error/Warning Logs - Separate table
-        .WriteTo.Logger(lc => lc
-            .Filter.ByIncludingOnly(evt => evt.Level >= LogEventLevel.Warning)
-            .WriteTo.MSSqlServer(
-                connectionString: connectionString,
-                sinkOptions: new MSSqlServerSinkOptions
-                {
-                    TableName = "ErrorLogs",
-                    SchemaName = "dbo",
-                    AutoCreateSqlTable = true,
-                    BatchPostingLimit = 100, // Smaller batch for urgent errors
-                    BatchPeriod = TimeSpan.FromSeconds(10) // More frequent for errors
-                },
-                columnOptions: GetErrorColumnOptions()))
-           .WriteTo.Email(
-               from: configuration["EmailConfiguration:FromEmail"],
-               to: GetEmailRecipients(configuration),
-               host: configuration["EmailConfiguration:Host"],
-               port: int.Parse(configuration["EmailConfiguration:Port"] ?? "587"),
-               connectionSecurity: MailKit.Security.SecureSocketOptions.StartTls,
-               credentials: new NetworkCredential(
-                   configuration["EmailConfiguration:FromEmail"],
-                   configuration["EmailConfiguration:Password"]
-               ),
-               subject: "🚨 Kuşgöz API Hata Bildirimi - {Level} - {Timestamp:yyyy-MM-dd HH:mm}",
-               restrictedToMinimumLevel: LogEventLevel.Error
-
-               )
-           .CreateLogger();
+                    if (environment == "Development")
+                    {
+                        lc.WriteTo.Console(
+                            restrictedToMinimumLevel: LogEventLevel.Information,
+                            outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}");
+                    }
+                })
+                .WriteTo.File("logs/api-application-.log",
+                    restrictedToMinimumLevel: LogEventLevel.Information,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 30,
+                    fileSizeLimitBytes: 10_000_000,
+                    rollOnFileSizeLimit: true,
+                    shared: true,
+                    outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
+                .WriteTo.Logger(lc => lc
+                    .Filter.ByIncludingOnly(evt => evt.Level == LogEventLevel.Information || evt.Level == LogEventLevel.Debug)
+                    .WriteTo.MSSqlServer(
+                        connectionString: connectionString,
+                        sinkOptions: new MSSqlServerSinkOptions
+                        {
+                            TableName = "InformationLogs",
+                            SchemaName = "dbo",
+                            AutoCreateSqlTable = true,
+                            BatchPostingLimit = 1000,
+                            BatchPeriod = TimeSpan.FromSeconds(30)
+                        },
+                        columnOptions: GetInformationColumnOptions()))
+                .WriteTo.Logger(lc => lc
+                    .Filter.ByIncludingOnly(evt => evt.Level >= LogEventLevel.Warning)
+                    .WriteTo.MSSqlServer(
+                        connectionString: connectionString,
+                        sinkOptions: new MSSqlServerSinkOptions
+                        {
+                            TableName = "ErrorLogs",
+                            SchemaName = "dbo",
+                            AutoCreateSqlTable = true,
+                            BatchPostingLimit = 100,
+                            BatchPeriod = TimeSpan.FromSeconds(10)
+                        },
+                        columnOptions: GetErrorColumnOptions()))
+                .WriteTo.Email(
+                    from: configuration["EmailConfiguration:FromEmail"],
+                    to: GetEmailRecipients(configuration),
+                    host: configuration["EmailConfiguration:Host"],
+                    port: int.Parse(configuration["EmailConfiguration:Port"] ?? "587"),
+                    connectionSecurity: MailKit.Security.SecureSocketOptions.StartTls,
+                    credentials: new NetworkCredential(
+                        configuration["EmailConfiguration:FromEmail"],
+                        configuration["EmailConfiguration:Password"]
+                    ),
+                    subject: "🚨 Kuşgöz API Hata Bildirimi - {Level} - {Timestamp:yyyy-MM-dd HH:mm}",
+                    restrictedToMinimumLevel: LogEventLevel.Error
+                )
+                .CreateLogger();
 
             host.UseSerilog();
 
@@ -114,22 +111,32 @@ namespace IdeKusgozManagement.WebAPI
             services.AddHttpClient();
             services.AddHttpContextAccessor();
 
+            // Session konfigürasyonu EKLE
+            services.AddDistributedMemoryCache();
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
+            // CORS konfigürasyonu - SignalR için güncellenmiş
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.AllowAnyOrigin()
-                         .WithMethods("GET", "POST", "PUT", "DELETE")
-                         .WithHeaders(
-                             "Content-Type",
-                             "Authorization",
-                             "X-Requested-With",
-                             "Accept",
-                             "Origin",
-                             "X-SignalR-User-Agent"
-                         )
-                         .WithExposedHeaders("X-Pagination")
-                         .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+                    policy.WithOrigins("http://localhost:5000", "https://localhost:5001", "http://localhost:5291", "http://localhost:5116") // Tüm client URL'leri
+                          .WithMethods("GET", "POST", "PUT", "DELETE")
+                          .WithHeaders(
+                              "Content-Type",
+                              "Authorization",
+                              "X-Requested-With",
+                              "Accept",
+                              "Origin",
+                              "X-SignalR-User-Agent"
+                          )
+                          .WithExposedHeaders("X-Pagination")
+                          .AllowCredentials();
                 });
             });
 
@@ -144,36 +151,52 @@ namespace IdeKusgozManagement.WebAPI
                 NullValueHandling = NullValueHandling.Ignore
             };
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                           .AddJwtBearer(options =>
-                           {
-                               options.Events = new JwtBearerEvents
-                               {
-                                   OnMessageReceived = context =>
-                                   {
-                                       var accessToken = context.Request.Query["access_token"];
-                                       var path = context.HttpContext.Request.Path;
+            // JWT Configuration - Infrastructure'daki JwtOptionsSetup ile uyumlu
+            services.Configure<JwtOptionsDTO>(configuration.GetSection("JwtConfiguration"));
 
-                                       // SignalR hub için token kontrolü
-                                       if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/messageHub"))
-                                       {
-                                           context.Token = accessToken;
-                                       }
-                                       return Task.CompletedTask;
-                                   },
-                                   OnAuthenticationFailed = context =>
-                                   {
-                                       Console.WriteLine($"JWT Authentication failed: {context.Exception.Message}");
-                                       return Task.CompletedTask;
-                                   },
-                                   OnTokenValidated = context =>
-                                   {
-                                       Console.WriteLine($"JWT Token validated for user: {context.Principal?.Identity?.Name}");
-                                       return Task.CompletedTask;
-                                   }
-                               };
-                           });
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    // SignalR için JWT Events - ÇOK ÖNEMLİ!
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+                            var path = context.HttpContext.Request.Path;
+
+                            // SignalR hub için token kontrolü
+                            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/messageHub"))
+                            {
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        },
+                        OnAuthenticationFailed = context =>
+                        {
+                            Console.WriteLine($"JWT Authentication failed: {context.Exception.Message}");
+                            if (context.Request.Path.StartsWithSegments("/messageHub"))
+                            {
+                                Console.WriteLine("SignalR authentication failed - but continuing without auth");
+                                // SignalR için auth başarısız olsa da devam et (çünkü [Authorize] kaldırdık)
+                            }
+                            return Task.CompletedTask;
+                        },
+                        OnTokenValidated = context =>
+                        {
+                            var userName = context.Principal?.Identity?.Name;
+                            Console.WriteLine($"JWT Token validated for user: {userName}");
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+
             services.AddAuthorization();
+
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true; // Hata detayları için
+            });
 
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(setup =>
@@ -205,117 +228,48 @@ namespace IdeKusgozManagement.WebAPI
             return services;
         }
 
+        // Diğer metodlar aynı kalır...
         private static ColumnOptions GetInformationColumnOptions()
         {
             var columnOptions = new ColumnOptions();
-
             columnOptions.Store.Remove(StandardColumn.MessageTemplate);
             columnOptions.Store.Remove(StandardColumn.Properties);
             columnOptions.Store.Add(StandardColumn.LogEvent);
-
             columnOptions.DisableTriggers = true;
-
             columnOptions.AdditionalColumns = new Collection<SqlColumn>
-    {
-        new SqlColumn
-        {
-            ColumnName = "UserId",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 50,
-            AllowNull = true
-        },
-        new SqlColumn
-        {
-            ColumnName = "Action",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 100,
-            AllowNull = true
-        },
-        new SqlColumn
-        {
-            ColumnName = "Module",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 100,
-            AllowNull = true
-        },
-        new SqlColumn
-        {
-            ColumnName = "ClientIP",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 45,
-            AllowNull = true
-        }
-    };
-
+            {
+                new SqlColumn { ColumnName = "UserId", DataType = SqlDbType.NVarChar, DataLength = 50, AllowNull = true },
+                new SqlColumn { ColumnName = "Action", DataType = SqlDbType.NVarChar, DataLength = 100, AllowNull = true },
+                new SqlColumn { ColumnName = "Module", DataType = SqlDbType.NVarChar, DataLength = 100, AllowNull = true },
+                new SqlColumn { ColumnName = "ClientIP", DataType = SqlDbType.NVarChar, DataLength = 45, AllowNull = true }
+            };
             return columnOptions;
         }
 
         private static ColumnOptions GetErrorColumnOptions()
         {
             var columnOptions = new ColumnOptions();
-
             columnOptions.Store.Add(StandardColumn.LogEvent);
             columnOptions.DisableTriggers = true;
-
             columnOptions.AdditionalColumns = new Collection<SqlColumn>
-    {
-        new SqlColumn
-        {
-            ColumnName = "UserId",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 50,
-            AllowNull = true
-        },
-        new SqlColumn
-        {
-            ColumnName = "Action",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 100,
-            AllowNull = true
-        },
-        new SqlColumn
-        {
-            ColumnName = "Module",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 100,
-            AllowNull = true
-        },
-        new SqlColumn
-        {
-            ColumnName = "ClientIP",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 45,
-            AllowNull = true
-        },
-        new SqlColumn
-        {
-            ColumnName = "UserAgent",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 500,
-            AllowNull = true
-        },
-        new SqlColumn
-        {
-            ColumnName = "RequestId",
-            DataType = SqlDbType.NVarChar,
-            DataLength = 50,
-            AllowNull = true
-        }
-    };
-
+            {
+                new SqlColumn { ColumnName = "UserId", DataType = SqlDbType.NVarChar, DataLength = 50, AllowNull = true },
+                new SqlColumn { ColumnName = "Action", DataType = SqlDbType.NVarChar, DataLength = 100, AllowNull = true },
+                new SqlColumn { ColumnName = "Module", DataType = SqlDbType.NVarChar, DataLength = 100, AllowNull = true },
+                new SqlColumn { ColumnName = "ClientIP", DataType = SqlDbType.NVarChar, DataLength = 45, AllowNull = true },
+                new SqlColumn { ColumnName = "UserAgent", DataType = SqlDbType.NVarChar, DataLength = 500, AllowNull = true },
+                new SqlColumn { ColumnName = "RequestId", DataType = SqlDbType.NVarChar, DataLength = 50, AllowNull = true }
+            };
             return columnOptions;
         }
 
         private static string GetEmailRecipients(IConfiguration configuration)
         {
             var toEmails = configuration.GetSection("EmailConfiguration:ToEmails").Get<string[]>();
-
             if (toEmails != null && toEmails.Length > 0)
             {
-                return string.Join(",", toEmails); // Çoklu email için virgül ile ayır
+                return string.Join(",", toEmails);
             }
-
-            // Fallback to single email
             return configuration["EmailConfiguration:ToEmail"] ?? configuration["EmailConfiguration:FromEmail"];
         }
     }

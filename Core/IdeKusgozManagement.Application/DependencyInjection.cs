@@ -17,6 +17,7 @@ namespace IdeKusgozManagement.Application
             ExpenseMappingConfig.Configure();
             LeaveRequestMappingConfig.Configure();
             MessageMappingConfig.Configure();
+            NotificationMappingConfig.Configure();
             return services;
         }
     }

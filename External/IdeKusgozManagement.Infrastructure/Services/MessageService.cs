@@ -19,7 +19,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<ApiResponse<bool>> CreateMessageAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<MessageDTO>> CreateMessageAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -28,12 +28,18 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await _unitOfWork.Repository<IdtMessage>().AddAsync(message, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ApiResponse<bool>.Success(true, "Mesaj başarıyla gönderildi");
+                // Get the created message with user information
+                var createdMessage = await _unitOfWork.Repository<IdtMessage>()
+                    .GetByIdNoTrackingAsync(message.Id, cancellationToken, m => m.CreatedByUser);
+
+                var messageDTO = createdMessage.Adapt<MessageDTO>();
+
+                return ApiResponse<MessageDTO>.Success(messageDTO, "Mesaj başarıyla gönderildi");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "CreateMessageAsync işleminde hata oluştu");
-                return ApiResponse<bool>.Error("Mesaj gönderilirken hata oluştu");
+                return ApiResponse<MessageDTO>.Error("Mesaj gönderilirken hata oluştu");
             }
         }
 
@@ -66,15 +72,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 var messages = await _unitOfWork.Repository<IdtMessage>()
-                    .GetAllNoTrackingAsync(cancellationToken, m => m.CreatedByUser);
+                    .GetPagedNoTrackingAsync(pageNumber, pageSize, cancellationToken, m => m.CreatedByUser);
 
-                var orderedMessages = messages
-                    .OrderByDescending(m => m.CreatedDate)
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize);
-
-                var messageDTO = orderedMessages.Adapt<IEnumerable<MessageDTO>>();
-
+                var messageDTO = messages.Adapt<IEnumerable<MessageDTO>>().OrderByDescending(x => x.CreatedDate);
                 return ApiResponse<IEnumerable<MessageDTO>>.Success(messageDTO, "Mesajlar başarıyla getirildi");
             }
             catch (Exception ex)
