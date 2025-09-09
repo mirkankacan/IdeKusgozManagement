@@ -25,6 +25,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         public DbSet<IdtUserHierarchy> IdtUserHierarchies => Set<IdtUserHierarchy>();
         public DbSet<IdtExpense> IdtExpenses => Set<IdtExpense>();
         public DbSet<IdtEquipment> IdtEquipments => Set<IdtEquipment>();
+        public DbSet<IdtMessage> IdtMessages => Set<IdtMessage>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,6 +58,12 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
                 .WithMany(u => u.UpdatedLeaveRequests)
                 .HasForeignKey(lr => lr.UpdatedBy)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdtMessage>()
+               .HasOne(m => m.CreatedByUser)
+               .WithMany()
+               .HasForeignKey(m => m.CreatedBy)
+               .OnDelete(DeleteBehavior.Restrict);
 
             base.OnModelCreating(modelBuilder);
         }

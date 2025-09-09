@@ -16,6 +16,7 @@ namespace IdeKusgozManagement.Application
             EquipmentMappingConfig.Configure();
             ExpenseMappingConfig.Configure();
             LeaveRequestMappingConfig.Configure();
+            MessageMappingConfig.Configure();
             return services;
         }
     }

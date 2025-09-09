@@ -52,6 +52,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPost("")]
         public async Task<IActionResult> CreateExpense([FromBody] CreateExpenseViewModel model, CancellationToken cancellationToken = default)
         {
@@ -65,6 +66,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPut("{expenseId}")]
         public async Task<IActionResult> UpdateExpense(string expenseId, [FromBody] UpdateExpenseViewModel model, CancellationToken cancellationToken = default)
         {
@@ -83,6 +85,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpDelete("{expenseId}")]
         public async Task<IActionResult> DeleteExpense(string expenseId, CancellationToken cancellationToken = default)
         {
@@ -96,6 +99,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPut("{expenseId}/aktif-et")]
         public async Task<IActionResult> EnableExpense(string expenseId, CancellationToken cancellationToken = default)
         {
@@ -109,6 +113,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPut("{expenseId}/pasif-et")]
         public async Task<IActionResult> DisableExpense(string expenseId, CancellationToken cancellationToken = default)
         {

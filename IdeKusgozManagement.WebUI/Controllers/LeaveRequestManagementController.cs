@@ -91,6 +91,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
+        [ValidateAntiForgeryToken]
         [HttpPost("izin/olustur")]
         public async Task<IActionResult> CreateLeaveRequest([FromBody] CreateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
         {
@@ -104,6 +105,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
+        [ValidateAntiForgeryToken]
         [HttpDelete("izin-yonetimi/{leaveRequestId}")]
         public async Task<IActionResult> DeleteLeaveRequest(string leaveRequestId, CancellationToken cancellationToken = default)
         {
@@ -117,6 +119,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPut("izin-yonetimi/{leaveRequestId}/onayla")]
         public async Task<IActionResult> ApproveLeaveRequest(string leaveRequestId, CancellationToken cancellationToken = default)
         {
@@ -130,6 +133,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPut("izin-yonetimi/{leaveRequestId}/reddet")]
         public async Task<IActionResult> RejectLeaveRequest(string leaveRequestId, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
         {

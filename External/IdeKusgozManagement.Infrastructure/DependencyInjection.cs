@@ -34,6 +34,7 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IWorkRecordService, WorkRecordService>();
+            services.AddScoped<IMessageService, MessageService>();
 
             services.ConfigureOptions<JwtOptionsSetup>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();

@@ -25,6 +25,15 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
+        [HttpGet("sosyal")]
+        public IActionResult Social()
+        {
+            var jwtToken = HttpContext.Session.GetString("JwtToken");
+            ViewData["JwtToken"] = jwtToken;
+            return View();
+        }
+
+        [Authorize]
         [HttpGet("takvim")]
         public IActionResult Calendar()
         {
@@ -57,7 +66,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                     break;
 
                 default:
-                    return Forbid("Yetkisiz erişim.");
+                    return Forbid("Yetkisiz erişim");
             }
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }

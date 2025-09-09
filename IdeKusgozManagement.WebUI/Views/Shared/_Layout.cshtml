@@ -93,6 +93,9 @@
 				<li class="@(Context.Request.Path == "/takvim" ? "active-page" : "")">
 					<a href="/takvim"><i data-feather="calendar"></i>Takvim</a>
 				</li>
+				<li class="@(Context.Request.Path == "/sosyal" ? "active-page" : "")">
+					<a href="/sosyal"><i data-feather="message-circle"></i>Sosyal</a>
+				</li>
 				@if (User.IsInRole("Admin") || User.IsInRole("Yönetici"))
 				{
 					<li class="sidebar-title">

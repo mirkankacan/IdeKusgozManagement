@@ -125,7 +125,8 @@ namespace IdeKusgozManagement.WebAPI
                              "Authorization",
                              "X-Requested-With",
                              "Accept",
-                             "Origin"
+                             "Origin",
+                             "X-SignalR-User-Agent"
                          )
                          .WithExposedHeaders("X-Pagination")
                          .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
@@ -143,8 +144,35 @@ namespace IdeKusgozManagement.WebAPI
                 NullValueHandling = NullValueHandling.Ignore
             };
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                           .AddJwtBearer(options =>
+                           {
+                               options.Events = new JwtBearerEvents
+                               {
+                                   OnMessageReceived = context =>
+                                   {
+                                       var accessToken = context.Request.Query["access_token"];
+                                       var path = context.HttpContext.Request.Path;
 
+                                       // SignalR hub için token kontrolü
+                                       if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/messageHub"))
+                                       {
+                                           context.Token = accessToken;
+                                       }
+                                       return Task.CompletedTask;
+                                   },
+                                   OnAuthenticationFailed = context =>
+                                   {
+                                       Console.WriteLine($"JWT Authentication failed: {context.Exception.Message}");
+                                       return Task.CompletedTask;
+                                   },
+                                   OnTokenValidated = context =>
+                                   {
+                                       Console.WriteLine($"JWT Token validated for user: {context.Principal?.Identity?.Name}");
+                                       return Task.CompletedTask;
+                                   }
+                               };
+                           });
             services.AddAuthorization();
 
             services.AddEndpointsApiExplorer();

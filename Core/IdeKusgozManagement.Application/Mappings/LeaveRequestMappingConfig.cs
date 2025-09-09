@@ -14,8 +14,8 @@ namespace IdeKusgozManagement.Application.Mappings
                     ? $"{src.CreatedByUser.Name} {src.CreatedByUser.Surname}"
                     : string.Empty)
                 .Map(dest => dest.UpdatedByName, src => src.UpdatedByUser != null
-                    ? $"{src.UpdatedByUser.Name} {src.UpdatedByUser.Surname}"
-                    : null);
+                  ? $"{src.UpdatedByUser.Name} {src.UpdatedByUser.Surname}"
+                    : string.Empty);
 
             TypeAdapterConfig<CreateLeaveRequestDTO, IdtLeaveRequest>
                 .NewConfig()

@@ -3,6 +3,7 @@ using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure;
 using IdeKusgozManagement.Infrastructure.Data.Seed;
 using IdeKusgozManagement.WebAPI;
+using IdeKusgozManagement.WebAPI.Hubs;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
 
@@ -12,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebAPIServices(builder.Configuration, builder.Host);
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -58,6 +62,9 @@ app.UseAuthorization();
 
 // Endpoint mapping
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<MessageHub>("/messageHub");
 
 app.Lifetime.ApplicationStopping.Register(Log.CloseAndFlush);
 

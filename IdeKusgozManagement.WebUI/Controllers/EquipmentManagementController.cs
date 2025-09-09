@@ -52,6 +52,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPost("")]
         public async Task<IActionResult> CreateEquipment([FromBody] CreateEquipmentViewModel model, CancellationToken cancellationToken = default)
         {
@@ -65,6 +66,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPut("{equipmentId}")]
         public async Task<IActionResult> UpdateEquipment(string equipmentId, [FromBody] UpdateEquipmentViewModel model, CancellationToken cancellationToken = default)
         {
@@ -83,6 +85,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpDelete("{equipmentId}")]
         public async Task<IActionResult> DeleteEquipment(string equipmentId, CancellationToken cancellationToken = default)
         {
@@ -96,6 +99,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPut("{equipmentId}/aktif-et")]
         public async Task<IActionResult> EnableEquipment(string equipmentId, CancellationToken cancellationToken = default)
         {
@@ -109,6 +113,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [ValidateAntiForgeryToken]
         [HttpPut("{equipmentId}/pasif-et")]
         public async Task<IActionResult> DisableEquipment(string equipmentId, CancellationToken cancellationToken = default)
         {
