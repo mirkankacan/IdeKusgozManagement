@@ -72,7 +72,37 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> GetLeaveRequestsByStatus(LeaveRequestStatus status, CancellationToken cancellationToken = default)
         {
-            var result = await _leaveRequestService.GetLeaveRequestByStatusAsync(status, cancellationToken);
+            var result = await _leaveRequestService.GetLeaveRequestsByStatusAsync(status, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Duruma göre izin taleplerini getirir
+        /// </summary>
+        /// <param name="status">Durum int cinsinden</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        [HttpGet("user/{userId}/status/{status}")]
+        public async Task<IActionResult> GetLeaveRequestsByUserIdAndStatus(string userId, LeaveRequestStatus status, CancellationToken cancellationToken = default)
+        {
+            var result = await _leaveRequestService.GetLeaveRequestsByUserIdAndStatusAsync(userId, status, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Duruma göre izin taleplerini getirir
+        /// </summary>
+        /// <param name="status">Durum int cinsinden</param>
+
+        [HttpGet("my-leave-requests/status/{status}")]
+        public async Task<IActionResult> GetMyLeaveRequestsByStatus(LeaveRequestStatus status, CancellationToken cancellationToken = default)
+        {
+            var currentUserId = _currentUserService.GetCurrentUserId();
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return BadRequest("Kullanıcı kimliği bulunamadı");
+            }
+            var result = await _leaveRequestService.GetLeaveRequestsByUserIdAndStatusAsync(currentUserId, status, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

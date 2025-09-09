@@ -45,15 +45,15 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
             switch (roleClaim.Value)
             {
+                // 1 onaylanmış izinleri getir
                 case "Admin":
                 case "Yönetici":
                 case "Şef":
-                    // 1 onaylanmış izinleri getir
-                    response = await _leaveRequestApiService.GetLeaveRequestByStatusAsync(1, cancellationToken);
+                    response = await _leaveRequestApiService.GetLeaveRequestsByStatusAsync(1, cancellationToken);
                     break;
 
                 case "Personel":
-                    response = await _leaveRequestApiService.GetMyLeaveRequestsAsync(cancellationToken);
+                    response = await _leaveRequestApiService.GetMyLeaveRequestsByStatusAsync(1, cancellationToken);
                     break;
 
                 default:

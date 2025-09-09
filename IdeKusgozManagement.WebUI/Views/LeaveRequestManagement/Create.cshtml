@@ -40,7 +40,7 @@
                                 <th>#</th>
                                 <th>BAŞLANGIÇ<br /> TARİHİ</th>
                                 <th>BİTİŞ<br /> TARİHİ</th>
-                                <th>SÜRE</th>
+                                <th>NET<br /> SÜRE</th>
                                 <th>SEBEP</th>
                                 <th>DURUM</th>
                                 <th>OLUŞTURMA<br /> TARİHİ</th>
@@ -304,6 +304,7 @@
         }
         
         async function createLeaveRequest() {
+        
             var picker = $('#date-leave').data('daterangepicker');
             var startDate = picker.startDate.format('YYYY-MM-DD'); 
             var endDate = picker.endDate.format('YYYY-MM-DD');
@@ -331,6 +332,10 @@
                                         $('#createLeaveRequestModal').modal('hide');
 
                     myLeaveRequestsTable.ajax.reload(null, false);
+                     $('#date-leave').val('');
+                    $('#select-leave-reason').val(0);
+                    $('#txt-description').val('');
+                    $('#file-document').val('');
                 } else {
                     toastr.error(response.message, 'Hata!');
                 }

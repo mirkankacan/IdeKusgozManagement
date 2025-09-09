@@ -23,6 +23,8 @@
 	<link href="~/theme/assets/css/custom.css" rel="stylesheet">
 	<link href="https://cdn.jsdelivr.net/npm/toastr/build/toastr.min.css" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css">
+	<link href="https://cdn.jsdelivr.net/npm/tippy.js/dist/tippy.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/themes/light.min.css">
 	@await RenderSectionAsync("Styles", required: false)
 	<style>
 		.modal-footer {
@@ -99,6 +101,13 @@
 					<li class="@(Context.Request.Path == "/kullanici-yonetimi" ? "active-page" : "")">
 						<a href="/kullanici-yonetimi"><i data-feather="users"></i>Kullanıcılar</a>
 					</li>
+				
+				}
+				@if (User.IsInRole("Admin") || User.IsInRole("Şef"))
+				{
+					<li class="sidebar-title">
+						Şef İşlemleri
+					</li>
 					<li class="@(Context.Request.Path == "/ekipman-yonetimi" ? "active-page" : "")">
 						<a href="/ekipman-yonetimi"><i data-feather="tool"></i>Ekipmanlar</a>
 					</li>
@@ -107,12 +116,6 @@
 					</li>
 					<li class="@(Context.Request.Path == "/izinn-yonetimi" ? "active-page" : "")">
 						<a href="/izin-yonetimi"><i data-feather="navigation"></i>İzinler</a>
-					</li>
-				}
-				@if (User.IsInRole("Admin") || User.IsInRole("Şef"))
-				{
-					<li class="sidebar-title">
-						Şef İşlemleri
 					</li>
 					<li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
 						<a href="/puantaj"><i data-feather="list"></i>Puantajlar</a>
@@ -155,8 +158,9 @@
 	</div>
 	<!-- Javascripts -->
 	<script src="~/theme/assets/plugins/jquery/jquery-3.4.1.min.js"></script>
-	<script src="https://unpkg.com/@@popperjs/core@2"></script>
-	<script src="~/theme/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@@popperjs/core/dist/umd/popper.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/tippy.js/dist/tippy.umd.min.js"></script>
+<script src="~/theme/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
 	<script src="https://unpkg.com/feather-icons"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/js/all.min.js"
 		integrity="sha512-gBYquPLlR76UWqCwD06/xwal4so02RjIR0oyG1TIhSGwmBTRrIkQbaPehPF8iwuY9jFikDHMGEelt0DtY7jtvQ=="

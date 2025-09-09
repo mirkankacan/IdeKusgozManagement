@@ -49,7 +49,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestByStatusAsync(LeaveRequestStatus status, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByStatusAsync(LeaveRequestStatus status, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -343,6 +343,27 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 _logger.LogError(ex, "GetLeaveRequestsByUserIdAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error("Kullanıcının izin talepleri getirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAndStatusAsync(string userId, LeaveRequestStatus status, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var leaveRequests = await _unitOfWork.Repository<IdtLeaveRequest>()
+                    .GetWhereNoTrackingAsync(x => x.Status == status && x.CreatedBy == userId, cancellationToken, lr => lr.CreatedByUser, lr => lr.UpdatedByUser);
+
+                var leaveRequestDTOs = leaveRequests
+                    .Adapt<IEnumerable<LeaveRequestDTO>>()
+                    .OrderByDescending(lr => lr.CreatedDate)
+                    .ToList();
+
+                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, "Duruma göre izin talepleri başarıyla getirildi");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetLeaveRequestByUserIdAndStatusAsync işleminde hata oluştu");
+                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error("Duruma göre izin talepleri getirilirken hata oluştu");
             }
         }
     }

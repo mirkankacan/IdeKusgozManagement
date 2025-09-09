@@ -8,7 +8,9 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
     {
         Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsAsync(CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestByStatusAsync(LeaveRequestStatus status, CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByStatusAsync(LeaveRequestStatus status, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAndStatusAsync(string userId, LeaveRequestStatus status, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
