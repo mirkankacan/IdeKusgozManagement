@@ -19,7 +19,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<ApiResponse<IEnumerable<NotificationDTO>>> GetNotificationsAsync(string userId, int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(string userId, int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -37,13 +37,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     return dto;
                 }).ToList();
+                var pagedResult = new PagedResult<NotificationDTO>
+                {
+                    Data = notificationDTOs,
+                    TotalCount = notifications.TotalCount,
+                    PageNumber = notifications.PageNumber,
+                    PageSize = notifications.PageSize,
+                    TotalPages = notifications.TotalPages
+                };
 
-                return ApiResponse<IEnumerable<NotificationDTO>>.Success(notificationDTOs, "Bildirimler başarıyla getirildi");
+                return ApiResponse<PagedResult<NotificationDTO>>.Success(pagedResult, "Bildirimler başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "GetNotificationsAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<NotificationDTO>>.Error("Bildirimler getirilirken hata oluştu");
+                return ApiResponse<PagedResult<NotificationDTO>>.Error("Bildirimler getirilirken hata oluştu");
             }
         }
 

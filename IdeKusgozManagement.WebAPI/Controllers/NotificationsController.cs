@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
@@ -6,6 +5,7 @@ using IdeKusgozManagement.WebAPI.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 
 namespace IdeKusgozManagement.WebAPI.Controllers
 {
@@ -75,7 +75,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <summary>
         /// Bildirimi okundu olarak işaretler
         /// </summary>
-        [HttpPut("{notificationId}/mark-as-read")]
+        [HttpPost("{notificationId}/mark-as-read")]
         public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken = default)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -91,7 +91,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <summary>
         /// Tüm bildirimleri okundu olarak işaretler
         /// </summary>
-        [HttpPut("mark-all-as-read")]
+        [HttpPost("mark-all-as-read")]
         public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken = default)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

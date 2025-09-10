@@ -31,6 +31,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddHttpContextAccessor();
+// Add SignalR
+builder.Services.AddSignalR();
 
 builder.Services.AddTransient<JwtTokenHandler>();
 
@@ -84,10 +86,14 @@ builder.Services.AddHttpClient<ILeaveRequestApiService, LeaveRequestApiService>(
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
-builder.Services.AddScoped<IAuthApiService, AuthApiService>();
+builder.Services.AddHttpClient<INotificationApiService, NotificationApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<JwtTokenHandler>();
 
-// Add SignalR
-builder.Services.AddSignalR();
+builder.Services.AddScoped<IAuthApiService, AuthApiService>();
 
 builder.Services.AddHttpClient("AuthApiWithToken", client =>
 {
@@ -135,7 +141,6 @@ app.Use(async (context, next) =>
     }
     await next();
 });
-
 
 app.MapControllerRoute(
     name: "default",

@@ -61,28 +61,36 @@
 						<li class="nav-item dropdown">
 							<a class="nav-link notifications-dropdown" href="#" id="notificationsDropDown" role="button"
 								data-bs-toggle="dropdown" aria-expanded="false">
-								<span id="notificationBadge" class="badge bg-danger">0</span>
+								<span id="notificationCount">0</span>
 							</a>
 							<div class="dropdown-menu dropdown-menu-end notif-drop-menu"
-								aria-labelledby="notificationsDropDown" style="max-width: 350px;">
-								<div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+								aria-labelledby="notificationsDropDown" id="notificationsDropdown">
+								<div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
 									<h6 class="dropdown-header mb-0">Bildirimler</h6>
-									<button class="btn btn-sm btn-outline-secondary" id="markAllAsReadBtn">
-										<i class="fas fa-check-double"></i> Tümünü Okundu İşaretle
+									<button type="button" class="btn btn-sm btn-outline-primary" id="markAllAsReadBtn"
+										style="display: none;">
+										<i class="fas fa-check-double"></i>
 									</button>
 								</div>
-								<div id="notificationsList" class="notifications-list"
-									style="max-height: 400px; overflow-y: auto;">
-									<div class="text-center p-3">
+
+								<div id="notificationsContainer" style="max-height: 400px; overflow-y: auto;">
+									<div id="notificationsList">
+										<div class="text-center py-3">
+											<p class="text-muted mb-0">Henüz bildirim bulunmuyor</p>
+										</div>
+									</div>
+
+									<div id="loadingIndicator" class="text-center py-2" style="display: none;">
 										<div class="spinner-border spinner-border-sm" role="status">
 											<span class="visually-hidden">Yükleniyor...</span>
 										</div>
-										<p class="mt-2 text-muted">Bildirimler yükleniyor...</p>
 									</div>
-								</div>
-								<div class="dropdown-divider"></div>
-								<div class="text-center p-2">
-									<a href="#" class="text-decoration-none">Tüm Bildirimleri Görüntüle</a>
+
+									<div id="loadMoreContainer" class="text-center py-2" style="display: none;">
+										<button type="button" class="btn btn-sm btn-outline-secondary" id="loadMoreBtn">
+											<i class="fas fa-chevron-down"></i> Daha Fazla Yükle
+										</button>
+									</div>
 								</div>
 							</div>
 						</li>
@@ -198,290 +206,12 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 	<script src="~/theme/assets/plugins/blockui/jquery.blockUI.js"></script>
 	<script src="~/theme/assets/js/main.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr/dist/browser/signalr.min.js"></script>
+	<script src="~/js/site.js"></script>
 
 	@await RenderSectionAsync("Scripts", required: false)
 
-	<script>
-		// Notification System
-		let notificationConnection;
-		let isNotificationConnected = false;
 
-		document.addEventListener('DOMContentLoaded', function () {
-			initializeNotificationSignalR();
-			loadNotifications();
-			loadUnreadNotificationCount();
-
-			// Mark all as read button
-			document.getElementById('markAllAsReadBtn').addEventListener('click', function () {
-				markAllAsRead();
-			});
-		});
-
-		async function initializeNotificationSignalR() {
-			try {
-				const hubUrl = 'http://localhost:5291/messageHub';
-				console.log('Attempting to connect to SignalR for notifications:', hubUrl);
-
-				notificationConnection = new signalR.HubConnectionBuilder()
-					.withUrl(hubUrl, {
-						transport: signalR.HttpTransportType.LongPolling
-					})
-					.withAutomaticReconnect([0, 2000, 10000, 30000])
-					.configureLogging(signalR.LogLevel.Debug)
-					.build();
-
-				// Handle new notification events
-				notificationConnection.on("NewNotification", function (notification) {
-					console.log('New notification received:', notification);
-					addNotificationToUI(notification);
-					updateNotificationBadge();
-				});
-
-				// Handle connection events
-				notificationConnection.onclose(function (error) {
-					console.log('Notification SignalR connection closed:', error);
-					isNotificationConnected = false;
-				});
-
-				notificationConnection.onreconnecting(function (error) {
-					console.log('Notification SignalR reconnecting:', error);
-				});
-
-				notificationConnection.onreconnected(function (connectionId) {
-					console.log('Notification SignalR reconnected:', connectionId);
-					isNotificationConnected = true;
-				});
-
-				// Start the connection
-				await notificationConnection.start();
-				console.log('Notification SignalR connected');
-				isNotificationConnected = true;
-
-				// Join the messages group
-				await notificationConnection.invoke("JoinGroup", "Messages");
-
-			} catch (error) {
-				console.error('Notification SignalR connection error:', error);
-			}
-		}
-
-		async function loadNotifications() {
-			try {
-				const response = await fetch('/api/notifications/unread', {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-					}
-				});
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
-				}
-
-				const result = await response.json();
-
-				if (result.isSuccess && result.data) {
-					displayNotifications(result.data);
-				} else {
-					showNoNotifications();
-				}
-
-			} catch (error) {
-				console.error('Error loading notifications:', error);
-				showNoNotifications();
-			}
-		}
-
-		async function loadUnreadNotificationCount() {
-			try {
-				const response = await fetch('/api/notifications/unread-count', {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-					}
-				});
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
-				}
-
-				const result = await response.json();
-
-				if (result.isSuccess) {
-					updateNotificationBadge(result.data);
-				}
-
-			} catch (error) {
-				console.error('Error loading notification count:', error);
-			}
-		}
-
-		function displayNotifications(notifications) {
-			const notificationsList = document.getElementById('notificationsList');
-
-			if (!notifications || notifications.length === 0) {
-				showNoNotifications();
-				return;
-			}
-
-			let notificationsHtml = '';
-			notifications.forEach(notification => {
-				const createdDate = new Date(notification.createdDate);
-				const formattedDate = createdDate.toLocaleDateString('tr-TR', {
-					day: '2-digit',
-					month: '2-digit',
-					year: 'numeric',
-					hour: '2-digit',
-					minute: '2-digit'
-				});
-
-				const isReadClass = notification.isRead ? '' : 'fw-bold';
-
-				notificationsHtml += `
-					<a href="#" class="notification-item" data-notification-id="${notification.id}" onclick="markAsRead('${notification.id}')">
-						<div class="header-notif">
-							<div class="notif-image">
-								<span class="notification-badge bg-primary text-white">
-									<i class="fas fa-bell"></i>
-								</span>
-							</div>
-							<div class="notif-text">
-								<p class="${isReadClass}">${notification.message}</p>
-								<small class="d-block text-muted">${formattedDate}</small>
-							</div>
-						</div>
-					</a>
-				`;
-			});
-
-			notificationsList.innerHTML = notificationsHtml;
-		}
-
-		function showNoNotifications() {
-			const notificationsList = document.getElementById('notificationsList');
-			notificationsList.innerHTML = `
-				<div class="text-center p-3">
-					<i class="fas fa-bell-slash text-muted" style="font-size: 2rem;"></i>
-					<p class="mt-2 text-muted">Henüz bildirim bulunmuyor</p>
-				</div>
-			`;
-		}
-
-		function addNotificationToUI(notification) {
-			const notificationsList = document.getElementById('notificationsList');
-
-			// Check if notification already exists
-			const existingNotification = notificationsList.querySelector(`[data-notification-id="${notification.id}"]`);
-			if (existingNotification) {
-				return;
-			}
-
-			const createdDate = new Date(notification.createdDate);
-			const formattedDate = createdDate.toLocaleDateString('tr-TR', {
-				day: '2-digit',
-				month: '2-digit',
-				year: 'numeric',
-				hour: '2-digit',
-				minute: '2-digit'
-			});
-
-			const notificationHtml = `
-				<a href="#" class="notification-item" data-notification-id="${notification.id}" onclick="markAsRead('${notification.id}')">
-					<div class="header-notif">
-						<div class="notif-image">
-							<span class="notification-badge bg-primary text-white">
-								<i class="fas fa-bell"></i>
-							</span>
-						</div>
-						<div class="notif-text">
-							<p class="fw-bold">${notification.message}</p>
-							<small class="d-block text-muted">${formattedDate}</small>
-						</div>
-					</div>
-				</a>
-			`;
-
-			// Add new notification to the top
-			notificationsList.insertAdjacentHTML('afterbegin', notificationHtml);
-
-			// Add animation
-			const newNotificationElement = notificationsList.querySelector(`[data-notification-id="${notification.id}"]`);
-			newNotificationElement.style.opacity = '0';
-			newNotificationElement.style.transform = 'translateX(-10px)';
-			newNotificationElement.style.transition = 'all 0.3s ease';
-
-			setTimeout(() => {
-				newNotificationElement.style.opacity = '1';
-				newNotificationElement.style.transform = 'translateX(0)';
-			}, 100);
-		}
-
-
-		function updateNotificationBadge(count = null) {
-			const badge = document.getElementById('notificationBadge');
-			if (count !== null) {
-				badge.textContent = count;
-				badge.style.display = count > 0 ? 'inline' : 'none';
-			} else {
-				// If count is not provided, reload it
-				loadUnreadNotificationCount();
-			}
-		}
-
-		async function markAsRead(notificationId) {
-			try {
-				const response = await fetch('/api/notifications/mark-as-read', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-					},
-					body: JSON.stringify({
-						notificationId: notificationId
-					})
-				});
-
-				if (response.ok) {
-					// Update UI
-					const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
-					if (notificationElement) {
-						const titleElement = notificationElement.querySelector('p');
-						titleElement.classList.remove('fw-bold');
-					}
-					updateNotificationBadge();
-				}
-
-			} catch (error) {
-				console.error('Error marking notification as read:', error);
-			}
-		}
-
-		async function markAllAsRead() {
-			try {
-				const response = await fetch('/api/notifications/mark-all-as-read', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-					}
-				});
-
-				if (response.ok) {
-					// Update UI
-					const notificationItems = document.querySelectorAll('.notification-item p');
-					notificationItems.forEach(item => {
-						item.classList.remove('fw-bold');
-					});
-					updateNotificationBadge();
-				}
-
-			} catch (error) {
-				console.error('Error marking all notifications as read:', error);
-			}
-		}
-	</script>
 
 </body>
 
