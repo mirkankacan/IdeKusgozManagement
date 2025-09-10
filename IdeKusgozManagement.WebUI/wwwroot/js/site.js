@@ -1,9 +1,4 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
-
-// Notification Management
+﻿
 class NotificationManager {
     constructor() {
         this.currentPage = 1;
@@ -61,19 +56,22 @@ class NotificationManager {
 
     setupSignalR() {
         // Get API base URL from configuration or use default
-        const apiBaseUrl = window.location.origin.replace('localhost:5000', 'localhost:5001') || 'https://localhost:5001';
+        const apiBaseUrl = window.location.origin.replace('localhost:5000', 'localhost:5291') || 'http://localhost:5291';
         
         this.connection = new signalR.HubConnectionBuilder()
-            .withUrl(`${apiBaseUrl}/messageHub`)
+            .withUrl(`${apiBaseUrl}/communicationHub`)
             .withAutomaticReconnect()
             .build();
 
         this.connection.start().then(() => {
-            console.log('SignalR Connected');
-            // Join the Messages group to receive notifications
-            this.connection.invoke("JoinGroup", "Messages");
+            console.log('SignalR Connected for Notifications');
         }).catch((err) => {
             console.error('SignalR Connection Error:', err);
+        });
+
+        // Handle connection status
+        this.connection.on("ConnectionStatus", (status) => {
+            console.log('Connection status received:', status);
         });
 
         // Listen for new notifications
@@ -89,7 +87,7 @@ class NotificationManager {
 
         this.connection.onreconnected(() => {
             console.log('SignalR Reconnected');
-            this.connection.invoke("JoinGroup", "Messages");
+            // Groups are automatically joined in OnConnectedAsync
         });
     }
 

@@ -16,9 +16,9 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     {
         private readonly IMessageService _messageService;
         private readonly INotificationService _notificationService;
-        private readonly IHubContext<MessageHub> _hubContext;
+        private readonly IHubContext<CommunicationHub> _hubContext;
 
-        public MessagesController(IMessageService messageService, INotificationService notificationService, IHubContext<MessageHub> hubContext)
+        public MessagesController(IMessageService messageService, INotificationService notificationService, IHubContext<CommunicationHub> hubContext)
         {
             _messageService = messageService;
             _notificationService = notificationService;
@@ -75,8 +75,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
                 if (notificationResult.IsSuccess && notificationResult.Data != null)
                 {
-                    // Send real-time notification to all connected clients
-                    await _hubContext.Clients.Group("Messages").SendAsync("NewNotification", notificationResult.Data);
+                    // Send real-time notification to all connected clients in Notifications group
+                    await _hubContext.Clients.Group("Notifications").SendAsync("NewNotification", notificationResult.Data);
                 }
             }
 

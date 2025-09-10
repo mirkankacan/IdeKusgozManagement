@@ -74,7 +74,7 @@
 
         async function initializeSignalR() {
             try {
-                const hubUrl = 'http://localhost:5291/messageHub';
+                const hubUrl = 'http://localhost:5291/communicationHub';
                 console.log('Attempting to connect to SignalR hub:', hubUrl);
 
                 connection = new signalR.HubConnectionBuilder()
@@ -84,6 +84,15 @@
                     .withAutomaticReconnect([0, 2000, 10000, 30000])
                     .configureLogging(signalR.LogLevel.Debug)
                     .build();
+
+                // Handle connection status
+                connection.on("ConnectionStatus", function (status) {
+                    console.log('Connection status received:', status);
+                    if (status.isConnected) {
+                        isConnected = true;
+                        showConnectionStatus(true);
+                    }
+                });
 
                 // Handle new message events
                 connection.on("NewMessage", function (message) {
@@ -121,8 +130,8 @@
                 isConnected = true;
                 showConnectionStatus(true);
 
-                // Join the messages group
-                await connection.invoke("JoinGroup", "Messages");
+                // Groups are automatically joined in OnConnectedAsync
+                // No need to manually join groups
 
             } catch (error) {
                 console.error('SignalR connection error:', error);

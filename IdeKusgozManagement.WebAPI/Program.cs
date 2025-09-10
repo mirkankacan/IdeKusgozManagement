@@ -63,7 +63,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Map SignalR Hub
-app.MapHub<MessageHub>("/messageHub");
+app.MapHub<CommunicationHub>("/communicationHub");
 
 app.Lifetime.ApplicationStopping.Register(Log.CloseAndFlush);
 
