@@ -2,8 +2,8 @@ using IdeKusgozManagement.Application;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure;
 using IdeKusgozManagement.Infrastructure.Data.Seed;
+using IdeKusgozManagement.Infrastructure.Hubs;
 using IdeKusgozManagement.WebAPI;
-using IdeKusgozManagement.WebAPI.Hubs;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
 
@@ -54,17 +54,20 @@ else
 
 // Security and CORS
 app.UseCors();
+app.UseRouting();
 
 // Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Endpoint mapping
-app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    // Controllers
+    endpoints.MapControllers();
 
-// Map SignalR Hub
-app.MapHub<CommunicationHub>("/communicationHub");
-
+    // SignalR Hub - endpoints i�inde map edilmeli
+    endpoints.MapHub<CommunicationHub>("/communicationHub");
+});
 app.Lifetime.ApplicationStopping.Register(Log.CloseAndFlush);
 
 app.Run();

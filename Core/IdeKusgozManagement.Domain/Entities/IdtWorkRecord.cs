@@ -1,5 +1,6 @@
 ﻿using IdeKusgozManagement.Domain.Entities.Base;
 using IdeKusgozManagement.Domain.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IdeKusgozManagement.Domain.Entities
 {
@@ -19,6 +20,12 @@ namespace IdeKusgozManagement.Domain.Entities
         public bool HasNightMeal { get; set; }
 
         public WorkRecordStatus Status { get; set; } // 0 = Pending, 1 = Approved, 2 = Rejected
+
+        [ForeignKey(nameof(CreatedBy))]
+        public virtual ApplicationUser CreatedByUser { get; set; }
+
+        [ForeignKey(nameof(UpdatedBy))]
+        public virtual ApplicationUser? UpdatedByUser { get; set; }
 
         public virtual IdtEquipment Equipment { get; set; }
         public virtual ICollection<IdtWorkRecordExpense> WorkRecordExpenses { get; set; } = new List<IdtWorkRecordExpense>();

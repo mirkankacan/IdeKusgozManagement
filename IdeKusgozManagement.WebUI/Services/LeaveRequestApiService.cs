@@ -1,8 +1,8 @@
-using System.Text;
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.LeaveRequestModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
@@ -125,7 +125,7 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<string>> CreateLeaveRequestAsync(CreateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<LeaveRequestViewModel>> CreateLeaveRequestAsync(CreateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -137,16 +137,16 @@ namespace IdeKusgozManagement.WebUI.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<string>>(responseContent);
-                    return apiResponse ?? new ApiResponse<string> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
+                    return apiResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<string>>(responseContent);
-                return errorResponse ?? new ApiResponse<string> { IsSuccess = false, Message = "API çağrısı başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
+                return errorResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<string> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
@@ -197,7 +197,7 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<LeaveRequestViewModel>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -206,20 +206,20 @@ namespace IdeKusgozManagement.WebUI.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
+                    return apiResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
+                return errorResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<LeaveRequestViewModel>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -228,16 +228,16 @@ namespace IdeKusgozManagement.WebUI.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
+                    return apiResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
+                return errorResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 

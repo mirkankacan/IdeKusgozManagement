@@ -1,11 +1,9 @@
 ﻿using IdeKusgozManagement.Application.DTOs.MessageDTOs;
-using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
+using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
-using IdeKusgozManagement.WebAPI.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 
 namespace IdeKusgozManagement.WebAPI.Controllers
 {
@@ -15,14 +13,12 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class MessagesController : ControllerBase
     {
         private readonly IMessageService _messageService;
-        private readonly INotificationService _notificationService;
-        private readonly IHubContext<CommunicationHub> _hubContext;
+        private readonly ISignalRService _signalRService;
 
-        public MessagesController(IMessageService messageService, INotificationService notificationService, IHubContext<CommunicationHub> hubContext)
+        public MessagesController(IMessageService messageService, ISignalRService signalRService)
         {
             _messageService = messageService;
-            _notificationService = notificationService;
-            _hubContext = hubContext;
+            _signalRService = signalRService;
         }
 
         /// <summary>
@@ -60,27 +56,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         {
             var result = await _messageService.CreateMessageAsync(createMessageDTO, cancellationToken);
 
-            if (result.IsSuccess && result.Data != null)
+            if (!result.IsSuccess)
             {
-                // Send real-time message to all connected clients
-                await _hubContext.Clients.Group("Messages").SendAsync("NewMessage", result.Data);
-
-                // Create notification
-                var notificationDTO = new CreateNotificationDTO
-                {
-                    Message = $"{result.Data.CreatedByName} yeni bir mesaj gönderdi"
-                };
-
-                var notificationResult = await _notificationService.CreateNotificationAsync(notificationDTO, cancellationToken);
-
-                if (notificationResult.IsSuccess && notificationResult.Data != null)
-                {
-                    // Send real-time notification to all connected clients in Notifications group
-                    await _hubContext.Clients.Group("Notifications").SendAsync("NewNotification", notificationResult.Data);
-                }
+                return BadRequest(result);
             }
-
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            await _signalRService.SendMessageToAllAsync(result.Data, cancellationToken);
+            await _signalRService.SendNotificationToAllAsync($"Yeni bir mesaj {result.Data.CreatedByName} tarafından {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde atıldı", NotificationType.Message, "/sosyal");
+            return Ok(result);
         }
 
         /// <summary>

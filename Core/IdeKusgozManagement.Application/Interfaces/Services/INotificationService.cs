@@ -5,9 +5,9 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
 {
     public interface INotificationService
     {
-        Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(string userId, int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default);
+        Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(string userId, string userRole, int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<int>> GetUnreadNotificationCountAsync(string userId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<int>> GetUnreadNotificationCountAsync(string userId, string userRole, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<NotificationDTO>> CreateNotificationAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default);
 

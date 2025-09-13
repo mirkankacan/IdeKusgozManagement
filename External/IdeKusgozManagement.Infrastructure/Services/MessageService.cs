@@ -67,20 +67,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<MessageDTO>>> GetMessagesAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<PagedResult<MessageDTO>>> GetMessagesAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             try
             {
                 var messages = await _unitOfWork.Repository<IdtMessage>()
-                    .GetPagedNoTrackingAsync(pageNumber, pageSize, cancellationToken, m => m.CreatedByUser);
+                    .GetPagedNoTrackingAsync(pageNumber, pageSize, null, x => x.OrderByDescending(msg => msg.CreatedDate), cancellationToken, m => m.CreatedByUser);
 
-                var messageDTO = messages.Adapt<IEnumerable<MessageDTO>>().OrderByDescending(x => x.CreatedDate);
-                return ApiResponse<IEnumerable<MessageDTO>>.Success(messageDTO, "Mesajlar başarıyla getirildi");
+                var messageDTO = messages.Adapt<PagedResult<MessageDTO>>();
+                return ApiResponse<PagedResult<MessageDTO>>.Success(messageDTO, "Mesajlar başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "GetMessagesAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<MessageDTO>>.Error("Mesajlar getirilirken hata oluştu");
+                return ApiResponse<PagedResult<MessageDTO>>.Error("Mesajlar getirilirken hata oluştu");
             }
         }
     }

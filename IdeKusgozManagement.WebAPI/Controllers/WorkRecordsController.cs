@@ -1,5 +1,6 @@
 ﻿using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
+using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     {
         private readonly IWorkRecordService _workRecordService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly ISignalRService _signalRService;
 
-        public WorkRecordsController(IWorkRecordService workRecordService, ICurrentUserService currentUserService)
+        public WorkRecordsController(IWorkRecordService workRecordService, ICurrentUserService currentUserService, ISignalRService signalRService)
         {
             _workRecordService = workRecordService;
             _currentUserService = currentUserService;
+            _signalRService = signalRService;
         }
 
         /// <summary>
@@ -71,7 +74,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await _workRecordService.BatchCreateWorkRecordsAsync(createWorkRecordDTOs, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+            await _signalRService.SendNotificationToRolesAsync(new[] { "Admin", "Yönetici", "Şef" }, $"{result.Data.FirstOrDefault().CreatedByName} tarafından, {result.Data.FirstOrDefault().Date.Month}/{result.Data.FirstOrDefault().Date.Year} ayı için puantaj kaydı oluşturuldu", NotificationType.WorkRecord, "/puantaj", cancellationToken);
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -92,7 +101,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await _workRecordService.BatchUpdateWorkRecordsByUserIdAsync(userId, updateWorkRecordDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+            await _signalRService.SendNotificationToUserAsync($"{result.Data.FirstOrDefault().CreatedBy}", $"{result.Data.FirstOrDefault().UpdatedByName} tarafından, {result.Data.FirstOrDefault().CreatedByName} kullanıcısının {result.Data.FirstOrDefault().Date.Month}/{result.Data.FirstOrDefault().Date.Year} ayı puantaj kaydı güncellendi", NotificationType.WorkRecord, "/puantaj", cancellationToken);
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -109,7 +124,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await _workRecordService.BatchApproveWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+            await _signalRService.SendNotificationToUserAsync($"{result.Data.FirstOrDefault().CreatedBy}", $"{result.Data.FirstOrDefault().UpdatedByName} tarafından, {result.Data.FirstOrDefault().Date.Month}/{result.Data.FirstOrDefault().Date.Year} ayı için puantaj kaydınız onaylandı", NotificationType.WorkRecord, "/puantaj", cancellationToken);
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -126,7 +147,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await _workRecordService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+            await _signalRService.SendNotificationToUserAsync($"{result.Data.FirstOrDefault().CreatedBy}", $"{result.Data.FirstOrDefault().UpdatedByName} tarafından, {result.Data.FirstOrDefault().Date.Month}/{result.Data.FirstOrDefault().Date.Year} ayı için puantaj kaydınız reddedildi", NotificationType.WorkRecord, "/puantaj", cancellationToken);
+
+            return Ok(result);
         }
     }
 }

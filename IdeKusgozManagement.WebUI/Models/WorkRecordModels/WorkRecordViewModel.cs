@@ -20,11 +20,12 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         public int Status { get; set; } // 0 = Pending, 1 = Approved, 2 = Rejected
 
         public string StatusText { get; set; }
-        public string CreatedBy { get; set; }
-
         public DateTime CreatedDate { get; set; }
-        public DateTime? UpdatedDate { get; set; }
+        public string CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
+        public DateTime? UpdatedDate { get; set; }
+        public string CreatedByName { get; set; }
+        public string? UpdatedByName { get; set; }
         public List<WorkRecordExpenseViewModel>? Expenses { get; set; }
     }
 }

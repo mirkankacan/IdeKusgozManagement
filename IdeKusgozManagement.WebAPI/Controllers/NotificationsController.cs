@@ -1,11 +1,7 @@
-using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
-using IdeKusgozManagement.WebAPI.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using System.Security.Claims;
 
 namespace IdeKusgozManagement.WebAPI.Controllers
 {
@@ -15,12 +11,12 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class NotificationsController : ControllerBase
     {
         private readonly INotificationService _notificationService;
-        private readonly IHubContext<CommunicationHub> _hubContext;
+        private readonly ICurrentUserService _currentUserService;
 
-        public NotificationsController(INotificationService notificationService, IHubContext<CommunicationHub> hubContext)
+        public NotificationsController(INotificationService notificationService, ICurrentUserService currentUserService)
         {
             _notificationService = notificationService;
-            _hubContext = hubContext;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -29,13 +25,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetNotifications([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1, CancellationToken cancellationToken = default)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            var userId = _currentUserService.GetCurrentUserId();
+            var userRole = _currentUserService.GetCurrentUserRole();
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(userRole))
             {
                 return Unauthorized("Kullanıcı bilgisi bulunamadı");
             }
 
-            var result = await _notificationService.GetNotificationsAsync(userId, pageSize, pageNumber, cancellationToken);
+            var result = await _notificationService.GetNotificationsAsync(userId, userRole, pageSize, pageNumber, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -45,30 +42,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet("unread-count")]
         public async Task<IActionResult> GetUnreadNotificationCount(CancellationToken cancellationToken = default)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            var userId = _currentUserService.GetCurrentUserId();
+            var userRole = _currentUserService.GetCurrentUserRole();
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(userRole))
             {
                 return Unauthorized("Kullanıcı bilgisi bulunamadı");
             }
 
-            var result = await _notificationService.GetUnreadNotificationCountAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// Yeni bildirim oluşturur
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> CreateNotification([FromBody] CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
-        {
-            var result = await _notificationService.CreateNotificationAsync(createNotificationDTO, cancellationToken);
-
-            if (result.IsSuccess && result.Data != null)
-            {
-                // Send real-time notification to all users in Notifications group
-                await _hubContext.Clients.Group("Notifications").SendAsync("NewNotification", result.Data);
-            }
-
+            var result = await _notificationService.GetUnreadNotificationCountAsync(userId,userRole, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -78,7 +59,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpPost("{notificationId}/mark-as-read")]
         public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken = default)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = _currentUserService.GetCurrentUserId();
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized("Kullanıcı bilgisi bulunamadı");
@@ -94,7 +75,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpPost("mark-all-as-read")]
         public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken = default)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = _currentUserService.GetCurrentUserId();
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized("Kullanıcı bilgisi bulunamadı");

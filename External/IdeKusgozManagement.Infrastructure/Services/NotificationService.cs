@@ -19,12 +19,27 @@ namespace IdeKusgozManagement.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(string userId, int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(string userId, string userRole, int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             try
             {
                 var notifications = await _unitOfWork.Repository<IdtNotification>()
-                    .GetPagedNoTrackingAsync(pageNumber, pageSize, cancellationToken, n => n.CreatedByUser, n => n.NotificationReads);
+             .GetPagedNoTrackingAsync(
+                 pageNumber,
+                 pageSize,
+                 predicate: x =>
+                         // Personal notifications
+                         (x.TargetUserId != null && x.TargetUserId == userId) ||
+                         // Role-based notifications (we'll filter this client-side)
+                         (x.TargetRole != null && x.TargetRole.Contains(userRole)) ||
+                         // General notifications
+                         (x.TargetUserId == null && x.TargetRole == null),
+                 orderBy: query => query
+                     .OrderByDescending(n => n.NotificationReads.All(nr => nr.CreatedBy != userId))
+                     .ThenByDescending(n => n.CreatedDate),
+                 cancellationToken,
+                 n => n.CreatedByUser,
+                 n => n.NotificationReads);
 
                 var notificationDTOs = notifications.Data.Select(n =>
                 {
@@ -34,7 +49,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     var readRecord = n.NotificationReads?.FirstOrDefault(nr => nr.CreatedBy == userId);
                     dto.IsRead = readRecord != null;
                     dto.ReadDate = readRecord?.CreatedDate;
-
                     return dto;
                 }).ToList();
                 var pagedResult = new PagedResult<NotificationDTO>
@@ -55,14 +69,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<int>> GetUnreadNotificationCountAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<int>> GetUnreadNotificationCountAsync(string userId,string userRole, CancellationToken cancellationToken = default)
         {
             try
             {
-                var notifications = await _unitOfWork.Repository<IdtNotification>()
-                    .GetAllNoTrackingAsync(cancellationToken, n => n.NotificationReads);
+                var allNotifications = await _unitOfWork.Repository<IdtNotification>()
+                     .GetWhereNoTrackingAsync(x =>
+                         // Personal notifications
+                         (x.TargetUserId != null && x.TargetUserId == userId) ||
+                         // Role-based notifications (we'll filter this client-side)
+                         (x.TargetRole != null && x.TargetRole.Contains(userRole)) ||
+                         // General notifications
+                         (x.TargetUserId == null && x.TargetRole == null),
+                         cancellationToken,
+                         n => n.NotificationReads);
 
-                var unreadCount = notifications.Count(n => !n.NotificationReads.Any(nr => nr.CreatedBy == userId));
+                var unreadCount = allNotifications.Count(n => !n.NotificationReads.Any(nr => nr.CreatedBy == userId));
 
                 return ApiResponse<int>.Success(unreadCount, "Okunmamış bildirim sayısı başarıyla getirildi");
             }

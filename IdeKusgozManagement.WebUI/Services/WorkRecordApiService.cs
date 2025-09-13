@@ -1,8 +1,8 @@
-﻿using System.Text;
-using IdeKusgozManagement.WebUI.Models;
+﻿using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.WorkRecordModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
@@ -107,7 +107,7 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -116,19 +116,19 @@ namespace IdeKusgozManagement.WebUI.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(content);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Onaylama başarısız" };
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Onaylama başarısız" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<bool>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -137,15 +137,15 @@ namespace IdeKusgozManagement.WebUI.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(content);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Reddetme başarısız" };
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Reddetme başarısız" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
     }

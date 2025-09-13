@@ -14,11 +14,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     {
         private readonly ILeaveRequestService _leaveRequestService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly ISignalRService _signalRService;
 
-        public LeaveRequestsController(ILeaveRequestService leaveRequestService, ICurrentUserService currentUserService)
+        public LeaveRequestsController(ILeaveRequestService leaveRequestService, ICurrentUserService currentUserService, ISignalRService signalRService)
         {
             _leaveRequestService = leaveRequestService;
             _currentUserService = currentUserService;
+            _signalRService = signalRService;
         }
 
         /// <summary>
@@ -136,7 +138,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await _leaveRequestService.CreateLeaveRequestAsync(createLeaveRequestDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+            await _signalRService.SendNotificationToRolesAsync(new[] { "Admin", "Yönetici", "Şef" }, $"{result.Data.CreatedByName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde yeni bir izin talebi oluşturuldu", NotificationType.LeaveRequest, "/izin-yonetimi", cancellationToken);
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -167,9 +176,15 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("İzin talebi ID'si gereklidir");
             }
-
             var result = await _leaveRequestService.ApproveLeaveRequestAsync(leaveRequestId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+            await _signalRService.SendNotificationToUserAsync($"{result.Data.CreatedBy}", $"{result.Data.UpdatedByName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde oluşturduğunuz izin talebiniz onaylanmıştır", NotificationType.LeaveRequest, "/izin/olustur", cancellationToken);
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -186,7 +201,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await _leaveRequestService.RejectLeaveRequestAsync(leaveRequestId, rejectReason, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+            await _signalRService.SendNotificationToUserAsync($"{result.Data.CreatedBy}", $"{result.Data.UpdatedByName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde oluşturduğunuz izin talebiniz reddedilmiştir", NotificationType.LeaveRequest, "/izin/olustur", cancellationToken);
+
+            return Ok(result);
         }
     }
 }

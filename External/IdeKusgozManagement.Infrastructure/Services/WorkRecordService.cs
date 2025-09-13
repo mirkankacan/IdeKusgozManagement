@@ -67,7 +67,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 // Tüm tarihler için mevcut kayıtları bir seferde al
                 var dates = createWorkRecordDTOs.Select(dto => dto.Date.Date).Distinct().ToList();
                 var existingWorkRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .GetWhereNoTrackingAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == currentUserId, cancellationToken);
+                    .GetWhereAsync(wr => dates.Contains(wr.Date.Date) && wr.CreatedBy == currentUserId, cancellationToken,x=>x.CreatedByUser, x=>x.UpdatedByUser);
 
                 var existingRecordsDict = existingWorkRecords.ToDictionary(wr => wr.Date.Date);
 
@@ -365,23 +365,23 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                    .GetWhereNoTrackingAsync(wr => wr.CreatedBy == userId &&
+                    .GetWhereAsync(wr => wr.CreatedBy == userId &&
                                    wr.Date.Year == date.Date.Year &&
-                                   wr.Date.Month == date.Date.Month, cancellationToken);
+                                   wr.Date.Month == date.Date.Month, cancellationToken, x => x.CreatedByUser, x => x.UpdatedByUser);
 
                 var workRecordsList = workRecords.ToList();
 
                 if (!workRecordsList.Any())
                 {
                     await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return ApiResponse<bool>.Error("Belirtilen tarih aralığında iş kaydı bulunamadı");
+                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Belirtilen tarih aralığında iş kaydı bulunamadı");
                 }
 
                 // Tüm kayıtları onaylı duruma getir
@@ -394,37 +394,38 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                var workRecordDTOs = workRecordsList.Adapt<IEnumerable<WorkRecordDTO>>();
 
                 _logger.LogInformation("Toplu iş kaydı onaylandı. UserId: {UserId}, Year: {Year}, Month: {Month}, Count: {Count}, OnaylayanUserId: {ApproverUserId}",
                     userId, date.Date.Year, date.Date.Month, workRecordsList.Count, _currentUserService.GetCurrentUserId());
 
-                return ApiResponse<bool>.Success(true, $"{workRecordsList.Count} adet iş kaydı başarıyla onaylandı");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs, $"{workRecordsList.Count} adet iş kaydı başarıyla onaylandı");
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "BatchApproveWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. UserId: {UserId}, Year: {Year}, Month: {Month}", userId, date.Date.Year, date.Date.Month);
-                return ApiResponse<bool>.Error("Toplu iş kaydı onaylanırken hata oluştu");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu iş kaydı onaylanırken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var workRecords = await _unitOfWork.Repository<IdtWorkRecord>()
-                      .GetWhereNoTrackingAsync(wr => wr.CreatedBy == userId &&
+                      .GetWhereAsync(wr => wr.CreatedBy == userId &&
                                      wr.Date.Year == date.Date.Year &&
-                                     wr.Date.Month == date.Date.Month, cancellationToken);
+                                     wr.Date.Month == date.Date.Month, cancellationToken, x => x.CreatedByUser, x => x.UpdatedByUser);
 
                 var workRecordsList = workRecords.ToList();
 
                 if (!workRecordsList.Any())
                 {
                     await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return ApiResponse<bool>.Error("Belirtilen tarih aralığında beklemede olan iş kaydı bulunamadı");
+                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Belirtilen tarih aralığında beklemede olan iş kaydı bulunamadı");
                 }
 
                 // Tüm kayıtları reddedildi duruma getir
@@ -436,17 +437,18 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                var workRecordDTOs = workRecordsList.Adapt<IEnumerable<WorkRecordDTO>>();
 
                 _logger.LogInformation("Toplu iş kaydı reddedildi. UserId: {UserId}, Year: {Year}, Month: {Month}, Count: {Count}, ReddedenUserId: {RejecterUserId}",
                     userId, date.Date.Year, date.Date.Month, workRecordsList.Count, _currentUserService.GetCurrentUserId());
 
-                return ApiResponse<bool>.Success(true, $"{workRecordsList.Count} adet iş kaydı başarıyla reddedildi");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs, $"{workRecordsList.Count} adet iş kaydı başarıyla reddedildi");
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "BatchRejectWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. UserId: {UserId}, Year: {Year}, Month: {Month}", userId, date.Date.Year, date.Date.Month);
-                return ApiResponse<bool>.Error("Toplu iş kaydı reddedilirken hata oluştu");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu iş kaydı reddedilirken hata oluştu");
             }
         }
     }

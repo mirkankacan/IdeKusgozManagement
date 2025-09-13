@@ -1,9 +1,9 @@
-using System.Linq.Expressions;
 using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Interfaces.Repositories;
 using IdeKusgozManagement.Domain.Entities.Base;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace IdeKusgozManagement.Infrastructure.Repositories
 {
@@ -365,9 +365,15 @@ namespace IdeKusgozManagement.Infrastructure.Repositories
             return query;
         }
 
-        public async Task<PagedResult<T>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includeProperties)
+        public async Task<PagedResult<T>> GetPagedNoTrackingAsync(
+             int pageNumber,
+             int pageSize,
+             Expression<Func<T, bool>> predicate = null,
+             Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+             CancellationToken cancellationToken = default,
+             params Expression<Func<T, object>>[] includeProperties)
         {
-            var query = _dbSet.AsQueryable();
+            var query = _dbSet.AsNoTracking().AsQueryable();
 
             // Include properties
             if (includeProperties?.Length > 0)
@@ -378,8 +384,20 @@ namespace IdeKusgozManagement.Infrastructure.Repositories
                 }
             }
 
-            // Total count
+            // Apply predicate (filter)
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            // Total count (filtrelenmiş veriye göre)
             var totalCount = await query.CountAsync(cancellationToken);
+
+            // Apply ordering
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
 
             // Calculate pagination
             var skip = (pageNumber - 1) * pageSize;
@@ -401,9 +419,15 @@ namespace IdeKusgozManagement.Infrastructure.Repositories
             };
         }
 
-        public async Task<PagedResult<T>> GetPagedNoTrackingAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includeProperties)
+        public async Task<PagedResult<T>> GetPagedAsync(
+     int pageNumber,
+     int pageSize,
+     Expression<Func<T, bool>> predicate = null,
+     Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+     CancellationToken cancellationToken = default,
+     params Expression<Func<T, object>>[] includeProperties)
         {
-            var query = _dbSet.AsNoTracking().AsQueryable();
+            var query = _dbSet.AsQueryable();
 
             // Include properties
             if (includeProperties?.Length > 0)
@@ -414,8 +438,19 @@ namespace IdeKusgozManagement.Infrastructure.Repositories
                 }
             }
 
-            // Total count
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            // Total count (filtrelenmiş veriye göre)
             var totalCount = await query.CountAsync(cancellationToken);
+
+            // Apply ordering
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
 
             // Calculate pagination
             var skip = (pageNumber - 1) * pageSize;

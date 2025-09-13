@@ -32,59 +32,70 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<IdtWorkRecordExpense>()
-               .HasOne(wre => wre.WorkRecord)
-               .WithMany(wr => wr.WorkRecordExpenses)
-               .HasForeignKey(wre => wre.WorkRecordId)
+               .HasOne(x => x.WorkRecord)
+               .WithMany(x => x.WorkRecordExpenses)
+               .HasForeignKey(x => x.WorkRecordId)
                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<IdtWorkRecord>()
-              .HasOne(wr => wr.Equipment)
-              .WithMany(e => e.WorkRecords)
-              .HasForeignKey(wr => wr.EquipmentId)
+              .HasOne(x => x.Equipment)
+              .WithMany(x => x.WorkRecords)
+              .HasForeignKey(x => x.EquipmentId)
               .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<IdtWorkRecordExpense>()
-             .HasOne(wre => wre.Expense)
-             .WithMany(e => e.WorkRecordExpenses)
-             .HasForeignKey(wre => wre.ExpenseId)
+             .HasOne(x => x.Expense)
+             .WithMany(x => x.WorkRecordExpenses)
+             .HasForeignKey(x => x.ExpenseId)
              .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<IdtLeaveRequest>()
-                .HasOne(lr => lr.CreatedByUser)
-                .WithMany(u => u.CreatedLeaveRequests)
-                .HasForeignKey(lr => lr.CreatedBy)
+                .HasOne(x => x.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedBy)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<IdtLeaveRequest>()
-                .HasOne(lr => lr.UpdatedByUser)
-                .WithMany(u => u.UpdatedLeaveRequests)
-                .HasForeignKey(lr => lr.UpdatedBy)
+                .HasOne(x => x.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdtWorkRecord>()
+             .HasOne(x => x.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.CreatedBy)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdtWorkRecord>()
+                .HasOne(x => x.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.UpdatedBy)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<IdtMessage>()
-               .HasOne(m => m.CreatedByUser)
+               .HasOne(x => x.CreatedByUser)
                .WithMany()
-               .HasForeignKey(m => m.CreatedBy)
+               .HasForeignKey(x => x.CreatedBy)
                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<IdtNotification>()
-               .HasOne(n => n.CreatedByUser)
+               .HasOne(x => x.CreatedByUser)
                .WithMany()
-               .HasForeignKey(n => n.CreatedBy)
+               .HasForeignKey(x => x.CreatedBy)
                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<IdtNotificationRead>()
-               .HasOne(nr => nr.Notification)
-               .WithMany(n => n.NotificationReads)
-               .HasForeignKey(nr => nr.NotificationId)
+               .HasOne(x => x.Notification)
+               .WithMany(x => x.NotificationReads)
+               .HasForeignKey(x => x.NotificationId)
                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<IdtNotificationRead>()
-               .HasOne(nr => nr.CreatedByUser)
+               .HasOne(x => x.CreatedByUser)
                .WithMany()
-               .HasForeignKey(nr => nr.CreatedBy)
+               .HasForeignKey(x => x.CreatedBy)
                .OnDelete(DeleteBehavior.Cascade);
-
 
             base.OnModelCreating(modelBuilder);
         }

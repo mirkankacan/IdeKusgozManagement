@@ -1,8 +1,8 @@
-﻿using System.Text;
-using IdeKusgozManagement.WebUI.Models;
+﻿using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.MessageModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
@@ -15,7 +15,7 @@ namespace IdeKusgozManagement.WebUI.Services
             _httpClient = httpClient;
         }
 
-        public async Task<ApiResponse<bool>> CreateMessageAsync(CreateMessageViewModel model, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<MessageViewModel>> CreateMessageAsync(CreateMessageViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -27,16 +27,16 @@ namespace IdeKusgozManagement.WebUI.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<MessageViewModel>>(responseContent);
+                    return apiResponse ?? new ApiResponse<MessageViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<MessageViewModel>>(responseContent);
+                return errorResponse ?? new ApiResponse<MessageViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<MessageViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
@@ -62,7 +62,7 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<MessageViewModel>>> GetMessagesAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<PagedResult<MessageViewModel>>> GetMessagesAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -71,16 +71,16 @@ namespace IdeKusgozManagement.WebUI.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MessageViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<MessageViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<PagedResult<MessageViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<PagedResult<MessageViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MessageViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<MessageViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<PagedResult<MessageViewModel>>>(content);
+                return errorResponse ?? new ApiResponse<PagedResult<MessageViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<IEnumerable<MessageViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<PagedResult<MessageViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
     }

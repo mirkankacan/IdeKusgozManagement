@@ -27,6 +27,39 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/themes/light.min.css">
 	@await RenderSectionAsync("Styles", required: false)
 	<style>
+		/* Notification Styles */
+		.bold-notif-text {
+			font-weight: bold !important;
+			background-color: #e3f2fd !important;
+		}
+
+		.notification-item:hover {
+			background-color: #f8f9fa !important;
+		}
+
+		.bold-notif-text:hover {
+			background-color: #bbdefb !important;
+		}
+
+		.notification-item .fa-bell {
+			font-size: 14px;
+		}
+
+		.notification-item .badge {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+		}
+
+		.notification-item {
+			position: relative;
+			border-left: 3px solid transparent;
+		}
+
+		.bold-notif-text {
+			border-left-color: #2196f3 !important;
+		}
+
 		.modal-footer {
 			flex-wrap: nowrap !important;
 		}
@@ -37,15 +70,34 @@
 			opacity: 0.8;
 			cursor: not-allowed !important;
 		}
-		.notif-drop-menu{
-			max-height:inherit !important;
-			overflow-y:unset !important;
+
+		.notif-drop-menu {
+			max-height: unset !important;
+			overflow-y: hidden !important;
+			overflow-x: hidden !important;
 		}
 
-		.page-header .header-notif .notif-image span{
-			width:20px !important;
-			height:20px !important;
-			line-height:20px !important;
+		.notification-item p {
+			word-wrap: break-word;
+			word-break: break-word;
+			overflow-wrap: break-word;
+			white-space: normal;
+		}
+
+		.notification-item {
+			max-width: 100%;
+			overflow: hidden;
+		}
+
+		.notification-item .flex-grow-1 {
+			min-width: 0;
+			overflow: hidden;
+		}
+
+		.page-header .header-notif .notif-image span {
+			width: 20px !important;
+			height: 20px !important;
+			line-height: 20px !important;
 		}
 	</style>
 </head>
@@ -74,7 +126,8 @@
 								<span id="notificationCount">0</span>
 							</a>
 							<div class="dropdown-menu dropdown-menu-end notif-drop-menu"
-								aria-labelledby="notificationsDropDown" id="notificationsDropdown">
+								aria-labelledby="notificationsDropDown" id="notificationsDropdown"
+								data-bs-auto-close="false">
 								<div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
 									<h6 class="dropdown-header mb-0">Bildirimler</h6>
 									<button type="button" class="btn btn-sm btn-outline-primary" id="markAllAsReadBtn"
@@ -217,7 +270,7 @@
 	<script src="~/theme/assets/plugins/blockui/jquery.blockUI.js"></script>
 	<script src="~/theme/assets/js/main.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr/dist/browser/signalr.min.js"></script>
-	<script src="~/js/site.js"></script>
+	<script src="~/js/realtime-manager.js"></script>
 
 	@await RenderSectionAsync("Scripts", required: false)
 

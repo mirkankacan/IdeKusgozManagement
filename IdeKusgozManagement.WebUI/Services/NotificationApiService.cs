@@ -1,4 +1,3 @@
-using System.Text;
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.NotificationModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
@@ -56,31 +55,6 @@ namespace IdeKusgozManagement.WebUI.Services
             catch (Exception)
             {
                 return new ApiResponse<int> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
-        }
-
-        public async Task<ApiResponse<NotificationViewModel>> CreateNotificationAsync(CreateNotificationViewModel model, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync("api/notifications", content, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<NotificationViewModel>>(responseContent);
-                    return apiResponse ?? new ApiResponse<NotificationViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<NotificationViewModel>>(responseContent);
-                return errorResponse ?? new ApiResponse<NotificationViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception)
-            {
-                return new ApiResponse<NotificationViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 

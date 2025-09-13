@@ -25,7 +25,20 @@ namespace IdeKusgozManagement.Infrastructure.OptionsSetup
             options.TokenValidationParameters.ValidAudience = _jwtOptions.Audience;
             options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey));
             options.TokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(1);
-
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+                    var path = context.HttpContext.Request.Path;
+                    if (!string.IsNullOrEmpty(accessToken) &&
+                        path.StartsWithSegments("/communicationHub"))
+                    {
+                        context.Token = accessToken;
+                    }
+                    return Task.CompletedTask;
+                }
+            };
         }
     }
 }

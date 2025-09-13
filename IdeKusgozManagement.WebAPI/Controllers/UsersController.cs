@@ -103,7 +103,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await _userService.CreateUserAsync(createUserDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
         }
 
         /// <summary>

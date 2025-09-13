@@ -4,6 +4,7 @@ using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdeKusgozManagement.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250911100908_RemoveTargetUserRelationship")]
+    partial class RemoveTargetUserRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -392,7 +395,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -441,18 +444,14 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedBy");
-
                     b.HasIndex("EquipmentId");
-
-                    b.HasIndex("UpdatedBy");
 
                     b.ToTable("IdtWorkRecords");
                 });
@@ -610,13 +609,13 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtLeaveRequest", b =>
                 {
                     b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "CreatedByUser")
-                        .WithMany()
+                        .WithMany("CreatedLeaveRequests")
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "UpdatedByUser")
-                        .WithMany()
+                        .WithMany("UpdatedLeaveRequests")
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -668,28 +667,13 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtWorkRecord", b =>
                 {
-                    b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("IdeKusgozManagement.Domain.Entities.IdtEquipment", "Equipment")
                         .WithMany("WorkRecords")
                         .HasForeignKey("EquipmentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CreatedByUser");
-
                     b.Navigation("Equipment");
-
-                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtWorkRecordExpense", b =>
@@ -760,6 +744,13 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.ApplicationUser", b =>
+                {
+                    b.Navigation("CreatedLeaveRequests");
+
+                    b.Navigation("UpdatedLeaveRequests");
                 });
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtEquipment", b =>

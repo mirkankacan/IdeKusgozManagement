@@ -23,7 +23,22 @@ namespace IdeKusgozManagement.WebUI.Controllers
             _userApiService = userApiService;
             _httpContextAccessor = httpContextAccessor;
         }
+        [HttpGet("token-al")]
+        [Authorize] 
+        public IActionResult GetToken()
+        {
+           
+                // Session'dan JWT token'ı al
+                var jwtToken = HttpContext.Session.GetString("JwtToken");
 
+                if (string.IsNullOrEmpty(jwtToken))
+                {
+                    return Unauthorized("Token bulunamadı");
+                }
+
+                return Ok(new { token = jwtToken });
+           
+        }
         [HttpGet("giris-yap")]
         [AllowAnonymous]
         public async Task<IActionResult> Login()

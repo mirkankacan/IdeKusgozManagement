@@ -20,368 +20,41 @@
                 <span id="errorText"></span>
             </div>
 
-            <!-- Connection status -->
-            <div id="connectionStatus" class="alert alert-info" style="display: none;">
-                <i class="fas fa-wifi me-2"></i>
-                <span id="connectionText">Bağlantı durumu kontrol ediliyor...</span>
-            </div>
 
-            <!-- Notifications container -->
-            <div id="notificationsContainer"
-                style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 350px;">
-                <!-- Notifications will appear here -->
-            </div>
 
             <!-- Messages container -->
-            <div class="post-comments" id="messagesContainer">
+            <div class="post-comments" id="messagesContainer" style="max-height: 500px; overflow-y: auto;">
                 <!-- Messages will be loaded here via AJAX -->
+            </div>
+
+            <!-- Loading indicator for pagination -->
+            <div id="loadingMoreIndicator" class="text-center py-2" style="display: none;">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Yükleniyor...</span>
+                </div>
+            </div>
+
+            <!-- Load more button -->
+            <div id="loadMoreContainer" class="text-center py-2" style="display: none;">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="loadMoreMessagesBtn">
+                    <i class="fas fa-chevron-down"></i> Daha Fazla Yükle
+                </button>
             </div>
             <br />
             <!-- New comment form -->
-            <div class="new-comment">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="Bir şeyler yaz..."
-                        aria-label="Bir şeyler yaz..." aria-describedby="button-addon2" id="messageInput">
-                    <button class="btn btn-outline-secondary" type="button" id="sendMessageBtn">
-                        <i class="fas fa-paper-plane me-2"></i>Gönder
-                    </button>
+            @if(User.IsInRole("Admin") || User.IsInRole("Yönetici"))
+            {
+                <div class="new-comment">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Bir şeyler yaz..."
+                               aria-label="Bir şeyler yaz..." aria-describedby="button-addon2" id="messageInput">
+                        <button class="btn btn-outline-secondary" type="button" id="sendMessageBtn">
+                            <i class="fas fa-paper-plane me-2"></i>Gönder
+                        </button>
+                    </div>
                 </div>
-            </div>
+            }
+         
         </div>
     </div>
 </div>
-@section Scripts {
-    <script>
-        let connection;
-        let isConnected = false;
-
-        document.addEventListener('DOMContentLoaded', function () {
-            initializeSignalR();
-            loadMessages();
-
-            // Send message button click event
-            document.getElementById('sendMessageBtn').addEventListener('click', function () {
-                sendMessage();
-            });
-
-            // Enter key press event for message input
-            document.getElementById('messageInput').addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-        });
-
-        async function initializeSignalR() {
-            try {
-                const hubUrl = 'http://localhost:5291/communicationHub';
-                console.log('Attempting to connect to SignalR hub:', hubUrl);
-
-                connection = new signalR.HubConnectionBuilder()
-                    .withUrl(hubUrl, {
-                        transport: signalR.HttpTransportType.LongPolling
-                    })
-                    .withAutomaticReconnect([0, 2000, 10000, 30000])
-                    .configureLogging(signalR.LogLevel.Debug)
-                    .build();
-
-                // Handle connection status
-                connection.on("ConnectionStatus", function (status) {
-                    console.log('Connection status received:', status);
-                    if (status.isConnected) {
-                        isConnected = true;
-                        showConnectionStatus(true);
-                    }
-                });
-
-                // Handle new message events
-                connection.on("NewMessage", function (message) {
-                    console.log('New message received:', message);
-                    addMessageToUI(message);
-                });
-
-                // Handle notification events
-                connection.on("NewNotification", function (notification) {
-                    console.log('New notification received:', notification);
-                    showNotification(notification);
-                });
-
-                // Handle connection events
-                connection.onclose(function (error) {
-                    console.log('SignalR connection closed:', error);
-                    isConnected = false;
-                    showConnectionStatus(false);
-                });
-
-                connection.onreconnecting(function (error) {
-                    console.log('SignalR reconnecting:', error);
-                    showConnectionStatus(false);
-                });
-
-                connection.onreconnected(function (connectionId) {
-                    console.log('SignalR reconnected:', connectionId);
-                    isConnected = true;
-                    showConnectionStatus(true);
-                });
-
-                // Start the connection
-                await connection.start();
-                console.log('SignalR connected');
-                isConnected = true;
-                showConnectionStatus(true);
-
-                // Groups are automatically joined in OnConnectedAsync
-                // No need to manually join groups
-
-            } catch (error) {
-                console.error('SignalR connection error:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    stack: error.stack,
-                    name: error.name
-                });
-                showConnectionStatus(false);
-            }
-        }
-
-        function showConnectionStatus(connected) {
-            const statusElement = document.getElementById('connectionStatus');
-            const statusText = document.getElementById('connectionText');
-
-            if (connected) {
-                statusText.textContent = 'Gerçek zamanlı bağlantı aktif';
-                statusElement.className = 'alert alert-success';
-                statusElement.style.display = 'block';
-                setTimeout(() => {
-                    statusElement.style.display = 'none';
-                }, 3000);
-            } else {
-                statusText.textContent = 'Bağlantı kesildi, yeniden bağlanılıyor...';
-                statusElement.className = 'alert alert-warning';
-                statusElement.style.display = 'block';
-            }
-        }
-
-        function addMessageToUI(message) {
-            const messagesContainer = document.getElementById('messagesContainer');
-
-            // Check if message already exists (to prevent duplicates)
-            const existingMessage = messagesContainer.querySelector(`[data-message-id="${message.id}"]`);
-            if (existingMessage) {
-                return;
-            }
-
-            const createdDate = new Date(message.createdDate);
-            const formattedDate = createdDate.toLocaleDateString('tr-TR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
-            const messageHtml = `
-                                            <div class="post-comm" data-message-id="${message.id}">
-                                                <img src="/theme/assets/images/avatars/profile-image.png" class="comment-img" alt="">
-                                                <div class="comment-container">
-                                                    <span class="comment-author">
-                                                        ${message.createdByName || message.createdBy}
-                                                        <small class="comment-date">${formattedDate}</small>
-                                                    </span>
-                                                </div>
-                                                <span class="comment-text">
-                                                    ${message.content}
-                                                </span>
-                                            </div>
-                                        `;
-
-            // Add new message to the top of the messages container
-            messagesContainer.insertAdjacentHTML('afterbegin', messageHtml);
-
-            // Add a subtle animation
-            const newMessageElement = messagesContainer.querySelector(`[data-message-id="${message.id}"]`);
-            newMessageElement.style.opacity = '0';
-            newMessageElement.style.transform = 'translateY(-10px)';
-            newMessageElement.style.transition = 'all 0.3s ease';
-
-            setTimeout(() => {
-                newMessageElement.style.opacity = '1';
-                newMessageElement.style.transform = 'translateY(0)';
-            }, 100);
-        }
-
-        async function loadMessages() {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            const errorMessage = document.getElementById('errorMessage');
-            const messagesContainer = document.getElementById('messagesContainer');
-
-            try {
-                loadingIndicator.style.display = 'block';
-                errorMessage.style.display = 'none';
-                messagesContainer.innerHTML = '';
-
-                const response = await fetch('/mesaj?pageSize=10&pageNumber=1', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-
-                if (result.isSuccess && result.data) {
-                    displayMessages(result.data);
-                } else {
-                    throw new Error(result.message || 'Mesajlar yüklenirken bir hata oluştu');
-                }
-
-            } catch (error) {
-                console.error('Error loading messages:', error);
-                showError('Mesajlar yüklenirken bir hata oluştu: ' + error.message);
-            } finally {
-                loadingIndicator.style.display = 'none';
-            }
-        }
-
-        function displayMessages(messages) {
-            const messagesContainer = document.getElementById('messagesContainer');
-
-            if (!messages || messages.length === 0) {
-                messagesContainer.innerHTML = '<div class="text-center text-muted py-3">Henüz mesaj bulunmuyor.</div>';
-                return;
-            }
-
-            let messagesHtml = '';
-            messages.forEach(message => {
-                const createdDate = new Date(message.createdDate);
-                const formattedDate = createdDate.toLocaleDateString('tr-TR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                messagesHtml += `
-                                                <div class="post-comm" data-message-id="${message.id}">
-                                                    <img src="/theme/assets/images/avatars/profile-image.png" class="comment-img" alt="">
-                                                    <div class="comment-container">
-                                                        <span class="comment-author">
-                                                            ${message.createdByName || message.createdBy}
-                                                            <small class="comment-date">${formattedDate}</small>
-                                                        </span>
-                                                    </div>
-                                                    <span class="comment-text">
-                                                        ${message.content}
-                                                    </span>
-                                                </div>
-                                            `;
-            });
-
-            messagesContainer.innerHTML = messagesHtml;
-        }
-
-        function showError(message) {
-            const errorMessage = document.getElementById('errorMessage');
-            const errorText = document.getElementById('errorText');
-            errorText.textContent = message;
-            errorMessage.style.display = 'block';
-        }
-
-        function showNotification(notification) {
-            const notificationsContainer = document.getElementById('notificationsContainer');
-
-            const notificationId = 'notification-' + Date.now();
-            const notificationHtml = `
-                                <div id="${notificationId}" class="alert alert-info alert-dismissible fade show mb-2" style="box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                                    <div class="d-flex align-items-start">
-                                        <div class="flex-shrink-0">
-                                            <i class="fas fa-bell text-primary"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-2">
-                                            <h6 class="alert-heading mb-1">${notification.title}</h6>
-                                            <p class="mb-1">${notification.message}</p>
-                                            <small class="text-muted">${new Date(notification.timestamp).toLocaleTimeString('tr-TR')}</small>
-                                        </div>
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                    </div>
-                                </div>
-                            `;
-
-            notificationsContainer.insertAdjacentHTML('afterbegin', notificationHtml);
-
-            // Auto-remove notification after 5 seconds
-            setTimeout(() => {
-                const notificationElement = document.getElementById(notificationId);
-                if (notificationElement) {
-                    notificationElement.remove();
-                }
-            }, 5000);
-
-            // Play notification sound (optional)
-            playNotificationSound();
-        }
-
-        function playNotificationSound() {
-            // Create a simple notification sound
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.3);
-        }
-
-        async function sendMessage() {
-            const messageInput = document.getElementById('messageInput');
-            const messageContent = messageInput.value.trim();
-
-            if (!messageContent) {
-                return;
-            }
-
-            try {
-                const response = await fetch('/mesaj', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                    },
-                    body: JSON.stringify({
-                        content: messageContent
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-
-                if (result.isSuccess) {
-                    messageInput.value = '';
-
-                } else {
-                    throw new Error(result.message || 'Mesaj gönderilirken bir hata oluştu');
-                }
-
-            } catch (error) {
-                console.error('Error sending message:', error);
-                showError('Mesaj gönderilirken bir hata oluştu: ' + error.message);
-            }
-        }
-    </script>
-}

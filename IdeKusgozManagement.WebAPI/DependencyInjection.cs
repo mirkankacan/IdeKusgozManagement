@@ -1,7 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Data;
-using System.Net;
-using IdeKusgozManagement.Application.DTOs.OptionDTOs;
+﻿using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,6 +9,9 @@ using Newtonsoft.Json.Serialization;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.MSSqlServer;
+using System.Collections.ObjectModel;
+using System.Data;
+using System.Net;
 
 namespace IdeKusgozManagement.WebAPI
 {
@@ -151,45 +151,11 @@ namespace IdeKusgozManagement.WebAPI
                 NullValueHandling = NullValueHandling.Ignore
             };
 
-            // JWT Configuration - Infrastructure'daki JwtOptionsSetup ile uyumlu
-            services.Configure<JwtOptionsDTO>(configuration.GetSection("JwtConfiguration"));
-
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    // SignalR için JWT Events - ÇOK ÖNEMLİ!
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnMessageReceived = context =>
-                        {
-                            var accessToken = context.Request.Query["access_token"];
-                            var path = context.HttpContext.Request.Path;
-
-                            // SignalR hub için token kontrolü
-                            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/messageHub"))
-                            {
-                                context.Token = accessToken;
-                            }
-                            return Task.CompletedTask;
-                        },
-                        OnAuthenticationFailed = context =>
-                        {
-                            Console.WriteLine($"JWT Authentication failed: {context.Exception.Message}");
-                            if (context.Request.Path.StartsWithSegments("/messageHub"))
-                            {
-                                Console.WriteLine("SignalR authentication failed - but continuing without auth");
-                                // SignalR için auth başarısız olsa da devam et (çünkü [Authorize] kaldırdık)
-                            }
-                            return Task.CompletedTask;
-                        },
-                        OnTokenValidated = context =>
-                        {
-                            var userName = context.Principal?.Identity?.Name;
-                            Console.WriteLine($"JWT Token validated for user: {userName}");
-                            return Task.CompletedTask;
-                        }
-                    };
-                });
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer();
 
             services.AddAuthorization();
 

@@ -1,6 +1,6 @@
-using System.Linq.Expressions;
 using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Domain.Entities.Base;
+using System.Linq.Expressions;
 
 namespace IdeKusgozManagement.Application.Interfaces.Repositories
 {
@@ -99,8 +99,20 @@ namespace IdeKusgozManagement.Application.Interfaces.Repositories
 
         Task<IEnumerable<TResult>> SelectNoTrackingAsync<TResult>(Expression<Func<T, TResult>> selector, Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
 
-        Task<PagedResult<T>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includeProperties);
+        Task<PagedResult<T>> GetPagedNoTrackingAsync(
+         int pageNumber,
+         int pageSize,
+         Expression<Func<T, bool>> predicate = null,
+         Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+         CancellationToken cancellationToken = default,
+         params Expression<Func<T, object>>[] includeProperties);
 
-        Task<PagedResult<T>> GetPagedNoTrackingAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includeProperties);
+        Task<PagedResult<T>> GetPagedAsync(
+            int pageNumber,
+            int pageSize,
+            Expression<Func<T, bool>> predicate = null,
+         Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+            CancellationToken cancellationToken = default,
+            params Expression<Func<T, object>>[] includeProperties);
     }
 }

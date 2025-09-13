@@ -1,9 +1,10 @@
-﻿using IdeKusgozManagement.WebUI.Models.NotificationModels;
-using IdeKusgozManagement.WebUI.Services.Interfaces;
+﻿using IdeKusgozManagement.WebUI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Controllers
 {
+    [Authorize]
     [Route("bildirim")]
     public class NotificationController : Controller
     {
@@ -25,17 +26,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetUnreadNotificationCount(CancellationToken cancellationToken = default)
         {
             var response = await _notificationApiService.GetUnreadNotificationCountAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateNotification([FromBody] CreateNotificationViewModel model, CancellationToken cancellationToken = default)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var response = await _notificationApiService.CreateNotificationAsync(model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 

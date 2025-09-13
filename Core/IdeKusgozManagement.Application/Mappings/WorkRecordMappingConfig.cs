@@ -12,6 +12,12 @@ namespace IdeKusgozManagement.Application.Mappings
             // IdtWorkRecord -> WorkRecordDTO
             TypeAdapterConfig<IdtWorkRecord, WorkRecordDTO>
                 .NewConfig()
+                   .Map(dest => dest.CreatedByName, src => src.CreatedByUser != null
+                    ? $"{src.CreatedByUser.Name} {src.CreatedByUser.Surname}"
+                    : string.Empty)
+                .Map(dest => dest.UpdatedByName, src => src.UpdatedByUser != null
+                  ? $"{src.UpdatedByUser.Name} {src.UpdatedByUser.Surname}"
+                    : string.Empty)
                 .Map(dest => dest.Expenses, src => (List<WorkRecordExpenseDTO>?)null); // Varsayılan olarak null, servis tarafında doldurulacak
 
             // CreateWorkRecordDTO -> IdtWorkRecord

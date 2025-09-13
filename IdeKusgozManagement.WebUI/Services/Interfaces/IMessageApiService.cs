@@ -5,9 +5,9 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
 {
     public interface IMessageApiService
     {
-        Task<ApiResponse<IEnumerable<MessageViewModel>>> GetMessagesAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default);
+        Task<ApiResponse<PagedResult<MessageViewModel>>> GetMessagesAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<bool>> CreateMessageAsync(CreateMessageViewModel model, CancellationToken cancellationToken = default);
+        Task<ApiResponse<MessageViewModel>> CreateMessageAsync(CreateMessageViewModel model, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> DeleteMessageAsync(string messageId, CancellationToken cancellationToken = default);
     }
