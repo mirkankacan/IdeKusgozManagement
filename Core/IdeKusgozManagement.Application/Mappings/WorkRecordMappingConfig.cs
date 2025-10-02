@@ -5,40 +5,18 @@ using Mapster;
 
 namespace IdeKusgozManagement.Application.Mappings
 {
-    public static class WorkRecordMappingConfig
+    public class WorkRecordMappingConfig : IRegister
     {
-        public static void Configure()
+        public void Register(TypeAdapterConfig config)
         {
-            // IdtWorkRecord -> WorkRecordDTO
-            TypeAdapterConfig<IdtWorkRecord, WorkRecordDTO>
-                .NewConfig()
-                   .Map(dest => dest.CreatedByName, src => src.CreatedByUser != null
-                    ? $"{src.CreatedByUser.Name} {src.CreatedByUser.Surname}"
-                    : string.Empty)
-                .Map(dest => dest.UpdatedByName, src => src.UpdatedByUser != null
-                  ? $"{src.UpdatedByUser.Name} {src.UpdatedByUser.Surname}"
-                    : string.Empty)
-                .Map(dest => dest.Expenses, src => (List<WorkRecordExpenseDTO>?)null); // Varsayılan olarak null, servis tarafında doldurulacak
+            config.NewConfig<IdtWorkRecord, WorkRecordDTO>()
+                 .Map(dest => dest.CreatedByFullName, src => $"{src.CreatedByUser.Name} {src.CreatedByUser.Surname}")
+                 .Map(dest => dest.UpdatedByFullName, src => src.UpdatedByUser != null ? $"{src.UpdatedByUser.Name} {src.UpdatedByUser.Surname}" : null)
+                 .Map(dest => dest.WorkRecordExpenses, src => src.WorkRecordExpenses);
 
-            // CreateWorkRecordDTO -> IdtWorkRecord
-            TypeAdapterConfig<CreateWorkRecordDTO, IdtWorkRecord>
-                .NewConfig()
-                .Ignore(dest => dest.Id)
-                .Ignore(dest => dest.CreatedDate)
-                .Ignore(dest => dest.UpdatedDate)
-                .Ignore(dest => dest.CreatedBy)
-                .Ignore(dest => dest.UpdatedBy);
-
-            // UpdateWorkRecordDTO -> IdtWorkRecord
-            TypeAdapterConfig<UpdateWorkRecordDTO, IdtWorkRecord>
-                .NewConfig()
-                .Ignore(dest => dest.Id)
-                .Ignore(dest => dest.Date)
-                .Ignore(dest => dest.CreatedDate)
-                .Ignore(dest => dest.UpdatedDate)
-                .Ignore(dest => dest.CreatedBy)
-                .Ignore(dest => dest.UpdatedBy)
-                .Ignore(dest => dest.Status);
+            config.NewConfig<IdtWorkRecordExpense, WorkRecordExpenseDTO>()
+                            .Map(dest => dest.ExpenseName, src => src.Expense.Name)
+                            .Map(dest => dest.FilePath, src => src.File != null ? src.File.Path : null);
         }
     }
 }

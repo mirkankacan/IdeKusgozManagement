@@ -6,6 +6,6 @@
         public string Content { get; set; }
         public DateTime CreatedDate { get; set; }
         public string CreatedBy { get; set; }
-        public string CreatedByName { get; set; }
+        public string CreatedByFullName { get; set; }
     }
 }

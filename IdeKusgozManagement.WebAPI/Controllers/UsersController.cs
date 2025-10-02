@@ -9,17 +9,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public class UsersController(IUserService userService, IIdentityService identityService) : ControllerBase
     {
-        private readonly IUserService _userService;
-        private readonly ICurrentUserService _currentUserService;
-
-        public UsersController(IUserService userService, ICurrentUserService currentUserService)
-        {
-            _userService = userService;
-            _currentUserService = currentUserService;
-        }
-
         /// <summary>
         /// Tüm kullanıcıları getirir
         /// </summary>
@@ -27,7 +18,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUsers(CancellationToken cancellationToken = default)
         {
-            var result = await _userService.GetUsersAsync(cancellationToken);
+            var result = await userService.GetUsersAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -38,7 +29,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet("active-superiors")]
         public async Task<IActionResult> GetActiveSuperiors()
         {
-            var result = await _userService.GetActiveSuperiorsAsync();
+            var result = await userService.GetActiveSuperiorsAsync();
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -54,7 +45,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await _userService.GetSubordinatesByUserIdAsync(userId, cancellationToken);
+            var result = await userService.GetSubordinatesByUserIdAsync(userId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -70,7 +61,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await _userService.GetUserByIdAsync(userId, cancellationToken);
+            var result = await userService.GetUserByIdAsync(userId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -80,12 +71,12 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet("my-user")]
         public async Task<IActionResult> GetMyUser(CancellationToken cancellationToken = default)
         {
-            var currentUserId = _currentUserService.GetCurrentUserId();
+            var currentUserId = identityService.GetUserId();
             if (string.IsNullOrEmpty(currentUserId))
             {
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
-            var result = await _userService.GetUserByIdAsync(currentUserId, cancellationToken);
+            var result = await userService.GetUserByIdAsync(currentUserId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -102,7 +93,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _userService.CreateUserAsync(createUserDTO, cancellationToken);
+            var result = await userService.CreateUserAsync(createUserDTO, cancellationToken);
 
             if (!result.IsSuccess)
             {
@@ -129,7 +120,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _userService.UpdateUserAsync(userId, updateUserDTO, cancellationToken);
+            var result = await userService.UpdateUserAsync(userId, updateUserDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -145,7 +136,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await _userService.DeleteUserAsync(userId);
+            var result = await userService.DeleteUserAsync(userId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -162,7 +153,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _userService.AssignRoleToUserAsync(assignRoleDTO);
+            var result = await userService.AssignRoleToUserAsync(assignRoleDTO);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -178,7 +169,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await _userService.EnableUserAsync(userId);
+            var result = await userService.EnableUserAsync(userId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -194,7 +185,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await _userService.DisableUserAsync(userId);
+            var result = await userService.DisableUserAsync(userId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -217,7 +208,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _userService.ChangePasswordAsync(userId, changePasswordDTO);
+            var result = await userService.ChangePasswordAsync(userId, changePasswordDTO);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

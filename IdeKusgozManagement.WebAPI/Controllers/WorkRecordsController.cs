@@ -1,6 +1,5 @@
 ﻿using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
-using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,49 +9,40 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
-    public class WorkRecordsController : ControllerBase
+    public class WorkRecordsController(IWorkRecordService workRecordService, IIdentityService identityService) : ControllerBase
     {
-        private readonly IWorkRecordService _workRecordService;
-        private readonly ICurrentUserService _currentUserService;
-        private readonly ISignalRService _signalRService;
-
-        public WorkRecordsController(IWorkRecordService workRecordService, ICurrentUserService currentUserService, ISignalRService signalRService)
-        {
-            _workRecordService = workRecordService;
-            _currentUserService = currentUserService;
-            _signalRService = signalRService;
-        }
-
         /// <summary>
-        /// Mevcut kullanıcının iş kayıtlarını getirir
+        /// Oturumdaki kullanıcının belirtilen ay ve yıldaki puantaj kayıtlarını getirir
         /// </summary>
-        [HttpGet("my-records-by-date")]
-        public async Task<IActionResult> GetMyWorkRecordsByDate([FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        /// <param name="date">Tarih</param>
+
+        [HttpGet("my-records/date/{date:datetime}")]
+        public async Task<IActionResult> GetMyWorkRecordsByDate(DateTime date, CancellationToken cancellationToken = default)
         {
-            var currentUserId = _currentUserService.GetCurrentUserId();
+            var currentUserId = identityService.GetUserId();
             if (string.IsNullOrEmpty(currentUserId))
             {
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
 
-            var result = await _workRecordService.GetWorkRecordsByUserIdAndDateAsync(currentUserId, date, cancellationToken);
+            var result = await workRecordService.GetWorkRecordsByUserIdAndDateAsync(currentUserId, date, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
-        /// Tarih ve kullanıcıya göre iş kayıtlarını getirir
+        /// Tarih ve kullanıcıya göre puantaj kayıtlarını getirir
         /// </summary>
         /// <param name="date">Tarih</param>
         /// <param name="userId">Kullanıcı ID'si</param>
-        [HttpGet("by-user-and-date")]
+        [HttpGet("user/{userId}/date/{date:datetime}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetWorkRecordsByDateAndUser([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetWorkRecordsByDateAndUser(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await _workRecordService.GetWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
+            var result = await workRecordService.GetWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -60,25 +50,19 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Toplu iş kaydı oluşturur
         /// </summary>
         /// <param name="createWorkRecordDTOs">İş kaydı listesi</param>
-        [HttpPost("batch-create")]
-        public async Task<IActionResult> BatchCreateWorkRecord([FromBody] List<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
+        [HttpPost("batch-create-modify")]
+        public async Task<IActionResult> BatchCreateOrModifyWorkRecords([FromBody] List<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (createWorkRecordDTOs == null || !createWorkRecordDTOs.Any())
-            {
-                return BadRequest("İş kaydı listesi boş olamaz");
-            }
-
-            var result = await _workRecordService.BatchCreateWorkRecordsAsync(createWorkRecordDTOs, cancellationToken);
+            var result = await workRecordService.BatchCreateOrModifyWorkRecordsAsync(createWorkRecordDTOs, cancellationToken);
             if (!result.IsSuccess)
             {
                 return BadRequest(result);
             }
-            await _signalRService.SendNotificationToRolesAsync(new[] { "Admin", "Yönetici", "Şef" }, $"{result.Data.FirstOrDefault().CreatedByName} tarafından, {result.Data.FirstOrDefault().Date.Month}/{result.Data.FirstOrDefault().Date.Year} ayı için puantaj kaydı oluşturuldu", NotificationType.WorkRecord, "/puantaj", cancellationToken);
 
             return Ok(result);
         }
@@ -88,8 +72,9 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="userId">Kullanıcı ID'si</param>
         /// <param name="updateWorkRecordDTO">Güncellenecek bilgiler</param>
-        [HttpPut]
-        public async Task<IActionResult> BatchUpdateWorkRecordByUser([FromQuery] string userId, [FromBody] List<UpdateWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default)
+        [HttpPut("batch-update/user/{userId}")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> BatchUpdateWorkRecordByUser(string userId, [FromBody] List<UpdateWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -100,58 +85,97 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _workRecordService.BatchUpdateWorkRecordsByUserIdAsync(userId, updateWorkRecordDTO, cancellationToken);
+            var result = await workRecordService.BatchUpdateWorkRecordsByUserIdAsync(userId, updateWorkRecordDTO, cancellationToken);
             if (!result.IsSuccess)
             {
                 return BadRequest(result);
             }
-            await _signalRService.SendNotificationToUserAsync($"{result.Data.FirstOrDefault().CreatedBy}", $"{result.Data.FirstOrDefault().UpdatedByName} tarafından, {result.Data.FirstOrDefault().CreatedByName} kullanıcısının {result.Data.FirstOrDefault().Date.Month}/{result.Data.FirstOrDefault().Date.Year} ayı puantaj kaydı güncellendi", NotificationType.WorkRecord, "/puantaj", cancellationToken);
 
             return Ok(result);
         }
 
         /// <summary>
-        /// İş kaydını onaylar
+        /// Puantajları toplu onaylar
         /// </summary>
         /// <param name="userId">Kullanıcı ID'si</param>
         /// <param name="date">Tarih</param>
-        [HttpPost("approve")]
+        [HttpPut("batch-approve/user/{userId}/date/{date:datetime}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> BatchApproveWorkRecordByUserAndDate([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchApproveWorkRecordByUserAndDate(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await _workRecordService.BatchApproveWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
+            var result = await workRecordService.BatchApproveWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
             if (!result.IsSuccess)
             {
                 return BadRequest(result);
             }
-            await _signalRService.SendNotificationToUserAsync($"{result.Data.FirstOrDefault().CreatedBy}", $"{result.Data.FirstOrDefault().UpdatedByName} tarafından, {result.Data.FirstOrDefault().Date.Month}/{result.Data.FirstOrDefault().Date.Year} ayı için puantaj kaydınız onaylandı", NotificationType.WorkRecord, "/puantaj", cancellationToken);
 
             return Ok(result);
         }
 
         /// <summary>
-        /// İş kaydını reddeder
+        /// Puantajları toplu reddeder
         /// </summary>
         /// <param name="userId">Kullanıcı ID'si</param>
         /// <param name="date">Tarih</param>
-        [HttpPost("reject")]
+        [HttpPut("batch-reject/user/{userId}/date/{date:datetime}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> BatchRejectWorkRecordByUserAndDate([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchRejectWorkRecordByUserAndDate(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await _workRecordService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
+            var result = await workRecordService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
             if (!result.IsSuccess)
             {
                 return BadRequest(result);
             }
-            await _signalRService.SendNotificationToUserAsync($"{result.Data.FirstOrDefault().CreatedBy}", $"{result.Data.FirstOrDefault().UpdatedByName} tarafından, {result.Data.FirstOrDefault().Date.Month}/{result.Data.FirstOrDefault().Date.Year} ayı için puantaj kaydınız reddedildi", NotificationType.WorkRecord, "/puantaj", cancellationToken);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Puantajı reddeder
+        /// </summary>
+        /// <param name="id">Puantaj ID'si</param>
+        [HttpPut("{id}/reject")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> RejectWorkRecordById(string id, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest("Puantaj ID'si gereklidir");
+            }
+            var result = await workRecordService.RejectWorkRecordByIdAsync(id, cancellationToken);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Puantajı onaylar
+        /// </summary>
+        /// <param name="id">Puantaj ID'si</param>
+        [HttpPut("{id}/approve")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> ApproveWorkRecordById(string id, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest("Puantaj ID'si gereklidir");
+            }
+            var result = await workRecordService.ApproveWorkRecordByIdAsync(id, cancellationToken);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
 
             return Ok(result);
         }

@@ -1,4 +1,6 @@
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.LeaveRequestDTOs;
+using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
@@ -10,19 +12,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
-    public class LeaveRequestsController : ControllerBase
+    public class LeaveRequestsController(ILeaveRequestService leaveRequestService, IIdentityService identityService, INotificationService notificationService, IFileService fileService) : ControllerBase
     {
-        private readonly ILeaveRequestService _leaveRequestService;
-        private readonly ICurrentUserService _currentUserService;
-        private readonly ISignalRService _signalRService;
-
-        public LeaveRequestsController(ILeaveRequestService leaveRequestService, ICurrentUserService currentUserService, ISignalRService signalRService)
-        {
-            _leaveRequestService = leaveRequestService;
-            _currentUserService = currentUserService;
-            _signalRService = signalRService;
-        }
-
         /// <summary>
         /// Tüm izin taleplerini getirir
         /// </summary>
@@ -30,22 +21,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> GetLeaveRequests(CancellationToken cancellationToken = default)
         {
-            var result = await _leaveRequestService.GetLeaveRequestsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// Oturumda olan kullanıcının kendi izin isteklerini getirir
-        /// </summary>
-        [HttpGet("my-leave-requests")]
-        public async Task<IActionResult> GetMyLeaveRequests(CancellationToken cancellationToken = default)
-        {
-            var currentUserId = _currentUserService.GetCurrentUserId();
-            if (string.IsNullOrEmpty(currentUserId))
-            {
-                return BadRequest("Kullanıcı kimliği bulunamadı");
-            }
-            var result = await _leaveRequestService.GetLeaveRequestsByUserIdAsync(currentUserId, cancellationToken);
+            var result = await leaveRequestService.GetLeaveRequestsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -61,50 +37,36 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
-            var result = await _leaveRequestService.GetLeaveRequestsByUserIdAsync(userId, cancellationToken);
+            var result = await leaveRequestService.GetLeaveRequestsByUserIdAsync(userId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
-        /// Duruma göre izin taleplerini getirir
+        /// Oturumda olan kullanıcının kendi izin isteklerini getirir
         /// </summary>
-        /// <param name="status">Durum int cinsinden</param>
-
-        [HttpGet("status/{status}")]
-        [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetLeaveRequestsByStatus(LeaveRequestStatus status, CancellationToken cancellationToken = default)
+        [HttpGet("my-leave-requests")]
+        public async Task<IActionResult> GetMyLeaveRequests(CancellationToken cancellationToken = default)
         {
-            var result = await _leaveRequestService.GetLeaveRequestsByStatusAsync(status, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// Duruma göre izin taleplerini getirir
-        /// </summary>
-        /// <param name="status">Durum int cinsinden</param>
-        /// <param name="userId">Kullanıcı ID'si</param>
-        [RoleFilter("Admin", "Yönetici", "Şef")]
-        [HttpGet("user/{userId}/status/{status}")]
-        public async Task<IActionResult> GetLeaveRequestsByUserIdAndStatus(string userId, LeaveRequestStatus status, CancellationToken cancellationToken = default)
-        {
-            var result = await _leaveRequestService.GetLeaveRequestsByUserIdAndStatusAsync(userId, status, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        /// <summary>
-        /// Duruma göre izin taleplerini getirir
-        /// </summary>
-        /// <param name="status">Durum int cinsinden</param>
-
-        [HttpGet("my-leave-requests/status/{status}")]
-        public async Task<IActionResult> GetMyLeaveRequestsByStatus(LeaveRequestStatus status, CancellationToken cancellationToken = default)
-        {
-            var currentUserId = _currentUserService.GetCurrentUserId();
-            if (string.IsNullOrEmpty(currentUserId))
+            var userId = identityService.GetUserId();
+            if (string.IsNullOrEmpty(userId))
             {
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
-            var result = await _leaveRequestService.GetLeaveRequestsByUserIdAndStatusAsync(currentUserId, status, cancellationToken);
+            var result = await leaveRequestService.GetLeaveRequestsByUserIdAsync(userId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Duruma göre izin taleplerini getirir
+        /// </summary>
+        /// <param name="status">Durum int cinsinden</param>
+        /// <param name="userId">Nullable kullanıcı ID'si</param>
+
+        [HttpGet("status/{status}")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> GetLeaveRequestsByStatus(LeaveRequestStatus status, [FromQuery] string? userId, CancellationToken cancellationToken = default)
+        {
+            var result = await leaveRequestService.GetLeaveRequestsByStatusAsync(status, userId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -121,7 +83,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("İzin talebi ID'si gereklidir");
             }
 
-            var result = await _leaveRequestService.GetLeaveRequestByIdAsync(leaveRequestId, cancellationToken);
+            var result = await leaveRequestService.GetLeaveRequestByIdAsync(leaveRequestId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -130,20 +92,19 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="createLeaveRequestDTO">İzin talebi bilgileri</param>
         [HttpPost]
-        public async Task<IActionResult> CreateLeaveRequest([FromBody] CreateLeaveRequestDTO createLeaveRequestDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateLeaveRequest([FromForm] CreateLeaveRequestDTO createLeaveRequestDTO, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = await _leaveRequestService.CreateLeaveRequestAsync(createLeaveRequestDTO, cancellationToken);
+            var result = await leaveRequestService.CreateLeaveRequestAsync(createLeaveRequestDTO, cancellationToken);
 
             if (!result.IsSuccess)
             {
                 return BadRequest(result);
             }
-            await _signalRService.SendNotificationToRolesAsync(new[] { "Admin", "Yönetici", "Şef" }, $"{result.Data.CreatedByName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde yeni bir izin talebi oluşturuldu", NotificationType.LeaveRequest, "/izin-yonetimi", cancellationToken);
 
             return Ok(result);
         }
@@ -160,7 +121,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("İzin talebi ID'si gereklidir");
             }
 
-            var result = await _leaveRequestService.DeleteLeaveRequestAsync(leaveRequestId, cancellationToken);
+            var result = await leaveRequestService.DeleteLeaveRequestAsync(leaveRequestId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -176,13 +137,20 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("İzin talebi ID'si gereklidir");
             }
-            var result = await _leaveRequestService.ApproveLeaveRequestAsync(leaveRequestId, cancellationToken);
+            var result = await leaveRequestService.ApproveLeaveRequestAsync(leaveRequestId, cancellationToken);
 
             if (!result.IsSuccess)
             {
                 return BadRequest(result);
             }
-            await _signalRService.SendNotificationToUserAsync($"{result.Data.CreatedBy}", $"{result.Data.UpdatedByName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde oluşturduğunuz izin talebiniz onaylanmıştır", NotificationType.LeaveRequest, "/izin/olustur", cancellationToken);
+            CreateNotificationDTO createNotificationDTO = new()
+            {
+                Message = $"{result.Data.UpdatedByFullName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde oluşturduğunuz izin talebiniz onaylanmıştır",
+                Type = NotificationType.LeaveRequest,
+                RedirectUrl = "/izin/olustur",
+                TargetUsers = new string[] { result.Data.CreatedBy }
+            };
+            await notificationService.SendNotificationToUsersAsync(createNotificationDTO, cancellationToken);
 
             return Ok(result);
         }
@@ -200,13 +168,20 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("İzin talebi ID'si gereklidir");
             }
 
-            var result = await _leaveRequestService.RejectLeaveRequestAsync(leaveRequestId, rejectReason, cancellationToken);
+            var result = await leaveRequestService.RejectLeaveRequestAsync(leaveRequestId, rejectReason, cancellationToken);
 
             if (!result.IsSuccess)
             {
                 return BadRequest(result);
             }
-            await _signalRService.SendNotificationToUserAsync($"{result.Data.CreatedBy}", $"{result.Data.UpdatedByName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde oluşturduğunuz izin talebiniz reddedilmiştir", NotificationType.LeaveRequest, "/izin/olustur", cancellationToken);
+            CreateNotificationDTO createNotificationDTO = new()
+            {
+                Message = $"{result.Data.UpdatedByFullName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde oluşturduğunuz izin talebiniz reddedilmiştir",
+                Type = NotificationType.LeaveRequest,
+                RedirectUrl = "/izin/olustur",
+                TargetUsers = new string[] { result.Data.CreatedBy }
+            };
+            await notificationService.SendNotificationToUsersAsync(createNotificationDTO, cancellationToken);
 
             return Ok(result);
         }

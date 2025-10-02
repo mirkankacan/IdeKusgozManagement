@@ -9,36 +9,22 @@ using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class RoleService : IRoleService
+    public class RoleService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, ILogger<RoleService> logger) : IRoleService
     {
-        private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ILogger<RoleService> _logger;
-
-        public RoleService(
-            RoleManager<ApplicationRole> roleManager,
-            UserManager<ApplicationUser> userManager,
-            ILogger<RoleService> logger)
-        {
-            _roleManager = roleManager;
-            _userManager = userManager;
-            _logger = logger;
-        }
-
         public async Task<ApiResponse<bool>> IsUserInRoleAsync(string userId, string roleName, CancellationToken cancellationToken = default)
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                     return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
 
-                var isInRole = await _userManager.IsInRoleAsync(user, roleName);
+                var isInRole = await userManager.IsInRoleAsync(user, roleName);
                 return ApiResponse<bool>.Success(isInRole);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "IsUserInRoleAsync işleminde hata oluştu. UserId:{userId} RoleName: {RoleName}", userId, roleName);
+                logger.LogError(ex, "IsUserInRoleAsync işleminde hata oluştu. UserId:{userId} RoleName: {RoleName}", userId, roleName);
                 return ApiResponse<bool>.Error("Kullanıcı rol kontolü yapılırken hata oluştu");
             }
         }
@@ -47,7 +33,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var roles = await _roleManager.Roles.ToListAsync();
+                var roles = await roleManager.Roles.ToListAsync();
                 var orderedRoles = roles.OrderBy(role =>
                 role.Name == "Admin" ? 1 :
                 role.Name == "Yönetici" ? 2 :
@@ -59,7 +45,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllRolesAsync işleminde hata oluştu");
+                logger.LogError(ex, "GetAllRolesAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<RoleDTO>>.Error("Roller getirilirken hata oluştu");
             }
         }
@@ -68,7 +54,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var role = await _roleManager.FindByIdAsync(roleId);
+                var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
                     return ApiResponse<RoleDTO>.Error("Rol bulunamadı");
@@ -80,7 +66,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetRoleByIdAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
+                logger.LogError(ex, "GetRoleByIdAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
                 return ApiResponse<RoleDTO>.Error("Rol getirilirken hata oluştu");
             }
         }
@@ -89,7 +75,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var role = await _roleManager.FindByNameAsync(roleName);
+                var role = await roleManager.FindByNameAsync(roleName);
                 if (role == null)
                 {
                     return ApiResponse<RoleDTO>.Error("Rol bulunamadı");
@@ -101,7 +87,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetRoleByNameAsync işleminde hata oluştu. RoleName: {RoleName}", roleName);
+                logger.LogError(ex, "GetRoleByNameAsync işleminde hata oluştu. RoleName: {RoleName}", roleName);
                 return ApiResponse<RoleDTO>.Error("Rol getirilirken hata oluştu");
             }
         }
@@ -111,7 +97,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 // Rol adı kontrolü
-                var existingRole = await _roleManager.FindByNameAsync(createRoleDTO.Name);
+                var existingRole = await roleManager.FindByNameAsync(createRoleDTO.Name);
                 if (existingRole != null)
                 {
                     return ApiResponse<RoleDTO>.Error("Bu rol adı zaten kullanılıyor");
@@ -119,7 +105,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var role = createRoleDTO.Adapt<ApplicationRole>();
 
-                var result = await _roleManager.CreateAsync(role);
+                var result = await roleManager.CreateAsync(role);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
@@ -132,7 +118,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "CreateRoleAsync işleminde hata oluştu");
+                logger.LogError(ex, "CreateRoleAsync işleminde hata oluştu");
                 return ApiResponse<RoleDTO>.Error("Rol oluşturulurken hata oluştu");
             }
         }
@@ -141,7 +127,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var role = await _roleManager.FindByIdAsync(roleId);
+                var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
                     return ApiResponse<RoleDTO>.Error("Rol bulunamadı");
@@ -150,7 +136,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 // Rol adı değişikliği kontrolü
                 if (role.Name != updateRoleDTO.Name)
                 {
-                    var existingRole = await _roleManager.FindByNameAsync(updateRoleDTO.Name);
+                    var existingRole = await roleManager.FindByNameAsync(updateRoleDTO.Name);
                     if (existingRole != null && existingRole.Id != roleId)
                     {
                         return ApiResponse<RoleDTO>.Error("Bu rol adı kullanılıyor");
@@ -160,7 +146,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 // Mevcut role'u güncelle
                 updateRoleDTO.Adapt(role);
 
-                var result = await _roleManager.UpdateAsync(role);
+                var result = await roleManager.UpdateAsync(role);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
@@ -173,7 +159,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "UpdateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
+                logger.LogError(ex, "UpdateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
                 return ApiResponse<RoleDTO>.Error("Rol güncellenirken hata oluştu");
             }
         }
@@ -182,14 +168,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var role = await _roleManager.FindByIdAsync(roleId);
+                var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
                     return ApiResponse<bool>.Error("Rol bulunamadı");
                 }
 
                 // Bu role sahip kullanıcı var mı kontrol et
-                var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name);
+                var usersInRole = await userManager.GetUsersInRoleAsync(role.Name);
                 if (usersInRole.Any())
                 {
                     return ApiResponse<bool>.Error("Bu role sahip kullanıcılar bulunduğu için rol silinemez");
@@ -197,7 +183,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 // Soft delete
                 role.IsActive = false;
-                var result = await _roleManager.UpdateAsync(role);
+                var result = await roleManager.UpdateAsync(role);
 
                 if (!result.Succeeded)
                 {
@@ -209,7 +195,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
+                logger.LogError(ex, "DeleteRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
                 return ApiResponse<bool>.Error("Rol silinirken hata oluştu");
             }
         }
@@ -218,14 +204,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var role = await _roleManager.FindByIdAsync(roleId);
+                var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
                     return ApiResponse<bool>.Error("Rol bulunamadı");
                 }
 
                 role.IsActive = true;
-                var result = await _roleManager.UpdateAsync(role);
+                var result = await roleManager.UpdateAsync(role);
 
                 if (!result.Succeeded)
                 {
@@ -237,7 +223,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ActivateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
+                logger.LogError(ex, "ActivateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
                 return ApiResponse<bool>.Error("Rol aktifleştirilirken hata oluştu");
             }
         }
@@ -246,21 +232,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var role = await _roleManager.FindByIdAsync(roleId);
+                var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
                     return ApiResponse<bool>.Error("Rol bulunamadı");
                 }
 
                 // Bu role sahip kullanıcı var mı kontrol et
-                var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name);
+                var usersInRole = await userManager.GetUsersInRoleAsync(role.Name);
                 if (usersInRole.Any())
                 {
                     return ApiResponse<bool>.Error("Bu role sahip kullanıcılar bulunduğu için rol pasifleştirilemez");
                 }
 
                 role.IsActive = false;
-                var result = await _roleManager.UpdateAsync(role);
+                var result = await roleManager.UpdateAsync(role);
 
                 if (!result.Succeeded)
                 {
@@ -272,7 +258,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeactivateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
+                logger.LogError(ex, "DeactivateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
                 return ApiResponse<bool>.Error("Rol pasifleştirilirken hata oluştu");
             }
         }
@@ -281,7 +267,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var roles = await _roleManager.Roles.Where(x => x.IsActive == true).ToListAsync();
+                var roles = await roleManager.Roles.Where(x => x.IsActive == true).ToListAsync();
                 var orderedRoles = roles.OrderBy(role =>
                 role.Name == "Admin" ? 1 :
                 role.Name == "Yönetici" ? 2 :
@@ -293,7 +279,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetActiveRolesAsync işleminde hata oluştu");
+                logger.LogError(ex, "GetActiveRolesAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<RoleDTO>>.Error("Roller getirilirken hata oluştu");
             }
         }

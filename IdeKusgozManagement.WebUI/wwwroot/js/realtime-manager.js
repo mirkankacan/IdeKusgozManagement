@@ -346,7 +346,6 @@ class NotificationManager extends RealtimeManager {
             if (redirectUrl && redirectUrl.trim() !== '') {
                 // Small delay to allow dropdown to close smoothly
                 setTimeout(() => {
-                    // Hem internal hem external URL'ler için aynı sayfada yönlendir
                     window.location.href = redirectUrl;
                 }, 150);
             }

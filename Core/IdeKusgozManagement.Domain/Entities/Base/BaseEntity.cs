@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MassTransit;
+using System.ComponentModel.DataAnnotations;
 
 namespace IdeKusgozManagement.Domain.Entities.Base
 {
@@ -14,7 +15,7 @@ namespace IdeKusgozManagement.Domain.Entities.Base
 
         protected BaseEntity()
         {
-            Id = Guid.NewGuid().ToString();
+            Id = NewId.NextSequentialGuid().ToString();
         }
     }
 }

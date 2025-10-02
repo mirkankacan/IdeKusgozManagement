@@ -9,15 +9,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
-    public class EquipmentsController : ControllerBase
+    public class EquipmentsController(IEquipmentService equipmentService) : ControllerBase
     {
-        private readonly IEquipmentService _equipmentService;
-
-        public EquipmentsController(IEquipmentService equipmentService)
-        {
-            _equipmentService = equipmentService;
-        }
-
         /// <summary>
         /// Tüm ekipmanları getirir
         /// </summary>
@@ -25,7 +18,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> GetEquipments(CancellationToken cancellationToken = default)
         {
-            var result = await _equipmentService.GetEquipmentsAsync(cancellationToken);
+            var result = await equipmentService.GetEquipmentsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -35,7 +28,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet("active-equipments")]
         public async Task<IActionResult> GetActiveEquipments(CancellationToken cancellationToken = default)
         {
-            var result = await _equipmentService.GetActiveEquipmentsAsync(cancellationToken);
+            var result = await equipmentService.GetActiveEquipmentsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -51,7 +44,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Ekipman ID'si gereklidir");
             }
-            var result = await _equipmentService.EnableEquipmentAsync(equipmentId);
+            var result = await equipmentService.EnableEquipmentAsync(equipmentId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -67,7 +60,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Ekipman ID'si gereklidir");
             }
-            var result = await _equipmentService.DisableEquipmentAsync(equipmentId);
+            var result = await equipmentService.DisableEquipmentAsync(equipmentId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -83,7 +76,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Ekipman ID'si gereklidir");
             }
 
-            var result = await _equipmentService.GetEquipmentByIdAsync(equipmentId, cancellationToken);
+            var result = await equipmentService.GetEquipmentByIdAsync(equipmentId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -100,8 +93,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _equipmentService.CreateEquipmentAsync(createEquipmentDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : NotFound(result);
+            var result = await equipmentService.CreateEquipmentAsync(createEquipmentDTO, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -123,7 +116,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _equipmentService.UpdateEquipmentAsync(equipmentId, updateEquipmentDTO, cancellationToken);
+            var result = await equipmentService.UpdateEquipmentAsync(equipmentId, updateEquipmentDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -140,7 +133,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Ekipman ID'si gereklidir");
             }
 
-            var result = await _equipmentService.DeleteEquipmentAsync(equipmentId, cancellationToken);
+            var result = await equipmentService.DeleteEquipmentAsync(equipmentId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

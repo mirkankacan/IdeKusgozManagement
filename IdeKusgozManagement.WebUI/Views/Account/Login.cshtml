@@ -1,130 +1,130 @@
 ﻿@{
-	Layout = null;
+    Layout = null;
 }
 
 <!DOCTYPE html>
 <html lang="tr">
 
 <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Kuşgöz İzmir Vinç - Giriş Yap</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kuşgöz İzmir Vinç - Giriş Yap</title>
 
-	<!-- Styles -->
-	<link href="https://fonts.googleapis.com/css?family=Poppins:400,500,700,800&display=swap" rel="stylesheet">
-	<link href="~/theme/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-	<link href="~/theme/assets/plugins/font-awesome/css/all.min.css" rel="stylesheet">
-	<link href="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.css" rel="stylesheet">
-	<link href="~/theme/assets/css/main.min.css" rel="stylesheet">
-	<link href="~/theme/assets/css/custom.css" rel="stylesheet">
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,700,800&display=swap" rel="stylesheet">
+    <link href="~/theme/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/theme/assets/plugins/font-awesome/css/all.min.css" rel="stylesheet">
+    <link href="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.css" rel="stylesheet">
+    <link href="~/theme/assets/css/main.min.css" rel="stylesheet">
+    <link href="~/theme/assets/css/custom.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
 
 </head>
 
 <body class="login-page">
-	<div class='loader'>
-		<div class='spinner-grow text-primary' role='status'>
-			<span class='sr-only'>Yükleniyor...</span>
-		</div>
-	</div>
+    <div class='loader'>
+        <div class='spinner-grow text-primary' role='status'>
+            <span class='sr-only'>Yükleniyor...</span>
+        </div>
+    </div>
 
-	<div class="container">
-		<div class="row justify-content-md-center">
-			<div class="col-md-12 col-lg-4">
-				<div class="card login-box-container">
-					<div class="card-body">
-						<div class="authent-logo text-center">
-							<img src="~/theme/assets/images/logo.png" width="200" alt="Logo">
-						</div>
-						<div class="authent-text text-center mb-4">
-							<p>Devam etmek için lütfen giriş yapınız.</p>
-						</div>
+    <div class="container">
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-4">
+                <div class="card login-box-container">
+                    <div class="card-body">
+                        <div class="authent-logo text-center">
+                            <img src="~/theme/assets/images/logo.png" width="200" alt="Logo">
+                        </div>
+                        <div class="authent-text text-center mb-4">
+                            <p>Devam etmek için lütfen giriş yapınız.</p>
+                        </div>
 
-						<form id="loginForm">
-							<div class="mb-3">
-								<div class="form-floating">
-									<input type="text" class="form-control" id="txtUsername"
-										placeholder="Kullanıcı adı giriniz..." required>
-									<label for="txtUsername">Kullanıcı Adı</label>
-								</div>
-							</div>
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="txtTCNo"
+                                           placeholder="TC No giriniz..." required>
+                                    <label for="txtTCNo">TC No</label>
+                                </div>
+                            </div>
 
-							<div class="mb-3">
-								<div class="form-floating">
-									<input type="password" class="form-control" id="txtPassword"
-										placeholder="Şifre giriniz..." required>
-									<label for="txtPassword">Şifre</label>
-								</div>
-							</div>
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="password" class="form-control" id="txtPassword"
+                                           placeholder="Şifre giriniz..." required>
+                                    <label for="txtPassword">Şifre</label>
+                                </div>
+                            </div>
 
-							<div class="mb-3 form-check">
-								<input type="checkbox" class="form-check-input" id="rememberMe">
-								<label class="form-check-label" for="rememberMe">Beni Hatırla</label>
-							</div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">Beni Hatırla</label>
+                            </div>
 
-							<div class="d-grid">
-								<button id="btnLogin" type="submit" class="btn btn-info">Giriş Yap</button>
-							</div>
+                            <div class="d-grid">
+                                <button id="btnLogin" type="submit" class="btn btn-info">Giriş Yap</button>
+                            </div>
 
-							<div id="errorArea" class="text-danger text-center mt-3"></div>
-						</form>
+                            <div id="errorArea" class="text-danger text-center mt-3"></div>
+                        </form>
 
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	<!-- Scripts -->
-	<script src="~/theme/assets/plugins/jquery/jquery-3.4.1.min.js"></script>
-	<script src="https://unpkg.com/@@popperjs/core@2"></script>
-	<script src="~/theme/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
-	<script src="https://unpkg.com/feather-icons"></script>
-	<script src="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
-	<script src="~/theme/assets/js/main.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- Scripts -->
+    <script src="~/theme/assets/plugins/jquery/jquery-3.4.1.min.js"></script>
+    <script src="https://unpkg.com/@@popperjs/core@2"></script>
+    <script src="~/theme/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
+    <script src="~/theme/assets/js/main.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
-	<script>
-		$("#loginForm").on("submit", function (e) {
-			e.preventDefault();
-			const loginDto = {
-				Username: $("#txtUsername").val(),
-				Password: $("#txtPassword").val(),
-				RememberMe: $("#rememberMe").is(":checked")
-			};
+    <script>
+        $("#loginForm").on("submit", function (e) {
+            e.preventDefault();
+            const loginDto = {
+                TCNo: $("#txtTCNo").val(),
+                Password: $("#txtPassword").val(),
+                RememberMe: $("#rememberMe").is(":checked")
+            };
 
-			$('#btnLogin').attr("disabled", true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Giriş yapılıyor...');
+            $('#btnLogin').attr("disabled", true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Giriş yapılıyor...');
 
-			$.ajax({
-				url: "/giris-yap",
-				method: "POST",
-				contentType: "application/json",
-				data: JSON.stringify(loginDto),
-				success: function (response) {
-					toastr.success("Giriş başarılı.", "Başarılı");
-					const redirectUrl = response;
-					setTimeout(() => window.location.href = redirectUrl, 1000);
-				},
-				error: function (xhr) {
-					let errorMessage = "Bir hata oluştu.";
-					if (xhr.responseText) {
-						try {
-							const errorData = JSON.parse(xhr.responseText);
-							errorMessage = errorData.message || errorData || xhr.responseText;
-						} catch (e) {
-							errorMessage = xhr.responseText;
-						}
-					}
-					toastr.error(errorMessage, "Hata");
-				},
-				complete: function () {
-					$('#btnLogin').attr("disabled", false).html('<i data-feather="log-in"></i> Giriş Yap');
-					feather.replace();
-				}
-			});
-		});
-	</script>
+            $.ajax({
+                url: "/giris-yap",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(loginDto),
+                success: function (response) {
+                    toastr.success("Giriş başarılı.", "Başarılı");
+                    const redirectUrl = response;
+                    setTimeout(() => window.location.href = redirectUrl, 1000);
+                },
+                error: function (xhr) {
+                    let errorMessage = "Bir hata oluştu.";
+                    if (xhr.responseText) {
+                        try {
+                            const errorData = JSON.parse(xhr.responseText);
+                            errorMessage = errorData.message || errorData || xhr.responseText;
+                        } catch (e) {
+                            errorMessage = xhr.responseText;
+                        }
+                    }
+                    toastr.error(errorMessage, "Hata");
+                },
+                complete: function () {
+                    $('#btnLogin').attr("disabled", false).html('<i data-feather="log-in"></i> Giriş Yap');
+                    feather.replace();
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

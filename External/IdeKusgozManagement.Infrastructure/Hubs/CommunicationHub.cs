@@ -6,44 +6,25 @@ using Microsoft.Extensions.Logging;
 namespace IdeKusgozManagement.Infrastructure.Hubs
 {
     [Authorize]
-    public class CommunicationHub : Hub
+    public class CommunicationHub(ILogger<CommunicationHub> logger, IIdentityService identityService) : Hub
     {
-        private readonly ILogger<CommunicationHub> _logger;
-        private readonly ICurrentUserService _currentUserService;
-
-        public CommunicationHub(ILogger<CommunicationHub> logger, ICurrentUserService currentUserService)
-        {
-            _logger = logger;
-            _currentUserService = currentUserService;
-        }
-
         public override async Task OnConnectedAsync()
         {
             try
             {
-                var userId = _currentUserService.GetCurrentUserId();
-                var userName = _currentUserService.GetCurrentUserName();
-                var roleName = _currentUserService.GetCurrentUserRole();
-
-                _logger.LogInformation("Kullanıcı bağlandı. UserId: {UserId}, UserName: {UserName}, RoleName: {RoleName}, ConnectionId: {ConnectionId}",
-                    userId, userName, roleName, Context.ConnectionId);
+                var userId = identityService.GetUserId();
+                var roleName = identityService.GetUserRole();
 
                 // Genel mesajlar grubuna katıl
                 await Groups.AddToGroupAsync(Context.ConnectionId, "Messages");
-                _logger.LogInformation("Kullanıcı Messages grubuna eklendi. ConnectionId: {ConnectionId}", Context.ConnectionId);
 
-                // Not: Genel bildirimler grubuna otomatik katılmıyoruz
-                // Bu grup sadece özel durumlarda manuel olarak kullanılmalı
-
-                // Role bazlı grup (örneğin: Admin, User)
+                // Rol bazlı grup (örneğin, Admin, Şef, Personel)
                 var roleGroupName = $"Role_{roleName}";
                 await Groups.AddToGroupAsync(Context.ConnectionId, roleGroupName);
-                _logger.LogInformation("Kullanıcı role grubuna eklendi. GroupName: {GroupName}, ConnectionId: {ConnectionId}", roleGroupName, Context.ConnectionId);
 
                 // Kullanıcıya özel grup (kişisel bildirimler için)
                 var userGroupName = $"User_{userId}";
                 await Groups.AddToGroupAsync(Context.ConnectionId, userGroupName);
-                _logger.LogInformation("Kullanıcı user grubuna eklendi. GroupName: {GroupName}, ConnectionId: {ConnectionId}", userGroupName, Context.ConnectionId);
 
                 // Bağlantı başarılı bilgisi gönder
                 await Clients.Caller.SendAsync("ConnectionStatus", new
@@ -52,16 +33,13 @@ namespace IdeKusgozManagement.Infrastructure.Hubs
                     Message = "Bağlantı başarılı",
                     UserId = userId,
                     RoleName = roleName,
-                    UserName = userName
                 });
-
-                _logger.LogInformation("ConnectionStatus gönderildi. UserId: {UserId}, RoleName: {RoleName}", userId, roleName);
 
                 await base.OnConnectedAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "SignalR Hub OnConnectedAsync işleminde hata");
+                logger.LogError(ex, "SignalR Hub OnConnectedAsync işleminde hata");
             }
         }
 
@@ -72,14 +50,14 @@ namespace IdeKusgozManagement.Infrastructure.Hubs
             {
                 if (exception != null)
                 {
-                    _logger.LogError(exception, "SignalR Hub OnDisconnectedAsync işleminde Exception hata");
+                    logger.LogError(exception, "SignalR Hub OnDisconnectedAsync işleminde Exception hata");
                 }
 
                 await base.OnDisconnectedAsync(exception);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "SignalR Hub OnDisconnectedAsync işleminde hata");
+                logger.LogError(ex, "SignalR Hub OnDisconnectedAsync işleminde hata");
             }
         }
 
@@ -92,7 +70,7 @@ namespace IdeKusgozManagement.Infrastructure.Hubs
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"SignalR Hub JoinGroup işleminde hata. GroupName:{groupName}");
+                logger.LogError(ex, $"SignalR Hub JoinGroup işleminde hata. GroupName:{groupName}");
             }
         }
 
@@ -104,7 +82,7 @@ namespace IdeKusgozManagement.Infrastructure.Hubs
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"SignalR Hub LeaveGroup işleminde hata. GroupName:{groupName}");
+                logger.LogError(ex, $"SignalR Hub LeaveGroup işleminde hata. GroupName:{groupName}");
             }
         }
     }

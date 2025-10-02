@@ -1,8 +1,8 @@
-﻿using System.Text;
-using IdeKusgozManagement.WebUI.Models;
+﻿using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
@@ -245,7 +245,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/users/subordiantes?id={userId}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/users/subordiantes?userId={userId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

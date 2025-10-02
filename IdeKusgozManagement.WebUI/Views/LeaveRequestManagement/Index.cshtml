@@ -55,9 +55,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <input type="hidden" id="txt-rejectLeaveRequestId" value="" disabled readonly/>
                 <div class="mb-3">
-                    <label for="txtRejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
-                    <textarea class="form-control" id="txtRejectReason" rows="3" placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
+                    <label for="txt-rejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
+                    <textarea class="form-control" id="txt-rejectReason" rows="3" placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -192,10 +193,10 @@
                                         onclick="approveLeaveRequest('${row.id}')" title="Onayla">
                                         <i class="fas fa-check"></i>
                                     </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm"
-                                        onclick="rejectLeaveRequest('${row.id}')" title="Reddet">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                     <button type="button" class="btn btn-outline-danger btn-sm"
+                  onclick="openRejectModal('${row.id}')"  title="Reddet">
+                    <i class="fas fa-times"></i>
+                </button>
                                     <button type="button" class="btn btn-outline-danger btn-sm"
                                         onclick="deleteLeaveRequest('${row.id}')" title="Sil">
                                         <i class="fas fa-trash"></i>
@@ -280,20 +281,24 @@
                 console.error('Onaylama hatası:', error);
             }
         }
-
+                function openRejectModal(id) {
+            $('#txt-rejectLeaveRequestId').val(id);
+            $('#txt-rejectReason').val('');
+            $('#rejectModal').modal('show');
+        }
     
 
-        async function rejectLeaveRequest(leaveRequestId) {
+        async function rejectLeaveRequest() {
             try {
-                $('#txtRejectReason').val('');
+                        const leaveRequestId = $('#txt-rejectLeaveRequestId').val();
 
                 if (!leaveRequestId) {
                     toastr.error('İzin talebi ID\'si bulunamadı');
                     return;
                 }
-                $('#rejectModal').modal('show');
+             
 
-                const rejectReason = $('#txtRejectReason').val().trim();
+                const rejectReason = $('#txt-rejectReason').val().trim();
 
                 const submitBtn = $('#btnRejectLeaveRequest');
                 submitBtn.prop('disabled', true)

@@ -1,4 +1,6 @@
-﻿using IdeKusgozManagement.Application.DTOs.MessageDTOs;
+﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.DTOs.MessageDTOs;
+using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
@@ -10,17 +12,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
-    public class MessagesController : ControllerBase
+    public class MessagesController(IMessageService messageService, INotificationService notificationService) : ControllerBase
     {
-        private readonly IMessageService _messageService;
-        private readonly ISignalRService _signalRService;
-
-        public MessagesController(IMessageService messageService, ISignalRService signalRService)
-        {
-            _messageService = messageService;
-            _signalRService = signalRService;
-        }
-
         /// <summary>
         /// Tüm mesajları getirir
         /// </summary>
@@ -43,26 +36,46 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                     pageNumber = 1;
                     break;
             }
-            var result = await _messageService.GetMessagesAsync(pageSize, pageNumber, cancellationToken);
+            var result = await messageService.GetMessagesAsync(pageSize, pageNumber, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
-        /// Mesaj oluşturur
+        /// Mesaj oluşturur SignalR ile anlık olarak gönderir
         /// </summary>
         [HttpPost]
         [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> CreateMessage([FromBody] CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
-            var result = await _messageService.CreateMessageAsync(createMessageDTO, cancellationToken);
+            ApiResponse<MessageDTO> messageResponse = new();
+            if (createMessageDTO.TargetRoles != null)
+                messageResponse = await messageService.SendMessageToRolesAsync(createMessageDTO, cancellationToken);
 
-            if (!result.IsSuccess)
+            if (createMessageDTO.TargetUsers != null)
+                messageResponse = await messageService.SendMessageToUsersAsync(createMessageDTO, cancellationToken);
+
+            if (createMessageDTO.TargetUsers == null && createMessageDTO.TargetRoles == null)
+                messageResponse = await messageService.SendMessageToAllAsync(createMessageDTO, cancellationToken);
+
+            var createNotification = new CreateNotificationDTO
             {
-                return BadRequest(result);
-            }
-            await _signalRService.SendMessageToAllAsync(result.Data, cancellationToken);
-            await _signalRService.SendNotificationToAllAsync($"Yeni bir mesaj {result.Data.CreatedByName} tarafından {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde atıldı", NotificationType.Message, "/sosyal");
-            return Ok(result);
+                Message = $"{messageResponse.Data.CreatedByFullName} tarafından {messageResponse.Data.CreatedDate:dd.MM.yyyy HH:mm} tarihinde yeni bir mesaj atıldı",
+                Type = NotificationType.Message,
+                RedirectUrl = "/sosyal",
+                TargetRoles = createMessageDTO.TargetRoles,
+                TargetUsers = createMessageDTO.TargetUsers
+            };
+
+            if (createMessageDTO.TargetRoles != null)
+                await notificationService.SendNotificationToRolesAsync(createNotification, cancellationToken);
+
+            if (createMessageDTO.TargetUsers != null)
+                await notificationService.SendNotificationToUsersAsync(createNotification, cancellationToken);
+
+            if (createMessageDTO.TargetRoles == null && createMessageDTO.TargetUsers == null)
+                await notificationService.SendNotificationToAllAsync(createNotification, cancellationToken);
+
+            return Ok(messageResponse);
         }
 
         /// <summary>
@@ -78,7 +91,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Mesaj ID'si gereklidir");
             }
-            var result = await _messageService.DeleteMessageAsync(messageId, cancellationToken);
+            var result = await messageService.DeleteMessageAsync(messageId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

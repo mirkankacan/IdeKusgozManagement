@@ -8,94 +8,75 @@ using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IJwtProvider jwtProvider, IIdentityService identityService, ILogger<AuthService> logger) : IAuthService
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IJwtProvider _jwtProvider;
-        private readonly ILogger<AuthService> _logger;
-        private readonly ICurrentUserService _currentUserService;
-
-        public AuthService(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            IJwtProvider jwtProvider,
-            ILogger<AuthService> logger,
-            ICurrentUserService currentUserService)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _jwtProvider = jwtProvider;
-            _logger = logger;
-            _currentUserService = currentUserService;
-        }
-
         public async Task<ApiResponse<TokenDTO>> LoginAsync(LoginDTO loginDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 // Kullanıcıyı bul
-                var user = await _userManager.FindByNameAsync(loginDTO.UserName);
+                var user = await userManager.FindByNameAsync(loginDTO.TCNo);
                 if (user == null)
                 {
-                    _logger.LogWarning("Giriş denemesi başarısız. Kullanıcı bulunamadı: {UserName}", loginDTO.UserName);
-                    return ApiResponse<TokenDTO>.Error("Kullanıcı adı veya şifre hatalı");
+                    logger.LogWarning("Giriş denemesi başarısız. Kullanıcı bulunamadı. TCNo: {TCNo}", loginDTO.TCNo);
+                    return ApiResponse<TokenDTO>.Error("TC No veya şifre hatalı");
                 }
 
                 // Kullanıcı aktif mi kontrol et
                 if (!user.IsActive)
                 {
-                    _logger.LogWarning("Giriş denemesi başarısız. Kullanıcı pasif durumda: {UserName}", loginDTO.UserName);
+                    logger.LogWarning("Giriş denemesi başarısız. Kullanıcı pasif durumda. TCNo: {TCNo}", loginDTO.TCNo);
                     return ApiResponse<TokenDTO>.Error("Hesabınız pasif durumda");
                 }
 
                 // Şifre kontrolü
-                var result = await _signInManager.CheckPasswordSignInAsync(user, loginDTO.Password, false);
+                var result = await signInManager.CheckPasswordSignInAsync(user, loginDTO.Password, false);
                 if (!result.Succeeded)
                 {
-                    _logger.LogWarning("Giriş denemesi başarısız. Geçersiz şifre: {UserName}", loginDTO.UserName);
-                    return ApiResponse<TokenDTO>.Error("Kullanıcı adı veya şifre hatalı");
+                    logger.LogWarning("Giriş denemesi başarısız. Geçersiz şifre. TCNo: {TCNo}", loginDTO.TCNo);
+                    return ApiResponse<TokenDTO>.Error("Şifre hatalı");
                 }
 
                 // Token oluştur
-                var token = await _jwtProvider.CreateTokenAsync(user);
+                var token = await jwtProvider.CreateTokenAsync(user);
 
-                _logger.LogInformation("Kullanıcı başarıyla giriş yaptı: {UserName}", loginDTO.UserName);
+                logger.LogInformation("Kullanıcı başarıyla giriş yaptı. TCNo: {TCNo}", loginDTO.TCNo);
 
                 return ApiResponse<TokenDTO>.Success(token, "Giriş başarılı");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "LoginAsync işleminde hata oluştu. UserName: {UserName}", loginDTO.UserName);
+                logger.LogError(ex, "LoginAsync işleminde hata oluştu. TCNo: {TCNo}", loginDTO.TCNo);
                 return ApiResponse<TokenDTO>.Error("Giriş işlemi sırasında bir hata oluştu");
             }
         }
 
         public async Task<ApiResponse<bool>> LogoutAsync(CancellationToken cancellationToken = default)
         {
+            var userId = identityService.GetUserId();
+
             try
             {
-                var userId = _currentUserService.GetCurrentUserId();
                 if (!string.IsNullOrEmpty(userId))
                 {
-                    var user = await _userManager.FindByIdAsync(userId);
+                    var user = await userManager.FindByIdAsync(userId);
                     if (user != null)
                     {
                         // Refresh token'ı temizle
                         user.RefreshToken = null;
                         user.RefreshTokenExpires = null;
-                        await _userManager.UpdateAsync(user);
+                        await userManager.UpdateAsync(user);
 
-                        _logger.LogInformation("Kullanıcı başarıyla çıkış yaptı: {UserId}", userId);
+                        logger.LogInformation("Kullanıcı başarıyla çıkış yaptı. UserId: {UserId}", userId);
                     }
                 }
 
-                await _signInManager.SignOutAsync();
+                await signInManager.SignOutAsync();
                 return ApiResponse<bool>.Success(true, "Çıkış başarılı");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "LogoutAsync işleminde hata oluştu");
+                logger.LogError(ex, "LogoutAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<bool>.Error("Çıkış işlemi sırasında bir hata oluştu");
             }
         }
@@ -104,44 +85,44 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(createTokenByRefreshTokenDTO.UserId);
+                var user = await userManager.FindByIdAsync(createTokenByRefreshTokenDTO.UserId);
                 if (user == null)
                 {
-                    _logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı bulunamadı. User Id: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                    logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı bulunamadı. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
                     return ApiResponse<TokenDTO>.Error("Kullanıcı bulunamadı");
                 }
 
                 // Kullanıcı aktif mi kontrol et
                 if (!user.IsActive)
                 {
-                    _logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı pasif durumda. User Id: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                    logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı pasif durumda. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
                     return ApiResponse<TokenDTO>.Error("Hesabınız pasif durumda");
                 }
 
                 // Refresh token kontrolü
                 if (user.RefreshToken != createTokenByRefreshTokenDTO.RefreshToken)
                 {
-                    _logger.LogWarning("Refresh token denemesi başarısız. Geçersiz refresh token User Id: {UserId} | Database Refresh Token: {DbRefreshToken} | From UI Refresh Token: {UiRefreshToken}", createTokenByRefreshTokenDTO.UserId, user.RefreshToken, createTokenByRefreshTokenDTO.RefreshToken);
+                    logger.LogWarning("Refresh token denemesi başarısız. Geçersiz refresh token. UserId: {UserId} | DatabaseRefreshToken: {DbRefreshToken} | FromUIRefreshToken: {UiRefreshToken}", createTokenByRefreshTokenDTO.UserId, user.RefreshToken, createTokenByRefreshTokenDTO.RefreshToken);
                     return ApiResponse<TokenDTO>.Error("Geçersiz refresh token");
                 }
 
                 // Refresh token süresi dolmuş mu kontrol et
                 if (user.RefreshTokenExpires == null || user.RefreshTokenExpires <= DateTime.Now)
                 {
-                    _logger.LogWarning("Refresh token denemesi başarısız. Refresh token süresi dolmuş. User Id: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                    logger.LogWarning("Refresh token denemesi başarısız. Refresh token süresi dolmuş. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
                     return ApiResponse<TokenDTO>.Error("Refresh token süresi dolmuş");
                 }
 
                 // Yeni token oluştur
-                var newToken = await _jwtProvider.CreateTokenAsync(user);
+                var newToken = await jwtProvider.CreateTokenAsync(user);
 
-                _logger.LogInformation("Token başarıyla yenilendi. User Id: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                logger.LogInformation("Token başarıyla yenilendi. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
 
                 return ApiResponse<TokenDTO>.Success(newToken, "Token başarıyla yenilendi");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "RefreshTokenAsync işleminde hata oluştu. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
+                logger.LogError(ex, "RefreshTokenAsync işleminde hata oluştu. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
                 return ApiResponse<TokenDTO>.Error("Token yenileme işlemi sırasında bir hata oluştu");
             }
         }

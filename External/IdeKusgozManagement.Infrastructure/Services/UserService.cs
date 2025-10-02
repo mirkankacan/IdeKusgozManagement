@@ -1,7 +1,7 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.UserDTOs;
-using IdeKusgozManagement.Application.Interfaces.Repositories;
 using IdeKusgozManagement.Application.Interfaces.Services;
+using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 using Microsoft.AspNetCore.Identity;
@@ -10,45 +10,44 @@ using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class UserService : IUserService
+    public class UserService(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, ILogger<UserService> logger, IUnitOfWork unitOfWork) : IUserService
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly ILogger<UserService> _logger;
-        private readonly IUnitOfWork _unitOfWork;
-
-        public UserService(
-            UserManager<ApplicationUser> userManager,
-            RoleManager<ApplicationRole> roleManager,
-            ILogger<UserService> logger,
-            IUnitOfWork unitOfWork)
-        {
-            _userManager = userManager;
-            _roleManager = roleManager;
-            _logger = logger;
-            _unitOfWork = unitOfWork;
-        }
+        private readonly string[] superiorRoles = new[] { "Şef", "Yönetici", "Admin" };
 
         public async Task<ApiResponse<IEnumerable<UserDTO>>> GetUsersAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var users = await _userManager.Users.ToListAsync(cancellationToken);
+                var users = await userManager.Users.ToListAsync(cancellationToken);
 
+                // Tüm kullanıcı ID'lerini topla
+                var userIds = users.Select(u => u.Id).ToList();
+
+                // Tüm hiyerarşileri tek sorguda getir
+                var hierarchies = await unitOfWork.GetRepository<IdtUserHierarchy>()
+                    .Where(x => userIds.Contains(x.SubordinateId))
+                    .ToListAsync(cancellationToken);
+
+                // Hiyerarşileri kullanıcı ID'sine göre grupla
+                var hierarchyLookup = hierarchies
+                    .GroupBy(h => h.SubordinateId)
+                    .ToDictionary(g => g.Key, g => g.Select(x => x.SuperiorId).ToList());
+
+                // Tüm kullanıcı rollerini tek seferde al (Identity'de böyle bir metod varsa)
                 var userDTOs = new List<UserDTO>();
 
                 foreach (var user in users)
                 {
                     var userDTO = user.Adapt<UserDTO>();
-                    var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
-                  .SelectNoTrackingAsync(
-                      selector: x => x.SuperiorId,
-                      predicate: x => x.SubordinateId == user.Id, cancellationToken
-                  );
-                    var roles = await _userManager.GetRolesAsync(user);
 
-                    userDTO.SuperiorIds = superiorIds.ToList();
+                    // Lookup'tan al, yoksa boş liste
+                    userDTO.SuperiorIds = hierarchyLookup.TryGetValue(user.Id, out var superiors)
+                        ? superiors
+                        : new List<string>();
+
+                    var roles = await userManager.GetRolesAsync(user);
                     userDTO.RoleName = roles.FirstOrDefault();
+
                     userDTOs.Add(userDTO);
                 }
 
@@ -56,7 +55,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetUsersAsync işleminde hata oluştu");
+                logger.LogError(ex, "GetUsersAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<UserDTO>>.Error("Kullanıcılar getirilirken hata oluştu");
             }
         }
@@ -65,29 +64,25 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ApiResponse<UserDTO>.Error("Kullanıcı bulunamadı");
                 }
 
-                var roles = await _userManager.GetRolesAsync(user);
+                var roles = await userManager.GetRolesAsync(user);
                 var userDTO = user.Adapt<UserDTO>();
                 userDTO.RoleName = roles.FirstOrDefault();
 
-                var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
-                    .SelectNoTrackingAsync(
-                        selector: x => x.SuperiorId,
-                        predicate: x => x.SubordinateId == userId, cancellationToken
-                    );
+                var superiorIds = await unitOfWork.GetRepository<IdtUserHierarchy>().Where(x => x.SubordinateId == userId).Select(x => x.SuperiorId).ToListAsync(cancellationToken);
 
-                userDTO.SuperiorIds = superiorIds.ToList();
+                userDTO.SuperiorIds = superiorIds;
 
                 return ApiResponse<UserDTO>.Success(userDTO);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetUserByIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                logger.LogError(ex, "GetUserByIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<UserDTO>.Error("Kullanıcı getirilirken hata oluştu");
             }
         }
@@ -96,10 +91,10 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+                await unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 // Username kontrolü
-                var existingUser = await _userManager.FindByNameAsync(createUserDTO.UserName);
+                var existingUser = await userManager.FindByNameAsync(createUserDTO.TCNo);
                 if (existingUser != null)
                 {
                     return ApiResponse<UserDTO>.Error("Bu kullanıcı adı zaten kullanılıyor");
@@ -107,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var user = createUserDTO.Adapt<ApplicationUser>();
 
-                var result = await _userManager.CreateAsync(user, createUserDTO.Password);
+                var result = await userManager.CreateAsync(user, createUserDTO.Password);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
@@ -116,9 +111,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (!string.IsNullOrEmpty(createUserDTO.RoleName))
                 {
-                    if (await _roleManager.RoleExistsAsync(createUserDTO.RoleName))
+                    if (await roleManager.RoleExistsAsync(createUserDTO.RoleName))
                     {
-                        await _userManager.AddToRoleAsync(user, createUserDTO.RoleName);
+                        await userManager.AddToRoleAsync(user, createUserDTO.RoleName);
                     }
                 }
 
@@ -142,12 +137,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     if (hierarchyList.Any())
                     {
-                        await _unitOfWork.Repository<IdtUserHierarchy>().AddRangeAsync(hierarchyList);
+                        await unitOfWork.GetRepository<IdtUserHierarchy>().AddRangeAsync(hierarchyList, cancellationToken);
                     }
                 }
 
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
 
                 var userDTO = user.Adapt<UserDTO>();
                 userDTO.RoleName = createUserDTO.RoleName;
@@ -156,8 +151,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                _logger.LogError(ex, "CreateUserAsync işleminde hata oluştu");
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                logger.LogError(ex, "CreateUserAsync işleminde hata oluştu");
                 return ApiResponse<UserDTO>.Error("Kullanıcı oluşturulurken hata oluştu");
             }
         }
@@ -166,43 +161,42 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+                await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ApiResponse<UserDTO>.Error("Kullanıcı bulunamadı");
                 }
 
-                // Username değişikliği kontrolü
-                if (user.UserName != updateUserDTO.UserName)
+                if (!string.IsNullOrEmpty(updateUserDTO.TCNo))
                 {
-                    var existingUser = await _userManager.FindByNameAsync(updateUserDTO.UserName);
-                    if (existingUser != null && existingUser.Id != userId)
+                    var isUserExist = await userManager.Users.AnyAsync(x => x.TCNo == updateUserDTO.TCNo && x.UserName == updateUserDTO.TCNo && x.Id != userId, cancellationToken);
+                    if (isUserExist)
                     {
-                        return ApiResponse<UserDTO>.Error("Bu kullanıcı adı kullanılıyor");
+                        return ApiResponse<UserDTO>.Error("Bu TC No kullanılıyor");
                     }
                 }
 
                 if (!string.IsNullOrEmpty(updateUserDTO.RoleName))
                 {
-                    var currentRoles = await _userManager.GetRolesAsync(user);
+                    var currentRoles = await userManager.GetRolesAsync(user);
                     if (currentRoles.Any())
                     {
-                        await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                        await userManager.RemoveFromRolesAsync(user, currentRoles);
                     }
 
-                    if (await _roleManager.RoleExistsAsync(updateUserDTO.RoleName))
+                    if (await roleManager.RoleExistsAsync(updateUserDTO.RoleName))
                     {
-                        await _userManager.AddToRoleAsync(user, updateUserDTO.RoleName);
+                        await userManager.AddToRoleAsync(user, updateUserDTO.RoleName);
                     }
                 }
 
                 // Şifre güncelleme kontrolü
                 if (!string.IsNullOrEmpty(updateUserDTO.Password) && updateUserDTO.Password.Length > 3)
                 {
-                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                    var passwordResult = await _userManager.ResetPasswordAsync(user, token, updateUserDTO.Password);
+                    var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                    var passwordResult = await userManager.ResetPasswordAsync(user, token, updateUserDTO.Password);
                     if (!passwordResult.Succeeded)
                     {
                         var passwordErrors = passwordResult.Errors.Select(e => e.Description).ToList();
@@ -210,53 +204,64 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     }
                 }
 
-                user.UserName = updateUserDTO.UserName;
+                user.UserName = updateUserDTO.TCNo;
+                user.TCNo = updateUserDTO.TCNo;
                 user.Name = updateUserDTO.Name;
                 user.Surname = updateUserDTO.Surname;
-                user.IsActive = updateUserDTO.IsActive.HasValue ? updateUserDTO.IsActive.Value : user.IsActive;
+                user.IsActive = updateUserDTO.IsActive;
 
-                var result = await _userManager.UpdateAsync(user);
+                var result = await userManager.UpdateAsync(user);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
                     return ApiResponse<UserDTO>.Error(errors);
                 }
 
-                var deleteResult = await _unitOfWork.Repository<IdtUserHierarchy>().DeleteRangeAsync(h => h.SubordinateId == user.Id, cancellationToken);
-
-                // Yeni hierarchy kayıtları oluştur
-                if (updateUserDTO.SuperiorIds != null && updateUserDTO.SuperiorIds.Any())
+                var superiors = await unitOfWork.GetRepository<IdtUserHierarchy>().Where(x => x.SubordinateId == user.Id).ToListAsync(cancellationToken);
+                if (superiors.Any())
                 {
-                    var newHierarchies = new List<IdtUserHierarchy>();
-
-                    foreach (var superiorId in updateUserDTO.SuperiorIds.Where(id => !string.IsNullOrEmpty(id)))
-                    {
-                        var hierarchy = new IdtUserHierarchy
-                        {
-                            SubordinateId = user.Id,
-                            SuperiorId = superiorId,
-                        };
-                        newHierarchies.Add(hierarchy);
-                    }
-
-                    if (newHierarchies.Any())
-                    {
-                        await _unitOfWork.Repository<IdtUserHierarchy>().AddRangeAsync(newHierarchies);
-                    }
+                    unitOfWork.GetRepository<IdtUserHierarchy>().RemoveRange(superiors);
                 }
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                var newHierarchies = new List<IdtUserHierarchy>();
+                foreach (var superiorId in updateUserDTO.SuperiorIds.Where(id => !string.IsNullOrEmpty(id)))
+                {
+                    // Superior'un gerçekten var olduğunu kontrol et
+                    var superiorExists = await userManager.FindByIdAsync(superiorId);
+                    if (superiorExists == null || !superiorExists.IsActive)
+                    {
+                        return ApiResponse<UserDTO>.Error($"Geçersiz üst kullanıcı ID: {superiorId}");
+                    }
 
-                var roles = await _userManager.GetRolesAsync(user);
-                var userDTO = user.Adapt<UserDTO>();
-                userDTO.RoleName = roles.FirstOrDefault();
+                    if (superiorId == user.Id)
+                    {
+                        return ApiResponse<UserDTO>.Error("Kullanıcı kendi üstü olamaz");
+                    }
 
-                return ApiResponse<UserDTO>.Success(userDTO, "Kullanıcı başarıyla güncellendi");
+                    var hierarchy = new IdtUserHierarchy
+                    {
+                        SubordinateId = user.Id,
+                        SuperiorId = superiorId,
+                    };
+                    newHierarchies.Add(hierarchy);
+                }
+
+                if (newHierarchies.Any())
+                {
+                    await unitOfWork.GetRepository<IdtUserHierarchy>().AddRangeAsync(newHierarchies, cancellationToken);
+                }
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                var mappedUser = user.Adapt<UserDTO>();
+                var role = (await userManager.GetRolesAsync(user)).FirstOrDefault()!;
+                mappedUser.RoleName = role;
+
+                return ApiResponse<UserDTO>.Success(mappedUser, "Kullanıcı başarıyla güncellendi");
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                _logger.LogError(ex, "UpdateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                logger.LogError(ex, "UpdateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<UserDTO>.Error("Kullanıcı güncellenirken hata oluştu");
             }
         }
@@ -265,13 +270,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
                 }
 
-                var result = await _userManager.DeleteAsync(user);
+                var result = await userManager.DeleteAsync(user);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
@@ -282,7 +287,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                logger.LogError(ex, "DeleteUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<bool>.Error("Kullanıcı silinirken hata oluştu");
             }
         }
@@ -291,26 +296,26 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(assignRoleDTO.UserId);
+                var user = await userManager.FindByIdAsync(assignRoleDTO.UserId);
                 if (user == null)
                 {
                     return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
                 }
 
-                if (!await _roleManager.RoleExistsAsync(assignRoleDTO.RoleName))
+                if (!await roleManager.RoleExistsAsync(assignRoleDTO.RoleName))
                 {
                     return ApiResponse<bool>.Error("Rol bulunamadı");
                 }
 
                 // Kullanıcının mevcut rollerini temizle (çünkü sadece 1 rol olacak)
-                var currentRoles = await _userManager.GetRolesAsync(user);
+                var currentRoles = await userManager.GetRolesAsync(user);
                 if (currentRoles.Any())
                 {
-                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                    await userManager.RemoveFromRolesAsync(user, currentRoles);
                 }
 
                 // Yeni rolü ata
-                var result = await _userManager.AddToRoleAsync(user, assignRoleDTO.RoleName);
+                var result = await userManager.AddToRoleAsync(user, assignRoleDTO.RoleName);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
@@ -321,7 +326,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "AssignRoleToUserAsync işleminde hata oluştu");
+                logger.LogError(ex, "AssignRoleToUserAsync işleminde hata oluştu");
                 return ApiResponse<bool>.Error("Rol atanırken hata oluştu");
             }
         }
@@ -330,14 +335,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
                 }
 
                 user.IsActive = true;
-                var result = await _userManager.UpdateAsync(user);
+                var result = await userManager.UpdateAsync(user);
 
                 if (!result.Succeeded)
                 {
@@ -349,7 +354,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "EnableUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                logger.LogError(ex, "EnableUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<bool>.Error("Kullanıcı aktifleştirilirken hata oluştu");
             }
         }
@@ -358,14 +363,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
                 }
 
                 user.IsActive = false;
-                var result = await _userManager.UpdateAsync(user);
+                var result = await userManager.UpdateAsync(user);
 
                 if (!result.Succeeded)
                 {
@@ -377,7 +382,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DisableUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                logger.LogError(ex, "DisableUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<bool>.Error("Kullanıcı pasifleştirilirken hata oluştu");
             }
         }
@@ -386,13 +391,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ApiResponse<bool>.Error("Kullanıcı bulunamadı");
                 }
 
-                var result = await _userManager.ChangePasswordAsync(user, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword);
+                var result = await userManager.ChangePasswordAsync(user, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
@@ -403,7 +408,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ChangePasswordAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                logger.LogError(ex, "ChangePasswordAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<bool>.Error("Şifre değiştirilirken hata oluştu");
             }
         }
@@ -412,28 +417,30 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var targetRoles = new[] { "Şef", "Yönetici", "Admin" };
-                var userDTOs = new List<UserDTO>();
+                // Aktif kullanıcıları getir
+                var users = await userManager.Users
+                    .Where(u => u.IsActive)
+                    .ToListAsync(cancellationToken);
 
-                foreach (var role in targetRoles)
+                // Üst düzey rollere sahip kullanıcıları filtrele
+                var superiorUsers = new List<ApplicationUser>();
+                foreach (var user in users)
                 {
-                    var usersInRole = await _userManager.GetUsersInRoleAsync(role);
-
-                    foreach (var user in usersInRole.Where(x => x.IsActive == true))
+                    var userRole = (await userManager.GetRolesAsync(user)).FirstOrDefault();
+                    if (userRole != null && superiorRoles.Contains(userRole))
                     {
-                        var userDTO = user.Adapt<UserDTO>();
-                        userDTO.RoleName = role;
-                        userDTO.SuperiorIds = new();
-                        userDTOs.Add(userDTO);
+                        superiorUsers.Add(user);
                     }
                 }
 
-                return ApiResponse<IEnumerable<UserDTO>>.Success(userDTOs);
+                var mappedActiveSuperiors = superiorUsers.Adapt<IEnumerable<UserDTO>>();
+
+                return ApiResponse<IEnumerable<UserDTO>>.Success(mappedActiveSuperiors);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetActiveSuperiorsAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<UserDTO>>.Error("Kullanıcılar getirilirken hata oluştu");
+                logger.LogError(ex, "GetActiveSuperiorsAsync işleminde hata oluştu");
+                return ApiResponse<IEnumerable<UserDTO>>.Error("Aktif yöneticiler getirilirken hata oluştu");
             }
         }
 
@@ -441,47 +448,29 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var subordinateIds = await _unitOfWork.Repository<IdtUserHierarchy>()
-                    .SelectNoTrackingAsync(
-                        selector: x => x.SubordinateId,
-                        predicate: x => x.SuperiorId == userId,
-                        cancellationToken
-                    );
-
-                // Eğer hiç astı yoksa boş liste döndür
-                if (!subordinateIds.Any())
+                if (string.IsNullOrEmpty(userId))
                 {
-                    return ApiResponse<IEnumerable<UserDTO>>.Success(new List<UserDTO>());
+                    return ApiResponse<IEnumerable<UserDTO>>.Error("Kullanıcı kimliği geçersiz");
                 }
 
-                var users = await _userManager.Users
-                    .Where(u => subordinateIds.Contains(u.Id))
+                var subordinateIds = await unitOfWork.GetRepository<IdtUserHierarchy>()
+                    .Where(x => x.SuperiorId == userId)
+                    .Select(x => x.SubordinateId)
                     .ToListAsync(cancellationToken);
 
-                var userDTOs = new List<UserDTO>();
-
-                foreach (var user in users)
+                if (subordinateIds == null || !subordinateIds.Any())
                 {
-                    var userDTO = user.Adapt<UserDTO>();
-
-                    var superiorIds = await _unitOfWork.Repository<IdtUserHierarchy>()
-                        .SelectNoTrackingAsync(
-                            selector: x => x.SuperiorId,
-                            predicate: x => x.SubordinateId == user.Id,
-                            cancellationToken
-                        );
-
-                    var roles = await _userManager.GetRolesAsync(user);
-                    userDTO.SuperiorIds = superiorIds.ToList();
-                    userDTO.RoleName = roles.FirstOrDefault();
-                    userDTOs.Add(userDTO);
+                    return ApiResponse<IEnumerable<UserDTO>>.Success(new List<UserDTO>(), "Alt kullanıcılar bulunamadı");
                 }
+                var users = await userManager.Users.Where(x => subordinateIds.Contains(x.Id)).ToListAsync(cancellationToken);
 
-                return ApiResponse<IEnumerable<UserDTO>>.Success(userDTOs);
+                var mappedUsers = users.Adapt<IEnumerable<UserDTO>>();
+
+                return ApiResponse<IEnumerable<UserDTO>>.Success(mappedUsers);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetSubordinatesByUserId işleminde hata oluştu. UserId: {UserId}", userId);
+                logger.LogError(ex, "GetSubordinatesByUserId işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<IEnumerable<UserDTO>>.Error("Atanmış kullanıcılar getirilirken hata oluştu");
             }
         }
