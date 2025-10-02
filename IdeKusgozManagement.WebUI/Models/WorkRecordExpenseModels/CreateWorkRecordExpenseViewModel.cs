@@ -11,7 +11,5 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels
 
         [Required]
         public decimal Amount { get; set; }
-
-        public string? ReceiptImageUrl { get; set; } = null;
     }
 }

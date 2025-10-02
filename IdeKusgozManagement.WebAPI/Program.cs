@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddInfrastructureServices(builder.Configuration, builder.Environment);
 builder.Services.AddWebAPIServices(builder.Configuration, builder.Host);
 
 // Add SignalR
@@ -65,7 +65,7 @@ app.UseEndpoints(endpoints =>
     // Controllers
     endpoints.MapControllers();
 
-    // SignalR Hub - endpoints i�inde map edilmeli
+    // SignalR Hubs
     endpoints.MapHub<CommunicationHub>("/communicationHub");
 });
 app.Lifetime.ApplicationStopping.Register(Log.CloseAndFlush);

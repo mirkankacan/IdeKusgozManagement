@@ -16,12 +16,12 @@ namespace IdeKusgozManagement.Domain.Entities
         /// <summary>
         /// Hedef kullanıcı ID'si (null ise tüm kullanıcılara gider)
         /// </summary>
-        public string? TargetUserId { get; set; }
+        public string? TargetUsers { get; set; }
 
         /// <summary>
         /// Hedef rol adı (null ise rol bazlı gönderim yapılmaz)
         /// </summary>
-        public string? TargetRole { get; set; }
+        public string? TargetRoles { get; set; }
 
         /// <summary>
         /// Bildirime tıklandığında yönlendirilecek URL

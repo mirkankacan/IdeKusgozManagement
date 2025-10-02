@@ -24,8 +24,8 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         public string CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public string CreatedByName { get; set; }
-        public string? UpdatedByName { get; set; }
+        public string CreatedByFullName { get; set; }
+        public string? UpdatedByFullName { get; set; }
         public List<WorkRecordExpenseViewModel>? Expenses { get; set; }
     }
 }

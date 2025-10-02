@@ -1,10 +1,13 @@
-﻿namespace IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs
+﻿using IdeKusgozManagement.Application.DTOs.FileDTOs;
+
+namespace IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs
 {
     public class CreateWorkRecordExpenseDTO
     {
-        public string ExpenseId { get; set; }
+        public string? WorkRecordId { get; set; }
+        public string ExpenseId { get; set; } = null!;
         public string? Description { get; set; }
         public decimal Amount { get; set; }
-        public string? ReceiptImageUrl { get; set; }
+        public UploadFileDTO? File { get; set; }
     }
 }

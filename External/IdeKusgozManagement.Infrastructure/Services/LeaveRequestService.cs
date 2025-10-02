@@ -1,12 +1,15 @@
 ﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.HolidayDTOs;
 using IdeKusgozManagement.Application.DTOs.LeaveRequestDTOs;
+using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.DTOs.OptionDTOs;
-using IdeKusgozManagement.Application.Interfaces.Repositories;
 using IdeKusgozManagement.Application.Interfaces.Services;
+using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Domain.Enums;
 using Mapster;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -14,59 +17,28 @@ using System.Text.Json;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class LeaveRequestService : ILeaveRequestService
+    public class LeaveRequestService(IUnitOfWork unitOfWork, IMemoryCache memoryCache, IOptions<HolidayApiOptionsDTO> holidayApiOptions, ILogger<LeaveRequestService> logger, IFileService fileService, INotificationService notificationService, IIdentityService identityService) : ILeaveRequestService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly ILogger<LeaveRequestService> _logger;
-        private readonly HolidayApiOptionsDTO _holidayApiOptions;
-        private readonly IMemoryCache _memoryCache;
-
-        public LeaveRequestService(IUnitOfWork unitOfWork, ILogger<LeaveRequestService> logger, IOptions<HolidayApiOptionsDTO> holidayApiOptions, IMemoryCache memoryCache)
-        {
-            _unitOfWork = unitOfWork;
-            _logger = logger;
-            _holidayApiOptions = holidayApiOptions.Value;
-            _memoryCache = memoryCache;
-        }
-
         public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var leaveRequests = await _unitOfWork.Repository<IdtLeaveRequest>().GetAllNoTrackingAsync(cancellationToken, lr => lr.CreatedByUser, lr => lr.UpdatedByUser);
+                var leaveRequests = await unitOfWork.GetRepository<IdtLeaveRequest>()
+                    .WhereAsNoTracking(null)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.File)
+                    .OrderByDescending(x => x.CreatedDate).ToListAsync(cancellationToken);
 
-                var leaveRequestDTOs = leaveRequests
-                    .Adapt<IEnumerable<LeaveRequestDTO>>()
-                    .OrderByDescending(lr => lr.CreatedDate)
-                    .ToList();
+                // Mapping config dosyasında CreatedByUser ve UpdatedByUser için gerekli dönüşümler yapıldı
+                var mappedLeaveRequests = leaveRequests.Adapt<IEnumerable<LeaveRequestDTO>>();
 
-                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, "İzin talepleri başarıyla getirildi");
+                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Success(mappedLeaveRequests, "İzin talepleri başarıyla getirildi");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetLeaveRequestsAsync işleminde hata oluştu");
+                logger.LogError(ex, "GetLeaveRequestsAsync işleminde hata oluştu");
                 return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error("İzin talepleri getirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByStatusAsync(LeaveRequestStatus status, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var leaveRequests = await _unitOfWork.Repository<IdtLeaveRequest>()
-                    .GetWhereNoTrackingAsync(x => x.Status == status, cancellationToken, lr => lr.CreatedByUser, lr => lr.UpdatedByUser);
-
-                var leaveRequestDTOs = leaveRequests
-                    .Adapt<IEnumerable<LeaveRequestDTO>>()
-                    .OrderByDescending(lr => lr.CreatedDate)
-                    .ToList();
-
-                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, "Duruma göre izin talepleri başarıyla getirildi");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetLeaveRequestByStatus işleminde hata oluştu");
-                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error("Duruma göre izin talepleri getirilirken hata oluştu");
             }
         }
 
@@ -74,8 +46,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var leaveRequest = await _unitOfWork.Repository<IdtLeaveRequest>()
-                    .GetByIdNoTrackingAsync(leaveRequestId, cancellationToken, lr => lr.CreatedByUser, lr => lr.UpdatedByUser);
+                var leaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>()
+                    .WhereAsNoTracking(x => x.Id == leaveRequestId)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.File)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .FirstOrDefaultAsync(cancellationToken);
 
                 if (leaveRequest == null)
                 {
@@ -88,7 +65,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetLeaveRequestByIdAsync işleminde hata oluştu");
+                logger.LogError(ex, "GetLeaveRequestByIdAsync işleminde hata oluştu");
                 return ApiResponse<LeaveRequestDTO>.Error("İzin talebi getirilirken hata oluştu");
             }
         }
@@ -108,6 +85,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     return ApiResponse<LeaveRequestDTO>.Error("Geçmiş tarihli izin talebi oluşturulamaz");
                 }
+                await unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var leaveRequest = createLeaveRequestDTO.Adapt<IdtLeaveRequest>();
                 leaveRequest.Status = LeaveRequestStatus.Pending; // Yeni talepler beklemede başlar
@@ -117,33 +95,212 @@ namespace IdeKusgozManagement.Infrastructure.Services
                           createLeaveRequestDTO.EndDate.Date);
 
                 leaveRequest.Duration = $"{workingDays} gün";
-                await _unitOfWork.Repository<IdtLeaveRequest>().AddAsync(leaveRequest, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                var createdLeaveRequest = await _unitOfWork.Repository<IdtLeaveRequest>()
-                  .GetByIdNoTrackingAsync(leaveRequest.Id, cancellationToken, m => m.CreatedByUser);
+                if (createLeaveRequestDTO.File != null && createLeaveRequestDTO.File.FormFile.Length > 0)
+                {
+                    createLeaveRequestDTO.File.TargetUserId = identityService.GetUserId();
+                    var fileResult = await fileService.UploadFileAsync(createLeaveRequestDTO.File, cancellationToken);
+
+                    if (!fileResult.IsSuccess)
+                    {
+                        return ApiResponse<LeaveRequestDTO>.Error(fileResult.Message);
+                    }
+
+                    leaveRequest.FileId = fileResult.Data.Id;
+                }
+                await unitOfWork.GetRepository<IdtLeaveRequest>().AddAsync(leaveRequest, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                var createdLeaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>()
+                    .Where(x => x.Id == leaveRequest.Id)
+                    .AsNoTracking()
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.File)
+                    .FirstOrDefaultAsync(cancellationToken);
+
                 var leaveRequestDTO = createdLeaveRequest.Adapt<LeaveRequestDTO>();
 
+                CreateNotificationDTO createNotification = new()
+                {
+                    Message = $"{leaveRequestDTO.CreatedByFullName} tarafından, {leaveRequestDTO.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde yeni bir izin talebi oluşturuldu",
+                    Type = NotificationType.LeaveRequest,
+                    RedirectUrl = "/izin-yonetimi",
+                };
+                await notificationService.SendNotificationToSuperiorsAsync(createNotification, cancellationToken);
                 return ApiResponse<LeaveRequestDTO>.Success(leaveRequestDTO, "İzin talebi başarıyla oluşturuldu");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "CreateLeaveRequestAsync işleminde hata oluştu");
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+
+                logger.LogError(ex, "CreateLeaveRequestAsync işleminde hata oluştu");
                 return ApiResponse<LeaveRequestDTO>.Error("İzin talebi oluşturulurken hata oluştu");
             }
         }
 
-        private async Task<List<HolidayDTO>> GetHolidaysForYearAsync(int year)
+        public async Task<ApiResponse<bool>> DeleteLeaveRequestAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
-                if (_memoryCache.TryGetValue($"holidays_{year}", out List<HolidayDTO> cachedHolidays))
+                var leaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>().GetByIdAsync(id, cancellationToken);
+
+                if (leaveRequest == null)
+                {
+                    return ApiResponse<bool>.Error("İzin talebi bulunamadı");
+                }
+
+                // Sadece beklemede olan talepler silinebilir
+                if (leaveRequest.Status != LeaveRequestStatus.Pending)
+                {
+                    return ApiResponse<bool>.Error("Sadece beklemede olan izin talepleri silinebilir");
+                }
+
+                unitOfWork.GetRepository<IdtLeaveRequest>().Remove(leaveRequest);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return ApiResponse<bool>.Success(true, "İzin talebi başarıyla silindi");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "DeleteLeaveRequestAsync işleminde hata oluştu");
+                return ApiResponse<bool>.Error("İzin talebi silinirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<LeaveRequestDTO>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var leaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>()
+                    .Where(x => x.Id == leaveRequestId)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.File)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (leaveRequest == null)
+                {
+                    return ApiResponse<LeaveRequestDTO>.Error("İzin talebi bulunamadı");
+                }
+
+                // Sadece beklemede olan talepler onaylanabilir
+                if (leaveRequest.Status != LeaveRequestStatus.Pending)
+                {
+                    return ApiResponse<LeaveRequestDTO>.Error("Sadece beklemede olan izin talepleri onaylanabilir");
+                }
+
+                leaveRequest.Status = LeaveRequestStatus.Approved;
+
+                unitOfWork.GetRepository<IdtLeaveRequest>().Update(leaveRequest);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                var leaveRequestDTO = leaveRequest.Adapt<LeaveRequestDTO>();
+
+                return ApiResponse<LeaveRequestDTO>.Success(leaveRequestDTO, $"İzin talebi başarıyla onaylandı. LeaveRequestId: {leaveRequestId}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "ApproveLeaveRequestAsync işleminde hata oluştu");
+                return ApiResponse<LeaveRequestDTO>.Error("İzin talebi onaylanırken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<LeaveRequestDTO>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var leaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>()
+                    .Where(x => x.Id == leaveRequestId)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.File)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (leaveRequest == null)
+                {
+                    return ApiResponse<LeaveRequestDTO>.Error("İzin talebi bulunamadı");
+                }
+
+                if (leaveRequest.Status != LeaveRequestStatus.Pending)
+                {
+                    return ApiResponse<LeaveRequestDTO>.Error("Sadece beklemede olan izin talepleri reddedilebilir");
+                }
+
+                leaveRequest.Status = LeaveRequestStatus.Rejected;
+                leaveRequest.RejectReason = !string.IsNullOrEmpty(rejectReason) ? rejectReason : null;
+
+                unitOfWork.GetRepository<IdtLeaveRequest>().Update(leaveRequest);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                var leaveRequestDTO = leaveRequest.Adapt<LeaveRequestDTO>();
+                return ApiResponse<LeaveRequestDTO>.Success(leaveRequestDTO, $"İzin talebi başarıyla reddedildi. LeaveRequestId: {leaveRequestId}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "RejectLeaveRequestAsync işleminde hata oluştu. LeaveRequestId: {LeaveRequestId}", leaveRequestId);
+                return ApiResponse<LeaveRequestDTO>.Error("İzin talebi reddedilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var leaveRequests = await unitOfWork.GetRepository<IdtLeaveRequest>()
+                    .WhereAsNoTracking(x => x.CreatedBy == userId)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.File)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .ToListAsync(cancellationToken);
+
+                var leaveRequestDTOs = leaveRequests.Adapt<IEnumerable<LeaveRequestDTO>>();
+
+                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, $"Kullanıcının izin talepleri başarıyla getirildi. UserId: {userId}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetLeaveRequestsByUserIdAsync işleminde hata oluştu");
+                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error($"Kullanıcının izin talepleri getirilirken hata oluştu. UserId: {userId}");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByStatusAsync(LeaveRequestStatus status, string? userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var leaveRequests = await unitOfWork.GetRepository<IdtLeaveRequest>()
+                    .WhereAsNoTracking(x => x.Status == status && !string.IsNullOrEmpty(userId) ? x.CreatedBy == userId : true)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.File)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .ToListAsync(cancellationToken);
+
+                var leaveRequestDTOs = leaveRequests.Adapt<IEnumerable<LeaveRequestDTO>>();
+
+                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, "Duruma göre izin talepleri başarıyla getirildi");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetLeaveRequestByStatus işleminde hata oluştu");
+                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error("Duruma göre izin talepleri getirilirken hata oluştu");
+            }
+        }
+
+        private async Task<List<HolidayDTO>> GetHolidaysByYearAsync(int year)
+        {
+            try
+            {
+                if (memoryCache.TryGetValue($"holidays_{year}", out List<HolidayDTO> cachedHolidays))
                 {
                     return cachedHolidays;
                 }
 
                 using var httpClient = new HttpClient();
-                var requestUrl = $"{_holidayApiOptions.BaseUrl}/holidays?api_key={_holidayApiOptions.ApiKey}&country={_holidayApiOptions.Country}&year={year}";
+                var requestUrl = $"{holidayApiOptions.Value.BaseUrl}/holidays?api_key={holidayApiOptions.Value.ApiKey}&country={holidayApiOptions.Value.Country}&year={year}";
 
                 var response = await httpClient.GetAsync(requestUrl);
 
@@ -159,17 +316,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     // Cache'e koy (süre yıl sonuna kadar)
                     var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
-                    _memoryCache.Set($"holidays_{year}", holidays, yearEnd);
+                    memoryCache.Set($"holidays_{year}", holidays, yearEnd);
 
                     return holidays;
                 }
 
-                _logger.LogWarning($"Holiday API çağrısı başarısız. Status: {response.StatusCode}, Year: {year}");
+                logger.LogWarning($"Holiday API çağrısı başarısız. Status: {response.StatusCode}, Year: {year}");
                 return new List<HolidayDTO>();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"GetHolidaysForYearAsync işleminde hata oluştu");
+                logger.LogError(ex, $"GetHolidaysByYearAsync işleminde hata oluştu");
                 return new List<HolidayDTO>();
             }
         }
@@ -179,12 +336,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 // Bayram listesini al
-                var holidays = await GetHolidaysForYearAsync(startDate.Year);
+                var holidays = await GetHolidaysByYearAsync(startDate.Year);
 
                 // Eğer tarihler farklı yıllara yayılıyorsa, her iki yılın bayramlarını al
                 if (startDate.Year != endDate.Year)
                 {
-                    var nextYearHolidays = await GetHolidaysForYearAsync(endDate.Year);
+                    var nextYearHolidays = await GetHolidaysByYearAsync(endDate.Year);
                     holidays.AddRange(nextYearHolidays);
                 }
 
@@ -229,148 +386,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "CalculateWorkingDaysAsync işleminde hata oluştu");
+                logger.LogError(ex, "CalculateWorkingDaysAsync işleminde hata oluştu");
                 // Hata durumunda basit hesaplama yap
                 return (endDate - startDate).Days + 1;
-            }
-        }
-
-        public async Task<ApiResponse<bool>> DeleteLeaveRequestAsync(string id, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var leaveRequest = await _unitOfWork.Repository<IdtLeaveRequest>()
-                    .GetByIdNoTrackingAsync(id, cancellationToken);
-
-                if (leaveRequest == null)
-                {
-                    return ApiResponse<bool>.Error("İzin talebi bulunamadı");
-                }
-
-                // Sadece beklemede olan talepler silinebilir
-                if (leaveRequest.Status != LeaveRequestStatus.Pending)
-                {
-                    return ApiResponse<bool>.Error("Sadece beklemede olan izin talepleri silinebilir");
-                }
-
-                await _unitOfWork.Repository<IdtLeaveRequest>().DeleteAsync(leaveRequest, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                return ApiResponse<bool>.Success(true, "İzin talebi başarıyla silindi");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "DeleteLeaveRequestAsync işleminde hata oluştu");
-                return ApiResponse<bool>.Error("İzin talebi silinirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<LeaveRequestDTO>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var leaveRequest = await _unitOfWork.Repository<IdtLeaveRequest>()
-                     .GetByIdAsync(leaveRequestId, cancellationToken, m => m.CreatedByUser, m => m.UpdatedByUser);
-
-                if (leaveRequest == null)
-                {
-                    return ApiResponse<LeaveRequestDTO>.Error("İzin talebi bulunamadı");
-                }
-
-                // Sadece beklemede olan talepler onaylanabilir
-                if (leaveRequest.Status != LeaveRequestStatus.Pending)
-                {
-                    return ApiResponse<LeaveRequestDTO>.Error("Sadece beklemede olan izin talepleri onaylanabilir");
-                }
-
-                leaveRequest.Status = LeaveRequestStatus.Approved;
-
-                await _unitOfWork.Repository<IdtLeaveRequest>().UpdateAsync(leaveRequest, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                var leaveRequestDTO = leaveRequest.Adapt<LeaveRequestDTO>();
-
-                return ApiResponse<LeaveRequestDTO>.Success(leaveRequestDTO, "İzin talebi başarıyla onaylandı");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "ApproveLeaveRequestAsync işleminde hata oluştu");
-                return ApiResponse<LeaveRequestDTO>.Error("İzin talebi onaylanırken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<LeaveRequestDTO>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var leaveRequest = await _unitOfWork.Repository<IdtLeaveRequest>()
-                    .GetByIdAsync(leaveRequestId, cancellationToken, m => m.CreatedByUser, m => m.UpdatedByUser);
-
-                if (leaveRequest == null)
-                {
-                    return ApiResponse<LeaveRequestDTO>.Error("İzin talebi bulunamadı");
-                }
-
-                if (leaveRequest.Status != LeaveRequestStatus.Pending)
-                {
-                    return ApiResponse<LeaveRequestDTO>.Error("Sadece beklemede olan izin talepleri reddedilebilir");
-                }
-
-                leaveRequest.Status = LeaveRequestStatus.Rejected;
-                leaveRequest.RejectReason = !string.IsNullOrEmpty(rejectReason) ? rejectReason : null;
-
-                await _unitOfWork.Repository<IdtLeaveRequest>().UpdateAsync(leaveRequest, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                var leaveRequestDTO = leaveRequest.Adapt<LeaveRequestDTO>();
-                return ApiResponse<LeaveRequestDTO>.Success(leaveRequestDTO, "İzin talebi başarıyla reddedildi");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "RejectLeaveRequestAsync işleminde hata oluştu. LeaveRequestId: {LeaveRequestId}", leaveRequestId);
-                return ApiResponse<LeaveRequestDTO>.Error("İzin talebi reddedilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var leaveRequests = await _unitOfWork.Repository<IdtLeaveRequest>()
-                    .GetWhereNoTrackingAsync(x => x.CreatedBy == userId, cancellationToken, lr => lr.CreatedByUser, lr => lr.UpdatedByUser);
-
-                var leaveRequestDTOs = leaveRequests
-                    .Adapt<IEnumerable<LeaveRequestDTO>>()
-                    .OrderByDescending(lr => lr.CreatedDate)
-                    .ToList();
-
-                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, "Kullanıcının izin talepleri başarıyla getirildi");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetLeaveRequestsByUserIdAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error("Kullanıcının izin talepleri getirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAndStatusAsync(string userId, LeaveRequestStatus status, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var leaveRequests = await _unitOfWork.Repository<IdtLeaveRequest>()
-                    .GetWhereNoTrackingAsync(x => x.Status == status && x.CreatedBy == userId, cancellationToken, lr => lr.CreatedByUser, lr => lr.UpdatedByUser);
-
-                var leaveRequestDTOs = leaveRequests
-                    .Adapt<IEnumerable<LeaveRequestDTO>>()
-                    .OrderByDescending(lr => lr.CreatedDate)
-                    .ToList();
-
-                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, "Duruma göre izin talepleri başarıyla getirildi");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetLeaveRequestByUserIdAndStatusAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error("Duruma göre izin talepleri getirilirken hata oluştu");
             }
         }
     }

@@ -1,5 +1,4 @@
-﻿using IdeKusgozManagement.Application.Mappings;
-using Mapster;
+﻿using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace IdeKusgozManagement.Application
@@ -9,15 +8,8 @@ namespace IdeKusgozManagement.Application
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddMapster();
-            UserMappingConfig.Configure();
-            RoleMappingConfig.Configure();
-            WorkRecordMappingConfig.Configure();
-            WorkRecordExpenseMappingConfig.Configure();
-            EquipmentMappingConfig.Configure();
-            ExpenseMappingConfig.Configure();
-            LeaveRequestMappingConfig.Configure();
-            MessageMappingConfig.Configure();
-            NotificationMappingConfig.Configure();
+            var config = TypeAdapterConfig.GlobalSettings;
+            config.Scan(typeof(ApplicationAssembly).Assembly);
             return services;
         }
     }

@@ -139,7 +139,7 @@
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <label for="year-select" class="form-label">Yıl</label>
-                        <select id="year-select" class="form-select">
+                        <select id="year-select" class="form-select" >
                             @for (int year = DateTime.Now.Year - 2; year <= DateTime.Now.Year; year++)
                             {
                                 if (year == DateTime.Now.Year)
@@ -155,7 +155,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="month-select" class="form-label">Ay</label>
-                        <select id="month-select" class="form-select">
+                        <select id="month-select" class="form-select" >
                             <option value="1">Ocak</option>
                             <option value="2">Şubat</option>
                             <option value="3">Mart</option>
@@ -543,14 +543,14 @@
                                         </td>
                                         <td>
                                             <div class="input-group">
-                                                <input type="text" class="form-control time-input start-time" value="${defaultValues.startTime}"
-                                                       data-day="${day}" placeholder="08:00" ${disabledAttr}>
+                                                <input type="text"  class="form-control time-input start-time" value="${defaultValues.startTime}"
+                                                       data-day="${day}" placeholder="08:00" ${disabledAttr} >
                                                 <span class="input-group-text"><i class="fas fa-clock"></i></span>
                                             </div>
                                         </td>
                                         <td>
                                             <div class="input-group">
-                                                <input type="text" class="form-control time-input end-time" value="${defaultValues.endTime}"
+                                                <input type="text"  class="form-control time-input end-time" value="${defaultValues.endTime}"
                                                        data-day="${day}" placeholder="17:00" ${disabledAttr}>
                                                 <span class="input-group-text"><i class="fas fa-clock"></i></span>
                                             </div>

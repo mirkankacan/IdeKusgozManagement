@@ -1,22 +1,19 @@
-﻿using IdeKusgozManagement.Application.Interfaces.Services;
-using IdeKusgozManagement.Domain.Entities;
+﻿using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Domain.Entities.Base;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace IdeKusgozManagement.Infrastructure.Data.Context
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
-        private readonly ILogger<ApplicationDbContext> _logger;
-        private readonly ICurrentUserService _currentUserService;
+        private readonly IHttpContextAccessor? _accessor;
 
-        public ApplicationDbContext(DbContextOptions options, ILogger<ApplicationDbContext> logger, ICurrentUserService currentUserService)
-            : base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor? accessor = null) : base(options)
         {
-            _logger = logger;
-            _currentUserService = currentUserService;
+            _accessor = accessor;
         }
 
         public DbSet<IdtWorkRecord> IdtWorkRecords => Set<IdtWorkRecord>();
@@ -28,6 +25,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         public DbSet<IdtMessage> IdtMessages => Set<IdtMessage>();
         public DbSet<IdtNotification> IdtNotifications => Set<IdtNotification>();
         public DbSet<IdtNotificationRead> IdtNotificationReads => Set<IdtNotificationRead>();
+        public DbSet<IdtFile> IdtFiles => Set<IdtFile>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -48,6 +46,18 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
              .WithMany(x => x.WorkRecordExpenses)
              .HasForeignKey(x => x.ExpenseId)
              .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdtWorkRecordExpense>()
+               .HasOne(x => x.File)
+               .WithMany(x => x.WorkRecordExpenses)
+               .HasForeignKey(x => x.FileId)
+               .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<IdtLeaveRequest>()
+                .HasOne(x => x.File)
+                .WithMany(x => x.LeaveRequests)
+                .HasForeignKey(x => x.FileId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<IdtLeaveRequest>()
                 .HasOne(x => x.CreatedByUser)
@@ -95,7 +105,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
                .HasOne(x => x.CreatedByUser)
                .WithMany()
                .HasForeignKey(x => x.CreatedBy)
-               .OnDelete(DeleteBehavior.Cascade);
+               .OnDelete(DeleteBehavior.Restrict);
 
             base.OnModelCreating(modelBuilder);
         }
@@ -103,19 +113,19 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var entries = ChangeTracker.Entries<BaseEntity>();
-            var currentUserId = _currentUserService.GetCurrentUserId();
+            string? userId = _accessor?.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             foreach (var entry in entries)
             {
                 switch (entry.State)
                 {
                     case EntityState.Added:
                         entry.Entity.CreatedDate = DateTime.Now;
-                        entry.Entity.CreatedBy = currentUserId ?? "Unknown";
+                        entry.Entity.CreatedBy = userId ?? "Unknown";
                         break;
 
                     case EntityState.Modified:
                         entry.Entity.UpdatedDate = DateTime.Now;
-                        entry.Entity.UpdatedBy = currentUserId ?? "Unknown";
+                        entry.Entity.UpdatedBy = userId ?? "Unknown";
                         entry.Property(e => e.CreatedDate).IsModified = false;
                         entry.Property(e => e.CreatedBy).IsModified = false;
                         break;

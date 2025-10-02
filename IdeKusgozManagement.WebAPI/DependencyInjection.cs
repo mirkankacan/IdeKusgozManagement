@@ -1,8 +1,8 @@
-﻿using IdeKusgozManagement.Application.DTOs.OptionDTOs;
-using IdeKusgozManagement.Domain.Entities;
+﻿using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -110,8 +110,7 @@ namespace IdeKusgozManagement.WebAPI
 
             services.AddHttpClient();
             services.AddHttpContextAccessor();
-
-            // Session konfigürasyonu EKLE
+            services.AddDbContext<ApplicationDbContext>(opts => opts.UseSqlServer(connectionString));
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
             {

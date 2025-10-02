@@ -27,7 +27,9 @@ namespace IdeKusgozManagement.Domain.Entities
         [ForeignKey(nameof(UpdatedBy))]
         public virtual ApplicationUser? UpdatedByUser { get; set; }
 
+        [ForeignKey(nameof(EquipmentId))]
         public virtual IdtEquipment Equipment { get; set; }
+
         public virtual ICollection<IdtWorkRecordExpense> WorkRecordExpenses { get; set; } = new List<IdtWorkRecordExpense>();
     }
 }

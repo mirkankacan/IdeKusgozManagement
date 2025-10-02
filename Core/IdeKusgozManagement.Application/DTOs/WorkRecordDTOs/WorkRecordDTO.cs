@@ -24,8 +24,8 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public string CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public string CreatedByName { get; set; }
-        public string? UpdatedByName { get; set; }
+        public string CreatedByFullName { get; set; }
+        public string? UpdatedByFullName { get; set; }
 
         public string StatusText => Status switch
         {
@@ -35,6 +35,6 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
             _ => "Bilinmiyor"
         };
 
-        public List<WorkRecordExpenseDTO>? Expenses { get; set; }
+        public List<WorkRecordExpenseDTO>? WorkRecordExpenses { get; set; }
     }
 }

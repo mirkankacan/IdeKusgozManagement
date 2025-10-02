@@ -1,112 +1,86 @@
 using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
-using IdeKusgozManagement.Application.Interfaces.Repositories;
 using IdeKusgozManagement.Application.Interfaces.Services;
+using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
+using IdeKusgozManagement.Infrastructure.Hubs;
 using Mapster;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class NotificationService : INotificationService
+    public class NotificationService(IUnitOfWork unitOfWork, ILogger<NotificationService> logger, IIdentityService identityService, IHubContext<CommunicationHub> hubContext) : INotificationService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly ILogger<NotificationService> _logger;
-
-        public NotificationService(IUnitOfWork unitOfWork, ILogger<NotificationService> logger)
-        {
-            _unitOfWork = unitOfWork;
-            _logger = logger;
-        }
-
         public async Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(string userId, string userRole, int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             try
             {
-                var notifications = await _unitOfWork.Repository<IdtNotification>()
-             .GetPagedNoTrackingAsync(
-                 pageNumber,
-                 pageSize,
-                 predicate: x =>
-                         // Personal notifications
-                         (x.TargetUserId != null && x.TargetUserId == userId) ||
-                         // Role-based notifications (we'll filter this client-side)
-                         (x.TargetRole != null && x.TargetRole.Contains(userRole)) ||
-                         // General notifications
-                         (x.TargetUserId == null && x.TargetRole == null),
-                 orderBy: query => query
-                     .OrderByDescending(n => n.NotificationReads.All(nr => nr.CreatedBy != userId))
-                     .ThenByDescending(n => n.CreatedDate),
-                 cancellationToken,
-                 n => n.CreatedByUser,
-                 n => n.NotificationReads);
+                var notifications = await unitOfWork.GetRepository<IdtNotification>()
+                    .WhereAsNoTracking(x => x.TargetUsers.Contains(userId) || x.TargetRoles.Contains(userRole) || (x.TargetUsers == null && x.TargetRoles == null))
+                    .OrderBy(n => n.NotificationReads.Any(nr => nr.CreatedBy != userId))
+                    .OrderByDescending(n => n.CreatedDate)
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .Include(x => x.CreatedByUser)
+                    .Include(n => n.NotificationReads)
+                    .ToListAsync(cancellationToken);
 
-                var notificationDTOs = notifications.Data.Select(n =>
-                {
-                    var dto = n.Adapt<NotificationDTO>();
+                var totalCount = await unitOfWork.GetRepository<IdtNotification>()
+                        .WhereAsNoTracking(x => x.TargetUsers.Contains(userId) || x.TargetRoles.Contains(userRole) || (x.TargetUsers == null && x.TargetRoles == null))
+                        .CountAsync(cancellationToken);
 
-                    // NotificationReads'te kayıt varsa okunmuş, yoksa okunmamış
-                    var readRecord = n.NotificationReads?.FirstOrDefault(nr => nr.CreatedBy == userId);
-                    dto.IsRead = readRecord != null;
-                    dto.ReadDate = readRecord?.CreatedDate;
-                    return dto;
-                }).ToList();
+                var notificationDTO = notifications.Adapt<IEnumerable<NotificationDTO>>();
+
                 var pagedResult = new PagedResult<NotificationDTO>
                 {
-                    Data = notificationDTOs,
-                    TotalCount = notifications.TotalCount,
-                    PageNumber = notifications.PageNumber,
-                    PageSize = notifications.PageSize,
-                    TotalPages = notifications.TotalPages
+                    Data = notificationDTO,
+                    TotalCount = totalCount,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
                 };
 
                 return ApiResponse<PagedResult<NotificationDTO>>.Success(pagedResult, "Bildirimler başarıyla getirildi");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetNotificationsAsync işleminde hata oluştu");
+                logger.LogError(ex, "GetNotificationsAsync işleminde hata oluştu");
                 return ApiResponse<PagedResult<NotificationDTO>>.Error("Bildirimler getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<int>> GetUnreadNotificationCountAsync(string userId,string userRole, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<int>> GetUnreadNotificationCountAsync(string userId, string userRole, CancellationToken cancellationToken = default)
         {
             try
             {
-                var allNotifications = await _unitOfWork.Repository<IdtNotification>()
-                     .GetWhereNoTrackingAsync(x =>
-                         // Personal notifications
-                         (x.TargetUserId != null && x.TargetUserId == userId) ||
-                         // Role-based notifications (we'll filter this client-side)
-                         (x.TargetRole != null && x.TargetRole.Contains(userRole)) ||
-                         // General notifications
-                         (x.TargetUserId == null && x.TargetRole == null),
-                         cancellationToken,
-                         n => n.NotificationReads);
-
-                var unreadCount = allNotifications.Count(n => !n.NotificationReads.Any(nr => nr.CreatedBy == userId));
+                var unreadCount = await unitOfWork.GetRepository<IdtNotification>()
+                   .WhereAsNoTracking(x => x.TargetUsers.Contains(userId) || x.TargetRoles.Contains(userRole) || (x.TargetUsers == null && x.TargetRoles == null) && !x.NotificationReads.Any(x => x.CreatedBy == userId))
+                   .CountAsync(cancellationToken);
 
                 return ApiResponse<int>.Success(unreadCount, "Okunmamış bildirim sayısı başarıyla getirildi");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetUnreadNotificationCountAsync işleminde hata oluştu");
+                logger.LogError(ex, "GetUnreadNotificationCountAsync işleminde hata oluştu");
                 return ApiResponse<int>.Error("Okunmamış bildirim sayısı getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<NotificationDTO>> CreateNotificationAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
+        private async Task<ApiResponse<NotificationDTO>> CreateNotificationAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 var notification = createNotificationDTO.Adapt<IdtNotification>();
 
-                await _unitOfWork.Repository<IdtNotification>().AddAsync(notification, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.GetRepository<IdtNotification>().AddAsync(notification, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                // Get the created notification with user information
-                var createdNotification = await _unitOfWork.Repository<IdtNotification>()
-                    .GetByIdNoTrackingAsync(notification.Id, cancellationToken, n => n.CreatedByUser, n => n.NotificationReads);
+                var createdNotification = await unitOfWork.GetRepository<IdtNotification>()
+                    .Where(x => x.Id == notification.Id)
+                    .Include(n => n.CreatedByUser)
+                    .Include(n => n.NotificationReads)
+                    .FirstOrDefaultAsync(cancellationToken);
 
                 var notificationDTO = createdNotification.Adapt<NotificationDTO>();
 
@@ -114,7 +88,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "CreateNotificationAsync işleminde hata oluştu");
+                logger.LogError(ex, "CreateNotificationAsync işleminde hata oluştu");
                 return ApiResponse<NotificationDTO>.Error("Bildirim oluşturulurken hata oluştu");
             }
         }
@@ -124,30 +98,28 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 // Check if notification exists
-                var notification = await _unitOfWork.Repository<IdtNotification>().GetByIdAsync(notificationId, cancellationToken, n => n.NotificationReads);
+                var notification = await unitOfWork.GetRepository<IdtNotification>()
+                         .Where(x => x.Id == notificationId && !x.NotificationReads.Any(x => x.CreatedBy == userId))
+                         .Include(n => n.NotificationReads)
+                         .FirstOrDefaultAsync(cancellationToken);
 
                 if (notification == null)
                 {
                     return ApiResponse<bool>.Error("Bildirim bulunamadı");
                 }
-                var alreadyRead = notification.NotificationReads?.Any(nr => nr.CreatedBy == userId) ?? false;
 
-                if (alreadyRead)
-                {
-                    return ApiResponse<bool>.Success(true, "Bildirim zaten okundu olarak işaretlenmiş");
-                }
                 var notificationRead = new IdtNotificationRead
                 {
                     NotificationId = notificationId
                 };
-                await _unitOfWork.Repository<IdtNotificationRead>().AddAsync(notificationRead, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.GetRepository<IdtNotificationRead>().AddAsync(notificationRead, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 return ApiResponse<bool>.Success(true, "Bildirim okundu olarak işaretlendi");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "MarkAsReadAsync işleminde hata oluştu");
+                logger.LogError(ex, "MarkAsReadAsync işleminde hata oluştu");
                 return ApiResponse<bool>.Error("Bildirim okundu olarak işaretlenirken hata oluştu");
             }
         }
@@ -156,56 +128,159 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var unreadNotificationIds = await _unitOfWork.Repository<IdtNotification>()
-                    .SelectNoTrackingAsync(
-                        selector: n => n.Id,
-                        predicate: n => !n.NotificationReads.Any(nr => nr.CreatedBy == userId),
-                        cancellationToken
-                    );
+                var userRole = identityService.GetUserRole();
+                var notifications = await unitOfWork.GetRepository<IdtNotification>()
+                    .Where(x => x.TargetUsers.Contains(userId) || x.TargetRoles == userRole || (x.TargetUsers == null && x.TargetRoles == null) && !x.NotificationReads.Any(x => x.CreatedBy == userId))
+                    .Include(n => n.NotificationReads)
+                    .ToListAsync(cancellationToken);
 
-                var unreadNotificationIdsList = unreadNotificationIds.ToList();
-
-                if (unreadNotificationIdsList.Any())
+                var notificationReads = notifications.Select(n => new IdtNotificationRead
                 {
-                    var notificationReads = unreadNotificationIdsList.Select(notificationId => new IdtNotificationRead
-                    {
-                        NotificationId = notificationId
-                    }).ToList();
+                    NotificationId = n.Id
+                }).ToList();
 
-                    await _unitOfWork.Repository<IdtNotificationRead>().AddRangeAsync(notificationReads, cancellationToken);
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                }
+                await unitOfWork.GetRepository<IdtNotificationRead>().AddRangeAsync(notificationReads, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 return ApiResponse<bool>.Success(true, "Tüm bildirimler okundu olarak işaretlendi");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "MarkAllAsReadAsync işleminde hata oluştu");
+                logger.LogError(ex, "MarkAllAsReadAsync işleminde hata oluştu");
                 return ApiResponse<bool>.Error("Tüm bildirimler okundu olarak işaretlenirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteNotificationAsync(string notificationId, CancellationToken cancellationToken = default)
+        public async Task SendNotificationToAllAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
         {
             try
             {
-                var notification = await _unitOfWork.Repository<IdtNotification>()
-                    .GetByIdAsync(notificationId, cancellationToken);
+                var response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
 
-                if (notification == null)
+                if (response.IsSuccess)
                 {
-                    return ApiResponse<bool>.Error("Bildirim bulunamadı");
+                    await hubContext.Clients.All.SendAsync("NewNotification", response.Data, cancellationToken);
+                    logger.LogInformation("Bildirim herkese gönderildi. Message: {Message}", createNotificationDTO.Message);
                 }
-
-                await _unitOfWork.Repository<IdtNotification>().DeleteAsync(notification, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                return ApiResponse<bool>.Success(true, "Bildirim başarıyla silindi");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeleteNotificationAsync işleminde hata oluştu");
-                return ApiResponse<bool>.Error("Bildirim silinirken hata oluştu");
+                logger.LogError(ex, "Bildirim herkese gönderilemedi. Message: {Message}", createNotificationDTO.Message);
+            }
+        }
+
+        public async Task SendNotificationToRolesAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (createNotificationDTO.TargetRoles == null || !createNotificationDTO.TargetRoles.Any())
+                {
+                    logger.LogWarning("TargetRoles boş, bildirim gönderilemedi");
+                }
+
+                var response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
+                if (response.IsSuccess)
+                {
+                    foreach (var role in createNotificationDTO.TargetRoles)
+                    {
+                        var groupName = $"Role_{role}";
+                        await hubContext.Clients.Group(groupName).SendAsync("NewNotification", response.Data, cancellationToken);
+                    }
+
+                    logger.LogInformation(message: "Bildirim rollere gönderildi. Roles: {RoleNames}, Message: {Message}",
+                        string.Join(", ", createNotificationDTO.TargetRoles), createNotificationDTO.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Bildirim rollere gönderilemedi. Roles: {RoleNames}, Message: {Message}",
+                    createNotificationDTO.TargetRoles != null ? string.Join(", ", createNotificationDTO.TargetRoles) : "null",
+                    createNotificationDTO.Message);
+            }
+        }
+
+        public async Task SendNotificationToSubordinatesAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var subordinateIds = await identityService.GetUserSubordinatesAsync(cancellationToken);
+                if (subordinateIds == null || !subordinateIds.Any())
+                {
+                    logger.LogWarning("Kullanıcının altları bulunamadı, bildirim gönderilemedi");
+                    return;
+                }
+
+                ApiResponse<NotificationDTO>? response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
+                if (response.IsSuccess)
+                {
+                    foreach (var userId in subordinateIds)
+                    {
+                        var groupName = $"User_{userId}";
+                        await hubContext.Clients.Group(groupName).SendAsync("NewNotification", response.Data, cancellationToken);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Bildirim altlara gönderilemedi");
+            }
+        }
+
+        public async Task SendNotificationToSuperiorsAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var superiorIds = await identityService.GetUserSuperiorsAsync(cancellationToken);
+                if (superiorIds == null || !superiorIds.Any())
+                {
+                    logger.LogWarning("Kullanıcının üstleri bulunamadı, bildirim gönderilemedi");
+                    return;
+                }
+
+                ApiResponse<NotificationDTO>? response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
+                if (response.IsSuccess)
+                {
+                    foreach (var userId in superiorIds)
+                    {
+                        var groupName = $"User_{userId}";
+                        await hubContext.Clients.Group(groupName).SendAsync("NewNotification", response.Data, cancellationToken);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Bildirim üstlere gönderilemedi");
+            }
+        }
+
+        public async Task SendNotificationToUsersAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (createNotificationDTO.TargetUsers == null || !createNotificationDTO.TargetUsers.Any())
+                {
+                    logger.LogWarning("TargetUsers boş, bildirim gönderilemedi");
+                    return;
+                }
+
+                var response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
+                if (response.IsSuccess)
+                {
+                    foreach (var userId in createNotificationDTO.TargetUsers)
+                    {
+                        var groupName = $"User_{userId}";
+                        await hubContext.Clients.Group(groupName).SendAsync("NewNotification", response.Data, cancellationToken);
+                    }
+
+                    logger.LogInformation("Bildirim kullanıcılara gönderildi. TargetUsers: {UserIds}, Message: {Message}",
+                        string.Join(", ", createNotificationDTO.TargetUsers), createNotificationDTO.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Bildirim kullanıcılara gönderilemedi. TargetUsers: {UserIds}, Message: {Message}",
+                    createNotificationDTO.TargetUsers != null ? string.Join(", ", createNotificationDTO.TargetUsers) : "null",
+                    createNotificationDTO.Message);
             }
         }
     }

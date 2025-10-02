@@ -1,5 +1,4 @@
 ﻿using IdeKusgozManagement.Application.DTOs.AuthDTOs;
-using IdeKusgozManagement.Application.Interfaces;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,15 +7,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(IAuthService authService) : ControllerBase
     {
-        private readonly IAuthService _authService;
-
-        public AuthController(IAuthService authService)
-        {
-            _authService = authService;
-        }
-
         /// <summary>
         /// Kullanıcı girişi yapar ve JWT token döner
         /// </summary>
@@ -31,7 +23,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _authService.LoginAsync(loginDTO);
+            var result = await authService.LoginAsync(loginDTO);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -42,7 +34,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [Authorize]
         public async Task<IActionResult> Logout()
         {
-            var result = await _authService.LogoutAsync();
+            var result = await authService.LogoutAsync();
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -60,7 +52,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _authService.RefreshTokenAsync(refreshTokenDTO);
+            var result = await authService.RefreshTokenAsync(refreshTokenDTO);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

@@ -1,27 +1,19 @@
-﻿using IdeKusgozManagement.Application.DTOs.LeaveRequestDTOs;
-using IdeKusgozManagement.Application.DTOs.MessageDTOs;
+﻿using IdeKusgozManagement.Application.DTOs.MessageDTOs;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 
 namespace IdeKusgozManagement.Application.Mappings
 {
-    public static class MessageMappingConfig
+    public class MessageMappingConfig : IRegister
     {
-        public static void Configure()
+        public void Register(TypeAdapterConfig config)
         {
-            TypeAdapterConfig<IdtMessage, MessageDTO>
-                .NewConfig()
-                 .Map(dest => dest.CreatedByName, src => src.CreatedByUser != null
-                    ? $"{src.CreatedByUser.Name} {src.CreatedByUser.Surname}"
-                    : string.Empty);
+            config.NewConfig<IdtMessage, MessageDTO>()
+                 .Map(dest => dest.CreatedByFullName, src => $"{src.CreatedByUser.Name} {src.CreatedByUser.Surname}");
 
-            TypeAdapterConfig<CreateMessageDTO, IdtMessage>
-                .NewConfig()
-                .Ignore(dest => dest.Id)
-                .Ignore(dest => dest.CreatedDate)
-                .Ignore(dest => dest.UpdatedDate)
-                .Ignore(dest => dest.CreatedBy)
-                .Ignore(dest => dest.UpdatedBy);
+            config.NewConfig<CreateMessageDTO, IdtMessage>()
+                .Map(dest => dest.TargetUsers, src => src.TargetUsers != null ? string.Join(";", src.TargetUsers) : null)
+                .Map(dest => dest.TargetRoles, src => src.TargetRoles != null ? string.Join(";", src.TargetRoles) : null);
         }
     }
 }

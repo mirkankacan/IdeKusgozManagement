@@ -9,22 +9,15 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
-    public class ExpensesController : ControllerBase
+    public class ExpensesController(IExpenseService expenseService) : ControllerBase
     {
-        private readonly IExpenseService _expenseService;
-
-        public ExpensesController(IExpenseService expenseService)
-        {
-            _expenseService = expenseService;
-        }
-
         /// <summary>
         /// Tüm masraf türlerini getirir
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetExpenses(CancellationToken cancellationToken = default)
         {
-            var result = await _expenseService.GetExpensesAsync(cancellationToken);
+            var result = await expenseService.GetExpensesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -34,7 +27,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet("active-expenses")]
         public async Task<IActionResult> GetActiveExpenses(CancellationToken cancellationToken = default)
         {
-            var result = await _expenseService.GetActiveExpensesAsync(cancellationToken);
+            var result = await expenseService.GetActiveExpensesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -50,7 +43,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Masraf türü ID'si gereklidir");
             }
-            var result = await _expenseService.EnableExpenseAsync(expenseId);
+            var result = await expenseService.EnableExpenseAsync(expenseId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -66,7 +59,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest("Masraf türü ID'si gereklidir");
             }
-            var result = await _expenseService.DisableExpenseAsync(expenseId);
+            var result = await expenseService.DisableExpenseAsync(expenseId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -82,7 +75,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Masraf türü ID'si gereklidir");
             }
 
-            var result = await _expenseService.GetExpenseByIdAsync(expenseId, cancellationToken);
+            var result = await expenseService.GetExpenseByIdAsync(expenseId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -99,7 +92,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _expenseService.CreateExpenseAsync(createExpenseDTO, cancellationToken);
+            var result = await expenseService.CreateExpenseAsync(createExpenseDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -122,7 +115,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _expenseService.UpdateExpenseAsync(expenseId, updateExpenseDTO, cancellationToken);
+            var result = await expenseService.UpdateExpenseAsync(expenseId, updateExpenseDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -139,7 +132,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Masraf türü ID'si gereklidir");
             }
 
-            var result = await _expenseService.DeleteExpenseAsync(expenseId, cancellationToken);
+            var result = await expenseService.DeleteExpenseAsync(expenseId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

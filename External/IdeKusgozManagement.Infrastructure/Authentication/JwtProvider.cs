@@ -1,14 +1,14 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using IdeKusgozManagement.Application.DTOs.AuthDTOs;
+﻿using IdeKusgozManagement.Application.DTOs.AuthDTOs;
 using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using IdeKusgozManagement.Application.Interfaces.Providers;
 using IdeKusgozManagement.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace IdeKusgozManagement.Infrastructure.Authentication
 {
@@ -31,12 +31,10 @@ namespace IdeKusgozManagement.Infrastructure.Authentication
             var claims = new List<Claim>
     {
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new Claim(ClaimTypes.Name, applicationUser.UserName),
+        new Claim("TCNo", applicationUser.TCNo!),
         new Claim("FullName", $"{applicationUser.Name} {applicationUser.Surname}"),
-        new Claim(ClaimTypes.GivenName, applicationUser.Name),
-        new Claim(ClaimTypes.Surname, applicationUser.Surname),
         new Claim(ClaimTypes.NameIdentifier, applicationUser.Id),
-        new Claim(ClaimTypes.Role, userRoles.FirstOrDefault())
+        new Claim(ClaimTypes.Role, userRoles.FirstOrDefault()!)
     };
 
             DateTime expires = DateTime.Now.AddHours(1);
