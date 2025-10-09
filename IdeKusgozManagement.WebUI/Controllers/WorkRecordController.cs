@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.WorkRecordModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -25,16 +23,16 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin,Yönetici,Şef")]
-        [HttpGet("liste")]
-        public async Task<IActionResult> GetWorkRecordsByUserIdAndDate([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        [HttpGet("liste/kullanici/{userId}/tarih/{date}")]
+        public async Task<IActionResult> GetWorkRecordsByUserIdAndDate(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             var response = await _workRecordApiService.GetWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
         [Authorize]
-        [HttpGet("listem")]
-        public async Task<IActionResult> GetMyWorkRecords([FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        [HttpGet("listem/tarih/{date}")]
+        public async Task<IActionResult> GetMyWorkRecords(DateTime date, CancellationToken cancellationToken = default)
         {
             var response = await _workRecordApiService.GetMyWorkRecordsByDateAsync(date, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -50,7 +48,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize]
         [HttpPost("toplu-ekle")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateWorkRecord([FromBody] List<CreateWorkRecordViewModel> model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateWorkRecord([FromForm] List<CreateWorkRecordViewModel> model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
@@ -61,9 +59,9 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
-        [HttpPost("toplu-reddet")]
+        [HttpPut("toplu-reddet/kullanici/{userId}/tarih/{date}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BatchRejectWorkRecordsByUserId([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchRejectWorkRecordsByUserId(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -74,9 +72,9 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
-        [HttpPost("toplu-onayla")]
+        [HttpPut("toplu-onayla/kullanici/{userId}/tarih/{date}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BatchApproveWorkRecordsByUserId([FromQuery] string userId, [FromQuery] DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchApproveWorkRecordsByUserId(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -86,46 +84,16 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [Authorize]
-        [HttpPut("toplu-guncelle")]
-        public async Task<IActionResult> BatchUpdateWorkRecordsByUserId([FromQuery] string? userId, [FromBody] List<UpdateWorkRecordViewModel> model, CancellationToken cancellationToken = default)
+        [Authorize(Roles = "Admin, Şef, Yönetici")]
+        [HttpPut("toplu-guncelle/kullanici/{userId}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BatchUpdateWorkRecordsByUserId(string userId, [FromForm] List<UpdateWorkRecordViewModel> model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var roleClaim = User.FindFirst(ClaimTypes.Role);
-            if (roleClaim == null)
-            {
-                return BadRequest("Rol bilgisi bulunamadı");
-            }
-
-            ApiResponse<IEnumerable<WorkRecordViewModel>> response;
-
-            switch (roleClaim.Value)
-            {
-                case "Admin":
-                case "Yönetici":
-                case "Şef":
-                    if (string.IsNullOrEmpty(userId))
-                    {
-                        return BadRequest("Kullanıcı ID'si boş geçilemez");
-                    }
-                    response = await _workRecordApiService.BatchUpdateWorkRecordsByUserIdAsync(userId, model, cancellationToken);
-                    break;
-
-                case "Peronsel":
-                    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    if (string.IsNullOrEmpty(currentUserId))
-                    {
-                        return BadRequest("Kullanıcı kimliği bulunamadı");
-                    }
-                    response = await _workRecordApiService.BatchUpdateWorkRecordsByUserIdAsync(currentUserId, model, cancellationToken);
-                    break;
-
-                default:
-                    return Forbid("Yetkisiz erişim");
-            }
+            var response = await _workRecordApiService.BatchUpdateWorkRecordsByUserIdAsync(userId, model, cancellationToken);
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }

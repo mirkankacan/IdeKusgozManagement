@@ -7,10 +7,11 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
     {
         public string Id { get; set; }
         public DateTime Date { get; set; }
-        public bool IsWeekend { get; set; }
+        public string? ExcuseReason { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-        public string Project { get; set; }
+        public string ProjectId { get; set; }
+        public string ProjectName { get; set; }
         public string EquipmentId { get; set; }
         public string EquipmentName { get; set; }
         public string Province { get; set; }
@@ -19,6 +20,7 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public bool HasLunch { get; set; }
         public bool HasDinner { get; set; }
         public bool HasNightMeal { get; set; }
+        public bool HasTravel { get; set; }
         public WorkRecordStatus Status { get; set; }
         public DateTime CreatedDate { get; set; }
         public string CreatedBy { get; set; }

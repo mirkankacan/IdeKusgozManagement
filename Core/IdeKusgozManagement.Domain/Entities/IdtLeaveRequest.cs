@@ -1,6 +1,5 @@
 ﻿using IdeKusgozManagement.Domain.Entities.Base;
 using IdeKusgozManagement.Domain.Enums;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IdeKusgozManagement.Domain.Entities
 {
@@ -15,13 +14,10 @@ namespace IdeKusgozManagement.Domain.Entities
         public string? Duration { get; set; }
         public string? RejectReason { get; set; }
 
-        [ForeignKey(nameof(FileId))]
         public virtual IdtFile? File { get; set; }
 
-        [ForeignKey(nameof(CreatedBy))]
         public virtual ApplicationUser CreatedByUser { get; set; }
 
-        [ForeignKey(nameof(UpdatedBy))]
         public virtual ApplicationUser? UpdatedByUser { get; set; }
     }
 }

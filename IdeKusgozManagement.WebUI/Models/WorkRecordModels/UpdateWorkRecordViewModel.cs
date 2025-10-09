@@ -4,7 +4,7 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
 {
     public class UpdateWorkRecordViewModel
     {
-        public bool IsWeekend { get; set; } = false;
+        public string? ExcuseReason { get; set; } = null;
 
         [Required]
         public TimeSpan StartTime { get; set; }
@@ -31,5 +31,6 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         public bool HasDinner { get; set; } = false;
 
         public bool HasNighMeal { get; set; } = false;
+        public bool HasTravel { get; set; } = false;
     }
 }

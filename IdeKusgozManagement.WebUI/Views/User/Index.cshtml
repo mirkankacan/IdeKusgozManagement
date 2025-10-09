@@ -296,7 +296,7 @@
             usersTable = $('#usersTable').DataTable({
                 "processing": true,
                 "ajax": {
-                    "url": "/kullanici-yonetimi/liste",
+                    "url": "/kullanici/liste",
                     "type": "GET",
                     "dataSrc": function (json) {
                         if (json && json.isSuccess && json.data) {
@@ -450,7 +450,7 @@
                     .html('<i class="fas fa-spinner fa-spin me-2"></i>Oluşturuluyor...');
 
                 const response = await $.ajax({
-                    url: '/kullanici-yonetimi/olustur',
+                    url: '/kullanici/olustur',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(userData),
@@ -517,7 +517,7 @@
 
                 // API çağrısı
                 const response = await $.ajax({
-                    url: `/kullanici-yonetimi/guncelle/${userData.Id}`,
+                    url: `/kullanici/guncelle/${userData.Id}`,
                     type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(userData),
@@ -570,7 +570,7 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/kullanici-yonetimi/aktif-et/${userId}`,
+                                url: `/kullanici/aktif-et/${userId}`,
                                 type: 'PUT',
                                 contentType: 'application/json',
                                 headers: {
@@ -630,7 +630,7 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/kullanici-yonetimi/pasif-et/${userId}`,
+                                url: `/kullanici/pasif-et/${userId}`,
                                 type: 'PUT',
                                 contentType: 'application/json',
                                 headers: {
@@ -690,7 +690,7 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/kullanici-yonetimi/sil/${userId}`,
+                                url: `/kullanici/sil/${userId}`,
                                 type: 'DELETE',
                                 contentType: 'application/json',
                                 headers: {
@@ -750,7 +750,7 @@
                 }
 
                 const response = await $.ajax({
-                    url: `/kullanici-yonetimi/${userId}`,
+                    url: `/kullanici/${userId}`,
                     type: 'GET',
                     contentType: 'application/json'
                 });
@@ -815,7 +815,7 @@
                 roleSelects.html('<option value="">Yükleniyor...</option>');
 
                 const response = await $.ajax({
-                    url: '/kullanici-yonetimi/aktif-roller',
+                    url: '/kullanici/aktif-roller',
                     type: 'GET',
                     dataType: 'json'
                 });
@@ -883,7 +883,7 @@
                 });
 
                 const response = await $.ajax({
-                    url: '/kullanici-yonetimi/aktif-ust-kullanicilar',
+                    url: '/kullanici/aktif-ust-kullanicilar',
                     type: 'GET',
                     dataType: 'json'
                 });

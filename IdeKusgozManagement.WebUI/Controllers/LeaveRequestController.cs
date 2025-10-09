@@ -5,25 +5,25 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Controllers
 {
-    [Route("")]
-    public class LeaveRequestManagementController : Controller
+    [Route("izin")]
+    public class LeaveRequestController : Controller
     {
         private readonly ILeaveRequestApiService _leaveRequestApiService;
 
-        public LeaveRequestManagementController(ILeaveRequestApiService leaveRequestApiService)
+        public LeaveRequestController(ILeaveRequestApiService leaveRequestApiService)
         {
             _leaveRequestApiService = leaveRequestApiService;
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
-        [HttpGet("izin-yonetimi")]
+        [HttpGet("")]
         public IActionResult Index()
         {
             return View();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
-        [HttpGet("izin-yonetimi/liste")]
+        [HttpGet("liste")]
         public async Task<IActionResult> GetLeaveRequests(CancellationToken cancellationToken = default)
         {
             var response = await _leaveRequestApiService.GetLeaveRequestsAsync(cancellationToken);
@@ -31,7 +31,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
-        [HttpGet("izin-yonetimi/kullanici/{userId}/durum/{status}")]
+        [HttpGet("kullanici/{userId}/durum/{status}")]
         public async Task<IActionResult> GetLeaveRequestsByUserIdAndStatus(string userId, int status, CancellationToken cancellationToken = default)
         {
             var response = await _leaveRequestApiService.GetLeaveRequestsByUserIdAndStatusAsync(userId, status, cancellationToken);
@@ -39,7 +39,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
-        [HttpGet("izin-yonetimi/durum/{status}")]
+        [HttpGet("durum/{status}")]
         public async Task<IActionResult> GetLeaveRequestsByStatus(int status, CancellationToken cancellationToken = default)
         {
             var response = await _leaveRequestApiService.GetLeaveRequestsByStatusAsync(status, cancellationToken);
@@ -47,7 +47,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
-        [HttpGet("izin/listem")]
+        [HttpGet("listem")]
         public async Task<IActionResult> GetMyLeaveRequests(CancellationToken cancellationToken = default)
         {
             var response = await _leaveRequestApiService.GetMyLeaveRequestsAsync(cancellationToken);
@@ -55,7 +55,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
-        [HttpGet("izin/listem/durum/{status}")]
+        [HttpGet("listem/durum/{status}")]
         public async Task<IActionResult> GetMyLeaveRequestsByStatus(int status, CancellationToken cancellationToken = default)
         {
             var response = await _leaveRequestApiService.GetMyLeaveRequestsByStatusAsync(status, cancellationToken);
@@ -63,7 +63,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
-        [HttpGet("izin-yonetimi/kullanici/{userId}")]
+        [HttpGet("kullanici/{userId}")]
         public async Task<IActionResult> GetLeaveRequestsByUserId(string userId, CancellationToken cancellationToken = default)
         {
             var response = await _leaveRequestApiService.GetLeaveRequestsByUserIdAsync(userId, cancellationToken);
@@ -71,7 +71,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
-        [HttpGet("izin-yonetimi/{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetLeaveRequestById(string id, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(id))
@@ -84,7 +84,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
-        [HttpGet("izin/olustur")]
+        [HttpGet("olustur")]
         public IActionResult Create()
         {
             return View();
@@ -92,8 +92,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [ValidateAntiForgeryToken]
-        [HttpPost("izin/olustur")]
-        public async Task<IActionResult> CreateLeaveRequest([FromBody] CreateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
+        [HttpPost("olustur")]
+        public async Task<IActionResult> CreateLeaveRequest([FromForm] CreateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
@@ -106,7 +106,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [ValidateAntiForgeryToken]
-        [HttpDelete("izin-yonetimi/{leaveRequestId}")]
+        [HttpDelete("{leaveRequestId}")]
         public async Task<IActionResult> DeleteLeaveRequest(string leaveRequestId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(leaveRequestId))
@@ -120,7 +120,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
-        [HttpPut("izin-yonetimi/{leaveRequestId}/onayla")]
+        [HttpPut("{leaveRequestId}/onayla")]
         public async Task<IActionResult> ApproveLeaveRequest(string leaveRequestId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(leaveRequestId))
@@ -134,7 +134,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
-        [HttpPut("izin-yonetimi/{leaveRequestId}/reddet")]
+        [HttpPut("{leaveRequestId}/reddet")]
         public async Task<IActionResult> RejectLeaveRequest(string leaveRequestId, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(leaveRequestId))

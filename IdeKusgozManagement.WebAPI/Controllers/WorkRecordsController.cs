@@ -47,17 +47,21 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
-        /// Toplu iş kaydı oluşturur
+        /// Toplu puantaj kaydı oluşturur
         /// </summary>
-        /// <param name="createWorkRecordDTOs">İş kaydı listesi</param>
+        /// <param name="createWorkRecordDTOs">Puantaj kaydı listesi</param>
         [HttpPost("batch-create-modify")]
-        public async Task<IActionResult> BatchCreateOrModifyWorkRecords([FromBody] List<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchCreateOrModifyWorkRecords([FromForm] List<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
+            if (createWorkRecordDTOs == null || !createWorkRecordDTOs.Any())
+            {
+                return BadRequest("İşlenecek kayıt bulunamadı");
+            }
             var result = await workRecordService.BatchCreateOrModifyWorkRecordsAsync(createWorkRecordDTOs, cancellationToken);
             if (!result.IsSuccess)
             {
@@ -68,13 +72,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
-        /// Toplu iş kaydını günceller
+        /// Toplu puantaj kayıtlarını günceller
         /// </summary>
         /// <param name="userId">Kullanıcı ID'si</param>
         /// <param name="updateWorkRecordDTO">Güncellenecek bilgiler</param>
         [HttpPut("batch-update/user/{userId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> BatchUpdateWorkRecordByUser(string userId, [FromBody] List<UpdateWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchUpdateWorkRecordByUser(string userId, [FromForm] List<UpdateWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {

@@ -90,7 +90,7 @@
             leaveRequestsTable = $('#leaveRequestsTable').DataTable({
                 "processing": true,
                 "ajax": {
-                    "url": "/izin-yonetimi/liste",
+                    "url": "/izin/liste",
                     "type": "GET",
                     "dataSrc": function (json) {
                         if (json && json.isSuccess && json.data) {
@@ -242,7 +242,7 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/izin-yonetimi/${leaveRequestId}/onayla`,
+                                url: `/izin/${leaveRequestId}/onayla`,
                                 type: 'PUT',
                                 contentType: 'application/json',
                                 headers: {
@@ -305,7 +305,7 @@
                     .html('<i class="fas fa-spinner fa-spin me-2"></i>Reddediliyor...');
 
                 const response = await $.ajax({
-                    url: `/izin-yonetimi/${leaveRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : ''}`,
+                    url: `/izin/${leaveRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : ''}`,
                     type: 'PUT',
                     contentType: 'application/json',
                     headers: {
@@ -353,7 +353,7 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/izin-yonetimi/${leaveRequestId}`,
+                                url: `/izin/${leaveRequestId}`,
                                 type: 'DELETE',
                                 contentType: 'application/json',
                                 headers: {

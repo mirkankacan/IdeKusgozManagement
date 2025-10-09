@@ -16,5 +16,9 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
         Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<WorkRecordViewModel>> ApproveWorkRecordByIdAsync(string userId, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<WorkRecordViewModel>> RejectWorkRecordByIdAsync(string userId, CancellationToken cancellationToken = default);
     }
 }

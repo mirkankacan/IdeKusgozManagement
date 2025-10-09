@@ -126,7 +126,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     Message = $"{leaveRequestDTO.CreatedByFullName} tarafından, {leaveRequestDTO.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde yeni bir izin talebi oluşturuldu",
                     Type = NotificationType.LeaveRequest,
-                    RedirectUrl = "/izin-yonetimi",
+                    RedirectUrl = "/izin",
                 };
                 await notificationService.SendNotificationToSuperiorsAsync(createNotification, cancellationToken);
                 return ApiResponse<LeaveRequestDTO>.Success(leaveRequestDTO, "İzin talebi başarıyla oluşturuldu");
@@ -197,7 +197,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 var leaveRequestDTO = leaveRequest.Adapt<LeaveRequestDTO>();
-
+                CreateNotificationDTO createNotification = new()
+                {
+                    Message = $"{leaveRequestDTO.UpdatedByFullName} tarafından, {leaveRequestDTO.UpdatedDate?.ToString("dd.MM.yyyy HH:mm")} tarihinde bir izin talebiniz onaylandı",
+                    Type = NotificationType.LeaveRequest,
+                    RedirectUrl = "/izin/olustur",
+                    TargetUsers = new[] { leaveRequestDTO.CreatedBy }
+                };
+                await notificationService.SendNotificationToUsersAsync(createNotification, cancellationToken);
                 return ApiResponse<LeaveRequestDTO>.Success(leaveRequestDTO, $"İzin talebi başarıyla onaylandı. LeaveRequestId: {leaveRequestId}");
             }
             catch (Exception ex)
@@ -235,6 +242,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 var leaveRequestDTO = leaveRequest.Adapt<LeaveRequestDTO>();
+                CreateNotificationDTO createNotification = new()
+                {
+                    Message = $"{leaveRequestDTO.UpdatedByFullName} tarafından, {leaveRequestDTO.UpdatedDate?.ToString("dd.MM.yyyy HH:mm")} tarihinde bir izin talebiniz reddedildi",
+                    Type = NotificationType.LeaveRequest,
+                    RedirectUrl = "/izin/olustur",
+                    TargetUsers = new[] { leaveRequestDTO.CreatedBy }
+                };
+                await notificationService.SendNotificationToUsersAsync(createNotification, cancellationToken);
                 return ApiResponse<LeaveRequestDTO>.Success(leaveRequestDTO, $"İzin talebi başarıyla reddedildi. LeaveRequestId: {leaveRequestId}");
             }
             catch (Exception ex)

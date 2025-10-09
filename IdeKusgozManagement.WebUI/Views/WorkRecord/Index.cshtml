@@ -99,7 +99,6 @@
             text-align: center;
         }
 
-
         .spinner-border {
             width: 3rem;
             height: 3rem;
@@ -417,7 +416,7 @@
         function showErrorMessage() {
             const errorMessage = `
                                             <tr>
-                                                <td colspan="10" class="text-center py-5">
+                                                <td colspan="11" class="text-center py-5">
                                                     <div class="text-danger">
                                                         <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
                                                         <h5>Veri Yükleme Hatası</h5>
@@ -453,12 +452,8 @@
                 const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
                 const response = await $.ajax({
-                    url: '/puantaj/liste',
-                    type: 'GET',
-                    data: {
-                        date: formattedDate,
-                        userId: selectedUserId
-                    }
+                    url: `/puantaj/liste/kullanici/${selectedUserId}/tarih/${formattedDate}`,
+                    type: 'GET'
                 });
 
                 if (response.isSuccess && response.data && response.data.length > 0) {
@@ -620,7 +615,7 @@
                 });
 
                 const response = await $.ajax({
-                    url: '/kullanici-yonetimi/liste',
+                    url: '/kullanici/liste',
                     type: 'GET',
                     dataType: 'json'
                 });
@@ -718,8 +713,8 @@
 
             try {
                 const response = await $.ajax({
-                    url: '/puantaj/toplu-ekle',
-                    type: 'POST',
+                    url: `/puantaj/toplu-guncelle/kullanici/${selectedUserId}`,
+                    type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(workRecords),
                     headers: {
@@ -764,9 +759,9 @@
                             const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
                             const response = await $.ajax({
-                                url: `/puantaj/toplu-onayla?userId=${selectedUserId}&date=${formattedDate}`,
-                                type: 'POST',
-                               
+                                url: `/puantaj/toplu-onayla/kullanici/${selectedUserId}/tarih/${formattedDate}`,
+                                type: 'PUT',
+
                                 headers: {
                                     'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                                 }
@@ -822,9 +817,9 @@
                             const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
                             const response = await $.ajax({
-                                url: `/puantaj/toplu-reddet?userId=${selectedUserId}&date=${formattedDate}`,
-                                type: 'POST',
-                            
+                                url: `/puantaj/toplu-reddet/kullanici/${selectedUserId}/tarih/${formattedDate}`,
+                                type: 'PUT',
+
                                 headers: {
                                     'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                                 }

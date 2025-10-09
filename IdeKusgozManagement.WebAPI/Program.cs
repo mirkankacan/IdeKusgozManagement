@@ -51,7 +51,7 @@ else
     app.UseHsts();
     app.UseHttpsRedirection();
 }
-
+app.UseStaticFiles();
 // Security and CORS
 app.UseCors();
 app.UseRouting();

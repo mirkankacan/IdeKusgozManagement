@@ -8,6 +8,8 @@ namespace IdeKusgozManagement.Application.Mappings
     {
         public void Register(TypeAdapterConfig config)
         {
+            config.NewConfig<CreateLeaveRequestDTO, IdtLeaveRequest>()
+                .Ignore(x => x.File);
             config.NewConfig<IdtLeaveRequest, LeaveRequestDTO>()
                  .Map(dest => dest.CreatedByFullName, src => $"{src.CreatedByUser.Name} {src.CreatedByUser.Surname}")
                  .Map(dest => dest.UpdatedByFullName, src => src.UpdatedByUser != null ? $"{src.UpdatedByUser.Name} {src.UpdatedByUser.Surname}" : null)

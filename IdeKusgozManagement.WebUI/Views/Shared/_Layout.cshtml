@@ -2,279 +2,281 @@
 <html lang="tr">
 
 <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="author" content="İdeaktif Danışmanlık ve Yazılım Ltd.">
-	<!-- The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-	<!-- Title -->
-	<title>@ViewData["Title"] • Kuşgöz İzmir Vinç</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="İdeaktif Danışmanlık ve Yazılım Ltd.">
+    <!-- The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <!-- Title -->
+    <title>@ViewData["Title"] • Kuşgöz İzmir Vinç</title>
 
-	<!-- Styles -->
-	<link href="https://fonts.googleapis.com/css?family=Poppins:400,500,700,800&display=swap" rel="stylesheet">
-	<link href="~/theme/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
-		integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ=="
-		crossorigin="anonymous" referrerpolicy="no-referrer" />
-	<link href="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.css" rel="stylesheet">
-	@await RenderSectionAsync("CalendarCss", required: false)
-	<!-- Theme Styles -->
-	<link href="~/theme/assets/css/main.min.css" rel="stylesheet">
-	<link href="~/theme/assets/css/custom.css" rel="stylesheet">
-	<link href="https://cdn.jsdelivr.net/npm/toastr/build/toastr.min.css" rel="stylesheet">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css">
-	<link href="https://cdn.jsdelivr.net/npm/tippy.js/dist/tippy.min.css" rel="stylesheet">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/themes/light.min.css">
-	@await RenderSectionAsync("Styles", required: false)
-	<style>
-		/* Notification Styles */
-		.bold-notif-text {
-			font-weight: bold !important;
-			background-color: #e3f2fd !important;
-		}
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,700,800&display=swap" rel="stylesheet">
+    <link href="~/theme/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+          integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.css" rel="stylesheet">
+    @await RenderSectionAsync("CalendarCss", required: false)
+    <!-- Theme Styles -->
+    <link href="~/theme/assets/css/main.min.css" rel="stylesheet">
+    <link href="~/theme/assets/css/custom.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/toastr/build/toastr.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/tippy.js/dist/tippy.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/themes/light.min.css">
+    @await RenderSectionAsync("Styles", required: false)
+    <style>
+        /* Notification Styles */
+        .bold-notif-text {
+            font-weight: bold !important;
+            background-color: #e3f2fd !important;
+        }
 
-		.notification-item:hover {
-			background-color: #f8f9fa !important;
-		}
+        .notification-item:hover {
+            background-color: #f8f9fa !important;
+        }
 
-		.bold-notif-text:hover {
-			background-color: #bbdefb !important;
-		}
+        .bold-notif-text:hover {
+            background-color: #bbdefb !important;
+        }
 
-		.notification-item .fa-bell {
-			font-size: 14px;
-		}
+        .notification-item .fa-bell {
+            font-size: 14px;
+        }
 
-		.notification-item .badge {
-			position: absolute;
-			top: 8px;
-			right: 8px;
-		}
+        .notification-item .badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
 
-		.notification-item {
-			position: relative;
-			border-left: 3px solid transparent;
-		}
+        .notification-item {
+            position: relative;
+            border-left: 3px solid transparent;
+        }
 
-		.bold-notif-text {
-			border-left-color: #2196f3 !important;
-		}
+        .bold-notif-text {
+            border-left-color: #2196f3 !important;
+        }
 
-		.modal-footer {
-			flex-wrap: nowrap !important;
-		}
+        .modal-footer {
+            flex-wrap: nowrap !important;
+        }
 
-		/* Approved/readonly row styles */
-		:disabled,
-		.disabled {
-			opacity: 0.8;
-			cursor: not-allowed !important;
-		}
+        /* Approved/readonly row styles */
+        :disabled,
+        .disabled {
+            opacity: 0.8;
+            cursor: not-allowed !important;
+        }
 
-		.notif-drop-menu {
-			max-height: unset !important;
-			overflow-y: hidden !important;
-			overflow-x: hidden !important;
-		}
+        .notif-drop-menu {
+            max-height: unset !important;
+            overflow-y: hidden !important;
+            overflow-x: hidden !important;
+        }
 
-		.notification-item p {
-			word-wrap: break-word;
-			word-break: break-word;
-			overflow-wrap: break-word;
-			white-space: normal;
-		}
+        .notification-item p {
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
 
-		.notification-item {
-			max-width: 100%;
-			overflow: hidden;
-		}
+        .notification-item {
+            max-width: 100%;
+            overflow: hidden;
+        }
 
-		.notification-item .flex-grow-1 {
-			min-width: 0;
-			overflow: hidden;
-		}
+            .notification-item .flex-grow-1 {
+                min-width: 0;
+                overflow: hidden;
+            }
 
-		.page-header .header-notif .notif-image span {
-			width: 20px !important;
-			height: 20px !important;
-			line-height: 20px !important;
-		}
-	</style>
+        .page-header .header-notif .notif-image span {
+            width: 20px !important;
+            height: 20px !important;
+            line-height: 20px !important;
+        }
+    </style>
 </head>
 
 <body class="">
 
-	<div class="page-container">
-		<div class="page-header">
-			<nav class="navbar navbar-expand-lg d-flex justify-content-between">
-				<div class="" id="navbarNav">
-					<ul class="navbar-nav" id="leftNav">
-						<li class="nav-item">
-							<a class="nav-link" id="sidebar-toggle" href="#"><i data-feather="arrow-left"></i></a>
-						</li>
+    <div class="page-container">
+        <div class="page-header">
+            <nav class="navbar navbar-expand-lg d-flex justify-content-between">
+                <div class="" id="navbarNav">
+                    <ul class="navbar-nav" id="leftNav">
+                        <li class="nav-item">
+                            <a class="nav-link" id="sidebar-toggle" href="#"><i data-feather="arrow-left"></i></a>
+                        </li>
 
-					</ul>
-				</div>
-				<div class="logo">
-					<a class="navbar-brand" href="/ana-sayfa"></a>
-				</div>
-				<div class="" id="headerNav">
-					<ul class="navbar-nav">
-						<li class="nav-item dropdown">
-							<a class="nav-link notifications-dropdown" href="#" id="notificationsDropDown" role="button"
-								data-bs-toggle="dropdown" aria-expanded="false">
-								<span id="notificationCount">0</span>
-							</a>
-							<div class="dropdown-menu dropdown-menu-end notif-drop-menu"
-								aria-labelledby="notificationsDropDown" id="notificationsDropdown"
-								data-bs-auto-close="false">
-								<div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-									<h6 class="dropdown-header mb-0">Bildirimler</h6>
-									<button type="button" class="btn btn-sm btn-outline-primary" id="markAllAsReadBtn"
-										style="display: none;">
-										<i class="fas fa-check-double"></i>
-									</button>
-								</div>
+                    </ul>
+                </div>
+                <div class="logo">
+                    <a class="navbar-brand" href="/ana-sayfa"></a>
+                </div>
+                <div class="" id="headerNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link notifications-dropdown" href="#" id="notificationsDropDown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <span id="notificationCount">0</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end notif-drop-menu"
+                                 aria-labelledby="notificationsDropDown" id="notificationsDropdown"
+                                 data-bs-auto-close="false">
+                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                                    <h6 class="dropdown-header mb-0">Bildirimler</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="markAllAsReadBtn"
+                                            style="display: none;">
+                                        <i class="fas fa-check-double"></i>
+                                    </button>
+                                </div>
 
-								<div id="notificationsContainer" style="max-height: 400px; overflow-y: auto;">
-									<div id="notificationsList">
-										<div class="text-center py-3">
-											<p class="text-muted mb-0">Henüz bildirim bulunmuyor</p>
-										</div>
-									</div>
+                                <div id="notificationsContainer" style="max-height: 400px; overflow-y: auto;">
+                                    <div id="notificationsList">
+                                        <div class="text-center py-3">
+                                            <p class="text-muted mb-0">Henüz bildirim bulunmuyor</p>
+                                        </div>
+                                    </div>
 
-									<div id="loadingIndicator" class="text-center py-2" style="display: none;">
-										<div class="spinner-border spinner-border-sm" role="status">
-											<span class="visually-hidden">Yükleniyor...</span>
-										</div>
-									</div>
+                                    <div id="loadingIndicator" class="text-center py-2" style="display: none;">
+                                        <div class="spinner-border spinner-border-sm" role="status">
+                                            <span class="visually-hidden">Yükleniyor...</span>
+                                        </div>
+                                    </div>
 
-									<div id="loadMoreContainer" class="text-center py-2" style="display: none;">
-										<button type="button" class="btn btn-sm btn-outline-secondary" id="loadMoreBtn">
-											<i class="fas fa-chevron-down"></i> Daha Fazla Yükle
-										</button>
-									</div>
-								</div>
-							</div>
-						</li>
-						<li class="nav-item dropdown">
+                                    <div id="loadMoreContainer" class="text-center py-2" style="display: none;">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="loadMoreBtn">
+                                            <i class="fas fa-chevron-down"></i> Daha Fazla Yükle
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown">
 
-							<a class="nav-link profile-dropdown" href="#" id="profileDropDown" role="button"
-								data-bs-toggle="dropdown" aria-expanded="false">
-								<img src="/theme/assets/images/avatars/profile-image.png" alt=""><span
-									class="mt-5 text-black">
-									@User.FindFirst("FullName")?.Value
-								</span>
-							</a>
-							<div class="dropdown-menu dropdown-menu-end profile-drop-menu"
-								aria-labelledby="profileDropDown">
-								<a class="dropdown-item" href="/profil"><i data-feather="user"></i>Profil</a>
-								<div class="dropdown-divider"></div>
-								<a class="dropdown-item" href="/cikis-yap"><i data-feather="log-out"></i>Çıkış Yap</a>
-							</div>
-						</li>
-					</ul>
-				</div>
-			</nav>
-		</div>
-		<div class="page-sidebar">
-			<ul class="list-unstyled accordion-menu">
-				<li class="sidebar-title">
-					Menü
-				</li>
-				<li class="@(Context.Request.Path == "/ana-sayfa" ? "active-page" : "")">
-					<a href="/ana-sayfa"><i data-feather="home"></i>Ana Sayfa</a>
-				</li>
-				<li class="@(Context.Request.Path == "/takvim" ? "active-page" : "")">
-					<a href="/takvim"><i data-feather="calendar"></i>Takvim</a>
-				</li>
-				<li class="@(Context.Request.Path == "/sosyal" ? "active-page" : "")">
-					<a href="/sosyal"><i data-feather="message-circle"></i>Sosyal</a>
-				</li>
-				@if (User.IsInRole("Admin") || User.IsInRole("Yönetici"))
-				{
-					<li class="sidebar-title">
-						Yönetici İşlemleri
-					</li>
-					<li class="@(Context.Request.Path == "/kullanici-yonetimi" ? "active-page" : "")">
-						<a href="/kullanici-yonetimi"><i data-feather="users"></i>Kullanıcılar</a>
-					</li>
+                            <a class="nav-link profile-dropdown" href="#" id="profileDropDown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="/theme/assets/images/avatars/profile-image.png" alt=""><span class="mt-5 text-black">
+                                    @User.FindFirst("FullName")?.Value
+                                </span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end profile-drop-menu"
+                                 aria-labelledby="profileDropDown">
+                                <a class="dropdown-item" href="/profil"><i data-feather="user"></i>Profil</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="/cikis-yap"><i data-feather="log-out"></i>Çıkış Yap</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        <div class="page-sidebar">
+            <ul class="list-unstyled accordion-menu">
+                <li class="sidebar-title">
+                    Menü
+                </li>
+                <li class="@(Context.Request.Path == "/ana-sayfa" ? "active-page" : "")">
+                    <a href="/ana-sayfa"><i data-feather="home"></i>Ana Sayfa</a>
+                </li>
+                <li class="@(Context.Request.Path == "/takvim" ? "active-page" : "")">
+                    <a href="/takvim"><i data-feather="calendar"></i>Takvim</a>
+                </li>
+                <li class="@(Context.Request.Path == "/sosyal" ? "active-page" : "")">
+                    <a href="/sosyal"><i data-feather="message-circle"></i>Sosyal</a>
+                </li>
+                @if (User.IsInRole("Admin") || User.IsInRole("Yönetici"))
+                {
+                    <li class="sidebar-title">
+                        Yönetici İşlemleri
+                    </li>
+                    <li class="@(Context.Request.Path == "/kullanici" ? "active-page" : "")">
+                        <a href="/kullanici"><i data-feather="users"></i>Kullanıcılar</a>
+                    </li>
 
-				}
-				@if (User.IsInRole("Admin") || User.IsInRole("Şef"))
-				{
-					<li class="sidebar-title">
-						Şef İşlemleri
-					</li>
-					<li class="@(Context.Request.Path == "/ekipman-yonetimi" ? "active-page" : "")">
-						<a href="/ekipman-yonetimi"><i data-feather="tool"></i>Ekipmanlar</a>
-					</li>
-					<li class="@(Context.Request.Path == "/masraf-yonetimi" ? "active-page" : "")">
-						<a href="/masraf-yonetimi"><i data-feather="tag"></i>Masraflar</a>
-					</li>
-					<li class="@(Context.Request.Path == "/izinn-yonetimi" ? "active-page" : "")">
-						<a href="/izin-yonetimi"><i data-feather="navigation"></i>İzinler</a>
-					</li>
-					<li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
-						<a href="/puantaj"><i data-feather="list"></i>Puantajlar</a>
-					</li>
-				}
+                }
+                @if (User.IsInRole("Admin") || User.IsInRole("Şef"))
+                {
+                    <li class="sidebar-title">
+                        Şef İşlemleri
+                    </li>
+                    <li class="@(Context.Request.Path == "/proje" ? "active-page" : "")">
+                        <a href="/proje"><i data-feather="cpu"></i>Projeler</a>
+                    </li>
+                    <li class="@(Context.Request.Path == "/ekipman" ? "active-page" : "")">
+                        <a href="/ekipman"><i data-feather="tool"></i>Ekipmanlar</a>
+                    </li>
+                    <li class="@(Context.Request.Path == "/masraf" ? "active-page" : "")">
+                        <a href="/masraf"><i data-feather="tag"></i>Masraflar</a>
+                    </li>
+                    <li class="@(Context.Request.Path == "/izin" ? "active-page" : "")">
+                        <a href="/izin"><i data-feather="navigation"></i>İzinler</a>
+                    </li>
+                    <li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
+                        <a href="/puantaj"><i data-feather="list"></i>Puantajlar</a>
+                    </li>
+                }
 
-				<li class="sidebar-title">
-					Personel İşlemleri
-				</li>
-				<li class="@(Context.Request.Path == "/puantaj/ekle" ? "active-page" : "")">
-					<a href="/puantaj/ekle"><i data-feather="clock"></i>Puantaj Gir</a>
-				</li>
-				<li class="@(Context.Request.Path == "/izin/olustur" ? "active-page" : "")">
-					<a href="/izin/olustur"><i data-feather="flag"></i>İzinlerim</a>
-				</li>
-				<li><br /></li>
+                <li class="sidebar-title">
+                    Personel İşlemleri
+                </li>
+                <li class="@(Context.Request.Path == "/puantaj/ekle" ? "active-page" : "")">
+                    <a href="/puantaj/ekle"><i data-feather="clock"></i>Puantaj Gir</a>
+                </li>
+                <li class="@(Context.Request.Path == "/izin/olustur" ? "active-page" : "")">
+                    <a href="/izin/olustur"><i data-feather="flag"></i>İzinlerim</a>
+                </li>
+                <li><br /></li>
 
-			</ul>
-		</div>
-		<div class="page-content">
-			<div class="main-wrapper">
-				@RenderBody()
-			</div>
+            </ul>
+        </div>
+        <div class="page-content">
+            <div class="main-wrapper">
+                @RenderBody()
+            </div>
 
-		</div>
-		<footer class="footer">
-			<div class="container-fluid">
-				<div class="row">
-					<div class="col-sm-6">
-					</div>
-					<div class="col-sm-6">
-						<div class="text-sm-end d-none d-sm-block">
-							<a href="https://www.ideaktif.com.tr" target="_blank" style="color:#5b5b5b">2025 © İdeaktif
-								Danışmanlık ve Yazılım Ltd.</a>
-						</div>
-					</div>
-				</div>
-			</div>
-		</footer>
-	</div>
-	<!-- Javascripts -->
-	<script src="~/theme/assets/plugins/jquery/jquery-3.4.1.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/@@popperjs/core/dist/umd/popper.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/tippy.js/dist/tippy.umd.min.js"></script>
-	<script src="~/theme/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
-	<script src="https://unpkg.com/feather-icons"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/js/all.min.js"
-		integrity="sha512-gBYquPLlR76UWqCwD06/xwal4so02RjIR0oyG1TIhSGwmBTRrIkQbaPehPF8iwuY9jFikDHMGEelt0DtY7jtvQ=="
-		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-	<script src="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/toastr/toastr.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-	<script src="~/theme/assets/plugins/blockui/jquery.blockUI.js"></script>
-	<script src="~/theme/assets/js/main.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr/dist/browser/signalr.min.js"></script>
-	<script src="~/js/realtime-manager.js"></script>
+        </div>
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6">
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-sm-end d-none d-sm-block">
+                            <a href="https://www.ideaktif.com.tr" target="_blank" style="color:#5b5b5b">
+                                2025 © İdeaktif
+                                Danışmanlık ve Yazılım Ltd.
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <!-- Javascripts -->
+    <script src="~/theme/assets/plugins/jquery/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@popperjs/core/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tippy.js/dist/tippy.umd.min.js"></script>
+    <script src="~/theme/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/js/all.min.js"
+            integrity="sha512-gBYquPLlR76UWqCwD06/xwal4so02RjIR0oyG1TIhSGwmBTRrIkQbaPehPF8iwuY9jFikDHMGEelt0DtY7jtvQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastr/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="~/theme/assets/plugins/blockui/jquery.blockUI.js"></script>
+    <script src="~/theme/assets/js/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/realtime-manager.js"></script>
 
-	@await RenderSectionAsync("Scripts", required: false)
-
-
+    @await RenderSectionAsync("Scripts", required: false)
 
 </body>
 

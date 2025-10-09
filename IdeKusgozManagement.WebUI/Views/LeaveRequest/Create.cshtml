@@ -309,36 +309,42 @@
             });
         }
 
-        async function createLeaveRequest() {
-
+              async function createLeaveRequest() {
             var picker = $('#date-leave').data('daterangepicker');
             var startDate = picker.startDate.format('YYYY-MM-DD');
             var endDate = picker.endDate.format('YYYY-MM-DD');
-            const leaveRequestData = {
-                StartDate: startDate,
-                EndDate: endDate,
-                Reason: $('#select-leave-reason').val(),
-                Description: $('#txt-description').val().trim(),
-                DocumentUrl: $('#file-document').val(),
-            };
+
+            // Create FormData for file upload support
+            const formData = new FormData();
+            formData.append('StartDate', startDate);
+            formData.append('EndDate', endDate);
+            formData.append('Reason', $('#select-leave-reason').val());
+            formData.append('Description', $('#txt-description').val().trim());
+            formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+            // Add file if uploaded
+            const fileInput = $('#file-document')[0];
+            if (fileInput.files.length > 0) {
+                formData.append('File.File', fileInput.files[0]);
+                formData.append('File.FileType', 1);
+            }
 
             try {
                 const response = await $.ajax({
                     url: '/izin/olustur',
                     type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(leaveRequestData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: formData,
+                    processData: false,
+                    contentType: false,
                 });
 
                 if (response.isSuccess) {
                     toastr.success(response.message, 'Başarılı!');
-                                        $('#createLeaveRequestModal').modal('hide');
-
+                    $('#createLeaveRequestModal').modal('hide');
                     myLeaveRequestsTable.ajax.reload(null, false);
-                     $('#date-leave').val('');
+
+                    // Reset form
+                    $('#date-leave').val('');
                     $('#select-leave-reason').val(0);
                     $('#txt-description').val('');
                     $('#file-document').val('');
@@ -346,10 +352,66 @@
                     toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
-                console.error('Create expense error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                console.error('Create leave request error:', error);
+                toastr.error(error.responseJSON?.message || 'Bir hata oluştu!', 'Hata!');
             }
         }
+
+             async function deleteLeaveRequest(leaveRequestId) {
+            try {
+                const result = await Swal.fire({
+                    title: 'İzin Talebini Sil',
+                    text: 'Bu izin talebini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-trash"></i> Evet, Sil',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await $.ajax({
+                                url: `/izin/${leaveRequestId}`,
+                                type: 'DELETE',
+                                contentType: 'application/json',
+                                headers: {
+                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                }
+                            });
+                            return response;
+                        } catch (error) {
+                            let errorMessage = 'Silme başarısız';
+                            if (error.responseJSON) {
+                                if (error.responseJSON.message) {
+                                    errorMessage = error.responseJSON.message;
+                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                                    errorMessage = error.responseJSON.errors.join(', ');
+                                }
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            throw error;
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'İzin talebi başarıyla silindi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    myLeaveRequestsTable.ajax.reload(null, false);
+                }
+
+            } catch (error) {
+                console.error('Silme hatası:', error);
+            }
+        }
+
     </script>
 
 }

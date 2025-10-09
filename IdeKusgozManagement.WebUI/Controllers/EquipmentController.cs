@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Controllers
 {
-    [Route("ekipman-yonetimi")]
-    public class EquipmentManagementController : Controller
+    [Route("ekipman")]
+    public class EquipmentController : Controller
     {
         private readonly IEquipmentApiService _equipmentApiService;
 
-        public EquipmentManagementController(IEquipmentApiService equipmentApiService)
+        public EquipmentController(IEquipmentApiService equipmentApiService)
         {
             _equipmentApiService = equipmentApiService;
         }
