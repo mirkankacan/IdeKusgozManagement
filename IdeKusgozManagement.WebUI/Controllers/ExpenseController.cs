@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Controllers
 {
-    [Route("masraf-yonetimi")]
-    public class ExpenseManagementController : Controller
+    [Route("masraf")]
+    public class ExpenseController : Controller
     {
         private readonly IExpenseApiService _expenseApiService;
 
-        public ExpenseManagementController(IExpenseApiService expenseApiService)
+        public ExpenseController(IExpenseApiService expenseApiService)
         {
             _expenseApiService = expenseApiService;
         }

@@ -34,10 +34,12 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IWorkRecordService, WorkRecordService>();
+            services.AddScoped<IWorkRecordExpenseService, WorkRecordExpenseService>();
             services.AddScoped<IMessageService, MessageService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddSingleton<IFileProvider>(new PhysicalFileProvider(Path.Combine(environment.WebRootPath)));
             services.AddScoped<IFileService, FileService>();
+            services.AddScoped<IProjectService, ProjectService>();
 
             services.ConfigureOptions<JwtOptionsSetup>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();

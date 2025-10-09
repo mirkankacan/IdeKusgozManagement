@@ -19,7 +19,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/workrecords/my-records-by-date?date={date:yyyy-MM-dd}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/workrecords/my-records/date/{date:yyyy-MM-dd}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -40,7 +40,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/workrecords/by-user-and-date?userId={userId}&date={date:yyyy-MM-dd}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/workrecords/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -89,7 +89,7 @@ namespace IdeKusgozManagement.WebUI.Services
                 var json = JsonConvert.SerializeObject(updateWorkRecordViewModel);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"api/workrecords?userId={userId}", content, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/workrecords/batch-update/user/{userId}", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -111,7 +111,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/workrecords/approve?userId={userId}&date={date:yyyy-MM-dd}", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/workrecords/batch-approve/user/{userId}/date/{date:yyyy-MM-dd}", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -132,7 +132,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/workrecords/reject?userId={userId}&date={date:yyyy-MM-dd}", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/workrecords/batch-reject/user/{userId}/date/{date:yyyy-MM-dd}", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -146,6 +146,48 @@ namespace IdeKusgozManagement.WebUI.Services
             catch (Exception ex)
             {
                 return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<WorkRecordViewModel>> ApproveWorkRecordByIdAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"api/workrecords/{userId}/approve", null, cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
+                    return apiResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Onaylama başarısız" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<WorkRecordViewModel>> RejectWorkRecordByIdAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"api/workrecords/{userId}/reject", null, cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
+                    return apiResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Onaylama başarısız" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
     }

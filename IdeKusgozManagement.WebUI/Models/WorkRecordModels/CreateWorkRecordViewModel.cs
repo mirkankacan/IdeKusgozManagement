@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels;
+﻿using IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels;
+using System.ComponentModel.DataAnnotations;
 
 namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
 {
@@ -8,7 +8,7 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         [Required]
         public DateTime Date { get; set; }
 
-        public bool IsWeekend { get; set; } = false;
+        public string? ExcuseReason { get; set; } = null;
 
         [Required]
         public TimeSpan StartTime { get; set; }
@@ -37,6 +37,7 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         public bool HasDinner { get; set; } = false;
 
         public bool HasNightMeal { get; set; } = false;
+        public bool HasTravel { get; set; } = false;
         public List<CreateWorkRecordExpenseViewModel>? Expenses { get; set; } = new();
     }
 }

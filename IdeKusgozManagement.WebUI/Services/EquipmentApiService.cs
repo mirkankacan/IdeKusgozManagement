@@ -1,8 +1,8 @@
-using System.Text;
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.EquipmentModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace IdeKusgozManagement.WebUI.Services
 {

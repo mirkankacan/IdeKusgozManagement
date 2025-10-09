@@ -15,7 +15,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                IOrderedEnumerable<IdtExpense>? expenses = (await unitOfWork.GetRepository<IdtExpense>().GetAllAsync(cancellationToken)).OrderByDescending(e => e.CreatedDate);
+                IEnumerable<IdtExpense>? expenses = (await unitOfWork.GetRepository<IdtExpense>().GetAllAsync(cancellationToken)).OrderByDescending(e => e.CreatedDate);
 
                 var expenseDTOs = expenses.Adapt<IEnumerable<ExpenseDTO>>();
 
@@ -54,15 +54,15 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var existingExpense = await unitOfWork.GetRepository<IdtExpense>().GetFirstOrDefaultAsync(e => e.Name.ToLower() == createExpenseDTO.Name.ToLower(), cancellationToken);
+                var existingExpense = await unitOfWork.GetRepository<IdtExpense>().AnyAsync(e => e.Name.ToLower() == createExpenseDTO.Name.ToLower(), cancellationToken);
 
-                if (existingExpense != null)
+                if (existingExpense)
                 {
                     return ApiResponse<string>.Error("Bu isimde bir masraf türü zaten mevcut");
                 }
 
                 var expense = createExpenseDTO.Adapt<IdtExpense>();
-
+                expense.IsActive = true;
                 await unitOfWork.GetRepository<IdtExpense>().AddAsync(expense, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 

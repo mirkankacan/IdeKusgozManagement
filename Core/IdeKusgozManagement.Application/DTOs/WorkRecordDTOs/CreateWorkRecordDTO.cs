@@ -5,10 +5,10 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
     public class CreateWorkRecordDTO
     {
         public DateTime Date { get; set; }
-        public bool IsWeekend { get; set; }
+        public string? ExcuseReason { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-        public string Project { get; set; }
+        public string ProjectId { get; set; }
         public string EquipmentId { get; set; }
         public string Province { get; set; }
         public string District { get; set; }
@@ -16,6 +16,7 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public bool HasLunch { get; set; }
         public bool HasDinner { get; set; }
         public bool HasNightMeal { get; set; }
-        public List<CreateWorkRecordExpenseDTO>? Expenses { get; set; }
+        public bool HasTravel { get; set; }
+        public List<CreateWorkRecordExpenseDTO>? WorkRecordExpenses { get; set; }
     }
 }

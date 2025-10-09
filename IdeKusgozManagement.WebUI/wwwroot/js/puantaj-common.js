@@ -61,115 +61,6 @@ const PuantajUtils = {
 };
 
 /**
- * Time Picker Management
- */
-const TimePicker = {
-    initialize: function () {
-        this.initializeStartTime();
-        this.initializeEndTime();
-    },
-
-    initializeStartTime: function () {
-        $('.start-time:not(.dtp-initialized)').each(function () {
-            $(this).addClass('dtp-initialized').bootstrapMaterialDatePicker({
-                format: 'HH:mm',
-                shortTime: false,
-                date: false,
-                time: true,
-                monthPicker: false,
-                yearPicker: false,
-                dayPicker: false,
-                hourPicker: true,
-                minutePicker: true,
-                minuteStep: 15,
-                clearButton: true,
-                nowButton: true,
-                switchOnClick: true,
-                ampm: false,
-                okText: 'Tamam',
-                cancelText: 'İptal',
-                clearText: 'Temizle',
-                nowText: 'Şimdi',
-                lang: 'tr',
-                currentDate: moment().startOf('day').add(8, 'hours'),
-                showTodayBtn: false,
-                showClear: true,
-                showClose: true
-            }).on('change', function () {
-                TimePicker.validateTimeInputs($(this));
-            });
-
-            $(this).closest('.input-group').find('.fa-clock').parent().on('click', function () {
-                $(this).closest('.input-group').find('.start-time').focus();
-            });
-        });
-    },
-
-    initializeEndTime: function () {
-        $('.end-time:not(.dtp-initialized)').each(function () {
-            $(this).addClass('dtp-initialized').bootstrapMaterialDatePicker({
-                format: 'HH:mm',
-                shortTime: false,
-                date: false,
-                time: true,
-                monthPicker: false,
-                yearPicker: false,
-                dayPicker: false,
-                hourPicker: true,
-                minutePicker: true,
-                minuteStep: 15,
-                clearButton: true,
-                nowButton: true,
-                switchOnClick: true,
-                ampm: false,
-                okText: 'Tamam',
-                cancelText: 'İptal',
-                clearText: 'Temizle',
-                nowText: 'Şimdi',
-                lang: 'tr',
-                currentDate: moment().startOf('day').add(17, 'hours'),
-                showTodayBtn: false,
-                showClear: true,
-                showClose: true
-            }).on('change', function () {
-                TimePicker.validateTimeInputs($(this));
-            });
-
-            $(this).closest('.input-group').find('.fa-clock').parent().on('click', function () {
-                $(this).closest('.input-group').find('.end-time').focus();
-            });
-        });
-    },
-
-    validateTimeInputs: function (changedInput) {
-        const row = changedInput.closest('tr');
-        const startTimeInput = row.find('.start-time');
-        const endTimeInput = row.find('.end-time');
-
-        const startTime = startTimeInput.val();
-        const endTime = endTimeInput.val();
-
-        if (startTime && endTime) {
-            const startMoment = moment(startTime, 'HH:mm');
-            const endMoment = moment(endTime, 'HH:mm');
-
-            if (endMoment.isSameOrBefore(startMoment)) {
-                toastr.warning('Bırakma saati başlama saatinden erken olamaz!', 'Uyarı!');
-
-                if (changedInput.hasClass('end-time')) {
-                    const newEndTime = startMoment.add(1, 'hour').format('HH:mm');
-                    endTimeInput.val(newEndTime);
-                }
-                else if (changedInput.hasClass('start-time')) {
-                    const newEndTime = startMoment.add(1, 'hour').format('HH:mm');
-                    endTimeInput.val(newEndTime);
-                }
-            }
-        }
-    }
-};
-
-/**
  * Select2 Management
  */
 const Select2Manager = {
@@ -177,12 +68,13 @@ const Select2Manager = {
         await this.initializeEquipmentSelect();
         this.initializeLocationSelects();
         await this.initializeExpenseSelect();
+        await this.initializeProjectSelect();
     },
 
     initializeEquipmentSelect: async function () {
         try {
             const response = await $.ajax({
-                url: '/ekipman-yonetimi/aktif-liste',
+                url: '/ekipman/aktif-liste',
                 type: 'GET',
                 dataType: 'json'
             });
@@ -232,7 +124,7 @@ const Select2Manager = {
     initializeExpenseSelect: async function () {
         try {
             const response = await $.ajax({
-                url: '/masraf-yonetimi/aktif-liste',
+                url: '/masraf/aktif-liste',
                 type: 'GET',
                 dataType: 'json'
             });
@@ -255,6 +147,39 @@ const Select2Manager = {
         } catch (error) {
             console.error('Masraf türleri yüklenirken hata:', error);
             toastr.error('Masraf türleri yüklenirken hata oluştu', 'Hata!');
+        }
+    },
+    initializeProjectSelect: async function () {
+        try {
+            const response = await $.ajax({
+                url: '/proje/aktif-liste',
+                type: 'GET',
+                dataType: 'json'
+            });
+
+            if (response && response.isSuccess && response.data) {
+                $('.project-select').each(function () {
+                    const currentSelect = $(this);
+                    const currentValue = currentSelect.data('current-value');
+
+                    currentSelect.empty();
+                    currentSelect.append('<option value="">Proje seçin</option>');
+                    response.data.forEach(project => {
+                        const isSelected = currentValue === project.id;
+                        currentSelect.append(`<option value="${project.id}" ${isSelected ? 'selected' : ''}>${project.name}</option>`);
+                    });
+                });
+            }
+
+            $('.project-select').select2({
+                placeholder: 'Ekipman seçin',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%'
+            });
+        } catch (error) {
+            console.error('Proje listesi yüklenirken hata:', error);
+            toastr.error('Proje listesi yüklenirken hata oluştu', 'Hata!');
         }
     },
 
@@ -585,7 +510,6 @@ async function initializeCommonComponents() {
     }
 
     // Initialize components
-    TimePicker.initialize();
     await Select2Manager.initialize();
     ExpenseManager.setup();
 }
@@ -603,7 +527,6 @@ if (typeof $ !== 'undefined') {
 // Export for manual initialization
 window.PuantajCommon = {
     Utils: PuantajUtils,
-    TimePicker: TimePicker,
     Select2Manager: Select2Manager,
     ExpenseManager: ExpenseManager,
     LocationManager: LocationManager,

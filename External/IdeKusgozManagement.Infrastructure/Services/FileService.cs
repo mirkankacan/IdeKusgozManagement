@@ -15,9 +15,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
     {
         private readonly PhysicalFileProvider _physicalFileProvider = (PhysicalFileProvider)fileProvider;
 
-        public async Task<ApiResponse<FileDTO>> UploadFileAsync(
-     UploadFileDTO uploadFileDTO,
-     CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<FileDTO>> UploadFileAsync(UploadFileDTO uploadFileDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -36,6 +34,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     return ApiResponse<FileDTO>.Error("wwwroot klasörü bulunamadı");
                 }
+                if (uploadFileDTO.FileType == null)
+                {
+                    uploadFileDTO.FileType = FileType.Other;
+                }
+
                 // Dosya yolu oluştur
                 var newFileName = $"{NewId.NextGuid()}{fileExtension}";
                 var dateFolder = DateTime.Now.ToString("dd-MM-yyyy");
@@ -50,7 +53,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var fullFolderPath = Path.Combine(
                     wwwrootPath,
                     "Uploads",
-                    uploadFileDTO.FileType.ToFolderName(),
+                    uploadFileDTO.FileType?.ToFolderName(),
                     userFolder,
                     dateFolder);
                 if (!Directory.Exists(fullFolderPath))
@@ -62,7 +65,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await using var stream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write, FileShare.None);
                 await uploadFileDTO.FormFile.CopyToAsync(stream, cancellationToken);
                 // Relative path
-                var relativePath = $"/Uploads/{uploadFileDTO.FileType.ToFolderName()}/{userFolder}/{dateFolder}/{newFileName}";
+                var relativePath = $"/Uploads/{uploadFileDTO.FileType?.ToFolderName()}/{userFolder}/{dateFolder}/{newFileName}";
 
                 // Entity oluştur
                 var mappedFile = new IdtFile
@@ -74,7 +77,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 await unitOfWork.GetRepository<IdtFile>().AddAsync(mappedFile, cancellationToken);
 
+
                 await unitOfWork.SaveChangesAsync(cancellationToken);
+
 
                 var fileDTO = new FileDTO
                 {
@@ -89,7 +94,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Dosya yüklenirken hata oluştu");
-                return ApiResponse<FileDTO>.Error("Dosya yüklenirken bir hata oluştu");
+                throw;
             }
         }
 
@@ -98,11 +103,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 var file = await unitOfWork.GetRepository<IdtFile>().GetByIdAsync(fileId, cancellationToken);
-
-                if (File.Exists(file.Path))
+                if (file == null)
                 {
-                    File.Delete(file.Path);
+                    logger.LogWarning("Dosya kaydı bulunamadı: {FileId}", fileId);
+                    return ApiResponse<bool>.Error("Dosya kaydı bulunamadı");
+                }
+                var fullPath = Path.Combine(_physicalFileProvider.Root, file.Path.TrimStart('/'));
+
+                if (File.Exists(fullPath))
+                {
+                    File.Delete(fullPath);
                     await unitOfWork.GetRepository<IdtFile>().RemoveAsync(fileId, cancellationToken);
+                    await unitOfWork.SaveChangesAsync(cancellationToken);
+
                     logger.LogInformation("Dosya silindi: {FileId}", fileId);
                     return ApiResponse<bool>.Success(true, "Dosya silindi");
                 }

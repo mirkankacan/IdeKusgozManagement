@@ -1,3 +1,4 @@
+using IdeKusgozManagement.WebUI.Models.FileModels;
 using System.ComponentModel.DataAnnotations;
 
 namespace IdeKusgozManagement.WebUI.Models.LeaveRequestModels
@@ -14,5 +15,7 @@ namespace IdeKusgozManagement.WebUI.Models.LeaveRequestModels
         public string Reason { get; set; }
 
         public string? Description { get; set; }
+        public UploadFileViewModel? File { get; set; }
+
     }
 }

@@ -1,6 +1,5 @@
 using IdeKusgozManagement.Domain.Entities.Base;
 using IdeKusgozManagement.Domain.Enums;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IdeKusgozManagement.Domain.Entities
 {
@@ -28,7 +27,6 @@ namespace IdeKusgozManagement.Domain.Entities
         /// </summary>
         public string? RedirectUrl { get; set; }
 
-        [ForeignKey(nameof(CreatedBy))]
         public virtual ApplicationUser CreatedByUser { get; set; }
 
         public virtual ICollection<IdtNotificationRead> NotificationReads { get; set; } = new List<IdtNotificationRead>();

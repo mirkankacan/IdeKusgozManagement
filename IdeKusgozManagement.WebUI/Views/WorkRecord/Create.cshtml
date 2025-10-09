@@ -10,10 +10,6 @@
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
 
-    <link
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/css/bootstrap-material-datetimepicker.min.css"
-        rel="stylesheet">
-
     <style>
         .time-input {
             text-align: center;
@@ -115,6 +111,7 @@
             /* header + footer yüksekliğini çıkar */
             overflow-y: auto;
         }
+
     </style>
 }
 
@@ -203,6 +200,7 @@
                                     <th style="width: 150px;">ÇALIŞILAN<br /> İLÇE</th>
                                     <th>MASRAF</th>
                                     <th>YEMEK</th>
+                                    <th>YOL</th>
                                     <th>DURUM</th>
                                 </tr>
                             </thead>
@@ -286,9 +284,7 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js"></script>
-    <script src="~/js/turkey-locations.js"></script>
+      <script src="~/js/turkey-locations.js"></script>
     <script src="~/js/puantaj-common.js"></script>
 
     <script>
@@ -365,9 +361,8 @@
             try {
                 const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
                 const response = await $.ajax({
-                    url: '/puantaj/listem',
-                    type: 'GET',
-                    data: { date: formattedDate }
+                    url: `/puantaj/listem/tarih/${formattedDate}`,
+                    type: 'GET'
                 });
 
                 if (response.isSuccess && response.data && response.data.length > 0) {
@@ -480,6 +475,7 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month - 1, day);
                 const dayOfWeek = PuantajCommon.Utils.getDayOfWeekTurkish(date.getDay());
+                  const isHoliday = date.getDay() === 0;
                 const formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year} ${dayOfWeek}`;
 
                 const existingRecord = existingWorkRecords[day];
@@ -488,17 +484,18 @@
                 const isRejected = existingRecord && existingRecord.status === 2;
 
                 const defaultValues = {
-                    isWeekend: existingRecord?.isWeekend || false,
+                    excuseReason: existingRecord?.excuseReason || '',
                     startTime: existingRecord ? PuantajCommon.Utils.formatTimeSpan(existingRecord.startTime) : '08:00',
                     endTime: existingRecord ? PuantajCommon.Utils.formatTimeSpan(existingRecord.endTime) : '17:00',
-                    project: existingRecord?.project || '',
+                    projectId: existingRecord?.projectId || '',
                     equipmentId: existingRecord?.equipmentId || '',
                     province: existingRecord?.province || '',
                     district: existingRecord?.district || '',
                     hasBreakfast: existingRecord?.hasBreakfast || false,
                     hasLunch: existingRecord?.hasLunch || false,
                     hasDinner: existingRecord?.hasDinner || false,
-                    hasNightMeal: existingRecord?.hasNightMeal || false
+                    hasNightMeal: existingRecord?.hasNightMeal || false,
+                    hasTravel: existingRecord?.hasTravel || false
                 };
 
                 let statusBadge = PuantajCommon.StatusBadge.generate(null, 'Yeni');
@@ -512,7 +509,7 @@
 
                 const disabledAttr = isApproved ? 'disabled' : '';
 
-                const row = createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr);
+                const row = createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr, isHoliday);
                 $('#workRecordsTableBody').append(row);
 
                 // Update expense button if needed
@@ -524,22 +521,23 @@
             await PuantajCommon.LocationManager.populateProvincesAndDistricts(existingWorkRecords);
 
             await PuantajCommon.Select2Manager.initialize();
-            PuantajCommon.TimePicker.initialize();
 
             PuantajCommon.Utils.hideTableLoading();
         }
 
-        function createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr) {
+        function createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr, isHoliday = false) {
+                const holidayClass = isHoliday ? 'bg-warning' : 'bg-info';
+
             return `
                                     <tr data-day="${day}" data-record-id="${existingWorkRecords[day]?.id || ''}" >
                                         <td class="date-cell">
-                                            <span class="badge bg-info">${formattedDate}</span>
+                                            <span class="badge ${holidayClass}">${formattedDate}</span>
                                         </td>
                                         <td>
-                                            <div class="form-check d-flex justify-content-center">
-                                                <input class="form-check-input weekend-checkbox" type="checkbox" id="weekend_${day}"
-                                                       ${defaultValues.isWeekend ? 'checked' : ''} ${disabledAttr}>
-                                            </div>
+                                                <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${defaultValues.excuseReason}" ${disabledAttr}>
+                                        <option value="">Sebep seçin</option>
+                                        <option value="Hafta Tatili">Hafta Tatili</option>
+                                    </select>
                                         </td>
                                         <td>
                                             <div class="input-group">
@@ -556,8 +554,9 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control project-input" placeholder="Proje adı"
-                                                   data-day="${day}" value="${defaultValues.project}" ${disabledAttr}>
+                                               <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${defaultValues.projectId}" ${disabledAttr}>
+                                                    <option value="">Proje seçin</option>
+                                                </select>
                                         </td>
                                                                     <td>
                                     <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${defaultValues.equipmentId}" ${disabledAttr}>
@@ -611,6 +610,12 @@
                                                 </div>
                                             </div>
                                         </td>
+                                           <td>
+                                            <div class="form-check">
+                                                        <input class="form-check-input travel-checkbox" type="checkbox" id="t_${day}" data-day="${day}" ${defaultValues.hasTravel ? 'checked' : ''} ${disabledAttr}>
+                                                        <label class="form-check-label" for="t_${day}">Y</label>
+                                                    </div>
+                                        </td>
                                         <td>
                                             ${statusBadge}
                                         </td>
@@ -632,18 +637,19 @@
             $('#workRecordsTableBody tr').each(function () {
                 const day = $(this).data('day');
                 const recordId = $(this).data('record-id') || null;
-                const isWeekend = $(this).find('.weekend-checkbox').is(':checked');
+                const excuseReason = $(this).find('.excuse-reason-select').val();
                 const startTime = $(this).find('.start-time').val();
                 const endTime = $(this).find('.end-time').val();
-                const project = $(this).find('.project-input').val();
+                const projectId = $(this).find('.project-select').val();
                 const equipmentId = $(this).find('.equipment-select').val();
                 const province = $(this).find('.province-select').val();
                 const district = $(this).find('.district-select').val();
 
                 // Sadece en az bir alanı dolu olan satırları işle
-                const hasRequiredData = (startTime && startTime.trim() !== '') &&
+                const hasRequiredData = 
+                    (startTime && startTime.trim() !== '') &&
                     (endTime && endTime.trim() !== '') &&
-                    (project && project.trim() !== '') &&
+                    (projectId && projectId !== '') &&
                     (equipmentId && equipmentId !== '') &&
                     (province && province !== '') &&
                     (district && district !== '');
@@ -664,16 +670,17 @@
                 const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
                 const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
                 const hasNightMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');
+                const hasTravel = $(this).find('.travel-checkbox').is(':checked');
 
                 const formattedDate = `${PuantajCommon.getCurrentYear()}-${String(PuantajCommon.getCurrentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
                 workRecords.push({
                     Id: recordId,
                     Date: formattedDate,
-                    IsWeekend: isWeekend,
+                    ExcuseReason: excuseReason,
                     StartTime: startTime,
                     EndTime: endTime,
-                    Project: project,
+                    ProjectId: projectId,
                     EquipmentId: equipmentId,
                     Province: province,
                     District: district,
@@ -681,6 +688,7 @@
                     HasLunch: hasLunch,
                     HasDinner: hasDinner,
                     HasNightMeal: hasNightMeal,
+                    HasTravel: hasTravel,
                     Expenses: expenses
                 });
             });

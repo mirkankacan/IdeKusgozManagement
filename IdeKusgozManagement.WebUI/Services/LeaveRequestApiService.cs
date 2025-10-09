@@ -2,7 +2,7 @@ using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.LeaveRequestModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Newtonsoft.Json;
-using System.Text;
+using System.Net.Http.Headers;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
@@ -125,28 +125,65 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<LeaveRequestViewModel>> CreateLeaveRequestAsync(CreateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<LeaveRequestViewModel>> CreateLeaveRequestAsync(
+       CreateLeaveRequestViewModel model,
+       CancellationToken cancellationToken = default)
         {
             try
             {
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var formData = new MultipartFormDataContent();
 
-                var response = await _httpClient.PostAsync("api/leaveRequests", content, cancellationToken);
+                // Add form fields
+                formData.Add(new StringContent(model.StartDate.ToString("yyyy-MM-dd")), "StartDate");
+                formData.Add(new StringContent(model.EndDate.ToString("yyyy-MM-dd")), "EndDate");
+                formData.Add(new StringContent(model.Reason), "Reason");
+
+                if (!string.IsNullOrEmpty(model.Description))
+                {
+                    formData.Add(new StringContent(model.Description), "Description");
+                }
+
+                // Add file if exists
+                if (model.File?.File != null)
+                {
+                    var fileContent = new StreamContent(model.File.File.OpenReadStream());
+                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.File.File.ContentType);
+                    formData.Add(fileContent, "File.FormFile", model.File.File.FileName);
+                    formData.Add(new StringContent(model.File.FileType.ToString()), "File.FileType");
+
+                    if (!string.IsNullOrEmpty(model.File.TargetUserId))
+                    {
+                        formData.Add(new StringContent(model.File.TargetUserId), "File.TargetUserId");
+                    }
+                }
+
+                var response = await _httpClient.PostAsync("api/leaveRequests", formData, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var apiResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
-                    return apiResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
+                    return apiResponse ?? new ApiResponse<LeaveRequestViewModel>
+                    {
+                        IsSuccess = false,
+                        Message = "Veri alınamadı"
+                    };
                 }
 
                 var errorResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
-                return errorResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
+                return errorResponse ?? new ApiResponse<LeaveRequestViewModel>
+                {
+                    IsSuccess = false,
+                    Message = $"API çağrısı başarısız: {response.StatusCode}"
+                };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<LeaveRequestViewModel>
+                {
+                    IsSuccess = false,
+                    Message = "Bir hata oluştu"
+                };
             }
         }
 

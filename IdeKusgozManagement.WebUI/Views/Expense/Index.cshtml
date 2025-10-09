@@ -1,13 +1,10 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Ekipman Yönetimi";
+    ViewData["Title"] = "Masraf Türü Yönetimi";
 }
 
 @section Styles {
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 }
 
 @Html.AntiForgeryToken()
@@ -17,21 +14,21 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="fas fa-tools me-2"></i>
-                    Ekipman Yönetimi
+                    <i class="fas fa-receipt me-2"></i>
+                    Masraf Türü Yönetimi
                 </h5>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                    data-bs-target="#createEquipmentModal">
-                    <i class="fas fa-plus me-2"></i>Ekipman Ekle
+                    data-bs-target="#createExpenseModal">
+                    <i class="fas fa-plus me-2"></i>Masraf Türü Ekle
                 </button>
                 <br />
                 <br />
                 <div class="table-responsive">
-                    <table id="equipmentsTable" class="table table-striped table-hover display" style="width:100%">
+                    <table id="expensesTable" class="table table-striped table-hover display" style="width:100%">
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
-                                <th>EKİPMAN ADI</th>
+                                <th>MASRAF TÜRÜ ADI</th>
                                 <th>AKTİF Mİ</th>
                                 <th>İŞLEMLER</th>
                             </tr>
@@ -46,53 +43,53 @@
     </div>
 </div>
 
-<!-- Create Equipment Modal -->
-<div class="modal fade" id="createEquipmentModal" tabindex="-1" aria-labelledby="createEquipmentModalLabel"
+<!-- Create Expense Modal -->
+<div class="modal fade" id="createExpenseModal" tabindex="-1" aria-labelledby="createExpenseModalLabel"
     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Ekipman Ekleme Penceresi</h5>
+                <h5 class="modal-title">Masraf Türü Ekleme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form class="needs-validation" novalidate id="createEquipmentForm">
+            <form class="needs-validation" novalidate id="createExpenseForm">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label for="txtCName" class="form-label">Ekipman Adı</label>
+                            <label for="txtCName" class="form-label">Masraf Türü Adı</label>
                             <input type="text" class="form-control" id="txtCName" required>
                             <div class="valid-feedback">İyi görünüyor!</div>
-                            <div class="invalid-feedback">Geçerli bir ekipman adı giriniz.</div>
+                            <div class="invalid-feedback">Geçerli bir masraf türü adı giriniz.</div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
-                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-add me-1"></i>Ekle</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i>Ekle</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Update Equipment Modal -->
-<div class="modal fade" id="updateEquipmentModal" tabindex="-1" aria-labelledby="updateEquipmentModalLabel"
+<!-- Update Expense Modal -->
+<div class="modal fade" id="updateExpenseModal" tabindex="-1" aria-labelledby="updateExpenseModalLabel"
     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Ekipman Güncelleme Penceresi</h5>
+                <h5 class="modal-title">Masraf Türü Güncelleme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form class="needs-validation" novalidate id="updateEquipmentForm">
+            <form class="needs-validation" novalidate id="updateExpenseForm">
                 <div class="modal-body">
                     <input type="hidden" id="txtUId">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label for="txtUName" class="form-label">Ekipman Adı</label>
+                            <label for="txtUName" class="form-label">Masraf Türü Adı</label>
                             <input type="text" class="form-control" id="txtUName" required>
                             <div class="valid-feedback">İyi görünüyor!</div>
-                            <div class="invalid-feedback">Geçerli bir ekipman adı giriniz.</div>
+                            <div class="invalid-feedback">Geçerli bir masraf türü adı giriniz.</div>
                         </div>
                     </div>
                 </div>
@@ -107,22 +104,20 @@
 
 @section Scripts {
     <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
-        let equipmentsTable;
+        let expensesTable;
 
         $(document).ready(async function () {
             setupEventListeners();
 
             await initializeDataTable();
         });
-
         async function initializeDataTable() {
-            equipmentsTable = $('#equipmentsTable').DataTable({
+            expensesTable = $('#expensesTable').DataTable({
                 "processing": true,
                 "ajax": {
-                    "url": "/ekipman-yonetimi/liste",
+                    "url": "/masraf/liste",
                     "type": "GET",
                     "dataSrc": function (json) {
                         if (json && json.isSuccess && json.data) {
@@ -181,37 +176,36 @@
 
                             const statusButton = row.isActive
                                 ? `<button type="button" class="btn btn-outline-success btn-sm"
-                                                onclick="deactivateEquipment('${row.id}')" title="Pasifleştir">
-                                                    <i class="fas fa-toggle-on"></i>
-                                                </button>`
+                                        onclick="deactivateExpense('${row.id}')" title="Pasifleştir">
+                                        <i class="fas fa-toggle-on"></i>
+                                       </button>`
                                 : `<button type="button" class="btn btn-outline-secondary btn-sm"
-                                                onclick="activateEquipment('${row.id}')" title="Aktifleştir">
-                                                    <i class="fas fa-toggle-off"></i>
-                                               </button>`;
-                            return `
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                     <button type="button" class="btn btn-outline-warning btn-sm"
-                                                       onclick="loadEquipmentForEdit('${row.id}')" title="Düzenle">
-                                                      <i class="fas fa-edit"></i>
-                                                     </button>
-                                                     ${statusButton}
-                                                     <button type="button" class="btn btn-outline-danger btn-sm"
-                                                       onclick="deleteEquipment('${row.id}')" title="Sil">
-                                                      <i class="fas fa-trash"></i>
-                                                     </button>
-                                                    </div>
-                                               `;
+                                        onclick="activateExpense('${row.id}')" title="Aktifleştir">
+                                        <i class="fas  fa-toggle-off"></i>
+                                       </button>`;
+                            return `<div class="btn-group btn-group-sm" role="group">
+                                             <button type="button" class="btn btn-outline-warning btn-sm"
+                                               onclick="loadExpenseForEdit('${row.id}')" title="Düzenle">
+                                              <i class="fas fa-edit"></i>
+                                             </button>
+                                             ${statusButton}
+                                             <button type="button" class="btn btn-outline-danger btn-sm"
+                                               onclick="deleteExpense('${row.id}')" title="Sil">
+                                              <i class="fas fa-trash"></i>
+                                             </button>
+                                            </div>
+                                       `;
                         }
                     }
                 ],
-                  "language": {
+                 "language": {
                     url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
                 "pageLength": 10,
                 "responsive": true,
                 "searchDelay": 300,
-                "order": [[2, "asc"]],
+                "order": [[2, "asc"]], 
                 "drawCallback": function () {
                     var api = this.api();
                     var pageInfo = api.page.info();
@@ -225,20 +219,20 @@
         }
 
         function setupEventListeners() {
-            // Create equipment form
-            $('#createEquipmentForm').on('submit', function (e) {
+            // Create expense form
+            $('#createExpenseForm').on('submit', function (e) {
                 e.preventDefault();
                 if (this.checkValidity()) {
-                    createEquipment();
+                    createExpense();
                 }
                 $(this).addClass('was-validated');
             });
 
-            // Update equipment form
-            $('#updateEquipmentForm').on('submit', function (e) {
+            // Update expense form
+            $('#updateExpenseForm').on('submit', function (e) {
                 e.preventDefault();
                 if (this.checkValidity()) {
-                    updateEquipment();
+                    updateExpense();
                 }
                 $(this).addClass('was-validated');
             });
@@ -246,28 +240,28 @@
 
 
             // Clear forms when modals hide
-            $('#createEquipmentModal').on('hidden.bs.modal', function () {
-                $('#createEquipmentForm')[0].reset();
-                $('#createEquipmentForm').removeClass('was-validated');
+            $('#createExpenseModal').on('hidden.bs.modal', function () {
+                $('#createExpenseForm')[0].reset();
+                $('#createExpenseForm').removeClass('was-validated');
             });
 
-            $('#updateEquipmentModal').on('hidden.bs.modal', function () {
-                $('#updateEquipmentForm')[0].reset();
-                $('#updateEquipmentForm').removeClass('was-validated');
+            $('#updateExpenseModal').on('hidden.bs.modal', function () {
+                $('#updateExpenseForm')[0].reset();
+                $('#updateExpenseForm').removeClass('was-validated');
             });
         }
 
-        async function createEquipment() {
-            const equipmentData = {
-                name: $('#txtCName').val()
+        async function createExpense() {
+            const expenseData = {
+                name: $('#txtCName').val().trim()
             };
 
             try {
                 const response = await $.ajax({
-                    url: '/ekipman-yonetimi',
+                    url: '/masraf',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify(equipmentData),
+                    data: JSON.stringify(expenseData),
                     headers: {
                         'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                     }
@@ -275,49 +269,49 @@
 
                 if (response.isSuccess) {
                     toastr.success(response.message, 'Başarılı!');
-                    $('#createEquipmentModal').modal('hide');
-                    equipmentsTable.ajax.reload();
+                    $('#createExpenseModal').modal('hide');
+                    expensesTable.ajax.reload();
                 } else {
                     toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
-                console.error('Create equipment error:', error);
+                console.error('Create expense error:', error);
                 toastr.error(error.responseJSON.message, 'Hata!');
             }
         }
 
-        async function loadEquipmentForEdit(equipmentId) {
+        async function loadExpenseForEdit(expenseId) {
             try {
                 const response = await $.ajax({
-                    url: `/ekipman-yonetimi/${equipmentId}`,
+                    url: `/masraf/${expenseId}`,
                     type: 'GET'
                 });
 
                 if (response.isSuccess) {
                     $('#txtUId').val(response.data.id);
                     $('#txtUName').val(response.data.name);
-                    $('#updateEquipmentModal').modal('show');
+                    $('#updateExpenseModal').modal('show');
                 } else {
                     toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
-                console.error('Load equipment error:', error);
+                console.error('Load expense error:', error);
                 toastr.error(error.responseJSON.message, 'Hata!');
             }
         }
 
-        async function updateEquipment() {
-            const equipmentId = $('#txtUId').val();
-            const equipmentData = {
+        async function updateExpense() {
+            const expenseId = $('#txtUId').val();
+            const expenseData = {
                 name: $('#txtUName').val()
             };
 
             try {
                 const response = await $.ajax({
-                    url: `/ekipman-yonetimi/${equipmentId}`,
+                    url: `/masraf/${expenseId}`,
                     type: 'PUT',
                     contentType: 'application/json',
-                    data: JSON.stringify(equipmentData),
+                    data: JSON.stringify(expenseData),
                     headers: {
                         'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                     }
@@ -325,21 +319,21 @@
 
                 if (response.isSuccess) {
                     toastr.success(response.message, 'Başarılı!');
-                    $('#updateEquipmentModal').modal('hide');
-                    equipmentsTable.ajax.reload();
+                    $('#updateExpenseModal').modal('hide');
+                    expensesTable.ajax.reload();
                 } else {
                     toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
-                console.error('Update equipment error:', error);
+                console.error('Update expense error:', error);
                 toastr.error(error.responseJSON.message, 'Hata!');
             }
         }
 
-        async function deleteEquipment(equipmentId) {
+        async function deleteExpense(expenseId) {
             Swal.fire({
                 title: 'Emin misiniz?',
-                text: "Bu ekipman silinecek ve geri alınamayacak!",
+                text: "Bu masraf türü silinecek ve geri alınamayacak!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -350,7 +344,7 @@
                 if (result.isConfirmed) {
                     try {
                         const response = await $.ajax({
-                            url: `/ekipman-yonetimi/${equipmentId}`,
+                            url: `/masraf/${expenseId}`,
                             type: 'DELETE',
                             headers: {
                                 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
@@ -359,23 +353,23 @@
 
                         if (response.isSuccess) {
                             toastr.success(response.message, 'Başarılı!');
-                            equipmentsTable.ajax.reload();
+                            expensesTable.ajax.reload();
                         } else {
                             toastr.error(response.message, 'Hata!');
                         }
                     } catch (error) {
-                        console.error('Delete equipment error:', error);
+                        console.error('Delete expense error:', error);
                         toastr.error(error.responseJSON.message, 'Hata!');
                     }
                 }
             });
         }
 
-        async function activateEquipment(equipmentId) {
+        async function activateExpense(expenseId) {
             try {
                 const result = await Swal.fire({
-                    title: 'Ekipmanı Aktifleştir',
-                    text: 'Bu ekipmanı aktifleştirmek istediğinizden emin misiniz?',
+                    title: 'Masraf Türünü Aktifleştir',
+                    text: 'Bu masraf türünü aktifleştirmek istediğinizden emin misiniz?',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#28a745',
@@ -386,7 +380,7 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/ekipman-yonetimi/${equipmentId}/aktif-et`,
+                                url: `/masraf/${expenseId}/aktif-et`,
                                 type: 'PUT',
                                 contentType: 'application/json',
                                 headers: {
@@ -413,13 +407,13 @@
                 if (result.isConfirmed) {
                     await Swal.fire({
                         title: 'Başarılı!',
-                        text: 'Ekipman başarıyla aktifleştirildi.',
+                        text: 'Masraf türü başarıyla aktifleştirildi.',
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
                     });
 
-                    equipmentsTable.ajax.reload(null, false);
+                    expensesTable.ajax.reload(null, false);
                 }
 
             } catch (error) {
@@ -428,11 +422,11 @@
             }
         }
 
-        async function deactivateEquipment(equipmentId) {
+        async function deactivateExpense(expenseId) {
             try {
                 const result = await Swal.fire({
-                    title: 'Ekipmanı Pasifleştir',
-                    text: 'Bu ekipmanı pasifleştirmek istediğinizden emin misiniz?',
+                    title: 'Masraf Türünü Pasifleştir',
+                    text: 'Bu masraf türünü pasifleştirmek istediğinizden emin misiniz?',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#ffc107',
@@ -443,7 +437,7 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/ekipman-yonetimi/${equipmentId}/pasif-et`,
+                                url: `/masraf/${expenseId}/pasif-et`,
                                 type: 'PUT',
                                 contentType: 'application/json',
                                 headers: {
@@ -470,13 +464,13 @@
                 if (result.isConfirmed) {
                     await Swal.fire({
                         title: 'Başarılı!',
-                        text: 'Ekipman başarıyla pasifleştirildi.',
+                        text: 'Masraf türü başarıyla pasifleştirildi.',
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
                     });
 
-                    equipmentsTable.ajax.reload(null, false);
+                    expensesTable.ajax.reload(null, false);
                 }
 
             } catch (error) {

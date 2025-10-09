@@ -1,10 +1,15 @@
-@{
+﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Masraf Türü Yönetimi";
+    ViewData["Title"] = "Proje Yönetimi";
 }
 
 @section Styles {
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
 }
 
 @Html.AntiForgeryToken()
@@ -14,21 +19,23 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="fas fa-receipt me-2"></i>
-                    Masraf Türü Yönetimi
+                    <i class="fas fa-tools me-2"></i>
+                    Proje Yönetimi
                 </h5>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                    data-bs-target="#createExpenseModal">
-                    <i class="fas fa-plus me-2"></i>Masraf Türü Ekle
+                        data-bs-target="#createProjectModal">
+                    <i class="fas fa-plus me-2"></i>Proje Ekle
                 </button>
                 <br />
                 <br />
                 <div class="table-responsive">
-                    <table id="expensesTable" class="table table-striped table-hover display" style="width:100%">
+                    <table id="projectsTable" class="table table-striped table-hover display" style="width:100%">
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
-                                <th>MASRAF TÜRÜ ADI</th>
+                                <th>PROJE ADI</th>
+                                <th>BAŞLANGIÇ<br />TARİHİ</th>
+                                <th>BİTİŞ<br />TARİHİ</th>
                                 <th>AKTİF Mİ</th>
                                 <th>İŞLEMLER</th>
                             </tr>
@@ -43,53 +50,74 @@
     </div>
 </div>
 
-<!-- Create Expense Modal -->
-<div class="modal fade" id="createExpenseModal" tabindex="-1" aria-labelledby="createExpenseModalLabel"
-    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+<!-- Create Project Modal -->
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel"
+     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Masraf Türü Ekleme Penceresi</h5>
+                <h5 class="modal-title">Proje Ekleme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form class="needs-validation" novalidate id="createExpenseForm">
+            <form class="needs-validation" novalidate id="createProjectForm">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label for="txtCName" class="form-label">Masraf Türü Adı</label>
+                            <label for="txtCName" class="form-label">Proje Adı</label>
                             <input type="text" class="form-control" id="txtCName" required>
                             <div class="valid-feedback">İyi görünüyor!</div>
-                            <div class="invalid-feedback">Geçerli bir masraf türü adı giriniz.</div>
+                            <div class="invalid-feedback">Geçerli bir proje adı giriniz.</div>
                         </div>
+                        <div class="col-md-12">
+                            <label for="c-date-project" class="form-label">Proje Süresi</label>
+                            <div class="input-group">
+
+                                <input type="text" class="form-control date-project" id="c-date-project" required
+                                       placeholder="Başlangıç - Bitiş"> <span class="input-group-text">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
-                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i>Ekle</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-add me-1"></i>Ekle</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Update Expense Modal -->
-<div class="modal fade" id="updateExpenseModal" tabindex="-1" aria-labelledby="updateExpenseModalLabel"
-    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+<!-- Update Project Modal -->
+<div class="modal fade" id="updateProjectModal" tabindex="-1" aria-labelledby="updateProjectModalLabel"
+     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Masraf Türü Güncelleme Penceresi</h5>
+                <h5 class="modal-title">Ekipman Güncelleme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form class="needs-validation" novalidate id="updateExpenseForm">
+            <form class="needs-validation" novalidate id="updateProjectForm">
                 <div class="modal-body">
                     <input type="hidden" id="txtUId">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label for="txtUName" class="form-label">Masraf Türü Adı</label>
+                            <label for="txtUName" class="form-label">Proje Adı</label>
                             <input type="text" class="form-control" id="txtUName" required>
                             <div class="valid-feedback">İyi görünüyor!</div>
-                            <div class="invalid-feedback">Geçerli bir masraf türü adı giriniz.</div>
+                            <div class="invalid-feedback">Geçerli bir proje adı giriniz.</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="u-date-project" class="form-label">Proje Süresi</label>
+                            <div class="input-group">
+
+                                <input type="text" class="form-control date-project" id="u-date-project" required
+                                       placeholder="Başlangıç - Bitiş"> <span class="input-group-text">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -104,20 +132,70 @@
 
 @section Scripts {
     <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
     <script>
-        let expensesTable;
+        let projectsTable;
 
         $(document).ready(async function () {
             setupEventListeners();
 
             await initializeDataTable();
+              var turkishLocale = {
+                "format": 'DD/MM/YYYY',
+                "separator": ' - ',
+                "applyLabel": 'Uygula',
+                "cancelLabel": 'İptal',
+                "fromLabel": 'Başlangıç',
+                "toLabel": 'Bitiş',
+                "customRangeLabel": 'Özel',
+                "weekLabel": 'Hf',
+                "daysOfWeek": [
+                    "Pz",
+                    "Pt",
+                    "Sl",
+                    "Çr",
+                    "Pr",
+                    "Cm",
+                    "Ct"
+                ], "monthNames": ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
+                "firstDay": 1
+
+            };
+
+            $('.date-project').daterangepicker({
+                locale: turkishLocale,
+                opens: 'left',
+                autoUpdateInput: false,
+                autoApply: true
+
+            });
+
+            $('#c-date-project').on('apply.daterangepicker', function (ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            });
+
+            $('#c-date-project').on('cancel.daterangepicker', function (ev, picker) {
+                $(this).val('');
+            });
+             $('#u-date-project').on('apply.daterangepicker', function (ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            });
+
+            $('#u-date-project').on('cancel.daterangepicker', function (ev, picker) {
+                $(this).val('');
+            });
+            $('.fa-calendar').parent().on('click', function () {
+                $(this).closest('.input-group').find('.date-project').focus();
+            });
         });
+
         async function initializeDataTable() {
-            expensesTable = $('#expensesTable').DataTable({
+            projectsTable = $('#projectsTable').DataTable({
                 "processing": true,
                 "ajax": {
-                    "url": "/masraf-yonetimi/liste",
+                    "url": "/proje/liste",
                     "type": "GET",
                     "dataSrc": function (json) {
                         if (json && json.isSuccess && json.data) {
@@ -157,6 +235,18 @@
                             return data ? `<strong>${data}</strong>` : '';
                         }
                     },
+                      {
+                        "data": "startDate",
+                        "render": function (data) {
+                            return data ? new Date(data).toLocaleDateString('tr-TR') : '';
+                        }
+                    },
+                      {
+                        "data": "endDate",
+                        "render": function (data) {
+                            return data ? new Date(data).toLocaleDateString('tr-TR') : '';
+                        }
+                    },
                     {
                         "data": "isActive",
                         "width": "10%",
@@ -176,36 +266,37 @@
 
                             const statusButton = row.isActive
                                 ? `<button type="button" class="btn btn-outline-success btn-sm"
-                                        onclick="deactivateExpense('${row.id}')" title="Pasifleştir">
-                                        <i class="fas fa-toggle-on"></i>
-                                       </button>`
+                                                onclick="deactivateProject('${row.id}')" title="Pasifleştir">
+                                                    <i class="fas fa-toggle-on"></i>
+                                                </button>`
                                 : `<button type="button" class="btn btn-outline-secondary btn-sm"
-                                        onclick="activateExpense('${row.id}')" title="Aktifleştir">
-                                        <i class="fas  fa-toggle-off"></i>
-                                       </button>`;
-                            return `<div class="btn-group btn-group-sm" role="group">
-                                             <button type="button" class="btn btn-outline-warning btn-sm"
-                                               onclick="loadExpenseForEdit('${row.id}')" title="Düzenle">
-                                              <i class="fas fa-edit"></i>
-                                             </button>
-                                             ${statusButton}
-                                             <button type="button" class="btn btn-outline-danger btn-sm"
-                                               onclick="deleteExpense('${row.id}')" title="Sil">
-                                              <i class="fas fa-trash"></i>
-                                             </button>
-                                            </div>
-                                       `;
+                                                onclick="activateProject('${row.id}')" title="Aktifleştir">
+                                                    <i class="fas fa-toggle-off"></i>
+                                               </button>`;
+                            return `
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                     <button type="button" class="btn btn-outline-warning btn-sm"
+                                                       onclick="loadProjectForEdit('${row.id}')" title="Düzenle">
+                                                      <i class="fas fa-edit"></i>
+                                                     </button>
+                                                     ${statusButton}
+                                                     <button type="button" class="btn btn-outline-danger btn-sm"
+                                                       onclick="deleteProject('${row.id}')" title="Sil">
+                                                      <i class="fas fa-trash"></i>
+                                                     </button>
+                                                    </div>
+                                               `;
                         }
                     }
                 ],
-                 "language": {
+                  "language": {
                     url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
                 "pageLength": 10,
                 "responsive": true,
                 "searchDelay": 300,
-                "order": [[2, "asc"]], 
+                "order": [[2, "asc"]],
                 "drawCallback": function () {
                     var api = this.api();
                     var pageInfo = api.page.info();
@@ -219,49 +310,50 @@
         }
 
         function setupEventListeners() {
-            // Create expense form
-            $('#createExpenseForm').on('submit', function (e) {
+            $('#createProjectForm').on('submit', function (e) {
                 e.preventDefault();
                 if (this.checkValidity()) {
-                    createExpense();
+                    createProject();
                 }
                 $(this).addClass('was-validated');
             });
 
-            // Update expense form
-            $('#updateExpenseForm').on('submit', function (e) {
+            $('#updateProjectForm').on('submit', function (e) {
                 e.preventDefault();
                 if (this.checkValidity()) {
-                    updateExpense();
+                    updateProject();
                 }
                 $(this).addClass('was-validated');
             });
-
-
 
             // Clear forms when modals hide
-            $('#createExpenseModal').on('hidden.bs.modal', function () {
-                $('#createExpenseForm')[0].reset();
-                $('#createExpenseForm').removeClass('was-validated');
+            $('#createProjectModal').on('hidden.bs.modal', function () {
+                $('#createProjectForm')[0].reset();
+                $('#createProjectForm').removeClass('was-validated');
             });
 
-            $('#updateExpenseModal').on('hidden.bs.modal', function () {
-                $('#updateExpenseForm')[0].reset();
-                $('#updateExpenseForm').removeClass('was-validated');
+            $('#updateProjectModal').on('hidden.bs.modal', function () {
+                $('#updateProjectForm')[0].reset();
+                $('#updateProjectForm').removeClass('was-validated');
             });
         }
 
-        async function createExpense() {
-            const expenseData = {
-                name: $('#txtCName').val().trim()
+        async function createProject() {
+            var picker = $('#c-date-project').data('daterangepicker');
+            var startDate = picker.startDate.format('YYYY-MM-DD');
+            var endDate = picker.endDate.format('YYYY-MM-DD');
+            const projectData = {
+                name: $('#txtCName').val().trim(),
+                startDate: startDate,
+                endDate: endDate
             };
 
             try {
                 const response = await $.ajax({
-                    url: '/masraf-yonetimi',
+                    url: '/proje',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify(expenseData),
+                    data: JSON.stringify(projectData),
                     headers: {
                         'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                     }
@@ -269,49 +361,62 @@
 
                 if (response.isSuccess) {
                     toastr.success(response.message, 'Başarılı!');
-                    $('#createExpenseModal').modal('hide');
-                    expensesTable.ajax.reload();
+                    $('#createProjectModal').modal('hide');
+                    projectsTable.ajax.reload();
                 } else {
                     toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
-                console.error('Create expense error:', error);
+                console.error('Create project error:', error);
                 toastr.error(error.responseJSON.message, 'Hata!');
             }
         }
 
-        async function loadExpenseForEdit(expenseId) {
+        async function loadProjectForEdit(projectId) {
             try {
                 const response = await $.ajax({
-                    url: `/masraf-yonetimi/${expenseId}`,
+                    url: `/proje/${projectId}`,
                     type: 'GET'
                 });
 
                 if (response.isSuccess) {
                     $('#txtUId').val(response.data.id);
                     $('#txtUName').val(response.data.name);
-                    $('#updateExpenseModal').modal('show');
+                      if ($('#u-date-project').data('daterangepicker')) {
+                        const startDate = moment(response.data.startDate);
+                        const endDate = moment(response.data.endDate);
+
+                        $('#u-date-project').val(startDate.format('DD/MM/YYYY') + "-" + endDate.format('DD/MM/YYYY'));
+                        $('#u-date-project').data('daterangepicker').setStartDate(startDate);
+                        $('#u-date-project').data('daterangepicker').setEndDate(endDate);
+                    }
+                    $('#updateProjectModal').modal('show');
                 } else {
                     toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
-                console.error('Load expense error:', error);
+                console.error('Load project error:', error);
                 toastr.error(error.responseJSON.message, 'Hata!');
             }
         }
 
-        async function updateExpense() {
-            const expenseId = $('#txtUId').val();
-            const expenseData = {
-                name: $('#txtUName').val()
+        async function updateProject() {
+             var picker = $('#u-date-project').data('daterangepicker');
+            const startDate = picker.startDate.format('YYYY-MM-DD');
+            const endDate = picker.endDate.format('YYYY-MM-DD');
+            const projectId = $('#txtUId').val();
+            const projectData = {
+                name: $('#txtUName').val(),
+                startDate: startDate,
+                endDate: endDate
             };
 
             try {
                 const response = await $.ajax({
-                    url: `/masraf-yonetimi/${expenseId}`,
+                    url: `/proje/${projectId}`,
                     type: 'PUT',
                     contentType: 'application/json',
-                    data: JSON.stringify(expenseData),
+                    data: JSON.stringify(projectData),
                     headers: {
                         'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                     }
@@ -319,21 +424,21 @@
 
                 if (response.isSuccess) {
                     toastr.success(response.message, 'Başarılı!');
-                    $('#updateExpenseModal').modal('hide');
-                    expensesTable.ajax.reload();
+                    $('#updateProjectModal').modal('hide');
+                    projectsTable.ajax.reload();
                 } else {
                     toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
-                console.error('Update expense error:', error);
+                console.error('Update project error:', error);
                 toastr.error(error.responseJSON.message, 'Hata!');
             }
         }
 
-        async function deleteExpense(expenseId) {
+        async function deleteProject(projectId) {
             Swal.fire({
                 title: 'Emin misiniz?',
-                text: "Bu masraf türü silinecek ve geri alınamayacak!",
+                text: "Bu proje silinecek ve geri alınamayacak!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -344,7 +449,7 @@
                 if (result.isConfirmed) {
                     try {
                         const response = await $.ajax({
-                            url: `/masraf-yonetimi/${expenseId}`,
+                            url: `/proje/${projectId}`,
                             type: 'DELETE',
                             headers: {
                                 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
@@ -353,23 +458,23 @@
 
                         if (response.isSuccess) {
                             toastr.success(response.message, 'Başarılı!');
-                            expensesTable.ajax.reload();
+                            projectsTable.ajax.reload();
                         } else {
                             toastr.error(response.message, 'Hata!');
                         }
                     } catch (error) {
-                        console.error('Delete expense error:', error);
+                        console.error('Delete project error:', error);
                         toastr.error(error.responseJSON.message, 'Hata!');
                     }
                 }
             });
         }
 
-        async function activateExpense(expenseId) {
+        async function activateProject(projectId) {
             try {
                 const result = await Swal.fire({
-                    title: 'Masraf Türünü Aktifleştir',
-                    text: 'Bu masraf türünü aktifleştirmek istediğinizden emin misiniz?',
+                    title: 'Projeyi Aktifleştir',
+                    text: 'Bu projeyi aktifleştirmek istediğinizden emin misiniz?',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#28a745',
@@ -380,7 +485,7 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/masraf-yonetimi/${expenseId}/aktif-et`,
+                                url: `/proje/${projectId}/aktif-et`,
                                 type: 'PUT',
                                 contentType: 'application/json',
                                 headers: {
@@ -407,13 +512,13 @@
                 if (result.isConfirmed) {
                     await Swal.fire({
                         title: 'Başarılı!',
-                        text: 'Masraf türü başarıyla aktifleştirildi.',
+                        text: 'Proje başarıyla aktifleştirildi.',
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
                     });
 
-                    expensesTable.ajax.reload(null, false);
+                    projectsTable.ajax.reload(null, false);
                 }
 
             } catch (error) {
@@ -422,11 +527,11 @@
             }
         }
 
-        async function deactivateExpense(expenseId) {
+        async function deactivateProject(projectId) {
             try {
                 const result = await Swal.fire({
-                    title: 'Masraf Türünü Pasifleştir',
-                    text: 'Bu masraf türünü pasifleştirmek istediğinizden emin misiniz?',
+                    title: 'Projeyi Pasifleştir',
+                    text: 'Bu projeyi pasifleştirmek istediğinizden emin misiniz?',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#ffc107',
@@ -437,7 +542,7 @@
                     preConfirm: async () => {
                         try {
                             const response = await $.ajax({
-                                url: `/masraf-yonetimi/${expenseId}/pasif-et`,
+                                url: `/proje/${projectId}/pasif-et`,
                                 type: 'PUT',
                                 contentType: 'application/json',
                                 headers: {
@@ -464,13 +569,13 @@
                 if (result.isConfirmed) {
                     await Swal.fire({
                         title: 'Başarılı!',
-                        text: 'Masraf türü başarıyla pasifleştirildi.',
+                        text: 'Proje başarıyla pasifleştirildi.',
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
                     });
 
-                    expensesTable.ajax.reload(null, false);
+                    projectsTable.ajax.reload(null, false);
                 }
 
             } catch (error) {

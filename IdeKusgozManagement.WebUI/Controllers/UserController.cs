@@ -1,19 +1,19 @@
-using System.Security.Claims;
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 {
-    [Route("kullanici-yonetimi")]
-    public class UserManagementController : Controller
+    [Route("kullanici")]
+    public class UserController : Controller
     {
         private readonly IUserApiService _userApiService;
         private readonly IRoleApiService _roleApiService;
 
-        public UserManagementController(IUserApiService userApiService, IRoleApiService roleApiService)
+        public UserController(IUserApiService userApiService, IRoleApiService roleApiService)
         {
             _userApiService = userApiService;
             _roleApiService = roleApiService;

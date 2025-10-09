@@ -62,7 +62,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 var equipment = createEquipmentDTO.Adapt<IdtEquipment>();
-
+                equipment.IsActive = true;
                 await unitOfWork.GetRepository<IdtEquipment>().AddAsync(equipment, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 return ApiResponse<string>.Success(equipment.Id, "Ekipman başarıyla oluşturuldu");
