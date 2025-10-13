@@ -5,9 +5,11 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
     public class UpdateWorkRecordDTO
     {
         public DateTime Date { get; set; }
-        public string? ExcuesReason { get; set; }
+        public string? ExcuseReason { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
+        public TimeSpan? AdditionalStartTime { get; set; }
+        public TimeSpan? AdditionalEndTime { get; set; }
         public string ProjectId { get; set; }
         public string EquipmentId { get; set; }
         public string Province { get; set; }

@@ -21,5 +21,29 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             var result = await fileService.UploadFileAsync(uploadFileDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetFileById(string id, CancellationToken cancellationToken = default)
+        {
+            var result = await fileService.GetFileByIdAsync(id, cancellationToken);
+            if (!result.IsSuccess || result.Data == null)
+            {
+                return NotFound(result);
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet("download/{id}")]
+        public async Task<IActionResult> DownloadFile(string id, CancellationToken cancellationToken = default)
+        {
+            var result = await fileService.GetFileByIdAsync(id, cancellationToken);
+            if (!result.IsSuccess || result.Data == null)
+            {
+                return NotFound(result);
+            }
+
+            return File(result.Data.FileStream, result.Data.ContentType, result.Data.OriginalName);
+        }
     }
 }

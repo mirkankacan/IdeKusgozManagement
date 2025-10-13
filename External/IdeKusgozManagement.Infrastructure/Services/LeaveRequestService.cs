@@ -98,7 +98,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (createLeaveRequestDTO.File != null && createLeaveRequestDTO.File.FormFile.Length > 0)
                 {
-                    createLeaveRequestDTO.File.TargetUserId = identityService.GetUserId();
+                    createLeaveRequestDTO.File.FileType = FileType.LeaveRequest;
                     var fileResult = await fileService.UploadFileAsync(createLeaveRequestDTO.File, cancellationToken);
 
                     if (!fileResult.IsSuccess)

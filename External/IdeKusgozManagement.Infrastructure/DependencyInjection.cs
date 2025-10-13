@@ -40,6 +40,7 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddSingleton<IFileProvider>(new PhysicalFileProvider(Path.Combine(environment.WebRootPath)));
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IProjectService, ProjectService>();
+            services.AddScoped<IAdvanceService, AdvanceService>();
 
             services.ConfigureOptions<JwtOptionsSetup>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();

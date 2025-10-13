@@ -7,13 +7,15 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         public string Id { get; set; }
         public DateTime Date { get; set; }
         public string? ExcuseReason { get; set; }
-        public TimeSpan StartTime { get; set; }
-        public TimeSpan EndTime { get; set; }
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public string EquipmentId { get; set; }
-        public string EquipmentName { get; set; }
-        public string Province { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
+        public TimeSpan? AdditionalStartTime { get; set; }
+        public TimeSpan? AdditionalEndTime { get; set; }
+        public string? ProjectId { get; set; }
+        public string? ProjectName { get; set; }
+        public string? EquipmentId { get; set; }
+        public string? EquipmentName { get; set; }
+        public string? Province { get; set; }
         public string District { get; set; }
         public bool HasBreakfast { get; set; }
         public bool HasLunch { get; set; }
@@ -30,7 +32,6 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
 
         public string StatusText { get; set; }
 
-
-        public List<WorkRecordExpenseViewModel>? Expenses { get; set; }
+        public List<WorkRecordExpenseViewModel>? WorkRecordExpenses { get; set; }
     }
 }

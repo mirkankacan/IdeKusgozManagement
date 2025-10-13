@@ -4,6 +4,9 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
 {
     public class UpdateWorkRecordViewModel
     {
+        [Required]
+        public DateTime Date { get; set; }
+
         public string? ExcuseReason { get; set; } = null;
 
         [Required]
@@ -12,8 +15,12 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         [Required]
         public TimeSpan EndTime { get; set; }
 
+        public TimeSpan? AdditionalStartTime { get; set; } = null;
+
+        public TimeSpan? AdditionalEndTime { get; set; } = null;
+
         [Required]
-        public string Project { get; set; }
+        public string ProjectId { get; set; }
 
         [Required]
         public string EquipmentId { get; set; }
@@ -30,7 +37,9 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
 
         public bool HasDinner { get; set; } = false;
 
-        public bool HasNighMeal { get; set; } = false;
+        public bool HasNightMeal { get; set; } = false;
         public bool HasTravel { get; set; } = false;
+        public List<UpdateWorkRecordViewModel>? WorkRecordExpenses { get; set; } = new();
+
     }
 }

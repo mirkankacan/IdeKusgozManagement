@@ -6,5 +6,7 @@
         public string Name { get; set; }
         public string Path { get; set; }
         public string OriginalName { get; set; }
+        public Stream? FileStream { get; set; }
+        public string? ContentType { get; set; }
     }
 }

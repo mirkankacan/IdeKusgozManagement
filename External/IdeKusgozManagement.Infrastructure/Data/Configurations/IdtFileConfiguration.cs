@@ -1,4 +1,5 @@
 ﻿using IdeKusgozManagement.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace IdeKusgozManagement.Infrastructure.Data.Configurations
@@ -18,6 +19,15 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.Property(x => x.OriginalName)
                 .IsRequired()
                 .HasMaxLength(450);
+
+            builder.Property(x => x.TargetUserId)
+                .IsRequired(false)
+                .HasMaxLength(450)
+                .HasDefaultValue(null);
+
+            builder.Property(x => x.Type)
+                .IsRequired()
+                .HasConversion<int>();
         }
     }
 }

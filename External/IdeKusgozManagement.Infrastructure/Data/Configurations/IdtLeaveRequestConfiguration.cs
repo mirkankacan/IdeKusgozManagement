@@ -21,6 +21,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .HasMaxLength(200);
 
             builder.Property(x => x.Description)
+                .IsRequired(false)
                 .HasMaxLength(2000)
                  .HasDefaultValue(null);
 
@@ -29,20 +30,24 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .HasConversion<int>(); // Enum'u int olarak kaydet
 
             builder.Property(x => x.FileId)
+                .IsRequired(false)
                 .HasMaxLength(450)
                 .HasDefaultValue(null);
 
             builder.Property(x => x.Duration)
+                .IsRequired(false)
                 .HasMaxLength(50);
 
             builder.Property(x => x.RejectReason)
+                .IsRequired(false)
                 .HasMaxLength(1000);
 
             // Relationships
             builder.HasOne(x => x.File)
                 .WithMany(x => x.LeaveRequests)
                 .HasForeignKey(x => x.FileId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
 
             builder.HasOne(x => x.CreatedByUser)
                 .WithMany()
@@ -52,7 +57,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.HasOne(x => x.UpdatedByUser)
                 .WithMany()
                 .HasForeignKey(x => x.UpdatedBy)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
         }
     }
 }

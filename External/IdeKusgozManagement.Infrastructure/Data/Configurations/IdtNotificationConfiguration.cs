@@ -18,12 +18,15 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .HasConversion<int>(); // Enum'u int olarak kaydet
 
             builder.Property(x => x.TargetUsers)
+                .IsRequired(false)
                 .HasMaxLength(1000);
 
             builder.Property(x => x.TargetRoles)
+                .IsRequired(false)
                 .HasMaxLength(1000);
 
             builder.Property(x => x.RedirectUrl)
+                .IsRequired(false)
                 .HasMaxLength(2000);
 
             builder.HasOne(x => x.CreatedByUser)

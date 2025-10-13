@@ -61,10 +61,75 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var json = JsonConvert.SerializeObject(createWorkRecordViewModels);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var formData = new MultipartFormDataContent();
 
-                var response = await _httpClient.PostAsync("api/workrecords/batch-create", content, cancellationToken);
+                var recordsList = createWorkRecordViewModels.ToList();
+
+                for (int i = 0; i < recordsList.Count; i++)
+                {
+                    var record = recordsList[i];
+
+                    // Ana work record alanları
+                    formData.Add(new StringContent(record.Date.ToString("yyyy-MM-dd")), $"[{i}].Date");
+
+                    if (!string.IsNullOrEmpty(record.ExcuseReason))
+                        formData.Add(new StringContent(record.ExcuseReason), $"[{i}].ExcuseReason");
+
+                    if (record.StartTime.HasValue)
+                        formData.Add(new StringContent(record.StartTime.Value.ToString(@"hh\:mm")), $"[{i}].StartTime");
+
+                    if (record.EndTime.HasValue)
+                        formData.Add(new StringContent(record.EndTime.Value.ToString(@"hh\:mm")), $"[{i}].EndTime");
+
+                    if (record.AdditionalStartTime.HasValue)
+                        formData.Add(new StringContent(record.AdditionalStartTime.Value.ToString(@"hh\:mm")), $"[{i}].AdditionalStartTime");
+
+                    if (record.AdditionalEndTime.HasValue)
+                        formData.Add(new StringContent(record.AdditionalEndTime.Value.ToString(@"hh\:mm")), $"[{i}].AdditionalEndTime");
+
+                    if (!string.IsNullOrEmpty(record.ProjectId))
+                        formData.Add(new StringContent(record.ProjectId), $"[{i}].ProjectId");
+
+                    if (!string.IsNullOrEmpty(record.EquipmentId))
+                        formData.Add(new StringContent(record.EquipmentId), $"[{i}].EquipmentId");
+
+                    if (!string.IsNullOrEmpty(record.Province))
+                        formData.Add(new StringContent(record.Province), $"[{i}].Province");
+
+                    if (!string.IsNullOrEmpty(record.District))
+                        formData.Add(new StringContent(record.District), $"[{i}].District");
+
+                    formData.Add(new StringContent(record.HasBreakfast.ToString()), $"[{i}].HasBreakfast");
+                    formData.Add(new StringContent(record.HasLunch.ToString()), $"[{i}].HasLunch");
+                    formData.Add(new StringContent(record.HasDinner.ToString()), $"[{i}].HasDinner");
+                    formData.Add(new StringContent(record.HasNightMeal.ToString()), $"[{i}].HasNightMeal");
+                    formData.Add(new StringContent(record.HasTravel.ToString()), $"[{i}].HasTravel");
+
+                    // Expenses
+                    if (record.WorkRecordExpenses != null && record.WorkRecordExpenses.Any())
+                    {
+                        for (int j = 0; j < record.WorkRecordExpenses.Count; j++)
+                        {
+                            var expense = record.WorkRecordExpenses[j];
+
+                            formData.Add(new StringContent(expense.ExpenseId), $"[{i}].WorkRecordExpenses[{j}].ExpenseId");
+                            formData.Add(new StringContent(expense.Amount.ToString()), $"[{i}].WorkRecordExpenses[{j}].Amount");
+
+                            if (!string.IsNullOrEmpty(expense.Description))
+                                formData.Add(new StringContent(expense.Description), $"[{i}].WorkRecordExpenses[{j}].Description");
+
+                            // Dosya varsa ekle
+                            if (expense.File != null)
+                            {
+                                var fileContent = new StreamContent(expense.File.FormFile.OpenReadStream());
+                                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(expense.File.FormFile.ContentType);
+                                formData.Add(fileContent, $"[{i}].WorkRecordExpenses[{j}].File.FormFile", expense.File.FormFile.FileName);
+                            }
+                        }
+                    }
+                }
+
+                var response = await _httpClient.PostAsync("api/workrecords/batch-create-modify", formData, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -78,7 +143,8 @@ namespace IdeKusgozManagement.WebUI.Services
             }
             catch (Exception ex)
             {
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+                // Loglama ekleyin
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = $"Bir hata oluştu: {ex.Message}" };
             }
         }
 

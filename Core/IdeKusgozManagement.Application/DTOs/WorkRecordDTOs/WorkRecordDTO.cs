@@ -8,14 +8,16 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public string Id { get; set; }
         public DateTime Date { get; set; }
         public string? ExcuseReason { get; set; }
-        public TimeSpan StartTime { get; set; }
-        public TimeSpan EndTime { get; set; }
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public string EquipmentId { get; set; }
-        public string EquipmentName { get; set; }
-        public string Province { get; set; }
-        public string District { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
+        public TimeSpan? AdditionalStartTime { get; set; }
+        public TimeSpan? AdditionalEndTime { get; set; }
+        public string? ProjectId { get; set; }
+        public string? ProjectName { get; set; }
+        public string? EquipmentId { get; set; }
+        public string? EquipmentName { get; set; }
+        public string? Province { get; set; }
+        public string? District { get; set; }
         public bool HasBreakfast { get; set; }
         public bool HasLunch { get; set; }
         public bool HasDinner { get; set; }
@@ -32,7 +34,7 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public string StatusText => Status switch
         {
             WorkRecordStatus.Pending => "Beklemede",
-            WorkRecordStatus.Approved => "Onaylandý",
+            WorkRecordStatus.Approved => "OnaylandÄ±",
             WorkRecordStatus.Rejected => "Reddedildi",
             _ => "Bilinmiyor"
         };

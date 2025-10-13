@@ -14,13 +14,15 @@ namespace IdeKusgozManagement.WebUI.Models.LeaveRequestModels
         public string? Description { get; set; }
         public string? FileId { get; set; }
         public string? FilePath { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public string CreatedBy { get; set; }
-        public string? UpdatedBy { get; set; }
-        public DateTime? UpdatedDate { get; set; }
-        public string CreatedByFullName { get; set; }
-        public string? UpdatedByFullName { get; set; }
+
         public string Duration { get; set; }
         public string? RejectReason { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public string CreatedByFullName { get; set; }
+
+        public string? UpdatedBy { get; set; }
+        public DateTime? UpdatedDate { get; set; }
+        public string? UpdatedByFullName { get; set; }
     }
 }

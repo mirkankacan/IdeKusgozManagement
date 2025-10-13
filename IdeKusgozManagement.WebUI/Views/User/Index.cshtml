@@ -117,7 +117,7 @@
                             <label for="ddCSuperior" class="form-label">Atanacak</label>
                             <select class="form-select superior-select" id="ddCSuperior">
                             </select>
-                            
+
                         </div>
                     </div>
                 </div>
@@ -203,7 +203,7 @@
                             <label for="ddUSuperior" class="form-label">Atanacak</label>
                             <select class="form-select superior-select" id="ddUSuperior">
                             </select>
-                           
+
                         </div>
                         <div class="col-md-12">
                             <label for="ddUStatus" class="form-label">Durum</label>
@@ -232,7 +232,6 @@
 </div>
 
 @section Scripts {
-
 
     <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -533,7 +532,6 @@
             } catch (error) {
                 console.error('Kullanıcı güncelleme hatası:', error);
 
-
                 let errorMessage = 'Kullanıcı güncellenirken hata oluştu';
 
                 if (error.responseJSON) {
@@ -591,7 +589,7 @@
                             }
 
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()
@@ -651,7 +649,7 @@
                             }
 
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()
@@ -711,7 +709,7 @@
                             }
 
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()
@@ -840,7 +838,6 @@
                 $('.ddRole').each(function () {
                     $(this).html('<option value="">Rol yüklenemedi</option>');
                 });
-
 
                 let errorMessage = 'Roller yüklenirken hata oluştu';
 

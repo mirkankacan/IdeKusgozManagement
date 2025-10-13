@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using IdeKusgozManagement.WebUI.Models.FileModels;
+using System.ComponentModel.DataAnnotations;
 
 namespace IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels
 {
@@ -12,6 +13,6 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels
         [Required]
         public decimal Amount { get; set; }
 
-        public string? ReceiptImageUrl { get; set; } = null;
+        public UploadFileViewModel? File { get; set; }
     }
 }

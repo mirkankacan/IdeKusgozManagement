@@ -23,7 +23,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin,Yönetici,Şef")]
-        [HttpGet("liste/kullanici/{userId}/tarih/{date}")]
+        [HttpGet("liste/kullanici/{userId}/tarih/{date:datetime}")]
         public async Task<IActionResult> GetWorkRecordsByUserIdAndDate(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             var response = await _workRecordApiService.GetWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
@@ -31,7 +31,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
-        [HttpGet("listem/tarih/{date}")]
+        [HttpGet("listem/tarih/{date:datetime}")]
         public async Task<IActionResult> GetMyWorkRecords(DateTime date, CancellationToken cancellationToken = default)
         {
             var response = await _workRecordApiService.GetMyWorkRecordsByDateAsync(date, cancellationToken);

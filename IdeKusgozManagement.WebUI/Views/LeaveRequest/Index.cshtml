@@ -19,7 +19,7 @@
                     <i class="fas fa-calendar-check me-2"></i>
                     İzin Talepleri Tablosu
                 </h5>
-             
+
                 <div class="table-responsive">
                     <table id="leaveRequestsTable" class="table table-striped table-hover display" style="width:100%">
                         <thead class="table-dark">
@@ -45,20 +45,19 @@
     </div>
 </div>
 
-
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">İzin Talebini Reddetme Penceresi</h5>
+                <h5 class="modal-title">İzin Talebi Reddetme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="txt-rejectLeaveRequestId" value="" disabled readonly/>
+                <input type="hidden" id="txtRejectLeaveRequestId" value="" disabled readonly/>
                 <div class="mb-3">
                     <label for="txt-rejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
-                    <textarea class="form-control" id="txt-rejectReason" rows="3" placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
+                    <textarea class="form-control" id="txtRejectReason" rows="3" placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -85,7 +84,6 @@
             });
         });
 
-        
         async function initializeDataTable() {
             leaveRequestsTable = $('#leaveRequestsTable').DataTable({
                 "processing": true,
@@ -203,7 +201,7 @@
                                     </button>
                                 </div>
                             ` : "";
-                         
+
                         }
                     }
                 ],
@@ -260,7 +258,7 @@
                                 }
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()
@@ -282,30 +280,28 @@
             }
         }
                 function openRejectModal(id) {
-            $('#txt-rejectLeaveRequestId').val(id);
-            $('#txt-rejectReason').val('');
+            $('#txtRejectLeaveRequestId').val(id);
+            $('#txtRejectReason').val('');
             $('#rejectModal').modal('show');
         }
-    
 
         async function rejectLeaveRequest() {
             try {
-                        const leaveRequestId = $('#txt-rejectLeaveRequestId').val();
+                        const leaveRequestId = $('#txtRejectLeaveRequestId').val();
 
                 if (!leaveRequestId) {
                     toastr.error('İzin talebi ID\'si bulunamadı');
                     return;
                 }
-             
 
-                const rejectReason = $('#txt-rejectReason').val().trim();
+                const rejectReason = $('#txtRejectReason').val().trim();
 
                 const submitBtn = $('#btnRejectLeaveRequest');
                 submitBtn.prop('disabled', true)
                     .html('<i class="fas fa-spinner fa-spin me-2"></i>Reddediliyor...');
 
                 const response = await $.ajax({
-                    url: `/izin/${leaveRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : ''}`,
+                    url: `/izin/${leaveRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : null}`,
                     type: 'PUT',
                     contentType: 'application/json',
                     headers: {
@@ -371,7 +367,7 @@
                                 }
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()
@@ -393,6 +389,5 @@
             }
         }
 
-       
     </script>
 }

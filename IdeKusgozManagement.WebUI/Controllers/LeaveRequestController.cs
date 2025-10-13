@@ -84,7 +84,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
-        [HttpGet("olustur")]
+        [HttpGet("istek-olustur")]
         public IActionResult Create()
         {
             return View();
@@ -92,7 +92,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [ValidateAntiForgeryToken]
-        [HttpPost("olustur")]
+        [HttpPost("istek-olustur")]
         public async Task<IActionResult> CreateLeaveRequest([FromForm] CreateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
