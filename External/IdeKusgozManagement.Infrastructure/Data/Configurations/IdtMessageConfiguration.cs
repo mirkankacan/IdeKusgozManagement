@@ -14,9 +14,11 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasMaxLength(2000);
             builder.Property(x => x.TargetUsers)
+                .IsRequired(false)
                 .HasMaxLength(1000);
 
             builder.Property(x => x.TargetRoles)
+                .IsRequired(false)
                 .HasMaxLength(1000);
 
             builder.HasOne(x => x.CreatedByUser)

@@ -16,16 +16,18 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
             _accessor = accessor;
         }
 
-        public DbSet<IdtWorkRecord> IdtWorkRecords => Set<IdtWorkRecord>();
-        public DbSet<IdtLeaveRequest> IdtLeaveRequests => Set<IdtLeaveRequest>();
-        public DbSet<IdtWorkRecordExpense> IdtWorkRecordExpenses => Set<IdtWorkRecordExpense>();
-        public DbSet<IdtUserHierarchy> IdtUserHierarchies => Set<IdtUserHierarchy>();
-        public DbSet<IdtExpense> IdtExpenses => Set<IdtExpense>();
+        public DbSet<IdtAdvance> IdtAdvances => Set<IdtAdvance>();
         public DbSet<IdtEquipment> IdtEquipments => Set<IdtEquipment>();
+        public DbSet<IdtExpense> IdtExpenses => Set<IdtExpense>();
+        public DbSet<IdtFile> IdtFiles => Set<IdtFile>();
+        public DbSet<IdtLeaveRequest> IdtLeaveRequests => Set<IdtLeaveRequest>();
         public DbSet<IdtMessage> IdtMessages => Set<IdtMessage>();
         public DbSet<IdtNotification> IdtNotifications => Set<IdtNotification>();
         public DbSet<IdtNotificationRead> IdtNotificationReads => Set<IdtNotificationRead>();
-        public DbSet<IdtFile> IdtFiles => Set<IdtFile>();
+        public DbSet<IdtProject> IdtProjects => Set<IdtProject>();
+        public DbSet<IdtUserHierarchy> IdtUserHierarchies => Set<IdtUserHierarchy>();
+        public DbSet<IdtWorkRecord> IdtWorkRecords => Set<IdtWorkRecord>();
+        public DbSet<IdtWorkRecordExpense> IdtWorkRecordExpenses => Set<IdtWorkRecordExpense>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

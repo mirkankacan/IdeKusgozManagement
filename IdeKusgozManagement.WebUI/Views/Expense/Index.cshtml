@@ -205,7 +205,7 @@
                 "pageLength": 10,
                 "responsive": true,
                 "searchDelay": 300,
-                "order": [[2, "asc"]], 
+                "order": [[2, "asc"]],
                 "drawCallback": function () {
                     var api = this.api();
                     var pageInfo = api.page.info();
@@ -236,8 +236,6 @@
                 }
                 $(this).addClass('was-validated');
             });
-
-
 
             // Clear forms when modals hide
             $('#createExpenseModal').on('hidden.bs.modal', function () {
@@ -398,7 +396,7 @@
                                 }
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()
@@ -455,7 +453,7 @@
                                 }
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()

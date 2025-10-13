@@ -125,13 +125,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<LeaveRequestViewModel>> CreateLeaveRequestAsync(
-       CreateLeaveRequestViewModel model,
-       CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<LeaveRequestViewModel>> CreateLeaveRequestAsync(CreateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
         {
             try
             {
-                var formData = new MultipartFormDataContent();
+                MultipartFormDataContent? formData = new MultipartFormDataContent();
 
                 // Add form fields
                 formData.Add(new StringContent(model.StartDate.ToString("yyyy-MM-dd")), "StartDate");
@@ -144,17 +142,11 @@ namespace IdeKusgozManagement.WebUI.Services
                 }
 
                 // Add file if exists
-                if (model.File?.File != null)
+                if (model.File?.FormFile != null)
                 {
-                    var fileContent = new StreamContent(model.File.File.OpenReadStream());
-                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.File.File.ContentType);
-                    formData.Add(fileContent, "File.FormFile", model.File.File.FileName);
-                    formData.Add(new StringContent(model.File.FileType.ToString()), "File.FileType");
-
-                    if (!string.IsNullOrEmpty(model.File.TargetUserId))
-                    {
-                        formData.Add(new StringContent(model.File.TargetUserId), "File.TargetUserId");
-                    }
+                    var fileContent = new StreamContent(model.File.FormFile.OpenReadStream());
+                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.File.FormFile.ContentType);
+                    formData.Add(fileContent, "File.FormFile", model.File.FormFile.FileName);
                 }
 
                 var response = await _httpClient.PostAsync("api/leaveRequests", formData, cancellationToken);

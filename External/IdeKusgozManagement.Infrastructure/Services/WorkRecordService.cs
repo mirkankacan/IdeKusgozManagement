@@ -72,7 +72,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     if (existingRecord != null)
                     {
                         // ========== GÜNCELLEME ==========
-                        existingRecord.ExcuseReason = dto.ExcuesReason;
+                        existingRecord.ExcuseReason = dto.ExcuseReason;
                         existingRecord.StartTime = dto.StartTime;
                         existingRecord.EndTime = dto.EndTime;
                         existingRecord.ProjectId = dto.ProjectId;
@@ -394,8 +394,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
             if (string.IsNullOrEmpty(userId))
             {
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error(
-                    "Kullanıcı kimliği bulunamadı. Lütfen sisteme tekrar giriş yapın.");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcı kimliği bulunamadı. Lütfen sisteme tekrar giriş yapın.");
             }
 
             try
@@ -406,6 +405,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var existingWorkRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
                     .Where(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
+                    .Include(x => x.WorkRecordExpenses)
+                    .ThenInclude(x => x.File)
                     .ToListAsync(cancellationToken);
 
                 var recordsToUpdate = new List<IdtWorkRecord>();
@@ -415,6 +416,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 foreach (var dto in createWorkRecordDTOs)
                 {
+                    // Saat kontrolü - nullable için
+                    var check = CheckHoursIfValid(dto);
+                    if (!check.Item1)
+                        return ApiResponse<IEnumerable<WorkRecordDTO>>.Error(check.Item2);
+
                     var existingRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == dto.Date.Date);
 
                     // Onaylanmış kayıtları atla
@@ -435,6 +441,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         existingRecord.HasLunch = dto.HasLunch;
                         existingRecord.HasDinner = dto.HasDinner;
                         existingRecord.HasNightMeal = dto.HasNightMeal;
+                        existingRecord.AdditionalStartTime = dto.AdditionalStartTime;
+                        existingRecord.AdditionalEndTime = dto.AdditionalEndTime;
+                        existingRecord.HasTravel = dto.HasTravel;
                         existingRecord.Status = WorkRecordStatus.Pending;
 
                         recordsToUpdate.Add(existingRecord);
@@ -451,6 +460,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                             foreach (var expense in dto.WorkRecordExpenses)
                             {
                                 expense.WorkRecordId = existingRecord.Id;
+                                if (expense.File != null)
+                                    expense.File.FileType = FileType.Expense;
                             }
                             expensesToAdd.AddRange(dto.WorkRecordExpenses);
                         }
@@ -472,19 +483,32 @@ namespace IdeKusgozManagement.Infrastructure.Services
                             HasLunch = dto.HasLunch,
                             HasDinner = dto.HasDinner,
                             HasNightMeal = dto.HasNightMeal,
+                            AdditionalStartTime = dto.AdditionalStartTime,
+                            AdditionalEndTime = dto.AdditionalEndTime,
+                            HasTravel = dto.HasTravel,
                             Status = WorkRecordStatus.Pending,
                         };
 
                         recordsToAdd.Add(newRecord);
+
                         if (dto.WorkRecordExpenses?.Any() == true)
                         {
                             foreach (var expense in dto.WorkRecordExpenses)
                             {
                                 expense.WorkRecordId = newRecord.Id;
+                                if (expense.File != null)
+                                    expense.File.FileType = FileType.Expense;
                             }
                             expensesToAdd.AddRange(dto.WorkRecordExpenses);
                         }
                     }
+                }
+
+                // Eğer hiçbir işlem yapılmadıysa (tüm kayıtlar onaylı)
+                if (!recordsToUpdate.Any() && !recordsToAdd.Any())
+                {
+                    await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Seçilen tarihlerdeki tüm kayıtlar onaylanmış durumda. İşlem yapılamadı.");
                 }
 
                 // WorkRecord işlemleri
@@ -530,13 +554,18 @@ namespace IdeKusgozManagement.Infrastructure.Services
                    .Include(x => x.WorkRecordExpenses)
                        .ThenInclude(x => x.File)
                    .ToListAsync(cancellationToken);
+
                 var mappedCreatedRecords = createdRecords.Adapt<IEnumerable<WorkRecordDTO>>();
 
                 if (!mappedCreatedRecords.Any())
                 {
-                    await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("İşlenmiş puantaj kayıtları bulunamadı");
+                    // Bu durumda rollback'e gerek yok, zaten commit edildi
+                    logger.LogWarning("İşlem başarılı ama döndürülecek kayıt bulunamadı. UserId: {UserId}", userId);
+                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(
+                        Enumerable.Empty<WorkRecordDTO>(),
+                        $"Toplu puantaj kayıtları başarıyla işlendi. {updatedCount} kayıt güncellendi, {addedCount} yeni kayıt eklendi.");
                 }
+
                 var firstRecord = mappedCreatedRecords.First();
                 var notificationDTO = new CreateNotificationDTO
                 {
@@ -546,6 +575,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     TargetUsers = await identityService.GetUserSuperiorsAsync(cancellationToken)
                 };
                 await notificationService.SendNotificationToSuperiorsAsync(notificationDTO, cancellationToken);
+
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(
                     mappedCreatedRecords,
                     $"Toplu puantaj kayıtları başarıyla işlendi. {updatedCount} kayıt güncellendi, {addedCount} yeni kayıt eklendi.");
@@ -556,6 +586,74 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "BatchCreateOrModifyWorkRecordsAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu puantaj kayıtları işlenirken hata oluştu");
             }
+        }
+        private (bool, string?) CheckHoursIfValid(CreateWorkRecordDTO dto)
+        {
+            if (dto.StartTime.HasValue && dto.EndTime.HasValue)
+            {
+                if (dto.StartTime.Value == dto.EndTime.Value)
+                {
+                    return (false, $"{dto.Date:dd.MM.yyyy} tarihinde başlangıç ve bitiş saati aynı olamaz.");
+                }
+
+                // Eğer endTime < startTime ise, bu gece vardiyası demektir (ertesi güne geçiyor)
+                TimeSpan workDuration;
+                if (dto.EndTime.Value < dto.StartTime.Value)
+                {
+                    // Gece vardiyası - ertesi güne geçiyor
+                    workDuration = (TimeSpan.FromHours(24) - dto.StartTime.Value) + dto.EndTime.Value;
+                }
+                else
+                {
+                    // Normal vardiya - aynı gün içinde
+                    workDuration = dto.EndTime.Value - dto.StartTime.Value;
+                }
+
+                // Maksimum 24 saat çalışma süresi kontrolü
+                if (workDuration.TotalHours > 24)
+                {
+                    return (false, $"{dto.Date:dd.MM.yyyy} tarihinde çalışma süresi 24 saati aşamaz.");
+                }
+            }
+            else if (dto.StartTime.HasValue || dto.EndTime.HasValue)
+            {
+                // Biri dolu biri boş olamaz
+                return (false, $"{dto.Date:dd.MM.yyyy} tarihinde başlangıç ve bitiş saati birlikte girilmelidir.");
+            }
+
+            if (dto.StartTime.HasValue && dto.EndTime.HasValue)
+            {
+                if (dto.StartTime.Value == dto.EndTime.Value)
+                {
+                    return (false, $"{dto.Date:dd.MM.yyyy} tarihinde ek başlangıç ve ek bitiş saati aynı olamaz.");
+                }
+
+                // Eğer endTime < startTime ise, bu gece vardiyası demektir (ertesi güne geçiyor)
+                TimeSpan workDuration;
+                if (dto.EndTime.Value < dto.StartTime.Value)
+                {
+                    // Gece vardiyası - ertesi güne geçiyor
+                    workDuration = (TimeSpan.FromHours(24) - dto.StartTime.Value) + dto.EndTime.Value;
+                }
+                else
+                {
+                    // Normal vardiya - aynı gün içinde
+                    workDuration = dto.EndTime.Value - dto.StartTime.Value;
+                }
+
+                // Maksimum 24 saat çalışma süresi kontrolü
+                if (workDuration.TotalHours > 24)
+                {
+                    return (false, $"{dto.Date:dd.MM.yyyy} tarihinde ek çalışma süresi 24 saati aşamaz.");
+                }
+            }
+            else if (dto.StartTime.HasValue || dto.EndTime.HasValue)
+            {
+                // Biri dolu biri boş olamaz
+                return (false, $"{dto.Date:dd.MM.yyyy} tarihinde ek başlangıç ve ek bitiş saati birlikte girilmelidir.");
+            }
+
+            return (true, string.Empty);
         }
     }
 }

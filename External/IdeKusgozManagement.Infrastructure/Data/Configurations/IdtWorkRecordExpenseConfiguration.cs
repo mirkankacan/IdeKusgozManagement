@@ -19,14 +19,15 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .HasMaxLength(450);
 
             builder.Property(x => x.Description)
+                .IsRequired(false)
                 .HasMaxLength(1000);
 
             builder.Property(x => x.Amount)
                 .IsRequired()
-                .HasColumnType("decimal(18,2)")
                 .HasPrecision(18, 2);
 
             builder.Property(x => x.FileId)
+                .IsRequired(false)
                 .HasMaxLength(450);
 
             builder.HasOne(x => x.WorkRecord)
@@ -42,7 +43,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.HasOne(x => x.File)
                 .WithMany(x => x.WorkRecordExpenses)
                 .HasForeignKey(x => x.FileId)
-                .OnDelete(DeleteBehavior.SetNull); // File silinince sadece referans null olur
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
 
             // Indexes
             builder.HasIndex(x => x.WorkRecordId); // WorkRecord'a göre expense'leri getirmek için

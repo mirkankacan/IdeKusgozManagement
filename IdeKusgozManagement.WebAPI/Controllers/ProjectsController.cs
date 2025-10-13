@@ -12,58 +12,58 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class ProjectsController(IProjectService projectService) : ControllerBase
     {
         [HttpGet]
-        public async Task<IActionResult> GetExpenses(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetProjects(CancellationToken cancellationToken = default)
         {
             var result = await projectService.GetProjectsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         [HttpGet("active-projects")]
-        public async Task<IActionResult> GetActiveExpenses(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveProjects(CancellationToken cancellationToken = default)
         {
             var result = await projectService.GetActiveProjectsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        [HttpPut("{expenseId}/enable")]
-        public async Task<IActionResult> EnableExpense(string expenseId)
+        [HttpPut("{projectId}/enable")]
+        public async Task<IActionResult> EnableProject(string projectId)
         {
-            if (string.IsNullOrWhiteSpace(expenseId))
+            if (string.IsNullOrWhiteSpace(projectId))
             {
-                return BadRequest("Masraf türü ID'si gereklidir");
+                return BadRequest("Proje ID'si gereklidir");
             }
-            var result = await projectService.EnableProjectAsync(expenseId);
+            var result = await projectService.EnableProjectAsync(projectId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        [HttpPut("{expenseId}/disable")]
-        public async Task<IActionResult> DisableExpense(string expenseId)
+        [HttpPut("{projectId}/disable")]
+        public async Task<IActionResult> DisableProject(string projectId)
         {
-            if (string.IsNullOrWhiteSpace(expenseId))
+            if (string.IsNullOrWhiteSpace(projectId))
             {
-                return BadRequest("Masraf türü ID'si gereklidir");
+                return BadRequest("Proje ID'si gereklidir");
             }
-            var result = await projectService.DisableProjectAsync(expenseId);
+            var result = await projectService.DisableProjectAsync(projectId);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpGet("{expenseId}")]
-        public async Task<IActionResult> GetExpenseById(string expenseId, CancellationToken cancellationToken = default)
+        [HttpGet("{projectId}")]
+        public async Task<IActionResult> GetProjectById(string projectId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(expenseId))
+            if (string.IsNullOrWhiteSpace(projectId))
             {
-                return BadRequest("Masraf türü ID'si gereklidir");
+                return BadRequest("Proje ID'si gereklidir");
             }
 
-            var result = await projectService.GetProjectByIdAsync(expenseId, cancellationToken);
+            var result = await projectService.GetProjectByIdAsync(projectId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         [HttpPost]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> CreateExpense([FromBody] CreateProjectDTO createProjectDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateProject([FromBody] CreateProjectDTO createProjectDTO, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
@@ -74,13 +74,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpPut("{expenseId}")]
+        [HttpPut("{projectId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> UpdateExpense(string expenseId, [FromBody] UpdateProjectDTO updateProjectDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateProject(string projectId, [FromBody] UpdateProjectDTO updateProjectDTO, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(expenseId))
+            if (string.IsNullOrWhiteSpace(projectId))
             {
-                return BadRequest("Masraf türü ID'si gereklidir");
+                return BadRequest("Proje ID'si gereklidir");
             }
 
             if (!ModelState.IsValid)
@@ -88,20 +88,20 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await projectService.UpdateProjectAsync(expenseId, updateProjectDTO, cancellationToken);
+            var result = await projectService.UpdateProjectAsync(projectId, updateProjectDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpDelete("{expenseId}")]
+        [HttpDelete("{projectId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> DeleteExpense(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteProject(string projectId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(expenseId))
+            if (string.IsNullOrWhiteSpace(projectId))
             {
-                return BadRequest("Masraf türü ID'si gereklidir");
+                return BadRequest("Proje ID'si gereklidir");
             }
 
-            var result = await projectService.DeleteProjectAsync(expenseId, cancellationToken);
+            var result = await projectService.DeleteProjectAsync(projectId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

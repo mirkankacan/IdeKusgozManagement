@@ -8,5 +8,7 @@ namespace IdeKusgozManagement.Application.Contracts.Services
         Task<ApiResponse<FileDTO>> UploadFileAsync(UploadFileDTO uploadFileDTO, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<FileDTO>> GetFileByIdAsync(string fileId, CancellationToken cancellationToken = default);
     }
 }

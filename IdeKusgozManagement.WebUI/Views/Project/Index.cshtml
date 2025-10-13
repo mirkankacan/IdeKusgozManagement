@@ -503,7 +503,7 @@
                                 }
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()
@@ -560,7 +560,7 @@
                                 }
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                            throw error;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()

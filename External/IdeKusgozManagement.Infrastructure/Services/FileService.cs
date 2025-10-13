@@ -53,7 +53,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var fullFolderPath = Path.Combine(
                     wwwrootPath,
                     "Uploads",
-                    uploadFileDTO.FileType?.ToFolderName(),
+                    uploadFileDTO.FileType.ToFolderName(),
                     userFolder,
                     dateFolder);
                 if (!Directory.Exists(fullFolderPath))
@@ -65,28 +65,30 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await using var stream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write, FileShare.None);
                 await uploadFileDTO.FormFile.CopyToAsync(stream, cancellationToken);
                 // Relative path
-                var relativePath = $"/Uploads/{uploadFileDTO.FileType?.ToFolderName()}/{userFolder}/{dateFolder}/{newFileName}";
+                var relativePath = $"/Uploads/{uploadFileDTO.FileType.ToFolderName()}/{userFolder}/{dateFolder}/{newFileName}";
 
                 // Entity oluştur
-                var mappedFile = new IdtFile
+                var file = new IdtFile
                 {
                     Name = newFileName,
                     Path = relativePath,
-                    OriginalName = uploadFileDTO.FormFile.FileName
+                    OriginalName = uploadFileDTO.FormFile.FileName,
+                    TargetUserId = uploadFileDTO.TargetUserId ?? null,
+                    Type = uploadFileDTO.FileType
                 };
 
-                await unitOfWork.GetRepository<IdtFile>().AddAsync(mappedFile, cancellationToken);
-
+                await unitOfWork.GetRepository<IdtFile>().AddAsync(file, cancellationToken);
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
+                logger.LogInformation("Dosya yüklendi: {FileName}, CreatedBy: {CreatedBy}", file.Name, file.CreatedBy);
 
                 var fileDTO = new FileDTO
                 {
-                    Id = mappedFile.Id,
-                    Name = mappedFile.Name,
-                    Path = mappedFile.Path,
-                    OriginalName = mappedFile.OriginalName,
+                    Id = file.Id,
+                    Name = file.Name,
+                    Path = file.Path,
+                    OriginalName = file.OriginalName
                 };
 
                 return ApiResponse<FileDTO>.Success(fileDTO);
@@ -128,6 +130,56 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "Dosya silinemedi: {FileId}", fileId);
                 return ApiResponse<bool>.Error("Dosya silinemedi");
             }
+        }
+
+        public async Task<ApiResponse<FileDTO>> GetFileByIdAsync(string fileId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+
+                var file = await unitOfWork.GetRepository<IdtFile>().GetByIdAsync(fileId, cancellationToken);
+                if (file == null)
+                {
+                    logger.LogWarning("Dosya kaydı bulunamadı: {FileId}", fileId);
+                    return ApiResponse<FileDTO>.Success(null, "Dosya kaydı bulunamadı");
+                }
+                var fullPath = Path.Combine(_physicalFileProvider.Root, file.Path.TrimStart('/'));
+                var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
+                var extension = Path.GetExtension(file.OriginalName).ToLowerInvariant();
+
+                var contentType = GetContentType(extension);
+
+                var fileDTO = new FileDTO
+                {
+                    Id = file.Id,
+                    Name = file.Name,
+                    Path = fullPath,
+                    OriginalName = file.OriginalName,
+                    FileStream = fileStream,
+                    ContentType = contentType
+                };
+
+                return ApiResponse<FileDTO>.Success(fileDTO);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Dosya okunamadı: {FileId}", fileId);
+                return ApiResponse<FileDTO>.Error("Dosya okunamadı");
+            }
+        }
+
+        private string GetContentType(string extension)
+        {
+            return extension switch
+            {
+                ".pdf" => "application/pdf",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                _ => "application/octet-stream"
+            };
         }
     }
 }

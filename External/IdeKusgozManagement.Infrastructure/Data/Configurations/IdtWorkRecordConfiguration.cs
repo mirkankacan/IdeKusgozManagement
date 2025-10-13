@@ -1,4 +1,5 @@
 ﻿using IdeKusgozManagement.Domain.Entities;
+using IdeKusgozManagement.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -14,29 +15,36 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .IsRequired();
 
             builder.Property(x => x.ExcuseReason)
-                .HasMaxLength(100);
+                .HasMaxLength(100)
+                .IsRequired(false); // Nullable
 
             builder.Property(x => x.StartTime)
-                .IsRequired();
+                .IsRequired(false); // Nullable
 
             builder.Property(x => x.EndTime)
-                .IsRequired();
+                .IsRequired(false); // Nullable
+
+            builder.Property(x => x.AdditionalStartTime)
+                .IsRequired(false); // Nullable
+
+            builder.Property(x => x.AdditionalEndTime)
+                .IsRequired(false); // Nullable
 
             builder.Property(x => x.ProjectId)
-                .IsRequired()
-                .HasMaxLength(450);
+                .HasMaxLength(450)
+                .IsRequired(false); // Nullable
 
             builder.Property(x => x.EquipmentId)
-                .IsRequired()
-                .HasMaxLength(450);
+                .HasMaxLength(450)
+                .IsRequired(false); // Nullable
 
             builder.Property(x => x.Province)
-                .IsRequired()
-                .HasMaxLength(100);
+                .HasMaxLength(100)
+                .IsRequired(false); // Nullable
 
             builder.Property(x => x.District)
-                .IsRequired()
-                .HasMaxLength(100);
+                .HasMaxLength(100)
+                .IsRequired(false); // Nullable
 
             builder.Property(x => x.HasBreakfast)
                 .IsRequired()
@@ -60,18 +68,21 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
 
             builder.Property(x => x.Status)
                 .IsRequired()
+                .HasDefaultValue(WorkRecordStatus.Pending)
                 .HasConversion<int>(); // Enum'u int olarak kaydet
 
-            // Relationships
+            // Relationships - Nullable foreign keys
             builder.HasOne(x => x.Equipment)
                 .WithMany(x => x.WorkRecords)
                 .HasForeignKey(x => x.EquipmentId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); // Nullable relationship
 
             builder.HasOne(x => x.Project)
                 .WithMany(x => x.WorkRecords)
                 .HasForeignKey(x => x.ProjectId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); // Nullable relationship
 
             builder.HasOne(x => x.CreatedByUser)
                 .WithMany()

@@ -200,7 +200,7 @@
                     </li>
 
                 }
-                @if (User.IsInRole("Admin") || User.IsInRole("Şef"))
+                @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || User.IsInRole("Şef"))
                 {
                     <li class="sidebar-title">
                         Şef İşlemleri
@@ -220,6 +220,9 @@
                     <li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
                         <a href="/puantaj"><i data-feather="list"></i>Puantajlar</a>
                     </li>
+                    <li class="@(Context.Request.Path == "/avans" ? "active-page" : "")">
+                        <a href="/avans"><i data-feather="book-open"></i>Avanslar</a>
+                    </li>
                 }
 
                 <li class="sidebar-title">
@@ -228,8 +231,11 @@
                 <li class="@(Context.Request.Path == "/puantaj/ekle" ? "active-page" : "")">
                     <a href="/puantaj/ekle"><i data-feather="clock"></i>Puantaj Gir</a>
                 </li>
-                <li class="@(Context.Request.Path == "/izin/olustur" ? "active-page" : "")">
-                    <a href="/izin/olustur"><i data-feather="flag"></i>İzinlerim</a>
+                <li class="@(Context.Request.Path == "/izin/istek-olustur" ? "active-page" : "")">
+                    <a href="/izin/istek-olustur"><i data-feather="flag"></i>İzinlerim</a>
+                </li>
+                <li class="@(Context.Request.Path == "/avans/istek-olustur" ? "active-page" : "")">
+                    <a href="/avans/istek-olustur"><i data-feather="credit-card"></i>Avanslarım</a>
                 </li>
                 <li><br /></li>
 
