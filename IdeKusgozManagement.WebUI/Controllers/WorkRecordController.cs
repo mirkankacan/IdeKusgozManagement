@@ -97,5 +97,30 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
+        [Authorize(Roles = "Admin, Şef, Yönetici")]
+        [HttpPut("onayla/{workRecordId}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveById(string workRecordId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(workRecordId))
+            {
+                return BadRequest("Puantaj ID'si boş geçilemez");
+            }
+            var response = await _workRecordApiService.ApproveWorkRecordByIdAsync(workRecordId, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+        [Authorize(Roles = "Admin, Şef, Yönetici")]
+        [HttpPut("reddet/{workRecordId}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectById(string workRecordId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(workRecordId))
+            {
+                return BadRequest("Puantaj ID'si boş geçilemez");
+            }
+            var response = await _workRecordApiService.RejectWorkRecordByIdAsync(workRecordId, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
     }
 }

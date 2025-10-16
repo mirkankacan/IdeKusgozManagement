@@ -10,139 +10,8 @@
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
 
-    <style>
-        .time-input {
-            text-align: center;
-            padding: 0.25rem 0.5rem;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
+    <link href="~/css/puantaj-common.css" rel="stylesheet" />
 
-        .fa-clock {
-            cursor: pointer;
-        }
-
-        .fa-clock:hover {
-            color: #007bff;
-        }
-
-        input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-        }
-
-        .table th {
-            vertical-align: middle;
-            text-align: center;
-            font-size: 0.7rem;
-            padding: 0.25rem 0.1rem !important;
-            white-space: nowrap;
-        }
-
-        .table td {
-            vertical-align: middle;
-            text-align: center;
-            padding: 0.25rem 0.01rem !important;
-            font-size: 0.85rem;
-        }
-
-        .project-input {
-            font-size: 0.85rem;
-        }
-
-        .table .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
-            font-size: 0.85rem !important;
-        }
-
-        .table .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option {
-            font-size: 0.85rem
-        }
-
-        .table .select2-selection__rendered {
-            font-size: 0.85rem;
-        }
-
-        .additional-time-btn {
-            font-size: 0.65rem;
-            padding: 0.125rem 0.25rem;
-            width: 100%;
-        }
-
-        .date-cell .additional-time-btn {
-            width: 100%;
-            margin-top: 2px;
-        }
-
-        .additional-time-section {
-            margin-top: 2px;
-        }
-
-        .additional-time-section .form-control-sm {
-            font-size: 0.7rem;
-            padding: 0.1rem 0.2rem;
-            height: calc(1.5em + 0.2rem);
-            text-align: center;
-        }
-
-        .additional-time-section .input-group-text-sm {
-            font-size: 0.7rem;
-            padding: 0.1rem 0.2rem;
-            height: calc(1.5em + 0.2rem);
-        }
-
-        .additional-time-section .input-group {
-            margin-bottom: 0;
-        }
-
-        .table .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered .select2-selection__placeholder {
-            font-size: 0.85rem;
-        }
-
-        /* Masraf Modal Stilleri */
-        .expense-modal-btn {
-            font-size: 0.85rem;
-        }
-
-        .expense-count {
-            font-weight: bold;
-        }
-
-        .list-group-item {
-            border: 1px solid #dee2e6;
-            margin-bottom: 0.25rem;
-        }
-
-        .remove-expense-btn {
-            min-width: 35px;
-            height: 35px;
-        }
-
-        .meal-section {
-            display: flex;
-            justify-content: center;
-            gap: 0.25rem;
-        }
-
-        .meal-item {
-            text-align: center;
-        }
-
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
-
-        /* Loading sırasında tablo başlıklarını gizle */
-        .table-loading #workRecordsTable {
-            display: none !important;
-        }
-
-        .modal-dialog-scrollable #expenseForm {
-            max-height: calc(100vh - 200px);
-            /* header + footer yüksekliğini çıkar */
-            overflow-y: auto;
-        }
-    </style>
 }
 
 @Html.AntiForgeryToken()
@@ -221,14 +90,14 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>TARİH</th>
-                                    <th style="width: 100px;">TATİL</th>
-                                    <th style="width: 100px;">BAŞLAMA<br /> SAATİ</th>
-                                    <th style="width: 100px;">BIRAKMA<br /> SAATİ</th>
-                                    <th style="width: 150px;">PROJE</th>
-                                    <th style="width: 150px;">ÇALIŞILAN<br /> EKİPMAN</th>
-                                    <th style="width: 160px;">ÇALIŞILAN<br /> İL</th>
-                                    <th style="width: 150px;">ÇALIŞILAN<br /> İLÇE</th>
-                                    <th>MASRAF</th>
+                                    <th>TATİL</th>
+                                    <th style="width:100px;max-width:100px;">BAŞLAMA<br /> SAATİ</th>
+                                    <th style="width:100px;max-width:100px;">BIRAKMA<br /> SAATİ</th>
+                                    <th>PROJE</th>
+                                    <th>ÇALIŞILAN<br /> EKİPMAN</th>
+                                    <th>ÇALIŞILAN<br /> İL</th>
+                                    <th>ÇALIŞILAN<br /> İLÇE</th>
+                                    <th style="width:120px;max-width:120px;">MASRAF</th>
                                     <th>YEMEK</th>
                                     <th>YOL</th>
                                     <th>DURUM</th>
@@ -643,115 +512,116 @@
             const holidayClass = isHoliday ? 'bg-warning' : 'bg-info';
 
             return ` <tr data-day="${day}" data-record-id="${existingWorkRecords[day]?.id || ''}" >
-            <td class="date-cell">
-            <span class="badge ${holidayClass}">${formattedDate}</span>
-            <button type="button" class="btn btn-xs btn-outline-success additional-time-btn mt-1 w-75"
-            data-day="${day}" title="Ek Saat Ekle" ${disabledAttr}>
-            Ek Saat
-            <i class="fas fa-plus"></i>
-            </button>
-            </td>
-            <td>
-            <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${defaultValues.excuseReason}" ${disabledAttr}>
-            <option value="">Sebep seçin</option>
-            </select>
-            </td>
-            <td>
-            <div class="input-group">
-            <input type="text"  class="form-control time-input start-time" value="${defaultValues.startTime || ''}"
-                                                                                                                                                                               data-day="${day}" placeholder="08:00" ${disabledAttr} >
-                                                                                                                                                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                                                                                                                                    </div>
-                                                                                                                                                        <div class="additional-time-section" data-day="${day}" style="display: ${defaultValues.additionalStartTime ? 'block' : 'none'}; margin-top: 2px;">
-                                                                                                                                                            <div class="input-group">
-                                                                                                                                                            <input type="text" class="form-control form-control-sm additional-start-time"
-                                                                                                                                                                   data-day="${day}" placeholder="Ek Başlangıç" value="${defaultValues.additionalStartTime || ''}" ${disabledAttr}>
-                                                                                                                                                                          <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                                                                                                                        </div>
-                                                                                                                                                        </div>
-                                                                                                                                                                </td>
-                                                                                                                                                                <td>
-                                                                                                                                                                    <div class="input-group">
-                                                                                                                                                                            <input type="text"  class="form-control time-input end-time" value="${defaultValues.endTime || ''}"
-                                                                                                                                                                               data-day="${day}" placeholder="17:00" ${disabledAttr}>
-                                                                                                                                                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                                                                                                                                    </div>
-                                                                                                                                                        <div class="additional-time-section" data-day="${day}" style="display: ${defaultValues.additionalEndTime ? 'block' : 'none'}; margin-top: 2px;">
-                                                                                                                                                             <div class="input-group">
-                                                                                                                                                            <input type="text" class="form-control form-control-sm additional-end-time"
-                                                                                                                                                                   data-day="${day}" placeholder="Ek Bitiş" value="${defaultValues.additionalEndTime || ''}" ${disabledAttr}>
-                                                                                                                                                                  <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                                                                                                                            </div>
-                                                                                                                                                        </div>
-                                                                                                                                                                </td>
-                                                                                                                                                                                                <td>
-                                                                                                                                                                                                       <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${defaultValues.projectId}" ${disabledAttr}>
-                                                                                                                                                                                                            <option value="">Proje seçin</option>
-                                                                                                                                                                                                        </select>
-                                                                                                                                                                                                </td>
-                                                                                                                                                                                                                            <td>
-                                                                                                                                                                                            <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${defaultValues.equipmentId}" ${disabledAttr}>
-                                                                                                                                                                                                <option value="">Ekipman seçin</option>
-                                                                                                                                                                                            </select>
+                                    <td class="date-cell">
+                                    <span class="badge ${holidayClass}">${formattedDate}</span>
+                                    <br/>
+                                    <button type="button" class="btn btn-xs btn-outline-success additional-time-btn mt-1 w-75"
+                                    data-day="${day}" title="Ek Saat Ekle" ${disabledAttr}>
+                                    Ek Saat
+                                    <i class="fas fa-plus"></i>
+                                    </button>
+                                    </td>
+                                    <td>
+                                    <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${defaultValues.excuseReason}" ${disabledAttr}>
+                                    <option value="">Sebep seçin</option>
+                                    </select>
+                                    </td>
+                                    <td>
+                                    <div class="input-group">
+                                    <input type="text"  class="form-control time-input start-time" value="${defaultValues.startTime || ''}"
+                                                                                                                                                                                                       data-day="${day}" placeholder="08:00" ${disabledAttr} >
+                                                                                                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                <div class="additional-time-section" data-day="${day}" style="display: ${defaultValues.additionalStartTime ? 'block' : 'none'}; margin-top: 2px;">
+                                                                                                                                                                                    <div class="input-group">
+                                                                                                                                                                                    <input type="text" class="form-control form-control-sm additional-start-time"
+                                                                                                                                                                                           data-day="${day}" placeholder="Ek Başlangıç" value="${defaultValues.additionalStartTime || ''}" ${disabledAttr}>
+                                                                                                                                                                                                  <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                                </div>
+                                                                                                                                                                                </div>
                                                                                                                                                                                         </td>
-                                                                                                                                                                                                <td>
-                                                                                                                                                                                                    <select class="form-select form-select-sm province-select" data-day="${day}" ${disabledAttr}>
-                                                                                                                                                                                                    </select>
-                                                                                                                                                                                                </td>
-                                                                                                                                                                                                <td>
-                                                                                                                                                                                                    <select class="form-select form-select-sm district-select" data-day="${day}" ${disabledAttr}>
-                                                                                                                                                                                                    </select>
-                                                                                                                                                                                                </td>
-                                                                                                                                                                                                <td>
-                                                                                                                                                                                                    <button type="button" class="btn btn-primary expense-modal-btn w-75"
-                                                                                                                                                                                                            data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal" >
-                                                                                                                                                                                                        <i class="fas fa-receipt me-1"></i>
-                                                                                                                                                                                                        <span class="expense-count" data-day="${day}">0</span> Masraf
-                                                                                                                                                                                                    </button>
-                                                                                                                                                                                                </td>
-                                                                                                                                                                                                <td>
-                                                                                                                                                                                                    <div class="meal-section">
-                                                                                                                                                                                                        <div class="meal-item">
-                                                                                                                                                                                                            <div class="form-check">
-                                                                                                                                                                                                                <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}"
-                                                                                                                                                                                                                       data-meal="S" data-day="${day}" ${defaultValues.hasBreakfast ? 'checked' : ''} ${disabledAttr}>
-                                                                                                                                                                                                                <label class="form-check-label" for="s_${day}">S</label>
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                        <div class="meal-item">
-                                                                                                                                                                                                            <div class="form-check">
-                                                                                                                                                                                                                <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}"
-                                                                                                                                                                                                                       data-meal="O" data-day="${day}" ${defaultValues.hasLunch ? 'checked' : ''} ${disabledAttr}>
-                                                                                                                                                                                                                <label class="form-check-label" for="o_${day}">Ö</label>
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                        <div class="meal-item">
-                                                                                                                                                                                                            <div class="form-check">
-                                                                                                                                                                                                                <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}"
-                                                                                                                                                                                                                       data-meal="A" data-day="${day}" ${defaultValues.hasDinner ? 'checked' : ''} ${disabledAttr}>
-                                                                                                                                                                                                                <label class="form-check-label" for="a_${day}">A</label>
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                        <div class="meal-item">
-                                                                                                                                                                                                            <div class="form-check">
-                                                                                                                                                                                                                <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}"
-                                                                                                                                                                                                                       data-meal="G" data-day="${day}" ${defaultValues.hasNightMeal ? 'checked' : ''} ${disabledAttr} disabled>
-                                                                                                                                                                                                                <label class="form-check-label" for="g_${day}">G</label>
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                </td>
-                                                                                                                                                                                                   <td>
-                                                                                                                                                                                                    <div class="form-check">
-                                                                                                                                                                                                                <input class="form-check-input travel-checkbox" type="checkbox" id="t_${day}" data-day="${day}" ${defaultValues.hasTravel ? 'checked' : ''} ${disabledAttr}>
-                                                                                                                                                                                                                <label class="form-check-label" for="t_${day}">Y</label>
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                </td>
-                                                                                                                                                                                                <td>
-                                                                                                                                                                                                    ${statusBadge}
-                                                                                                                                                                                                </td>
-                                                                                                                                                                                            </tr>
-                                                                                                                                                                                        `;
+                                                                                                                                                                                        <td>
+                                                                                                                                                                                            <div class="input-group">
+                                                                                                                                                                                                    <input type="text"  class="form-control time-input end-time" value="${defaultValues.endTime || ''}"
+                                                                                                                                                                                                       data-day="${day}" placeholder="17:00" ${disabledAttr}>
+                                                                                                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                <div class="additional-time-section" data-day="${day}" style="display: ${defaultValues.additionalEndTime ? 'block' : 'none'}; margin-top: 2px;">
+                                                                                                                                                                                     <div class="input-group">
+                                                                                                                                                                                    <input type="text" class="form-control form-control-sm additional-end-time"
+                                                                                                                                                                                           data-day="${day}" placeholder="Ek Bitiş" value="${defaultValues.additionalEndTime || ''}" ${disabledAttr}>
+                                                                                                                                                                                          <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                </div>
+                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                               <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${defaultValues.projectId}" ${disabledAttr}>
+                                                                                                                                                                                                                                    <option value="">Proje seçin</option>
+                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                    <td>
+                                                                                                                                                                                                                    <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${defaultValues.equipmentId}" ${disabledAttr}>
+                                                                                                                                                                                                                        <option value="">Ekipman seçin</option>
+                                                                                                                                                                                                                    </select>
+                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                            <select class="form-select form-select-sm province-select" data-day="${day}" ${disabledAttr}>
+                                                                                                                                                                                                                            </select>
+                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                            <select class="form-select form-select-sm district-select" data-day="${day}" ${disabledAttr}>
+                                                                                                                                                                                                                            </select>
+                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                            <button type="button" class="btn btn-primary expense-modal-btn w-100"
+                                                                                                                                                                                                                                    data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal" >
+                                                                                                                                                                                                                                <i class="fas fa-receipt me-1"></i>
+                                                                                                                                                                                                                                <span class="expense-count" data-day="${day}">0 Masraf<br/>₺0,00</span>
+                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                            <div class="meal-section">
+                                                                                                                                                                                                                                <div class="meal-item">
+                                                                                                                                                                                                                                    <div class="form-check">
+                                                                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}"
+                                                                                                                                                                                                                                               data-meal="S" data-day="${day}" ${defaultValues.hasBreakfast ? 'checked' : ''} ${disabledAttr}>
+                                                                                                                                                                                                                                        <label class="form-check-label" for="s_${day}">S</label>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div class="meal-item">
+                                                                                                                                                                                                                                    <div class="form-check">
+                                                                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}"
+                                                                                                                                                                                                                                               data-meal="O" data-day="${day}" ${defaultValues.hasLunch ? 'checked' : ''} ${disabledAttr}>
+                                                                                                                                                                                                                                        <label class="form-check-label" for="o_${day}">Ö</label>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div class="meal-item">
+                                                                                                                                                                                                                                    <div class="form-check">
+                                                                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}"
+                                                                                                                                                                                                                                               data-meal="A" data-day="${day}" ${defaultValues.hasDinner ? 'checked' : ''} ${disabledAttr}>
+                                                                                                                                                                                                                                        <label class="form-check-label" for="a_${day}">A</label>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div class="meal-item">
+                                                                                                                                                                                                                                    <div class="form-check">
+                                                                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}"
+                                                                                                                                                                                                                                               data-meal="G" data-day="${day}" ${defaultValues.hasNightMeal ? 'checked' : ''} ${disabledAttr} disabled>
+                                                                                                                                                                                                                                        <label class="form-check-label" for="g_${day}">G</label>
+                                                                                                                                                                                                                                    </div>
+                        </div>
+                        </div>
+                        </td>
+                        <td>
+                        <div class="form-check">
+                        <input class="form-check-input travel-checkbox" type="checkbox" id="t_${day}" data-day="${day}" ${defaultValues.hasTravel ? 'checked' : ''} ${disabledAttr}>
+                        <label class="form-check-label" for="t_${day}">Y</label>
+                        </div>
+                        </td>
+                        <td>
+                        ${statusBadge}
+                        </td>
+                        </tr>
+                                                                                                                                                                                                                `;
         }
 
         async function saveWorkRecords() {

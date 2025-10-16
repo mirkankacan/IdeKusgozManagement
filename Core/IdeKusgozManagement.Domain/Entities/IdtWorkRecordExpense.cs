@@ -10,9 +10,9 @@ namespace IdeKusgozManagement.Domain.Entities
 
         public decimal Amount { get; set; }
 
-        public string? FileId { get; set; }
+        public string FileId { get; set; }
 
-        public virtual IdtFile? File { get; set; }
+        public virtual IdtFile File { get; set; }
 
         public virtual IdtWorkRecord WorkRecord { get; set; }
 

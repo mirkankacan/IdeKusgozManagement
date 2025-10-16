@@ -10,8 +10,8 @@
 
         string GetUserRole();
 
-        Task<string[]?> GetUserSuperiorsAsync(CancellationToken cancellationToken = default);
+        Task<List<string>?> GetUserSuperiorsAsync(CancellationToken cancellationToken = default);
 
-        Task<string[]?> GetUserSubordinatesAsync(CancellationToken cancellationToken = default);
+        Task<List<string>?> GetUserSubordinatesAsync(CancellationToken cancellationToken = default);
     }
 }

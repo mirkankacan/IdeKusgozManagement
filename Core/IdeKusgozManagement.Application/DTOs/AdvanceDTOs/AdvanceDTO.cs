@@ -29,5 +29,8 @@ namespace IdeKusgozManagement.Application.DTOs.AdvanceDTOs
         public DateTime CreatedDate { get; set; }
         public string CreatedBy { get; set; }
         public string CreatedByFullName { get; set; }
+        public string? UpdatedBy { get; set; }
+        public string? UpdatedByFullName { get; set; }
+        public DateTime? UpdatedDate { get; set; }
     }
 }

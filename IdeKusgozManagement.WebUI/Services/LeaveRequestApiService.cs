@@ -37,72 +37,6 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetLeaveRequestsByStatusAsync(int status, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/leaveRequests/status/{status}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetMyLeaveRequestsAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync("api/leaveRequests/my-leave-requests", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/leaveRequests/user/{userId}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
-        }
-
         public async Task<ApiResponse<LeaveRequestViewModel>> GetLeaveRequestByIdAsync(string leaveRequestId, CancellationToken cancellationToken = default)
         {
             try
@@ -201,55 +135,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<LeaveRequestViewModel>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetLeaveRequestsByStatusAsync(int status, string? userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}/approve", null, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
-                    return apiResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
-                return errorResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
-        }
-
-        public async Task<ApiResponse<LeaveRequestViewModel>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}/reject?rejectReason={rejectReason}", null, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
-                    return apiResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
-                return errorResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetLeaveRequestsByUserIdAndStatusAsync(string userId, int status, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/leaveRequests/user/{userId}/status/{status}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/leaveRequests/status/{status}?userId={userId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -267,11 +157,77 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetMyLeaveRequestsByStatusAsync(int status, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/leaveRequests/my-leave-requests/status/{status}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/leaveRequests/user/{userId}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
+                return errorResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}/approve", null, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}/reject?rejectReason={rejectReason}", null, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetMyLeaveRequestsAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("api/leaveRequests/my-leave-requests", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

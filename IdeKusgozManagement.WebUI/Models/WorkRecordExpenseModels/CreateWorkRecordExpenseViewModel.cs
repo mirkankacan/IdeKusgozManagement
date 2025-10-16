@@ -1,5 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.FileModels;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using IdeKusgozManagement.WebUI.Models.FileModels;
 
 namespace IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels
 {
@@ -12,6 +12,8 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordExpenseModels
 
         [Required]
         public decimal Amount { get; set; }
-        public UploadFileViewModel? File { get; set; }
+
+        [Required(ErrorMessage = "Belge yüklenmesi zorunludur.")]
+        public UploadFileViewModel File { get; set; } = null!;
     }
 }

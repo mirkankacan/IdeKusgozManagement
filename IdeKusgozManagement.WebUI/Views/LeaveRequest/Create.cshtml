@@ -87,15 +87,18 @@
                             <label for="select-leave-reason" class="form-label">İzin Türü</label>
                             <select class="form-select select-leave-reason" id="select-leave-reason" required>
                                 <option value="" selected disabled>İzin türü seçiniz...</option>
-                                <option>Rapor</option>
-                                <option>Ücretsiz İzin</option>
-                                <option>Yıllık İzin</option>
-                                <option>Babalık İzni</option>
-                                <option>İdari İzin</option>
-                                <option>Cenaze İzni</option>
-                                <option>Evlilik İzni</option>
-                                <option>Devamsızlık</option>
-                                <option>Süt İzni</option>
+                                <option value="Rapor">Rapor</option>
+                                <option value="Ücretsiz İzin">Ücretsiz İzin</option>
+                                <option value="Yıllık İzin">Yıllık İzin</option>
+                                <option value="Babalık İzni">Babalık İzni</option>
+                                <option value="İdari İzin">İdari İzin (Serbest Zaman İzni)</option>
+                                <option value="Cenaze İzni">Cenaze İzni</option>
+                                <option value="Evlilik İzni">Evlilik İzni</option>
+                                <option value="Süt İzni">Süt İzni</option>
+                                @if (!User.IsInRole("Personel"))
+                                {
+                                    <option value="Devamsızlık">Devamsızlık</option>
+                                }
                             </select>
                             <div class="valid-feedback">İyi görünüyor!</div>
                             <div class="invalid-feedback">Geçerli izin türü seçiniz.</div>
@@ -336,9 +339,9 @@
             formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
 
             // Add file if uploaded
-            const file = $('#file-document')[0].files[0];
-            if (fileInput.files.length > 0) {
-                formData.append('File.FormFile', file);
+            const file = $('#file-document')[0];
+            if (file.files.length > 0) {
+                formData.append('File.FormFile', file.files[0]);
             }
 
             try {

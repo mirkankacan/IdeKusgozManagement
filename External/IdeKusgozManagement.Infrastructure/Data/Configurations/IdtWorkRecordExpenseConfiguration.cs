@@ -27,7 +27,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .HasPrecision(18, 2);
 
             builder.Property(x => x.FileId)
-                .IsRequired(false)
+                .IsRequired()
                 .HasMaxLength(450);
 
             builder.HasOne(x => x.WorkRecord)
@@ -43,8 +43,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.HasOne(x => x.File)
                 .WithMany(x => x.WorkRecordExpenses)
                 .HasForeignKey(x => x.FileId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .IsRequired(false);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
 
             // Indexes
             builder.HasIndex(x => x.WorkRecordId); // WorkRecord'a göre expense'leri getirmek için

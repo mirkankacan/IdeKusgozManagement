@@ -1,6 +1,5 @@
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.LeaveRequestDTOs;
-using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
@@ -143,14 +142,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest(result);
             }
-            CreateNotificationDTO createNotificationDTO = new()
-            {
-                Message = $"{result.Data.UpdatedByFullName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde oluşturduğunuz izin talebiniz onaylanmıştır",
-                Type = NotificationType.LeaveRequest,
-                RedirectUrl = "/izin/olustur",
-                TargetUsers = new string[] { result.Data.CreatedBy }
-            };
-            await notificationService.SendNotificationToUsersAsync(createNotificationDTO, cancellationToken);
 
             return Ok(result);
         }
@@ -174,14 +165,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             {
                 return BadRequest(result);
             }
-            CreateNotificationDTO createNotificationDTO = new()
-            {
-                Message = $"{result.Data.UpdatedByFullName} tarafından, {result.Data.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde oluşturduğunuz izin talebiniz reddedilmiştir",
-                Type = NotificationType.LeaveRequest,
-                RedirectUrl = "/izin/olustur",
-                TargetUsers = new string[] { result.Data.CreatedBy }
-            };
-            await notificationService.SendNotificationToUsersAsync(createNotificationDTO, cancellationToken);
 
             return Ok(result);
         }

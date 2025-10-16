@@ -7,7 +7,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
-    public class NotificationsController(INotificationService notificationService, IIdentityService identityService) : ControllerBase
+    public class NotificationsController(INotificationService notificationService) : ControllerBase
     {
         /// <summary>
         /// Kullanıcının bildirimlerini getirir
@@ -15,14 +15,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetNotifications([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1, CancellationToken cancellationToken = default)
         {
-            var userId = identityService.GetUserId();
-            var userRole = identityService.GetUserRole();
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(userRole))
-            {
-                return Unauthorized("Kullanıcı bilgisi bulunamadı");
-            }
-
-            var result = await notificationService.GetNotificationsAsync(userId, userRole, pageSize, pageNumber, cancellationToken);
+            var result = await notificationService.GetNotificationsAsync(pageSize, pageNumber, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -32,14 +25,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpGet("unread-count")]
         public async Task<IActionResult> GetUnreadNotificationCount(CancellationToken cancellationToken = default)
         {
-            var userId = identityService.GetUserId();
-            var userRole = identityService.GetUserRole();
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(userRole))
-            {
-                return Unauthorized("Kullanıcı bilgisi bulunamadı");
-            }
-
-            var result = await notificationService.GetUnreadNotificationCountAsync(userId, userRole, cancellationToken);
+            var result = await notificationService.GetUnreadNotificationCountAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -49,13 +35,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpPut("{notificationId}/mark-as-read")]
         public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken = default)
         {
-            var userId = identityService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("Kullanıcı bilgisi bulunamadı");
-            }
-
-            var result = await notificationService.MarkAsReadAsync(notificationId, userId, cancellationToken);
+            var result = await notificationService.MarkAsReadAsync(notificationId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -65,13 +45,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [HttpPut("mark-all-as-read")]
         public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken = default)
         {
-            var userId = identityService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("Kullanıcı bilgisi bulunamadı");
-            }
-
-            var result = await notificationService.MarkAllAsReadAsync(userId, cancellationToken);
+            var result = await notificationService.MarkAllAsReadAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

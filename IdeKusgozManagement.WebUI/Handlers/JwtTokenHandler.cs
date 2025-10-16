@@ -1,10 +1,10 @@
-﻿using System.Net.Http.Headers;
-using System.Text;
-using IdeKusgozManagement.WebUI.Models;
+﻿using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.AuthModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Newtonsoft.Json;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace IdeKusgozManagement.WebUI.Handlers
 {
@@ -105,9 +105,10 @@ namespace IdeKusgozManagement.WebUI.Handlers
                             {
                                 httpContext.Session.SetString("JwtToken", apiResponse.Data.Token);
                                 httpContext.Session.SetString("UserId", apiResponse.Data.UserId);
-                                httpContext.Session.SetString("UserName", apiResponse.Data.UserName);
+                                httpContext.Session.SetString("TCNo", apiResponse.Data.TCNo);
                                 httpContext.Session.SetString("FullName", apiResponse.Data.FullName);
                                 httpContext.Session.SetString("RoleName", apiResponse.Data.RoleName);
+                                httpContext.Session.SetString("FullNameWithExp", apiResponse.Data.FullNameWithExp);
 
                                 if (!string.IsNullOrEmpty(apiResponse.Data.RefreshToken))
                                 {

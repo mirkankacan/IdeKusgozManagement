@@ -1,4 +1,10 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var fullName = User.FindFirstValue("FullName")!;
+    var fullNameWithExp = User.FindFirstValue("FullNameWithExp")!;
+
+}
+
+<!DOCTYPE html>
 <html lang="tr">
 
 <head>
@@ -161,9 +167,11 @@
 
                             <a class="nav-link profile-dropdown" href="#" id="profileDropDown" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="/theme/assets/images/avatars/profile-image.png" alt=""><span class="mt-5 text-black">
-                                    @User.FindFirst("FullName")?.Value
+                                <img src="/theme/assets/images/avatars/profile-image.png" alt="">
+                                <span class="mt-5 text-black">
+                                    @fullName
                                 </span>
+
                             </a>
                             <div class="dropdown-menu dropdown-menu-end profile-drop-menu"
                                  aria-labelledby="profileDropDown">
@@ -281,7 +289,9 @@
     <script src="~/theme/assets/js/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/realtime-manager.js"></script>
-
+    <script>
+window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
+</script>
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>

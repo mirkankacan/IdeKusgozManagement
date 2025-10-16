@@ -335,20 +335,30 @@ class NotificationManager extends RealtimeManager {
 
     attachClickHandler(notificationId) {
         const element = $(`[data-notification-id="${notificationId}"]`);
-        element.off('click').on('click', (e) => {
+        element.off('click').on('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
+
             const notification = this.notifications.find(n => n.id === notificationId);
-            if (notification && !notification.isRead) {
-                this.markAsRead(notificationId);
-            }
             const redirectUrl = $(e.currentTarget).data('notification-redirecturl');
-            if (redirectUrl && redirectUrl.trim() !== '') {
-                // Small delay to allow dropdown to close smoothly
-                setTimeout(() => {
-                    window.location.href = redirectUrl;
-                }, 150);
+
+            if (notification && !notification.isRead) {
+                // Okundu işareti başarılı olursa yönlendir
+                const success = await this.markAsRead(notificationId);
+                if (success && redirectUrl && redirectUrl.trim() !== '') {
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 150);
+                }
+            } else {
+                // Zaten okunmuşsa direkt yönlendir
+                if (redirectUrl && redirectUrl.trim() !== '') {
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 150);
+                }
             }
+
             return false;
         });
     }
@@ -368,30 +378,42 @@ class NotificationManager extends RealtimeManager {
     async markAsRead(notificationId) {
         try {
             const response = await fetch(`/bildirim/${notificationId}/okundu`, {
-                method: 'POST',
+                method: 'PUT',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' }
             });
+            const result = await response.json();
 
             if (response.ok) {
-                const notification = this.notifications.find(n => n.id === notificationId);
-                if (notification && !notification.isRead) {
-                    notification.isRead = true;
-                    notification.readDate = new Date().toISOString();
-                    this.unreadCount = Math.max(0, this.unreadCount - 1);
-                    this.updateUnreadCount();
-                    this.renderAllNotifications();
+                if (result.isSuccess) {
+                    const notification = this.notifications.find(n => n.id === notificationId);
+                    if (notification && !notification.isRead) {
+                        notification.isRead = true;
+                        notification.readDate = new Date().toISOString();
+                        this.unreadCount = Math.max(0, this.unreadCount - 1);
+                        this.updateUnreadCount();
+                        this.renderAllNotifications();
+                    }
+                    return true; // Başarılı
+                } else {
+                    this.showError(result.message || 'Bildirim okundu olarak işaretlenemedi');
+                    return false;
                 }
+            } else {
+                this.showError(result.message);
+                return false;
             }
         } catch (error) {
             console.error('Error marking notification as read:', error);
+            this.showError('Bildirim okundu olarak işaretlenirken bir hata oluştu: ' + error.message);
+            return false;
         }
     }
 
     async markAllAsRead() {
         try {
             const response = await fetch('/bildirim/hepsini-okundu', {
-                method: 'POST',
+                method: 'PUT',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -494,7 +516,13 @@ class MessageManager extends RealtimeManager {
     async setupSignalR() {
         const success = await this.initializeConnection('http://localhost:5291/communicationHub');
         if (success) {
-            this.on("NewMessage", message => this.handleNewMessage(message));
+            this.on("NewMessage", message => {
+                console.log('Received NewMessage via SignalR:', message);
+                this.handleNewMessage(message);
+            });
+            console.log('SignalR connection established for messages');
+        } else {
+            console.error('Failed to establish SignalR connection for messages');
         }
     }
 
@@ -515,8 +543,7 @@ class MessageManager extends RealtimeManager {
 
             const response = await fetch(`/mesaj?pageSize=${this.pageSize}&pageNumber=${this.currentPage}`, {
                 headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    'Content-Type': 'application/json'
                 }
             });
 
@@ -578,6 +605,7 @@ class MessageManager extends RealtimeManager {
         }
 
         this.messages.forEach(message => {
+            console.log(message)
             messagesContainer.append(this.createMessageHtml(message));
         });
     }
@@ -586,14 +614,39 @@ class MessageManager extends RealtimeManager {
         const formattedDate = new Date(message.createdDate).toLocaleDateString('tr-TR', {
             day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
-
+        const isAll = !message.targetRoles && !message.targetUsers; 
+        let targets;
+        if (isAll) {
+            targets = `
+                        <small class="comment-target-roles">Görebilen Roller: Herkes</small>
+                        <br/>
+                        <small class="comment-target-users">Görebilen Kullanıcılar: Herkes</small>`;
+        }
+        else {
+            if (message.targetRoles) {
+                targets = `
+                          <small class="comment-target-roles">Görebilen Roller: ${message.targetRoles}</small>`;
+            }
+            else if (message.targetUsers) {
+                targets = `
+                          <small class="comment-target-roles">Görebilen Kullanıcılar: ${message.targetUsers}</small>`;
+            }
+            else {
+                targets = `
+                        <small class="comment-target-roles">Görebilen Roller: ${message.targetRoles}</small>
+                        <br/>
+                        <small class="comment-target-users">Görebilen Kullanıcılar: ${message.targetUsers}</small>`;
+            }
+        }
         return `
             <div class="post-comm" data-message-id="${message.id}">
                 <img src="/theme/assets/images/avatars/profile-image.png" class="comment-img" alt="">
                 <div class="comment-container">
                     <span class="comment-author">
-                        ${message.createdByName || message.createdBy}
+                        ${message.createdByFullName || message.createdBy}
                         <small class="comment-date">${formattedDate}</small>
+                        <br/>
+                        ${targets}
                     </span>
                 </div>
                 <span class="comment-text">${message.content}</span>
@@ -602,20 +655,32 @@ class MessageManager extends RealtimeManager {
     }
 
     handleNewMessage(message) {
-        if (this.messages.find(m => m.id === message.id)) return;
+        // Mesaj zaten varsa tekrar ekleme
+        if (this.messages.find(m => m.id === message.id)) {
+            console.log('Message already exists, skipping:', message.id);
+            return;
+        }
 
+        console.log('Adding new message to UI:', message);
         this.messages.unshift(message);
         this.messages.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
         this.renderAllMessages();
 
         // Add animation
         const newMessageElement = $(`[data-message-id="${message.id}"]`);
-        newMessageElement.css({ opacity: '0', transform: 'translateY(-10px)', transition: 'all 0.3s ease' });
-        setTimeout(() => newMessageElement.css({ opacity: '1', transform: 'translateY(0)' }), 100);
+        if (newMessageElement.length > 0) {
+            newMessageElement.css({ opacity: '0', transform: 'translateY(-10px)', transition: 'all 0.3s ease' });
+            setTimeout(() => newMessageElement.css({ opacity: '1', transform: 'translateY(0)' }), 100);
+        }
     }
 
     async sendMessage() {
         const messageInput = $('#messageInput');
+        const roleSelect = $('#select-target-roles');
+        const userSelect = $('#select-target-users');
+
+        const targetRoles = roleSelect.val() || []; // Boşsa boş array
+        const targetUsers = userSelect.val() || []; // Boşsa boş array
         const messageContent = messageInput.val().trim();
 
         if (!messageContent) {
@@ -624,19 +689,35 @@ class MessageManager extends RealtimeManager {
         }
 
         try {
+            console.log('Sending message:', { content: messageContent, targetRoles, targetUsers });
             const response = await fetch('/mesaj', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
                 },
-                body: JSON.stringify({ content: messageContent })
+                body: JSON.stringify({
+                    content: messageContent,
+                    targetRoles: targetRoles,     
+                    targetUsers: targetUsers     
+                })
             });
 
             if (response.ok) {
                 const result = await response.json();
+                console.log('Message send response:', result);
                 if (result.isSuccess) {
+                    // Mesajı hemen UI'ya ekle (gönderen kişi için)
+                    if (result.data) {
+                        console.log('Adding message to UI immediately:', result.data);
+                        this.handleNewMessage(result.data);
+                    } else {
+                        console.warn('No message data in response');
+                    }
+                    
                     messageInput.val('');
+                    roleSelect.val(null).trigger('change');
+                    userSelect.val(null).trigger('change');
                     this.showSuccess('Mesaj başarıyla gönderildi');
                 } else {
                     throw new Error(result.message || 'Mesaj gönderilirken bir hata oluştu');

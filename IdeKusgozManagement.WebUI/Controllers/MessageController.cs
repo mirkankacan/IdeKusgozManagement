@@ -23,7 +23,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
         [ValidateAntiForgeryToken]
-
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost]
         public async Task<IActionResult> CreateMessage([FromBody] CreateMessageViewModel model, CancellationToken cancellationToken = default)

@@ -1,5 +1,5 @@
-﻿using IdeKusgozManagement.Application.DTOs.FileDTOs;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using IdeKusgozManagement.Application.DTOs.FileDTOs;
 
 namespace IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs
 {
@@ -10,6 +10,6 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs
         public string ExpenseId { get; set; } = null!;
         public string? Description { get; set; }
         public decimal Amount { get; set; }
-        public UploadFileDTO? File { get; set; }
+        public UploadFileDTO File { get; set; } = null!;
     }
 }

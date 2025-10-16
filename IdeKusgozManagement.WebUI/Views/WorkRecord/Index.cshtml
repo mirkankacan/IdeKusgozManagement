@@ -9,144 +9,10 @@
         href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+    
 
-    <link
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/css/bootstrap-material-datetimepicker.min.css"
-        rel="stylesheet">
+    <link href="~/css/puantaj-common.css" rel="stylesheet" />
 
-    <style>
-        .time-input {
-            text-align: center;
-            padding: 0.25rem 0.5rem;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
-
-        .fa-clock {
-            cursor: pointer;
-        }
-
-        .fa-clock:hover {
-            color: #007bff;
-        }
-
-        input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-        }
-
-        .table th {
-            vertical-align: middle;
-            text-align: center;
-            font-size: 0.7rem;
-            padding: 0.25rem 0.1rem !important;
-            white-space: nowrap;
-        }
-
-        .table td {
-            vertical-align: middle;
-            text-align: center;
-            padding: 0.25rem 0.01rem !important;
-            font-size: 0.85rem;
-        }
-
-        .project-input {
-            font-size: 0.85rem;
-        }
-
-        .table .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
-            font-size: 0.85rem !important;
-        }
-
-        .table .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option {
-            font-size: 0.85rem
-        }
-
-        .table .select2-selection__rendered {
-            font-size: 0.85rem;
-        }
-
-        .additional-time-btn {
-            font-size: 0.65rem;
-            padding: 0.125rem 0.25rem;
-            width: 100%;
-        }
-
-        .date-cell .additional-time-btn {
-            width: 100%;
-            margin-top: 2px;
-        }
-
-        .additional-time-section {
-            margin-top: 2px;
-        }
-
-        .additional-time-section .form-control-sm {
-            font-size: 0.7rem;
-            padding: 0.1rem 0.2rem;
-            height: calc(1.5em + 0.2rem);
-            text-align: center;
-        }
-
-        .additional-time-section .input-group-text-sm {
-            font-size: 0.7rem;
-            padding: 0.1rem 0.2rem;
-            height: calc(1.5em + 0.2rem);
-        }
-
-        .additional-time-section .input-group {
-            margin-bottom: 0;
-        }
-
-        .table .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered .select2-selection__placeholder {
-            font-size: 0.85rem;
-        }
-
-        /* Masraf Modal Stilleri */
-        .expense-modal-btn {
-            font-size: 0.85rem;
-        }
-
-        .expense-count {
-            font-weight: bold;
-        }
-
-        .list-group-item {
-            border: 1px solid #dee2e6;
-            margin-bottom: 0.25rem;
-        }
-
-        .remove-expense-btn {
-            min-width: 35px;
-            height: 35px;
-        }
-
-        .meal-section {
-            display: flex;
-            justify-content: center;
-            gap: 0.25rem;
-        }
-
-        .meal-item {
-            text-align: center;
-        }
-
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
-
-        /* Loading sırasında tablo başlıklarını gizle */
-        .table-loading #workRecordsTable {
-            display: none !important;
-        }
-
-        .modal-dialog-scrollable #expenseForm {
-            max-height: calc(100vh - 200px);
-            /* header + footer yüksekliğini çıkar */
-            overflow-y: auto;
-        }
-    </style>
 }
 
 @Html.AntiForgeryToken()
@@ -233,17 +99,18 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>TARİH</th>
-                                    <th style="width: 100px;">TATİL</th>
-                                    <th style="width: 100px;">BAŞLAMA<br /> SAATİ</th>
-                                    <th style="width: 100px;">BIRAKMA<br /> SAATİ</th>
-                                    <th style="width: 150px;">PROJE</th>
-                                    <th style="width: 150px;">ÇALIŞILAN<br /> EKİPMAN</th>
-                                    <th style="width: 160px;">ÇALIŞILAN<br /> İL</th>
-                                    <th style="width: 150px;">ÇALIŞILAN<br /> İLÇE</th>
-                                    <th>MASRAF</th>
+                                    <th>TATİL</th>
+                                    <th style="width: 100px;max-width:100px;">BAŞLAMA<br /> SAATİ</th>
+                                    <th style="width: 100px;max-width:100px;">BIRAKMA<br /> SAATİ</th>
+                                    <th >PROJE</th>
+                                    <th>ÇALIŞILAN<br /> EKİPMAN</th>
+                                    <th>ÇALIŞILAN<br /> İL</th>
+                                    <th>ÇALIŞILAN<br /> İLÇE</th>
+                                    <th style="width:120px;max-width:120px;">MASRAF</th>
                                     <th>YEMEK</th>
                                     <th>YOL</th>
                                     <th>DURUM</th>
+                                    <th>İŞLEM</th>
                                 </tr>
                             </thead>
                             <tbody id="workRecordsTableBody">
@@ -299,7 +166,6 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-
                 </div>
             </form>
         </div>
@@ -308,8 +174,6 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js"></script>
     <script src="~/js/turkey-locations.js"></script>
     <script src="~/js/puantaj-common.js"></script>
 
@@ -501,50 +365,50 @@
         // Table state management functions
         function showEmptyTable() {
             const emptyMessage = `
-                                                                                                                                                                    <tr>
-                                                                                                                                                                        <td colspan="12" class="text-center py-5">
-                                                                                                                                                                            <div class="text-muted">
-                                                                                                                                                                                <i class="fas fa-info-circle fa-2x mb-3"></i>
-                                                                                                                                                                                <h5>Kullanıcı Seçin</h5>
-                                                                                                                                                                                <p>Puantaj verilerini görüntülemek için lütfen bir kullanıcı seçin.</p>
-                                                                                                                                                                            </div>
-                                                                                                                                                                        </td>
-                                                                                                                                                                    </tr>
-                                                                                                                                                                `;
+                                                                                                                                                                                    <tr>
+                                                                                                                                                                                        <td colspan="13" class="text-center py-5">
+                                                                                                                                                                                            <div class="text-muted">
+                                                                                                                                                                                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                                                                                                                                                                                <h5>Kullanıcı Seçin</h5>
+                                                                                                                                                                                                <p>Puantaj verilerini görüntülemek için lütfen bir kullanıcı seçin.</p>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                        </td>
+                                                                                                                                                                                    </tr>
+                                                                                                                                                                                `;
             $('#workRecordsTableBody').html(emptyMessage);
         }
 
         function showNoDataMessage(year, month) {
             const noDataMessage = `
-                                                                                                                                                                    <tr>
-                                                                                                                                                                        <td colspan="12" class="text-center py-5">
-                                                                                                                                                                            <div class="text-muted">
-                                                                                                                                                                                <i class="fas fa-calendar-times fa-2x mb-3 text-warning"></i>
-                                                                                                                                                                                <h5>Puantaj Verisi Bulunamadı</h5>
-                                                                                                                                                                                <p>Seçili kullanıcının ${month}/${year} ayına ait puantaj kaydı bulunmamaktadır.</p>
-                                                                                                                                                                                <small>Personel henüz bu ay için puantaj doldurmamış olabilir.</small>
-                                                                                                                                                                            </div>
-                                                                                                                                                                        </td>
-                                                                                                                                                                    </tr>
-                                                                                                                                                                `;
+                                                                                                                                                                                    <tr>
+                                                                                                                                                                                        <td colspan="13" class="text-center py-5">
+                                                                                                                                                                                            <div class="text-muted">
+                                                                                                                                                                                                <i class="fas fa-calendar-times fa-2x mb-3 text-warning"></i>
+                                                                                                                                                                                                <h5>Puantaj Verisi Bulunamadı</h5>
+                                                                                                                                                                                                <p>Seçili kullanıcının ${month}/${year} ayına ait puantaj kaydı bulunmamaktadır.</p>
+                                                                                                                                                                                                <small>Personel henüz bu ay için puantaj doldurmamış olabilir.</small>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                        </td>
+                                                                                                                                                                                    </tr>
+                                                                                                                                                                                `;
             $('#workRecordsTableBody').html(noDataMessage);
         }
 
         function showErrorMessage() {
             const errorMessage = `
-                                                                                                                                                                    <tr>
-                                                                                                                                                                        <td colspan="12" class="text-center py-5">
-                                                                                                                                                                            <div class="text-danger">
-                                                                                                                                                                                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                                                                                                                                                                                <h5>Veri Yükleme Hatası</h5>
-                                                                                                                                                                                <p>Puantaj verileri yüklenirken bir hata oluştu.</p>
-                                                                                                                                                                                <button class="btn btn-outline-primary btn-sm" onclick="loadWorkRecordsByUser()">
-                                                                                                                                                                                    <i class="fas fa-redo me-1"></i>Tekrar Dene
-                                                                                                                                                                                </button>
-                                                                                                                                                                            </div>
-                                                                                                                                                                        </td>
-                                                                                                                                                                    </tr>
-                                                                                                                                                                `;
+                                                                                                                                                                                    <tr>
+                                                                                                                                                                                        <td colspan="13" class="text-center py-5">
+                                                                                                                                                                                            <div class="text-danger">
+                                                                                                                                                                                                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                                                                                                                                                                                                <h5>Veri Yükleme Hatası</h5>
+                                                                                                                                                                                                <p>Puantaj verileri yüklenirken bir hata oluştu.</p>
+                                                                                                                                                                                                <button class="btn btn-outline-primary btn-sm" onclick="loadWorkRecordsByUser()">
+                                                                                                                                                                                                    <i class="fas fa-redo me-1"></i>Tekrar Dene
+                                                                                                                                                                                                </button>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                        </td>
+                                                                                                                                                                                    </tr>
+                                                                                                                                                                                `;
             $('#workRecordsTableBody').html(errorMessage);
         }
 
@@ -575,7 +439,7 @@
 
                 if (response.isSuccess && response.data && response.data.length > 0) {
                     await populateTableWithWorkRecords(response.data);
-                    toastr.success(`${response.data.length} puantaj kaydı yüklendi`, 'Başarılı!');
+                    // toastr.success(`${response.data.length} puantaj kaydı yüklendi`, 'Başarılı!');
                 } else {
                     showNoDataMessage(year, month);
                 }
@@ -596,7 +460,6 @@
             workRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
 
             const expenseData = PuantajCommon.getExpenseData();
-            console.log(expenseData);
             workRecords.forEach(record => {
                 const date = new Date(record.date);
                 const day = date.getDate();
@@ -635,115 +498,216 @@
 
         function createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge) {
             return `
-                                                                                                                                                                    <tr data-day="${day}" data-record-id="${record.id}">
-             <td class="date-cell">
-             <span class="badge bg-info">${formattedDate}</span>
-             ${record.additionalStartTime || record.additionalEndTime ? `
-                         <button type="button" class="btn btn-xs btn-success additional-time-btn mt-1 w-75" disabled
-                     data-day="${day}" title="Ek Saat Mevcut">
-                     Ek Saat
-                     </button>
-             ` : ''}
-             </td>
-            <td>
-            <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${record.excuseReason || ''}">
-            <option value="">Sebep seçin</option>
-            </select>
-            </td>
-                                                                                                                                                        <td>
-                                                                                                                                                            <div class="input-group">
-                                                                                                                                                                <input type="text" class="form-control time-input start-time" value="${startTime}" data-day="${day}" placeholder="08:00">
-                                                                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                                                                                                                            </div>
-                                                                                                                                                            <div class="additional-time-section" data-day="${day}" style="display: ${record.additionalStartTime ? 'block' : 'none'}; margin-top: 2px;">
-                                                                                                                                                                <div class="input-group">
-                                                                                                                                                                    <input type="text" class="form-control form-control-sm additional-start-time"
-                                                                                                                                                                           data-day="${day}" placeholder="Ek Başlangıç" value="${record.additionalStartTime ? PuantajCommon.Utils.formatTimeSpan(record.additionalStartTime) : ''}">
-                                                                                                                                                                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                                                                                                                                </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        </td>
-                                                                                                                                                    <td>
-                                                                                                                                                        <div class="input-group">
-                                                                                                                                                            <input type="text" class="form-control time-input end-time" value="${endTime}" data-day="${day}" placeholder="17:00">
-                                                                                                                                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                                                                                                                        </div>
-                                                                                                                                                        <div class="additional-time-section" data-day="${day}" style="display: ${record.additionalEndTime ? 'block' : 'none'}; margin-top: 2px;">
-                                                                                                                                                            <div class="input-group">
-                                                                                                                                                                <input type="text" class="form-control form-control-sm additional-end-time"
-                                                                                                                                                                       data-day="${day}" placeholder="Ek Bitiş" value="${record.additionalEndTime ? PuantajCommon.Utils.formatTimeSpan(record.additionalEndTime) : ''}">
-                                                                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                                                                                                                            </div>
-                                                                                                                                                        </div>
-                                                                                                                                                    </td>
-                                                                                                                                                      <td>
-                                                                                                                                                             <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${record.projectId || ''}">
-                                                                                                                                                               <option value="">Proje seçin</option>
-                                                                                                                                                              </select>
-                                                                                                                                                      </td>
-                                                                                                                                                                                            <td>
-                                                                                                                                                                    <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${record.equipmentId || ''}">
-                                                                                                                                                                        <option value="">Ekipman seçin</option>
-                                                                                                                                                                    </select>
-                                                                                                                                                                </td>
+                <tr data-day="${day}" data-record-id="${record.id}">
+                             <td class="date-cell">
+                             <span class="badge bg-info">${formattedDate}</span>
+                             ${record.additionalStartTime || record.additionalEndTime ? `
+                                       <br/>
+                                         <button type="button" class="btn btn-xs btn-success additional-time-btn mt-1 w-75" disabled
+                                     data-day="${day}" title="Ek Saat Mevcut">
+                                     Ek Saat
+                                     </button>
+                             ` : ''}
+                             </td>
+                            <td>
+                            <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${record.excuseReason || ''}">
+                            <option value="">Sebep seçin</option>
+                            </select>
+                            </td>
                                                                                                                                                                         <td>
-                                                                                                                                                                            <select class="form-select form-select-sm province-select" data-day="${day}">
-                                                                                                                                                                                <option value="">İl seçin</option>
-                                                                                                                                                                            </select>
-                                                                                                                                                                        </td>
-                                                                                                                                                                        <td>
-                                                                                                                                                                            <select class="form-select form-select-sm district-select" data-day="${day}">
-                                                                                                                                                                                <option value="">İlçe seçin</option>
-                                                                                                                                                                            </select>
-                                                                                                                                                                        </td>
-                                                                                                                                                                        <td>
-                                                                                                                                                                            <button type="button" class="btn btn-primary expense-modal-btn w-100"
-                                                                                                                                                                                    data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal">
-                                                                                                                                                                                <i class="fas fa-receipt me-1"></i>
-                                                                                                                                                                                <span class="expense-count" data-day="${day}">0</span> Masraf
-                                                                                                                                                                            </button>
-                                                                                                                                                                        </td>
-                                                                                                                                                                        <td>
-                                                                                                                                                                            <div class="meal-section">
-                                                                                                                                                                                <div class="meal-item">
-                                                                                                                                                                                    <div class="form-check">
-                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}" data-meal="S" data-day="${day}" ${record.hasBreakfast ? 'checked' : ''}>
-                                                                                                                                                                                        <label class="form-check-label" for="s_${day}">S</label>
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                </div>
-                                                                                                                                                                                <div class="meal-item">
-                                                                                                                                                                                    <div class="form-check">
-                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}" data-meal="O" data-day="${day}" ${record.hasLunch ? 'checked' : ''}>
-                                                                                                                                                                                        <label class="form-check-label" for="o_${day}">Ö</label>
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                </div>
-                                                                                                                                                                                <div class="meal-item">
-                                                                                                                                                                                    <div class="form-check">
-                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}" data-meal="A" data-day="${day}" ${record.hasDinner ? 'checked' : ''}>
-                                                                                                                                                                                        <label class="form-check-label" for="a_${day}">A</label>
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                </div>
-                                                                                                                                                                                <div class="meal-item">
-                                                                                                                                                                                    <div class="form-check">
-                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}" data-meal="G" data-day="${day}" ${record.hasNightMeal ? 'checked' : ''} disabled>
-                                                                                                                                                                                        <label class="form-check-label" for="g_${day}">G</label>
-                                                                                                                                                                                    </div>
+                                                                                                                                                                            <div class="input-group">
+                                                                                                                                                                                <input type="text" class="form-control time-input start-time" value="${startTime}" data-day="${day}" placeholder="08:00">
+                                                                                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                            </div>
+                                                                                                                                                                            <div class="additional-time-section" data-day="${day}" style="display: ${record.additionalStartTime ? 'block' : 'none'}; margin-top: 2px;">
+                                                                                                                                                                                <div class="input-group">
+                                                                                                                                                                                    <input type="text" class="form-control form-control-sm additional-start-time"
+                                                                                                                                                                                           data-day="${day}" placeholder="Ek Başlangıç" value="${record.additionalStartTime ? PuantajCommon.Utils.formatTimeSpan(record.additionalStartTime) : ''}">
+                                                                                                                                                                                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
                                                                                                                                                                                 </div>
                                                                                                                                                                             </div>
                                                                                                                                                                         </td>
-                                                                                                                                                                        <td>
-                                                                                                                                                                            <div class="form-check">
-                                                                                                                                                                                <input class="form-check-input travel-checkbox" type="checkbox" id="t_${day}" data-day="${day}" ${record.hasTravel ? 'checked' : ''}>
-                                                                                                                                                                                <label class="form-check-label" for="t_${day}">Y</label>
+                                                                                                                                                                    <td>
+                                                                                                                                                                        <div class="input-group">
+                                                                                                                                                                            <input type="text" class="form-control time-input end-time" value="${endTime}" data-day="${day}" placeholder="17:00">
+                                                                                                                                                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <div class="additional-time-section" data-day="${day}" style="display: ${record.additionalEndTime ? 'block' : 'none'}; margin-top: 2px;">
+                                                                                                                                                                            <div class="input-group">
+                                                                                                                                                                                <input type="text" class="form-control form-control-sm additional-end-time"
+                                                                                                                                                                                       data-day="${day}" placeholder="Ek Bitiş" value="${record.additionalEndTime ? PuantajCommon.Utils.formatTimeSpan(record.additionalEndTime) : ''}">
+                                                                                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
                                                                                                                                                                             </div>
-                                                                                                                                                                        </td>
-                                                                                                                                                                        <td>
-                                                                                                                                                                            ${statusBadge}
-                                                                                                                                                                        </td>
-                                                                                                                                                                    </tr>
-                                                                                                                                                                `;
+                                                                                                                                                                        </div>
+                                                                                                                                                                    </td>
+                                                                                                                                                                      <td>
+                                                                                                                                                                             <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${record.projectId || ''}">
+                                                                                                                                                                               <option value="">Proje seçin</option>
+                                                                                                                                                                              </select>
+                                                                                                                                                                      </td>
+                                                                                                                                                                                                            <td>
+                                                                                                                                                                                    <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${record.equipmentId || ''}">
+                                                                                                                                                                                        <option value="">Ekipman seçin</option>
+                                                                                                                                                                                    </select>
+                                                                                                                                                                                </td>
+                                                                                                                                                                                        <td>
+                                                                                                                                                                                            <select class="form-select form-select-sm province-select" data-day="${day}">
+                                                                                                                                                                                                <option value="">İl seçin</option>
+                                                                                                                                                                                            </select>
+                                                                                                                                                                                        </td>
+                                                                                                                                                                                        <td>
+                                                                                                                                                                                            <select class="form-select form-select-sm district-select" data-day="${day}">
+                                                                                                                                                                                                <option value="">İlçe seçin</option>
+                                                                                                                                                                                            </select>
+                                                                                                                                                                                        </td>
+                                                                                                                                                                                        <td>
+                                                                                                                                                                                            <button type="button" class="btn btn-primary expense-modal-btn w-100"
+                                                                                                                                                                                                    data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal">
+                                                                                                                                                                                                <i class="fas fa-receipt me-1"></i>
+                                                                                                                                                                                                <span class="expense-count" data-day="${day}">0 Masraf<br/><small>0,00 ₺</small></span>
+                                                                                                                                                                                            </button>
+                                                                                                                                                                                        </td>
+                                                                                                                                                                                        <td>
+                                                                                                                                                                                            <div class="meal-section">
+                                                                                                                                                                                                <div class="meal-item">
+                                                                                                                                                                                                    <div class="form-check">
+                                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}" data-meal="S" data-day="${day}" ${record.hasBreakfast ? 'checked' : ''}>
+                                                                                                                                                                                                        <label class="form-check-label" for="s_${day}">S</label>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <div class="meal-item">
+                                                                                                                                                                                                    <div class="form-check">
+                                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}" data-meal="O" data-day="${day}" ${record.hasLunch ? 'checked' : ''}>
+                                                                                                                                                                                                        <label class="form-check-label" for="o_${day}">Ö</label>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <div class="meal-item">
+                                                                                                                                                                                                    <div class="form-check">
+                                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}" data-meal="A" data-day="${day}" ${record.hasDinner ? 'checked' : ''}>
+                                                                                                                                                                                                        <label class="form-check-label" for="a_${day}">A</label>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <div class="meal-item">
+                                                                                                                                                                                                    <div class="form-check">
+                                                                                                                                                                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}" data-meal="G" data-day="${day}" ${record.hasNightMeal ? 'checked' : ''} disabled>
+                                                                                                                                                                                                        <label class="form-check-label" for="g_${day}">G</label>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                        </td>
+                                                                                                                                                                                        <td>
+                                                                                                                                                                                            <div class="form-check">
+                <input class="form-check-input travel-checkbox" type="checkbox" id="t_${day}" data-day="${day}" ${record.hasTravel ? 'checked' : ''}>
+                <label class="form-check-label" for="t_${day}">Y</label>
+                </div>
+                </td>
+                <td>
+                ${statusBadge}
+                </td>
+                <td>
+                <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-success" onclick="approveWorkRecord('${record.id}', '${formattedDate}')">
+                        <i class="fas fa-thumbs-up"></i>
+                </button>
+                                <button type="button" class="btn btn-outline-danger" onclick="rejectWorkRecord('${record.id}','${formattedDate}')">
+                <i class="fas fa-thumbs-down"></i>
+                </button>
+                </div>
+                </td>
+                </tr>
+                `;
         }
 
+        async function approveWorkRecord(id, date) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Puantajı Onayla',
+                    text: `Bu kullanıcının ${date} puantajını onaylamak istediğinizden emin misiniz?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-check"></i> Evet, Onayla',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await $.ajax({
+                                url: `/puantaj/onayla/${id}`,
+                                type: 'PUT',
+                                headers: {
+                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                }
+                            });
+                            if (!response.isSuccess) {
+                                Swal.showValidationMessage(`Hata: ${response.message}`);
+                                throw new Error(response.message);
+                            }
+                            return response;
+                        } catch (error) {
+                            const errorMessage = PuantajCommon.AjaxHelper.handleError(error, 'Onaylama başarısız');
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            return false;
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    toastr.success('Puantaj başarıyla onaylandı', 'Başarılı!');
+                    await loadWorkRecordsByUser();
+                }
+            } catch (error) {
+                console.error('Onaylama hatası:', error);
+            }
+        }
+
+        async function rejectWorkRecord(id, date) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Puantajı Reddet',
+                    text: `Bu kullanıcının ${date} puantajını reddetmek istediğinizden emin misiniz?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-check"></i> Evet, Reddet',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await $.ajax({
+                                url: `/puantaj/reddet/${id}`,
+                                type: 'PUT',
+
+                                headers: {
+                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                }
+                            });
+
+                            if (!response.isSuccess) {
+                                Swal.showValidationMessage(`Hata: ${response.message}`);
+                                throw new Error(response.message);
+                            }
+
+                            return response;
+                        } catch (error) {
+                            const errorMessage = PuantajCommon.AjaxHelper.handleError(error, 'Reddetme başarısız');
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            return false;
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');
+                    await loadWorkRecordsByUser();
+                }
+            } catch (error) {
+                console.error('Reddetme hatası:', error);
+            }
+        }
         // User management functions
         async function getAssignedUsers() {
             try {
@@ -778,7 +742,7 @@
                         currentSelect.append('<option value="">Kullanıcı seçin</option>');
 
                         response.data.forEach(user => {
-                            currentSelect.append(`<option value="${user.id}">${user.fullName}</option>`);
+                            currentSelect.append(`<option value="${user.id}">${user.fullNameWithExp}</option>`);
                         });
 
                         if (currentSelect.hasClass('select2-hidden-accessible')) {

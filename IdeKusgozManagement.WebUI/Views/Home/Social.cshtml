@@ -2,6 +2,12 @@
     ViewData["Title"] = "Sosyal";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+}
 @Html.AntiForgeryToken()
 <div class="card">
     <div class="card-body">
@@ -19,8 +25,6 @@
                 <i class="fas fa-exclamation-triangle me-2"></i>
                 <span id="errorText"></span>
             </div>
-
-
 
             <!-- Messages container -->
             <div class="post-comments" id="messagesContainer" style="max-height: 500px; overflow-y: auto;">
@@ -42,19 +46,114 @@
             </div>
             <br />
             <!-- New comment form -->
-            @if(User.IsInRole("Admin") || User.IsInRole("Yönetici"))
+            @if (User.IsInRole("Admin") || User.IsInRole("Yönetici"))
             {
                 <div class="new-comment">
+
+                    <textarea id="messageInput" class="form-control" placeholder="Bir şeyler yaz..." aria-label="Bir şeyler yaz..." rows="3"
+                          maxlength="1999"></textarea>
+                    <br />
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Bir şeyler yaz..."
-                               aria-label="Bir şeyler yaz..." aria-describedby="button-addon2" id="messageInput">
+
+                        <select class="form-control" id="select-target-roles">
+                        </select>
+                        <select class="form-control" id="select-target-users">
+                        </select>
                         <button class="btn btn-outline-secondary" type="button" id="sendMessageBtn">
                             <i class="fas fa-paper-plane me-2"></i>Gönder
                         </button>
                     </div>
                 </div>
             }
-         
+
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        // Kullanıcının yetkisini server-side'dan al
+        const isAuthorized = @Json.Serialize(User.IsInRole("Admin") || User.IsInRole("Yönetici"));
+
+        async function initializeTargetRolesSelect() {
+            try {
+                const response = await $.ajax({
+                    url: '/kullanici/aktif-roller',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#select-target-roles').empty();
+
+                    response.data.forEach(role => {
+                        $('#select-target-roles').append(`<option value="${role.name}">${role.name}</option>`);
+                    });
+                }
+                $('#select-target-roles').val(null);
+
+                $('#select-target-roles').select2({
+                    placeholder: 'Rol seçin',
+                    theme: 'bootstrap-5',
+                    width: '25%',
+                    multiple: true,
+                    allowClear: true
+                });
+            } catch (error) {
+                console.error('Rol listesi yüklenirken hata:', error);
+                toastr.error('Rol listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        async function initializeTargetUsersSelect() {
+            try {
+                const response = await $.ajax({
+                    url: '/kullanici/liste',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+                if (response && response.isSuccess && response.data) {
+                    $('#select-target-users').empty();
+
+                    response.data.forEach(user => {
+                        $('#select-target-users').append(`<option value="${user.id}">${user.fullName}</option>`);
+                    });
+                }
+                $('#select-target-users').val(null);
+
+                $('#select-target-users').select2({
+                    placeholder: 'Kullanıcı seçin',
+                    theme: 'bootstrap-5',
+                    width: '25%',
+                    multiple: true,
+                    allowClear: true
+                });
+            } catch (error) {
+                console.error('Kullanıcı listesi yüklenirken hata:', error);
+                toastr.error('Kullanıcı listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        /**
+         * Initialize all social page selects (only for authorized users)
+         */
+        async function initializeSocialPageSelects() {
+            if (!isAuthorized) {
+                return; 
+            }
+
+            await initializeTargetRolesSelect();
+            await initializeTargetUsersSelect();
+        }
+
+        /**
+         * Initialize social page when DOM is ready
+         */
+        $(document).ready(function() {
+            initializeSocialPageSelects();
+        });
+    </script>
+
+}

@@ -2,6 +2,7 @@
 using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using IdeKusgozManagement.Application.Interfaces.Providers;
 using IdeKusgozManagement.Domain.Entities;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -30,7 +31,7 @@ namespace IdeKusgozManagement.Infrastructure.Authentication
 
             var claims = new List<Claim>
     {
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(JwtRegisteredClaimNames.Jti, NewId.NextGuid().ToString()),
         new Claim("TCNo", applicationUser.TCNo!),
         new Claim("FullName", $"{applicationUser.Name} {applicationUser.Surname}"),
         new Claim(ClaimTypes.NameIdentifier, applicationUser.Id),
@@ -63,10 +64,11 @@ namespace IdeKusgozManagement.Infrastructure.Authentication
                 RefreshToken = refreshToken,
                 RefreshTokenExpires = applicationUser.RefreshTokenExpires,
                 UserId = applicationUser.Id,
-                UserName = applicationUser.UserName,
+                TCNo = applicationUser.TCNo,
                 Name = applicationUser.Name,
                 Surname = applicationUser.Surname,
                 RoleName = userRoles.FirstOrDefault(),
+                IsExpatriate = applicationUser.IsExpatriate
             };
             Console.WriteLine($"TOKEN OLUŞTURULDU - Expire: {expires:yyyy-MM-dd HH:mm:ss}");
 

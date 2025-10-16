@@ -5,7 +5,7 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
     public class UpdateUserViewModel
     {
         [Required]
-        public string UserName { get; set; }
+        public string TCNo { get; set; }
 
         [Required]
         public string Name { get; set; }
@@ -17,6 +17,10 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
 
         public bool? IsActive { get; set; }
         public string? RoleName { get; set; }
+
+        [Required]
+        public bool IsExpatriate { get; set; }
+
         public List<string>? SuperiorIds { get; set; } = new();
     }
 }

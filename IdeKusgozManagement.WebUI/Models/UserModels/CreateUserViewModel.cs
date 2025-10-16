@@ -5,7 +5,7 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
     public class CreateUserViewModel
     {
         [Required]
-        public string UserName { get; set; }
+        public string TCNo { get; set; }
 
         [Required]
         public string Name { get; set; }
@@ -20,6 +20,8 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
         public string RoleName { get; set; }
 
         [Required]
-        public List<string> SuperiorIds { get; set; }
+        public bool IsExpatriate { get; set; }
+
+        public List<string>? SuperiorIds { get; set; } = new();
     }
 }

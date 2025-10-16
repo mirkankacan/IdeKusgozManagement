@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebAPI.Controllers
 {
-    [RoleFilter("Admin")]
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("api/[controller]")]
     [ApiController]
@@ -16,6 +15,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Tüm rolleri getirir
         /// </summary>
         [HttpGet]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> GetRoles()
         {
             var result = await roleService.GetRolesAsync();
@@ -26,6 +26,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Tüm aktif rolleri getirir
         /// </summary>
         [HttpGet("active-roles")]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> GetActiveRoles()
         {
             var result = await roleService.GetActiveRolesAsync();
@@ -37,6 +38,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="roleId">Rol ID'si</param>
         [HttpGet("{roleId}")]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> GetRoleById(string roleId)
         {
             if (string.IsNullOrEmpty(roleId))
@@ -52,6 +54,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="name">Rol adı</param>
         [HttpGet("name/{roleName}")]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> GetRoleByName(string roleName)
         {
             if (string.IsNullOrEmpty(roleName))
@@ -67,6 +70,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="createRoleDTO">Rol bilgileri</param>
         [HttpPost]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> CreateRole([FromBody] CreateRoleDTO createRoleDTO)
         {
             if (!ModelState.IsValid)
@@ -84,6 +88,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="roleId">Rol ID'si</param>
         /// <param name="updateRoleDTO">Güncellenecek bilgiler</param>
         [HttpPut("{roleId}")]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> UpdateRole(string roleId, [FromBody] UpdateRoleDTO updateRoleDTO)
         {
             if (string.IsNullOrEmpty(roleId))
@@ -104,6 +109,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">Rol ID'si</param>
         [HttpDelete("{roleId}")]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> DeleteRole(string roleId)
         {
             if (string.IsNullOrEmpty(roleId))
@@ -119,6 +125,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">Rol ID'si</param>
         [HttpPost("{roleId}/enable")]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> EnableRole(string roleId)
         {
             if (string.IsNullOrEmpty(roleId))
@@ -134,6 +141,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="id">Rol ID'si</param>
         [HttpPost("{roleId}/disable")]
+        [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> DisableRole(string roleId)
         {
             if (string.IsNullOrEmpty(roleId))

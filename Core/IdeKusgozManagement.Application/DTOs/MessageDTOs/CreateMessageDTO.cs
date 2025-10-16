@@ -3,7 +3,7 @@
     public class CreateMessageDTO
     {
         public string Content { get; set; }
-        public string[]? TargetRoles { get; set; }
-        public string[]? TargetUsers { get; set; }
+        public List<string>? TargetRoles { get; set; }
+        public List<string>? TargetUsers { get; set; }
     }
 }
