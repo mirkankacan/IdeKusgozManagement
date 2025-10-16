@@ -1,11 +1,11 @@
-﻿using System.Security.Claims;
-using IdeKusgozManagement.WebUI.Models.AuthModels;
+﻿using IdeKusgozManagement.WebUI.Models.AuthModels;
 using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace IdeKusgozManagement.WebUI.Controllers
 {
@@ -23,22 +23,22 @@ namespace IdeKusgozManagement.WebUI.Controllers
             _userApiService = userApiService;
             _httpContextAccessor = httpContextAccessor;
         }
+
         [HttpGet("token-al")]
-        [Authorize] 
+        [Authorize]
         public IActionResult GetToken()
         {
-           
-                // Session'dan JWT token'ı al
-                var jwtToken = HttpContext.Session.GetString("JwtToken");
+            // Session'dan JWT token'ı al
+            var jwtToken = _httpContextAccessor.HttpContext.Session.GetString("JwtToken");
 
-                if (string.IsNullOrEmpty(jwtToken))
-                {
-                    return Unauthorized("Token bulunamadı");
-                }
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                return Unauthorized("Token bulunamadı");
+            }
 
-                return Ok(new { token = jwtToken });
-           
+            return Ok(new { token = jwtToken });
         }
+
         [HttpGet("giris-yap")]
         [AllowAnonymous]
         public async Task<IActionResult> Login()
@@ -46,8 +46,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
             if (User.Identity?.IsAuthenticated == true)
             {
                 // Session bilgilerini kontrol et
-                var userId = HttpContext.Session.GetString("UserId");
-                var jwtToken = HttpContext.Session.GetString("JwtToken");
+                var userId = _httpContextAccessor.HttpContext.Session.GetString("UserId");
+                var jwtToken = _httpContextAccessor.HttpContext.Session.GetString("JwtToken");
 
                 // Eğer authenticated ama session bilgileri yoksa silent logout
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jwtToken))
@@ -63,7 +63,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                     }
 
                     // Session'ı temizle
-                    HttpContext.Session.Clear();
+                    _httpContextAccessor.HttpContext.Session.Clear();
 
                     // Cookie authentication'ı temizle
                     await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -99,13 +99,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 }
 
                 // Session'a kullanıcı bilgilerini kaydet
-                var httpContext = HttpContext;
+                var httpContext = _httpContextAccessor.HttpContext;
                 if (httpContext != null && response.Data != null)
                 {
                     httpContext.Session.SetString("JwtToken", response.Data.Token);
                     httpContext.Session.SetString("RefreshToken", response.Data.RefreshToken);
                     httpContext.Session.SetString("UserId", response.Data.UserId);
-                    httpContext.Session.SetString("UserName", response.Data.UserName);
+                    httpContext.Session.SetString("TCNo", response.Data.TCNo);
+                    httpContext.Session.SetString("FullNameWithExp", response.Data.FullNameWithExp);
                     httpContext.Session.SetString("FullName", response.Data.FullName);
                     httpContext.Session.SetString("RoleName", response.Data.RoleName);
 
@@ -113,7 +114,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.NameIdentifier, response.Data.UserId),
-                        new Claim(ClaimTypes.Name, response.Data.UserName),
+                        new Claim("TCNo", response.Data.TCNo),
+                        new Claim("FullNameWithExp", response.Data.FullNameWithExp),
                         new Claim("FullName", response.Data.FullName),
                         new Claim(ClaimTypes.GivenName, response.Data.Name),
                         new Claim(ClaimTypes.Surname, response.Data.Surname),
@@ -151,10 +153,10 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 await _authApiService.LogoutAsync(cancellationToken);
 
                 // Session'ı temizle
-                HttpContext.Session.Clear();
+                _httpContextAccessor.HttpContext.Session.Clear();
 
                 // Cookie authentication'ı temizle
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                await _httpContextAccessor.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
                 return Redirect("/giris-yap");
             }
@@ -191,7 +193,9 @@ namespace IdeKusgozManagement.WebUI.Controllers
             {
                 var httpContext = _httpContextAccessor.HttpContext;
 
-                httpContext.Session.SetString("UserName", response.Data.UserName);
+                httpContext.Session.SetString("TCNo", response.Data.TCNo);
+                httpContext.Session.SetString("FullNameWithExp", response.Data.FullNameWithExp);
+                httpContext.Session.SetString("RoleName", response.Data.RoleName);
                 httpContext.Session.SetString("FullName", response.Data.FullName);
                 await UpdateUserClaims(response.Data);
             }
@@ -216,7 +220,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             // Yeni claim'leri ekle
-            identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+            identity.AddClaim(new Claim("TCNo", user.TCNo));
+            identity.AddClaim(new Claim("FullNameWithExp", user.FullNameWithExp));
             identity.AddClaim(new Claim(ClaimTypes.GivenName, user.Name));
             identity.AddClaim(new Claim("FullName", user.FullName));
             identity.AddClaim(new Claim(ClaimTypes.Surname, user.Surname));

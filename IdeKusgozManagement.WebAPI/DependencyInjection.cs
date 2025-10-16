@@ -110,7 +110,14 @@ namespace IdeKusgozManagement.WebAPI
 
             services.AddHttpClient();
             services.AddHttpContextAccessor();
-            services.AddDbContext<ApplicationDbContext>(opts => opts.UseSqlServer(connectionString));
+
+            services.AddDbContext<ApplicationDbContext>(opts =>
+               opts.UseSqlServer(connectionString,
+                   sqlOptions =>
+                   {
+                       sqlOptions.UseCompatibilityLevel(120); // SQL Server 2014 = 120
+                   }));
+
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
             {
@@ -124,7 +131,7 @@ namespace IdeKusgozManagement.WebAPI
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("http://localhost:5000", "https://localhost:5001", "http://localhost:5291", "http://localhost:5116") // Tüm client URL'leri
+                    policy.WithOrigins("http://localhost:5290") // Tüm client URL'leri
                           .WithMethods("GET", "POST", "PUT", "DELETE")
                           .WithHeaders(
                               "Content-Type",

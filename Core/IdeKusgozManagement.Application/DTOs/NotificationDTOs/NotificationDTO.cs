@@ -7,9 +7,11 @@ namespace IdeKusgozManagement.Application.DTOs.NotificationDTOs
         public string Id { get; set; }
         public string Message { get; set; }
         public NotificationType Type { get; set; }
-        public string[]? TargetUsers { get; set; }
-        public string[]? TargetRoles { get; set; }
+
+        //public List<string>? TargetUsers { get; set; }
+        //public List<string>? TargetRoles { get; set; }
         public string? RedirectUrl { get; set; }
+
         public bool IsRead { get; set; }
         public DateTime? ReadDate { get; set; }
         public DateTime CreatedDate { get; set; }

@@ -18,8 +18,8 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
 
         Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<LeaveRequestDTO>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<bool>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<LeaveRequestDTO>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default);
+        Task<ApiResponse<bool>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default);
     }
 }

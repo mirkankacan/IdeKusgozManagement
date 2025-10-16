@@ -5,13 +5,14 @@ using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Hubs;
 using Mapster;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class MessageService(IUnitOfWork unitOfWork, ILogger<MessageService> logger, IHubContext<CommunicationHub> hubContext, IIdentityService identityService) : IMessageService
+    public class MessageService(IUnitOfWork unitOfWork, ILogger<MessageService> logger, IHubContext<CommunicationHub> hubContext, IIdentityService identityService, UserManager<ApplicationUser> userManager) : IMessageService
     {
         private async Task<ApiResponse<MessageDTO>> CreateMessageAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
@@ -22,9 +23,45 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtMessage>().AddAsync(message, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                var createdMessage = await unitOfWork.GetRepository<IdtMessage>().Where(x => x.Id == message.Id).Include(x => x.CreatedByUser).FirstOrDefaultAsync();
+                var createdMessage = await unitOfWork.GetRepository<IdtMessage>()
+                .WhereAsNoTracking(x => x.Id == message.Id)
+                .Include(x => x.CreatedByUser)
+                .FirstOrDefaultAsync(cancellationToken);
+                var targetUserIds = !string.IsNullOrWhiteSpace(createdMessage.TargetUsers)
+                         ? createdMessage.TargetUsers.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
+                         : new List<string>();
 
-                var messageDTO = createdMessage.Adapt<MessageDTO>();
+                var userDictionary = new Dictionary<string, string>();
+
+                if (targetUserIds.Any())
+                {
+                    var users = await userManager.Users
+                        .Where(u => targetUserIds.Contains(u.Id))
+                        .Select(u => new { u.Id, u.Name, u.Surname })
+                        .ToListAsync(cancellationToken);
+
+                    userDictionary = users.ToDictionary(
+                        u => u.Id,
+                        u => $"{u.Name} {u.Surname}"
+                    );
+                }
+
+                // Manual mapping
+                var messageDTO = new MessageDTO
+                {
+                    Id = createdMessage.Id,
+                    Content = createdMessage.Content,
+                    CreatedDate = createdMessage.CreatedDate,
+                    CreatedBy = createdMessage.CreatedBy,
+                    CreatedByFullName = $"{createdMessage.CreatedByUser.Name} {createdMessage.CreatedByUser.Surname}",
+                    TargetUsers = targetUserIds.Any()
+                        ? targetUserIds.Select(id => userDictionary.ContainsKey(id) ? userDictionary[id] : "Bilinmeyen Kullanıcı").ToList()
+                        : null,
+                    TargetRoles = !string.IsNullOrWhiteSpace(createdMessage.TargetRoles)
+                        ? createdMessage.TargetRoles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
+                        : null
+                };
+
 
                 return ApiResponse<MessageDTO>.Success(messageDTO, "Mesaj başarıyla gönderildi");
             }
@@ -64,25 +101,79 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 var userId = identityService.GetUserId();
                 var userRole = identityService.GetUserRole();
-                var messages = await unitOfWork.GetRepository<IdtMessage>()
-                    .WhereAsNoTracking(x => x.TargetUsers.Contains(userId) || x.TargetRoles.Contains(userRole) || (x.TargetUsers == null && x.TargetRoles == null))
+                IQueryable<IdtMessage> baseQuery;
+
+                if (userRole == "Admin" || userRole == "Yönetici")
+                {
+                    baseQuery = unitOfWork.GetRepository<IdtMessage>()
+                       .WhereAsNoTracking(x => x.Id != null);
+                }
+                else
+                {
+                    baseQuery = unitOfWork.GetRepository<IdtMessage>()
+                        .WhereAsNoTracking(x =>
+                        x.TargetUsers.Contains(userId) ||
+                        x.TargetRoles.Contains(userRole) ||
+                        (x.TargetUsers == null && x.TargetRoles == null));
+                }
+
+                var messages = await baseQuery
                     .OrderByDescending(x => x.CreatedDate)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
                     .Include(x => x.CreatedByUser)
                     .ToListAsync(cancellationToken);
 
-                var messagesCount = await unitOfWork.GetRepository<IdtMessage>()
-                    .Where(x => x.TargetUsers.Contains(userId) || x.TargetRoles.Contains(userRole) || (x.TargetUsers == null && x.TargetRoles == null)).CountAsync(cancellationToken);
+                var messagesCount = await baseQuery.CountAsync(cancellationToken);
 
-                PagedResult<MessageDTO> mappedMessages = new()
+                var allTargetUserIds = messages
+                    .Where(m => !string.IsNullOrWhiteSpace(m.TargetUsers))
+                    .SelectMany(m => m.TargetUsers.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    .Distinct()
+                    .ToList();
+
+                // TEK SORGU ile tüm kullanıcıları çek
+                var userDictionary = new Dictionary<string, string>();
+
+                if (allTargetUserIds.Any())
                 {
-                    Data = messages.Adapt<IEnumerable<MessageDTO>>(),
+                    var users = await userManager.Users
+                        .Where(u => allTargetUserIds.Contains(u.Id))
+                        .Select(u => new { u.Id, u.Name, u.Surname })
+                        .ToListAsync(cancellationToken);
+
+                    userDictionary = users.ToDictionary(
+                        u => u.Id,
+                        u => $"{u.Name} {u.Surname}"
+                    );
+                }
+
+                var mappedMessages = messages.Select(m => new MessageDTO
+                {
+                    Id = m.Id,
+                    Content = m.Content,
+                    CreatedDate = m.CreatedDate,
+                    CreatedBy = m.CreatedBy,
+                    CreatedByFullName = $"{m.CreatedByUser.Name} {m.CreatedByUser.Surname}",
+                    TargetUsers = !string.IsNullOrWhiteSpace(m.TargetUsers)
+                        ? m.TargetUsers.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                            .Select(id => userDictionary.ContainsKey(id) ? userDictionary[id] : "Bilinmeyen Kullanıcı")
+                            .ToList()
+                        : null,
+                    TargetRoles = !string.IsNullOrWhiteSpace(m.TargetRoles)
+                        ? m.TargetRoles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
+                        : null
+                }).ToList();
+
+                PagedResult<MessageDTO> pagedResult = new()
+                {
+                    Data = mappedMessages,
                     PageNumber = pageNumber,
                     PageSize = pageSize,
                     TotalCount = messagesCount
                 };
-                return ApiResponse<PagedResult<MessageDTO>>.Success(mappedMessages, "Mesajlar başarıyla getirildi");
+
+                return ApiResponse<PagedResult<MessageDTO>>.Success(pagedResult, "Mesajlar başarıyla getirildi");
             }
             catch (Exception ex)
             {
@@ -98,8 +189,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var response = await CreateMessageAsync(createMessageDTO, cancellationToken);
                 if (response.IsSuccess)
                 {
-                    await hubContext.Clients.Group("Messages").SendAsync("NewMessage", createMessageDTO);
-                    logger.LogInformation("Mesaj herkese gönderildi. MessageDTO: {MessageDTO}", createMessageDTO);
+                    await hubContext.Clients.Group("Messages").SendAsync("NewMessage", response.Data);
+                    logger.LogInformation("Mesaj herkese gönderildi. MessageDTO: {MessageDTO}", response.Data);
                     return ApiResponse<MessageDTO>.Success(response.Data, "Mesaj herkese gönderildi");
                 }
                 else

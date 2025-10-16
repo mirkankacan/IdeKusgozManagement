@@ -1,5 +1,4 @@
-﻿
-@model ApiResponse<UserViewModel>
+﻿@model ApiResponse<UserViewModel>
 @{
     ViewData["Title"] = "Profil";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -14,10 +13,10 @@
                 <form  class="row g-3 needs-validation" novalidate>
                     <input type="hidden" id="txtUserId" readonly disabled value="@Model.Data.Id" />
                     <div class="col-md-6">
-                        <label for="txtUsername" class="form-label">Kullanıcı Adı</label>
-                        <input type="text" class="form-control" id="txtUsername" name="UserName" value="@Model.Data.UserName" required>
+                        <label for="txtTCNo" class="form-label">TC No</label>
+                        <input type="text" class="form-control" id="txtTCNo" name="TCNo" value="@Model.Data.TCNo" required>
                         <div class="valid-feedback">İyi görünüyor!</div>
-                        <div class="invalid-feedback">Geçerli bir kullanıcı adı giriniz.</div>
+                        <div class="invalid-feedback">Geçerli bir TC No giriniz.</div>
                     </div>
 
                     <div class="col-md-6">
@@ -61,7 +60,7 @@
                         e.stopPropagation();
                                 await updateProfile();
                     });
-  
+
 });
           async function updateProfile() {
                 try {

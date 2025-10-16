@@ -150,10 +150,10 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var firstRecord = mappedUpdatedRecords.First();
                 CreateNotificationDTO notificationDTO = new()
                 {
-                    Message = $"{firstRecord.UpdatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için puantajınız güncellendi",
+                    Message = $"{firstRecord.UpdatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için puantajınız güncellendi.",
                     Type = NotificationType.WorkRecord,
                     RedirectUrl = "/puantaj/ekle",
-                    TargetUsers = new[] { firstRecord.CreatedBy }
+                    TargetUsers = new List<string> { firstRecord.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(mappedUpdatedRecords, $"Toplu puantaj kayıtları başarıyla güncellendi. {updatedCount} kayıt güncellendi");
@@ -206,10 +206,10 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 CreateNotificationDTO notificationDTO = new()
                 {
-                    Message = $"{mappedWorkRecords.First().UpdatedByFullName} tarafından, {mappedWorkRecords.First().Date:MM/yyyy} ayı için puantaj kayıtlarınız onaylandı",
+                    Message = $"{mappedWorkRecords.First().UpdatedByFullName} tarafından, {mappedWorkRecords.First().Date:MM/yyyy} ayı için puantaj kayıtlarınız onaylandı.",
                     Type = NotificationType.WorkRecord,
                     RedirectUrl = "/puantaj/ekle",
-                    TargetUsers = new[] { mappedWorkRecords.First().CreatedBy }
+                    TargetUsers = new List<string> { mappedWorkRecords.First().CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(mappedWorkRecords, $"{workRecords.Count} adet puantaj kaydı başarıyla onaylandı");
@@ -261,10 +261,10 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 CreateNotificationDTO notificationDTO = new()
                 {
-                    Message = $"{mappedWorkRecords.First().UpdatedByFullName} tarafından, {mappedWorkRecords.First().Date:MM/yyyy} ayı için puantaj kayıtlarınız reddedildi",
+                    Message = $"{mappedWorkRecords.First().UpdatedByFullName} tarafından, {mappedWorkRecords.First().Date:MM/yyyy} ayı için puantaj kayıtlarınız reddedildi.",
                     Type = NotificationType.WorkRecord,
                     RedirectUrl = "/puantaj/ekle",
-                    TargetUsers = new[] { mappedWorkRecords.First().CreatedBy }
+                    TargetUsers = new List<string> { mappedWorkRecords.First().CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
 
@@ -284,17 +284,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                var workRecord = await unitOfWork.GetRepository<IdtWorkRecord>()
-                    .Where(x => x.Id == id)
-                    .Include(x => x.Equipment)
-                    .Include(x => x.Project)
-                    .Include(x => x.CreatedByUser)
-                    .Include(x => x.UpdatedByUser)
-                    .Include(x => x.WorkRecordExpenses)
-                        .ThenInclude(x => x.Expense)
-                    .Include(x => x.WorkRecordExpenses)
-                        .ThenInclude(x => x.File)
-                    .FirstOrDefaultAsync(cancellationToken);
+                var workRecord = await unitOfWork.GetRepository<IdtWorkRecord>().GetByIdAsync(id, cancellationToken);
 
                 if (workRecord == null)
                 {
@@ -310,16 +300,28 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
-                var mappedWorkRecord = workRecord.Adapt<WorkRecordDTO>();
 
                 var approverUserId = identityService.GetUserId;
+                var approvedWorkRecord = await unitOfWork.GetRepository<IdtWorkRecord>()
+                  .WhereAsNoTracking(x => x.Id == id)
+                  .Include(x => x.CreatedByUser)
+                  .Include(x => x.UpdatedByUser)
+                  //.Include(x => x.Equipment)
+                  //.Include(x => x.Project)
+                  //.Include(x => x.WorkRecordExpenses)
+                  //    .ThenInclude(x => x.Expense)
+                  //.Include(x => x.WorkRecordExpenses)
+                  //    .ThenInclude(x => x.File)
+                  .FirstOrDefaultAsync(cancellationToken);
+                var mappedWorkRecord = approvedWorkRecord.Adapt<WorkRecordDTO>();
+
                 logger.LogInformation($"{id} ID'li puantaj kaydı {approverUserId} tarafından onaylandı");
                 CreateNotificationDTO notificationDTO = new()
                 {
-                    Message = $"{mappedWorkRecord.UpdatedByFullName} tarafından, {mappedWorkRecord.Date:dd/MM/yyyy} tarihi için puantaj kaydınız onaylandı",
+                    Message = $"{mappedWorkRecord.UpdatedByFullName} tarafından, {mappedWorkRecord.Date:dd/MM/yyyy} tarihi için puantaj kaydınız onaylandı.",
                     Type = NotificationType.WorkRecord,
                     RedirectUrl = "/puantaj/ekle",
-                    TargetUsers = new[] { mappedWorkRecord.CreatedBy }
+                    TargetUsers = new List<string> { mappedWorkRecord.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
 
@@ -339,17 +341,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                var workRecord = await unitOfWork.GetRepository<IdtWorkRecord>()
-                    .Where(x => x.Id == id)
-                    .Include(x => x.Equipment)
-                    .Include(x => x.Project)
-                    .Include(x => x.CreatedByUser)
-                    .Include(x => x.UpdatedByUser)
-                    .Include(x => x.WorkRecordExpenses)
-                        .ThenInclude(x => x.Expense)
-                    .Include(x => x.WorkRecordExpenses)
-                        .ThenInclude(x => x.File)
-                    .FirstOrDefaultAsync(cancellationToken);
+                var workRecord = await unitOfWork.GetRepository<IdtWorkRecord>().GetByIdAsync(id, cancellationToken);
 
                 if (workRecord == null)
                 {
@@ -365,17 +357,30 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
-                var mappedWorkRecord = workRecord.Adapt<WorkRecordDTO>();
 
                 var rejecterUserId = identityService.GetUserId;
+
+                var rejectedWorkRecord = await unitOfWork.GetRepository<IdtWorkRecord>()
+                 .WhereAsNoTracking(x => x.Id == id)
+                 .Include(x => x.CreatedByUser)
+                 .Include(x => x.UpdatedByUser)
+                 //.Include(x => x.Equipment)
+                 //.Include(x => x.Project)
+                 //.Include(x => x.WorkRecordExpenses)
+                 //    .ThenInclude(x => x.Expense)
+                 //.Include(x => x.WorkRecordExpenses)
+                 //    .ThenInclude(x => x.File)
+                 .FirstOrDefaultAsync(cancellationToken);
+                var mappedWorkRecord = rejectedWorkRecord.Adapt<WorkRecordDTO>();
+
                 logger.LogInformation($"{mappedWorkRecord.Id} ID'li puantaj kaydı {rejecterUserId} tarafından reddedildi");
 
                 CreateNotificationDTO notificationDTO = new()
                 {
-                    Message = $"{mappedWorkRecord.UpdatedByFullName} tarafından, {mappedWorkRecord.Date:dd/MM/yyyy} tarihi için puantaj kaydınız reddedildi",
+                    Message = $"{mappedWorkRecord.UpdatedByFullName} tarafından, {mappedWorkRecord.Date:dd/MM/yyyy} tarihi için puantaj kaydınız reddedildi.",
                     Type = NotificationType.WorkRecord,
                     RedirectUrl = "/puantaj/ekle",
-                    TargetUsers = new[] { mappedWorkRecord.CreatedBy }
+                    TargetUsers = new List<string> { mappedWorkRecord.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
                 return ApiResponse<WorkRecordDTO>.Success(mappedWorkRecord, $"Puantaj kaydı başarıyla reddedildi");
@@ -569,7 +574,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var firstRecord = mappedCreatedRecords.First();
                 var notificationDTO = new CreateNotificationDTO
                 {
-                    Message = $"{firstRecord.CreatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için toplu puantaj kayıtları başarıyla işlendi. {updatedCount} kayıt güncellendi, {addedCount} yeni kayıt eklendi",
+                    Message = $"{firstRecord.CreatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için toplu puantaj kayıtları başarıyla işlendi. {updatedCount} kayıt güncellendi, {addedCount} yeni kayıt eklendi.",
                     Type = NotificationType.WorkRecord,
                     RedirectUrl = "/puantaj",
                     TargetUsers = await identityService.GetUserSuperiorsAsync(cancellationToken)
@@ -587,6 +592,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu puantaj kayıtları işlenirken hata oluştu");
             }
         }
+
         private (bool, string?) CheckHoursIfValid(CreateWorkRecordDTO dto)
         {
             if (dto.StartTime.HasValue && dto.EndTime.HasValue)

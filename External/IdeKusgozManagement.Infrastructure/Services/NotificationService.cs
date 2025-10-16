@@ -13,25 +13,40 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class NotificationService(IUnitOfWork unitOfWork, ILogger<NotificationService> logger, IIdentityService identityService, IHubContext<CommunicationHub> hubContext) : INotificationService
     {
-        public async Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(string userId, string userRole, int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             try
             {
-                var notifications = await unitOfWork.GetRepository<IdtNotification>()
-                    .WhereAsNoTracking(x => x.TargetUsers.Contains(userId) || x.TargetRoles.Contains(userRole) || (x.TargetUsers == null && x.TargetRoles == null))
-                    .OrderBy(n => n.NotificationReads.Any(nr => nr.CreatedBy != userId))
-                    .OrderByDescending(n => n.CreatedDate)
+                var userId = identityService.GetUserId();
+                var userRole = identityService.GetUserRole();
+
+                // Ortak Where koşulu - DÜZELTİLMİŞ
+                var baseQuery = unitOfWork.GetRepository<IdtNotification>()
+                    .WhereAsNoTracking(x =>
+                        (x.TargetUsers.Contains(userId) ||
+                         x.TargetRoles.Contains(userRole) ||
+                         (x.TargetUsers == null && x.TargetRoles == null))
+                        && x.CreatedBy != userId); // Parantez dışında
+
+                var notifications = await baseQuery
+                    .OrderBy(n => n.NotificationReads.Any(nr => nr.CreatedBy == userId)) // Okunmuşlar sona
+                    .ThenByDescending(n => n.CreatedDate) // Sonra tarihe göre
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
                     .Include(x => x.CreatedByUser)
                     .Include(n => n.NotificationReads)
                     .ToListAsync(cancellationToken);
 
-                var totalCount = await unitOfWork.GetRepository<IdtNotification>()
-                        .WhereAsNoTracking(x => x.TargetUsers.Contains(userId) || x.TargetRoles.Contains(userRole) || (x.TargetUsers == null && x.TargetRoles == null))
-                        .CountAsync(cancellationToken);
+                var totalCount = await baseQuery.CountAsync(cancellationToken);
 
-                var notificationDTO = notifications.Adapt<IEnumerable<NotificationDTO>>();
+                var notificationDTO = notifications.Select(n =>
+                {
+                    var dto = n.Adapt<NotificationDTO>();
+                    var userRead = n.NotificationReads.FirstOrDefault(nr => nr.CreatedBy == userId);
+                    dto.IsRead = userRead != null;
+                    dto.ReadDate = userRead?.CreatedDate;
+                    return dto;
+                });
 
                 var pagedResult = new PagedResult<NotificationDTO>
                 {
@@ -50,13 +65,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<int>> GetUnreadNotificationCountAsync(string userId, string userRole, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<int>> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default)
         {
             try
             {
+                var userId = identityService.GetUserId();
+                var userRole = identityService.GetUserRole();
+
                 var unreadCount = await unitOfWork.GetRepository<IdtNotification>()
-                   .WhereAsNoTracking(x => x.TargetUsers.Contains(userId) || x.TargetRoles.Contains(userRole) || (x.TargetUsers == null && x.TargetRoles == null) && !x.NotificationReads.Any(x => x.CreatedBy == userId))
-                   .CountAsync(cancellationToken);
+                    .WhereAsNoTracking(x =>
+                        (x.TargetUsers.Contains(userId) ||
+                         x.TargetRoles.Contains(userRole) ||
+                         (x.TargetUsers == null && x.TargetRoles == null))
+                        && x.CreatedBy != userId) // Parantez dışında
+                    .Where(n => !n.NotificationReads.Any(nr => nr.CreatedBy == userId))
+                    .CountAsync(cancellationToken); // Include kaldırıldı
 
                 return ApiResponse<int>.Success(unreadCount, "Okunmamış bildirim sayısı başarıyla getirildi");
             }
@@ -77,7 +100,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 var createdNotification = await unitOfWork.GetRepository<IdtNotification>()
-                    .Where(x => x.Id == notification.Id)
+                    .WhereAsNoTracking(x => x.Id == notification.Id)
                     .Include(n => n.CreatedByUser)
                     .Include(n => n.NotificationReads)
                     .FirstOrDefaultAsync(cancellationToken);
@@ -93,15 +116,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> MarkAsReadAsync(string notificationId, string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> MarkAsReadAsync(string notificationId, CancellationToken cancellationToken = default)
         {
             try
             {
-                // Check if notification exists
+                var userId = identityService.GetUserId();
+
+                var isNotificationRead = await unitOfWork.GetRepository<IdtNotificationRead>().AnyAsync(x => x.CreatedBy == userId && x.NotificationId == notificationId, cancellationToken);
+                if (isNotificationRead)
+                {
+                    return ApiResponse<bool>.Error("Bildirim daha önceden okundu olarak işaretlenmiş");
+                }
                 var notification = await unitOfWork.GetRepository<IdtNotification>()
-                         .Where(x => x.Id == notificationId && !x.NotificationReads.Any(x => x.CreatedBy == userId))
-                         .Include(n => n.NotificationReads)
-                         .FirstOrDefaultAsync(cancellationToken);
+                .Where(x => x.Id == notificationId)
+                .FirstOrDefaultAsync(cancellationToken);
 
                 if (notification == null)
                 {
@@ -110,7 +138,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var notificationRead = new IdtNotificationRead
                 {
-                    NotificationId = notificationId
+                    NotificationId = notificationId,
+                    IsRead = true
                 };
                 await unitOfWork.GetRepository<IdtNotificationRead>().AddAsync(notificationRead, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -124,19 +153,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> MarkAllAsReadAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> MarkAllAsReadAsync(CancellationToken cancellationToken = default)
         {
             try
             {
+                var userId = identityService.GetUserId();
                 var userRole = identityService.GetUserRole();
+
                 var notifications = await unitOfWork.GetRepository<IdtNotification>()
-                    .Where(x => x.TargetUsers.Contains(userId) || x.TargetRoles == userRole || (x.TargetUsers == null && x.TargetRoles == null) && !x.NotificationReads.Any(x => x.CreatedBy == userId))
+                    .Where(x => x.TargetUsers.Contains(userId) || x.TargetRoles.Contains(userRole) || (x.TargetUsers == null && x.TargetRoles == null) && x.CreatedBy != userId && !x.NotificationReads.Any(x => x.CreatedBy == userId))
                     .Include(n => n.NotificationReads)
                     .ToListAsync(cancellationToken);
 
                 var notificationReads = notifications.Select(n => new IdtNotificationRead
                 {
-                    NotificationId = n.Id
+                    NotificationId = n.Id,
+                    IsRead = true
                 }).ToList();
 
                 await unitOfWork.GetRepository<IdtNotificationRead>().AddRangeAsync(notificationReads, cancellationToken);

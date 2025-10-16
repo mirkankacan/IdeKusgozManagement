@@ -31,46 +31,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
-        [HttpGet("kullanici/{userId}/durum/{status}")]
-        public async Task<IActionResult> GetLeaveRequestsByUserIdAndStatus(string userId, int status, CancellationToken cancellationToken = default)
-        {
-            var response = await _leaveRequestApiService.GetLeaveRequestsByUserIdAndStatusAsync(userId, status, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
-        }
-
-        [Authorize(Roles = "Admin, Yönetici, Şef")]
-        [HttpGet("durum/{status}")]
-        public async Task<IActionResult> GetLeaveRequestsByStatus(int status, CancellationToken cancellationToken = default)
-        {
-            var response = await _leaveRequestApiService.GetLeaveRequestsByStatusAsync(status, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
-        }
-
-        [Authorize]
-        [HttpGet("listem")]
-        public async Task<IActionResult> GetMyLeaveRequests(CancellationToken cancellationToken = default)
-        {
-            var response = await _leaveRequestApiService.GetMyLeaveRequestsAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
-        }
-
-        [Authorize]
-        [HttpGet("listem/durum/{status}")]
-        public async Task<IActionResult> GetMyLeaveRequestsByStatus(int status, CancellationToken cancellationToken = default)
-        {
-            var response = await _leaveRequestApiService.GetMyLeaveRequestsByStatusAsync(status, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
-        }
-
-        [Authorize(Roles = "Admin, Yönetici, Şef")]
-        [HttpGet("kullanici/{userId}")]
-        public async Task<IActionResult> GetLeaveRequestsByUserId(string userId, CancellationToken cancellationToken = default)
-        {
-            var response = await _leaveRequestApiService.GetLeaveRequestsByUserIdAsync(userId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
-        }
-
-        [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetLeaveRequestById(string id, CancellationToken cancellationToken = default)
         {
@@ -115,6 +75,30 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _leaveRequestApiService.DeleteLeaveRequestAsync(leaveRequestId, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [HttpGet("durum/{status}")]
+        public async Task<IActionResult> GetLeaveRequestsByStatus(int status, [FromQuery] string? userId, CancellationToken cancellationToken = default)
+        {
+            var response = await _leaveRequestApiService.GetLeaveRequestsByStatusAsync(status, userId, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize]
+        [HttpGet("listem")]
+        public async Task<IActionResult> GetMyLeaveRequests(CancellationToken cancellationToken = default)
+        {
+            var response = await _leaveRequestApiService.GetMyLeaveRequestsAsync(cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [HttpGet("kullanici/{userId}")]
+        public async Task<IActionResult> GetLeaveRequestsByUserId(string userId, CancellationToken cancellationToken = default)
+        {
+            var response = await _leaveRequestApiService.GetLeaveRequestsByUserIdAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 

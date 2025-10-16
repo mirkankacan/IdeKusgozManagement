@@ -37,23 +37,23 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return accessor.HttpContext!.User!.Claims.First(c => c.Type == ClaimTypes.Role)!.Value;
         }
 
-        public async Task<string[]?> GetUserSuperiorsAsync(CancellationToken cancellationToken = default)
+        public async Task<List<string>?> GetUserSuperiorsAsync(CancellationToken cancellationToken = default)
         {
             if (!accessor.HttpContext!.User.Identity!.IsAuthenticated)
             {
                 throw new UnauthorizedAccessException("Kullanıcı kimliği doğrulanmadı");
             }
-            var users = await unitOfWork.GetRepository<IdtUserHierarchy>().WhereAsNoTracking(x => x.SubordinateId == GetUserId()).Select(x => x.SuperiorId).ToArrayAsync(cancellationToken);
+            var users = await unitOfWork.GetRepository<IdtUserHierarchy>().WhereAsNoTracking(x => x.SubordinateId == GetUserId()).Select(x => x.SuperiorId).ToListAsync(cancellationToken);
             return users;
         }
 
-        public async Task<string[]?> GetUserSubordinatesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<string>?> GetUserSubordinatesAsync(CancellationToken cancellationToken = default)
         {
             if (!accessor.HttpContext!.User.Identity!.IsAuthenticated)
             {
                 throw new UnauthorizedAccessException("Kullanıcı kimliği doğrulanmadı");
             }
-            var users = await unitOfWork.GetRepository<IdtUserHierarchy>().WhereAsNoTracking(x => x.SuperiorId == GetUserId()).Select(x => x.SubordinateId).ToArrayAsync(cancellationToken);
+            var users = await unitOfWork.GetRepository<IdtUserHierarchy>().WhereAsNoTracking(x => x.SuperiorId == GetUserId()).Select(x => x.SubordinateId).ToListAsync(cancellationToken);
             return users;
         }
 

@@ -8,6 +8,7 @@
         public bool IsActive { get; set; }
         public string? RoleName { get; set; }
         public string? Password { get; set; }
+        public bool IsExpatriate { get; set; }
         public List<string> SuperiorIds { get; set; } = new();
     }
 }

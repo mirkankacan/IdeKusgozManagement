@@ -20,19 +20,61 @@ function getDayOfWeekTurkish(day) {
 function formatTimeSpan(timeSpan) {
     if (!timeSpan || timeSpan == null) return '';
 
+    let formattedTime = '';
+
     // If timeSpan is already in HH:mm format, return as is
     if (typeof timeSpan === 'string' && timeSpan.includes(':')) {
-        return timeSpan.substring(0, 5); // Get HH:mm part
+        formattedTime = timeSpan.substring(0, 5); // Get HH:mm part
     }
-
     // If timeSpan is in .NET TimeSpan format (e.g., "08:00:00")
-    if (typeof timeSpan === 'string') {
+    else if (typeof timeSpan === 'string') {
         const parts = timeSpan.split(':');
         if (parts.length >= 2) {
-            return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+            formattedTime = `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
         }
     }
-    return '';
+
+    // Convert 00:00 to 23:59 since 00:00 is not a valid time in the system
+    if (formattedTime === '00:00') {
+        formattedTime = '23:59';
+    }
+
+    return formattedTime;
+}
+
+/**
+ * Converts 00:00 time to 23:59 for display purposes
+ * @param {string} timeString - Time string in HH:mm format
+ * @returns {string} - Converted time string
+ */
+function convertMidnightTime(timeString) {
+    if (!timeString || typeof timeString !== 'string') return timeString;
+    
+    // Check if the time is exactly 00:00
+    if (timeString.trim() === '00:00') {
+        return '23:59';
+    }
+    
+    return timeString;
+}
+
+/**
+ * Validates and converts time input to prevent 00:00 entry
+ * @param {string} timeValue - Time value to validate
+ * @returns {string} - Validated and converted time value
+ */
+function validateAndConvertTime(timeValue) {
+    if (!timeValue || typeof timeValue !== 'string') return timeValue;
+    
+    // Remove any whitespace
+    timeValue = timeValue.trim();
+    
+    // If user enters 00:00, convert to 23:59
+    if (timeValue === '00:00') {
+        return '23:59';
+    }
+    
+    return timeValue;
 }
 
 function setupAdditionalTimeHandlers() {
@@ -111,6 +153,9 @@ function setupAdditionalTimeHandlers() {
         if (value.length === 2 && !value.includes(':')) {
             value += ':';
         }
+
+        // 00:00 girişini engelle ve 23:59'a çevir
+        value = validateAndConvertTime(value);
 
         $(this).val(value);
 
@@ -238,7 +283,12 @@ function setupAdditionalTimeHandlers() {
             if (value.indexOf(':') === -1 && value.length === 2) {
                 // İki nokta ekle
                 e.preventDefault();
-                input.val(value + ':');
+                let newValue = value + ':';
+                // 00:00 girişini engelle
+                if (newValue === '00:') {
+                    newValue = '23:';
+                }
+                input.val(newValue);
                 input[0].setSelectionRange(3, 3);
             } else {
                 e.preventDefault();
@@ -248,12 +298,21 @@ function setupAdditionalTimeHandlers() {
             e.preventDefault();
         }
     });
+
+    // Saat input'ları için blur event handler (00:00 girişini yakalamak için)
+    $(document).on('blur', '.time-input, .additional-start-time, .additional-end-time', function () {
+        let value = $(this).val();
+        if (value === '00:00') {
+            $(this).val('23:59');
+        }
+    });
 }
 
 function clearExpenseForm() {
     $('#expenseForm')[0].reset();
     $('#expenseForm').removeClass('was-validated');
     $('#expense-select').val('').trigger('change');
+    updateExpenseAddButtonState(); // Buton durumunu güncelle
 }
 
 function showTableLoading() {
@@ -391,13 +450,14 @@ async function initializeExcuseReasonSelect() {
             { value: 'Ücretsiz İzin', text: 'Ücretsiz İzin' },
             { value: 'Yıllık İzin', text: 'Yıllık İzin' },
             { value: 'Babalık İzni', text: 'Babalık İzni' },
-            { value: 'İdari İzin', text: 'İdari İzin' },
+            { value: 'İdari İzin (Serbest Zaman İzni)', text: 'İdari İzin (Serbest Zaman İzni)' },
             { value: 'Cenaze İzni', text: 'Cenaze İzni' },
             { value: 'Evlilik İzni', text: 'Evlilik İzni' },
-            { value: 'Devamsızlık', text: 'Devamsızlık' },
             { value: 'Süt İzni', text: 'Süt İzni' }
         ];
-
+        if (!window.isUserPersonel) {
+            reasons.push({ value: 'Devamsızlık', text: 'Devamsızlık' });
+        }
         $('.excuse-reason-select').each(function () {
             const currentSelect = $(this);
             const currentValue = currentSelect.data('current-value');
@@ -430,6 +490,7 @@ function initializeUserSelect() {
         width: '100%'
     });
 }
+
 
 async function initializeAllSelects() {
     await initializeEquipmentSelect();
@@ -475,6 +536,26 @@ function setupExpenseEventListeners() {
         const expenseIndex = $(this).data('index');
         removeExpenseFromDay(expenseIndex);
     });
+
+    // Belge seçildiğinde masraf ekleme butonunu enable/disable yap
+    $('#fileReceipt').on('change', function() {
+        updateExpenseAddButtonState();
+    });
+}
+
+function updateExpenseAddButtonState() {
+    const fileInput = $('#fileReceipt')[0];
+    const addButton = $('#btnAddExpense');
+    
+    if (fileInput.files && fileInput.files.length > 0) {
+        addButton.prop('disabled', false);
+        addButton.removeClass('btn-secondary').addClass('btn-primary');
+        addButton.html('<i class="fas fa-plus me-1"></i>Masraf Ekle');
+    } else {
+        addButton.prop('disabled', true);
+        addButton.removeClass('btn-primary').addClass('btn-secondary');
+        addButton.html('<i class="fas fa-lock me-1"></i>Belge Seçin');
+    }
 }
 
 function loadExpensesForDay(day) {
@@ -576,6 +657,11 @@ function addExpenseToDay() {
         return;
     }
 
+    if (!receiptFile) {
+        toastr.error("Masraf eklemek için belge yüklenmesi zorunludur!");
+        return;
+    }
+
     if (!expenseData[currentEditingDay]) {
         expenseData[currentEditingDay] = [];
     }
@@ -629,8 +715,20 @@ function updateExpenseButton(day) {
     const expenses = expenseData[day] || [];
     const button = $(`.expense-modal-btn[data-day="${day}"]`);
     const count = expenses.length;
+    const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
-    button.find('.expense-count').text(count);
+    // Show count and total amount with Turkish localization
+    if (count > 0) {
+        const formattedTotal = new Intl.NumberFormat('tr-TR', {
+            style: 'currency',
+            currency: 'TRY',
+            minimumFractionDigits: 2
+        }).format(total);
+        
+        button.find('.expense-count').html(`${count} Masraf<br/>${formattedTotal}`);
+    } else {
+        button.find('.expense-count').html('0 Masraf<br/>₺0,00');
+    }
 
     if (count > 0) {
         button.removeClass('btn-outline-primary').addClass('btn-success');
@@ -809,6 +907,8 @@ window.PuantajCommon = {
     Utils: {
         getDayOfWeekTurkish: getDayOfWeekTurkish,
         formatTimeSpan: formatTimeSpan,
+        convertMidnightTime: convertMidnightTime,
+        validateAndConvertTime: validateAndConvertTime,
         clearExpenseForm: clearExpenseForm,
         showTableLoading: showTableLoading,
         hideTableLoading: hideTableLoading

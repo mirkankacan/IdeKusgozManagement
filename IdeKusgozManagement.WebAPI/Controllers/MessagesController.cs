@@ -48,13 +48,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> CreateMessage([FromBody] CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
             ApiResponse<MessageDTO> messageResponse = new();
-            if (createMessageDTO.TargetRoles != null)
+            if (createMessageDTO.TargetRoles.Any())
                 messageResponse = await messageService.SendMessageToRolesAsync(createMessageDTO, cancellationToken);
 
-            if (createMessageDTO.TargetUsers != null)
+            if (createMessageDTO.TargetUsers.Any())
                 messageResponse = await messageService.SendMessageToUsersAsync(createMessageDTO, cancellationToken);
 
-            if (createMessageDTO.TargetUsers == null && createMessageDTO.TargetRoles == null)
+            if (!createMessageDTO.TargetUsers.Any() && !createMessageDTO.TargetRoles.Any())
                 messageResponse = await messageService.SendMessageToAllAsync(createMessageDTO, cancellationToken);
 
             var createNotification = new CreateNotificationDTO
@@ -66,13 +66,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 TargetUsers = createMessageDTO.TargetUsers
             };
 
-            if (createMessageDTO.TargetRoles != null)
+            if (createMessageDTO.TargetRoles.Any())
                 await notificationService.SendNotificationToRolesAsync(createNotification, cancellationToken);
 
-            if (createMessageDTO.TargetUsers != null)
+            if (createMessageDTO.TargetUsers.Any())
                 await notificationService.SendNotificationToUsersAsync(createNotification, cancellationToken);
 
-            if (createMessageDTO.TargetRoles == null && createMessageDTO.TargetUsers == null)
+            if (!createMessageDTO.TargetRoles.Any() && !createMessageDTO.TargetUsers.Any())
                 await notificationService.SendNotificationToAllAsync(createNotification, cancellationToken);
 
             return Ok(messageResponse);

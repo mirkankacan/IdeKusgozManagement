@@ -62,7 +62,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/notifications/{notificationId}/mark-as-read", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/notifications/{notificationId}/mark-as-read", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -84,7 +84,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PostAsync("api/notifications/mark-all-as-read", null, cancellationToken);
+                var response = await _httpClient.PutAsync("api/notifications/mark-all-as-read", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

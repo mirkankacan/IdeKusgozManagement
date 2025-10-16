@@ -101,7 +101,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 var user = createUserDTO.Adapt<ApplicationUser>();
-
+                user.UserName = user.TCNo;
+                user.Email = null;
                 var result = await userManager.CreateAsync(user, createUserDTO.Password);
                 if (!result.Succeeded)
                 {
@@ -205,6 +206,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 user.UserName = updateUserDTO.TCNo;
+                user.Email = null;
                 user.TCNo = updateUserDTO.TCNo;
                 user.Name = updateUserDTO.Name;
                 user.Surname = updateUserDTO.Surname;

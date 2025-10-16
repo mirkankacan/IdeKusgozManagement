@@ -66,7 +66,14 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.HasOne(x => x.UnitManagerUser)
              .WithMany()
              .HasForeignKey(x => x.ProcessedByUnitManagerId)
-             .OnDelete(DeleteBehavior.NoAction).IsRequired(false);
+             .OnDelete(DeleteBehavior.NoAction)
+             .IsRequired(false);
+
+            builder.HasOne(x => x.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.UpdatedBy)
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
         }
     }
 }

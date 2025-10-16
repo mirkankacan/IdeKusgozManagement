@@ -18,6 +18,7 @@ namespace IdeKusgozManagement.Domain.Entities
         public string? ChiefRejectReason { get; set; }
 
         public virtual ApplicationUser CreatedByUser { get; set; }
+        public virtual ApplicationUser? UpdatedByUser { get; set; }
         public virtual ApplicationUser? ChiefUser { get; set; }
         public virtual ApplicationUser? UnitManagerUser { get; set; }
     }

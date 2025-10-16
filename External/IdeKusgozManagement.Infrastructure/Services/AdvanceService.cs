@@ -1,6 +1,7 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.AdvanceDTOs;
+using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class AdvanceService(IUnitOfWork unitOfWork, ILogger<AdvanceService> logger, IIdentityService identityService) : IAdvanceService
+    public class AdvanceService(IUnitOfWork unitOfWork, ILogger<AdvanceService> logger, IIdentityService identityService, INotificationService notificationService) : IAdvanceService
     {
         public async Task<ApiResponse<bool>> ApproveAdvanceAsync(string advanceId, CancellationToken cancellationToken = default)
         {
@@ -61,6 +62,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 unitOfWork.GetRepository<IdtAdvance>().Update(advance);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
+                var approvedAdvance = await unitOfWork.GetRepository<IdtAdvance>()
+                    .WhereAsNoTracking(e => e.Id == advance.Id)
+                    .Include(x => x.ChiefUser)
+                    .Include(x => x.UnitManagerUser)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .FirstOrDefaultAsync(cancellationToken);
+                var mappedAdvance = approvedAdvance.Adapt<AdvanceDTO>();
+                CreateNotificationDTO notificationDTO = new()
+                {
+                    Message = $"{mappedAdvance.UpdatedByFullName} tarafından, {mappedAdvance.CreatedDate:dd/MM/yyyy} tarihinde oluşturduğunuz {mappedAdvance.Reason} avans isteğiniz onaylandı.",
+                    Type = NotificationType.WorkRecord,
+                    RedirectUrl = "/avans/listem",
+                    TargetUsers = new List<string> { mappedAdvance.CreatedBy }
+                };
+                await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
                 return ApiResponse<bool>.Success(true, "Avans isteği başarıyla onaylandı");
             }
             catch (Exception ex)
@@ -77,6 +94,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var newAdvance = createAdvanceDTO.Adapt<IdtAdvance>();
                 await unitOfWork.GetRepository<IdtAdvance>().AddAsync(newAdvance, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
+                var createdAdvance = await unitOfWork.GetRepository<IdtAdvance>()
+                 .WhereAsNoTracking(e => e.Id == newAdvance.Id)
+                 .Include(x => x.ChiefUser)
+                 .Include(x => x.UnitManagerUser)
+                 .Include(x => x.CreatedByUser)
+                 .Include(x => x.UpdatedByUser)
+                 .FirstOrDefaultAsync(cancellationToken);
+                var mappedAdvance = createdAdvance.Adapt<AdvanceDTO>();
+                CreateNotificationDTO notificationDTO = new()
+                {
+                    Message = $"{mappedAdvance.CreatedByFullName} tarafından, {mappedAdvance.CreatedDate:dd/MM/yyyy} tarihinde {mappedAdvance.Reason} avans isteği oluşturuldu.",
+                    Type = NotificationType.WorkRecord,
+                    RedirectUrl = "/avans",
+                    TargetUsers = await identityService.GetUserSuperiorsAsync(cancellationToken)
+                };
+                await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
                 return ApiResponse<string>.Success(newAdvance.Id, "Avans isteği başarıyla oluşturuldu");
             }
             catch (Exception ex)
@@ -200,7 +233,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 AdvanceStatus[] statuses = new AdvanceStatus[] { AdvanceStatus.ApprovedByChief, AdvanceStatus.ApprovedByUnitManager, AdvanceStatus.RejectedByUnitManager };
-                var advances = await unitOfWork.GetRepository<IdtAdvance>().WhereAsNoTracking(x => statuses.Contains(x.Status))
+                var advances = await unitOfWork.GetRepository<IdtAdvance>()
+                    .WhereAsNoTracking(x => statuses.Contains(x.Status))
                       .Include(x => x.ChiefUser)
                     .Include(x => x.UnitManagerUser)
                     .Include(x => x.CreatedByUser)
@@ -273,6 +307,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
                 unitOfWork.GetRepository<IdtAdvance>().Update(advance);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
+                var approvedAdvance = await unitOfWork.GetRepository<IdtAdvance>()
+                .WhereAsNoTracking(e => e.Id == advance.Id)
+                .Include(x => x.ChiefUser)
+                .Include(x => x.UnitManagerUser)
+                .Include(x => x.CreatedByUser)
+                .Include(x => x.UpdatedByUser)
+                .FirstOrDefaultAsync(cancellationToken);
+                var mappedAdvance = approvedAdvance.Adapt<AdvanceDTO>();
+                CreateNotificationDTO notificationDTO = new()
+                {
+                    Message = $"{mappedAdvance.UpdatedByFullName} tarafından, {mappedAdvance.CreatedDate:dd/MM/yyyy} tarihinde oluşturduğunuz {mappedAdvance.Reason} avans isteğiniz reddedildi.",
+                    Type = NotificationType.WorkRecord,
+                    RedirectUrl = "/avans/listem",
+                    TargetUsers = new List<string> { mappedAdvance.CreatedBy }
+                };
+                await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
                 return ApiResponse<bool>.Success(true, "Avans isteği başarıyla reddedildi");
             }
             catch (Exception ex)

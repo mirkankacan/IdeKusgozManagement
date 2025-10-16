@@ -120,12 +120,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var projects = await unitOfWork.GetRepository<IdtProject>().Where(e => e.IsActive == true).OrderBy(e => e.Name).ToListAsync(cancellationToken);
+                var projects = await unitOfWork.GetRepository<IdtProject>().WhereAsNoTracking(e => e.IsActive == true).OrderByDescending(e => e.EndDate).ToListAsync(cancellationToken);
 
-                var projectDTOs = projects
-                    .Adapt<IEnumerable<ProjectDTO>>();
+                var mappedProjects = projects.Adapt<IEnumerable<ProjectDTO>>();
 
-                return ApiResponse<IEnumerable<ProjectDTO>>.Success(projectDTOs, "Aktif proje listesi başarıyla getirildi");
+                return ApiResponse<IEnumerable<ProjectDTO>>.Success(mappedProjects, "Aktif proje listesi başarıyla getirildi");
             }
             catch (Exception ex)
             {

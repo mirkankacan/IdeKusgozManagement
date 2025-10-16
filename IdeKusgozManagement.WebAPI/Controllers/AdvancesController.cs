@@ -85,7 +85,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpPost]
-        [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> CreateAdvance([FromBody] CreateAdvanceDTO createAdvanceDTO, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)

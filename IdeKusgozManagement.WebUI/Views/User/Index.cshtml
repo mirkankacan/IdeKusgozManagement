@@ -32,7 +32,7 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
-                                <th>KULLANICI ADI</th>
+                                <th>TC No</th>
                                 <th>AD SOYAD</th>
                                 <th>ROL</th>
                                 <th>AKTİF Mİ</th>
@@ -62,13 +62,13 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="txtCUsername" class="form-label">TC Kimlik No</label>
-                            <input type="text" class="form-control" id="txtCUsername" value="" required>
+                            <label for="txtCTCNo" class="form-label">TC Kimlik No</label>
+                            <input type="text" class="form-control" id="txtCTCNo" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
                             </div>
                             <div class="invalid-feedback">
-                                Geçerli bir kullanıcı adı giriniz.
+                                Geçerli bir TC no giriniz.
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -103,8 +103,8 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="ddCRole" class="form-label">Rol</label>
-                            <select class="form-select ddRole" id="ddCRole" required="">
+                            <label for="selectCRole" class="form-label">Rol</label>
+                            <select class="form-select selectRole" id="selectCRole" required="">
                             </select>
                             <div class="valid-feedback">
                                 İyi görünüyor!
@@ -114,14 +114,29 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="ddCSuperior" class="form-label">Atanacak</label>
-                            <select class="form-select superior-select" id="ddCSuperior">
+                            <label for="selectCExpatriate" class="form-label">Gurbetçi mi?</label>
+                            <select class="form-select" id="selectCExpatriate" required="">
+                                <option value="false">Hayır</option>
+                                <option value="true">Evet</option>
+                            </select>
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir seçenek seçiniz.
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="selectCSuperior" class="form-label">Üstleri</label>
+                            <select class="form-select superior-select" id="selectCSuperior">
                             </select>
 
                         </div>
+
                     </div>
                 </div>
-                <div class="modal-footer">
+
+                    <div class="modal-footer">
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
                     <button class="btn btn-primary w-100" type="submit" id="btnCreateUser"><i
                             class="fas fa-user-plus me-1"></i>Oluştur</button>
@@ -144,13 +159,13 @@
                     <div class="row g-3">
                         <input type="text" id="txtUUserId" value="" readonly hidden disabled />
                         <div class="col-md-6">
-                            <label for="txtUUsername" class="form-label">TC Kimlik No</label>
-                            <input type="text" class="form-control" id="txtUUsername" value="" required>
+                            <label for="txtUTCNo" class="form-label">TC Kimlik No</label>
+                            <input type="text" class="form-control" id="txtUTCNo" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
                             </div>
                             <div class="invalid-feedback">
-                                Geçerli bir kullanıcı adı giriniz.
+                                Geçerli bir TC no giriniz.
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -189,8 +204,8 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="ddURole" class="form-label">Rol</label>
-                            <select class="form-select ddRole" id="ddURole" required="">
+                            <label for="selectURole" class="form-label">Rol</label>
+                            <select class="form-select selectRole" id="selectURole" required="">
                             </select>
                             <div class="valid-feedback">
                                 İyi görünüyor!
@@ -200,14 +215,14 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="ddUSuperior" class="form-label">Atanacak</label>
-                            <select class="form-select superior-select" id="ddUSuperior">
+                            <label for="selectUSuperior" class="form-label">Üstleri</label>
+                            <select class="form-select superior-select" id="selectUSuperior">
                             </select>
 
                         </div>
-                        <div class="col-md-12">
-                            <label for="ddUStatus" class="form-label">Durum</label>
-                            <select class="form-select" id="ddUStatus" required="">
+                        <div class="col-md-6">
+                            <label for="selectUStatus" class="form-label">Durum</label>
+                            <select class="form-select" id="selectUStatus" required="">
                                 <option value="" selected="" disabled>Durum seçiniz...</option>
                                 <option value="true">Aktif</option>
                                 <option value="false">Pasif</option>
@@ -219,7 +234,19 @@
                                 Geçerli bir rol seçiniz.
                             </div>
                         </div>
-
+                        <div class="col-md-6">
+                            <label for="selectUExpatriate" class="form-label">Gurbetçi mi?</label>
+                            <select class="form-select " id="selectUExpatriate" required="">
+                                <option value="false">Hayır</option>
+                                <option value="true">Evet</option>
+                            </select>
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir seçenek seçiniz.
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -264,32 +291,32 @@
         });
         function initializeSelect2() {
             $('.superior-select').select2({
-                placeholder: 'Atanacak kullanıcı(lar) seçin',
+                placeholder: 'Üst(ler)ini seçin',
                 theme: 'bootstrap-5',
                 multiple: true,
                 width: '100%'
             });
         }
         function clearCreateUserForm() {
-            $('#txtCUsername').val('');
+            $('#txtCNo').val('');
             $('#txtCPassword').val('');
             $('#txtCName').val('');
             $('#txtCSurname').val('');
 
             // Select2 alanlarını temizle
-            $('#ddCRole').val('').trigger('change');
-            $('#ddCSuperior').val('').trigger('change');
+            $('#selectCRole').val('').trigger('change');
+            $('#selectCSuperior').val('').trigger('change');
         }
         function clearUpdateUserForm() {
-            $('#txtUUsername').val('');
+            $('#txtUTCNo').val('');
             $('#txtUPassword').val('');
             $('#txtUName').val('');
             $('#txtUSurname').val('');
 
             // Select2 alanlarını temizle
-            $('#ddURole').val('').trigger('change');
-            $('#ddUSuperior').val('').trigger('change');
-            $('#ddUStatus').val('').trigger('change');
+            $('#selectURole').val('').trigger('change');
+            $('#selectUSuperior').val('').trigger('change');
+            $('#selectUStatus').val('').trigger('change');
         }
         async function initializeDataTable() {
             usersTable = $('#usersTable').DataTable({
@@ -330,13 +357,13 @@
                         }
                     },
                     {
-                        "data": "userName",
+                        "data": "tcNo",
                         "render": function (data) {
                             return data ? `<strong>${data}</strong>` : '';
                         }
                     },
                     {
-                        "data": "fullName",
+                        "data": "fullNameWithExp",
                         "render": function (data) {
                             return data || '';
                         }
@@ -434,16 +461,15 @@
                     form.classList.add('was-validated');
                     return;
                 }
-
                 const userData = {
-                    UserName: $('#txtCUsername').val().trim(),
+                    TCNo: $('#txtCTCNo').val().trim(),
                     Name: $('#txtCName').val().trim(),
                     Surname: $('#txtCSurname').val().trim(),
                     Password: $('#txtCPassword').val(),
-                    RoleName: $('#ddCRole').val(),
-                    SuperiorIds: $('#ddCSuperior').val() || []
+                    RoleName: $('#selectCRole').val(),
+                    IsExpatriate: $('#selectCExpatriate').val() == "true",
+                    SuperiorIds: $('#selectCSuperior').val() || []
                 };
-
                 const submitBtn = $('#btnCreateUser');
                 submitBtn.prop('disabled', true)
                     .html('<i class="fas fa-spinner fa-spin me-2"></i>Oluşturuluyor...');
@@ -496,13 +522,14 @@
 
                 const userData = {
                     Id: $('#txtUUserId').val(),
-                    UserName: $('#txtUUsername').val().trim(),
+                    TCNo: $('#txtUTCNo').val().trim(),
                     Password: $("#txtUPassword").val().trim() || null,
                     Name: $('#txtUName').val().trim(),
                     Surname: $('#txtUSurname').val().trim(),
-                    RoleName: $('#ddURole').val(),
-                    IsActive: $('#ddUStatus').val() === "true",
-                    SuperiorIds: $('#ddUSuperior').val() || []
+                    RoleName: $('#selectURole').val(),
+                    IsExpatriate: $('#selectUExpatriate').val() == "true",
+                    IsActive: $('#selectUStatus').val() == "true",
+                    SuperiorIds: $('#selectUSuperior').val() || []
                 };
 
                 if (!userData.Id) {
@@ -755,18 +782,18 @@
 
                 if (response) {
                     const userData = response;
-
                     $('#txtUUserId').val(userData.id || '');
-                    $('#txtUUsername').val(userData.userName || '');
+                    $('#txtUTCNo').val(userData.tcNo || '');
                     $('#txtUPassword').val('');
                     $('#txtUName').val(userData.name || '');
                     $('#txtUSurname').val(userData.surname || '');
-                    $('#ddURole').val(userData.roleName);
-                    $('#ddUStatus').val(userData.isActive ? "true" : "false");
+                    $('#selectUExpatriate').val(userData.isExpatriate ? "true" : "false");
+                    $('#selectURole').val(userData.roleName);
+                    $('#selectUStatus').val(userData.isActive ? "true" : "false");
                     if (userData.superiorIds && Array.isArray(userData.superiorIds) && userData.superiorIds.length > 0) {
-                        $('#ddUSuperior').val(userData.superiorIds).trigger('change');
+                        $('#selectUSuperior').val(userData.superiorIds).trigger('change');
                     } else {
-                        $('#ddUSuperior').val([]).trigger('change'); // Boş array - hiçbiri seçili değil
+                        $('#selectUSuperior').val([]).trigger('change'); // Boş array - hiçbiri seçili değil
                     }
 
                     const form = document.querySelector('#updateUserModal form');
@@ -803,7 +830,7 @@
 
         async function getRoles() {
             try {
-                const roleSelects = $('.ddRole');
+                const roleSelects = $('.selectRole');
                 if (!roleSelects.length) {
                     console.warn('Role select elements not found');
                     return;
@@ -835,7 +862,7 @@
                 }
             } catch (error) {
                 console.error('Roller yüklenirken hata:', error);
-                $('.ddRole').each(function () {
+                $('.selectRole').each(function () {
                     $(this).html('<option value="">Rol yüklenemedi</option>');
                 });
 
@@ -853,7 +880,7 @@
 
                 toastr.error(errorMessage);
             } finally {
-                $('.ddRole').prop('disabled', false);
+                $('.selectRole').prop('disabled', false);
             }
         }
         async function getSuperiorUsers() {

@@ -28,6 +28,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         public DbSet<IdtUserHierarchy> IdtUserHierarchies => Set<IdtUserHierarchy>();
         public DbSet<IdtWorkRecord> IdtWorkRecords => Set<IdtWorkRecord>();
         public DbSet<IdtWorkRecordExpense> IdtWorkRecordExpenses => Set<IdtWorkRecordExpense>();
+        public DbSet<IdtTrafficTicket> IdtTrafficTickets => Set<IdtTrafficTicket>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

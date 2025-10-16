@@ -29,7 +29,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [HttpPost("{notificationId}/okundu")]
+        [HttpPut("{notificationId}/okundu")]
         public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(notificationId))
@@ -40,7 +40,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [HttpPost("hepsini-okundu")]
+        [HttpPut("hepsini-okundu")]
         public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken = default)
         {
             var response = await _notificationApiService.MarkAllAsReadAsync(cancellationToken);
