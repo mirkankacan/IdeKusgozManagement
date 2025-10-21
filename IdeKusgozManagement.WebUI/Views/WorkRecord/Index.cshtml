@@ -146,7 +146,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="expenseForm">
+            <form id="expenseForm" class="needs-validation" novalidate>
                 <div class="modal-body">
                     <!-- Mevcut Masraflar Listesi -->
                     <div id="currentExpensesList" class="mb-3" style="display: none;">
@@ -156,15 +156,50 @@
                         </div>
                     </div>
 
+                    <!-- Yeni Masraf Ekleme Formu -->
+                    <div id="addExpenseForm" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="expense-select" class="form-label">Masraf Türü</label>
+                            <select class="form-select expense-select" id="expense-select" required>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Lütfen geçerli bir masraf seçiniz.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="txtAmount" class="form-label">Tutar (₺)</label>
+                            <input type="number" class="form-control" id="txtAmount" step="0.01" min="0" required>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Lütfen geçerli bir tutar giriniz.</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="txtDescription" class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="txtDescription" placeholder="Opsiyonel"></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="fileReceipt" class="form-label">Fatura</label>
+                            <input type="file" class="form-control" id="fileReceipt" required
+                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                            <div class="form-text">
+                                Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX
+                            </div>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Lütfen geçerli bir dosya seçiniz.</div>
+                        </div>
+                    </div>
+
                     <!-- Toplam Masraf -->
                     <div class="mt-3 p-2 bg-light rounded" id="totalExpenseSection" style="display: none;">
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="fw-bold">Toplam Masraf:</span>
-                            <span class="fw-bold text-primary" id="totalExpenseAmount">0.00 ₺</span>
+                            <span class="fw-bold text-primary" id="totalExpenseAmount">₺0,00</span>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+                    <button class="btn btn-primary w-100" type="submit" id="btnAddExpense">
+                        <i class="fas fa-plus me-1"></i>Masraf Ekle
+                    </button>
                 </div>
             </form>
         </div>
@@ -381,7 +416,36 @@
             initializeLocationSelects();
             await initializeProjectSelect();
             await initializeExcuseReasonSelect();
+            await initializeExpenseSelect();
             initializeUserSelect();
+        }
+
+        async function initializeExpenseSelect() {
+            try {
+                const response = await $.ajax({
+                    url: '/masraf/aktif-liste',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#expense-select').empty();
+                    $('#expense-select').append('<option value="">Masraf türü seçin</option>');
+                    response.data.forEach(expense => {
+                        $('#expense-select').append(`<option value="${expense.id}">${expense.name}</option>`);
+                    });
+                }
+
+                $('#expense-select').select2({
+                    placeholder: 'Masraf türü seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
+            } catch (error) {
+                console.error('Masraf listesi yüklenirken hata:', error);
+                toastr.error('Masraf listesi yüklenirken hata oluştu', 'Hata!');
+            }
         }
 
         // ===== EXPENSE MANAGEMENT =====
@@ -389,7 +453,13 @@
             if (!expenseData[day]) {
                 expenseData[day] = [];
             }
-            displayCurrentExpenses(day, true);
+
+            // Onaylanmış kayıt kontrolü
+            const recordId = $(`tr[data-day="${day}"]`).data('record-id');
+            const statusBadge = $(`tr[data-day="${day}"]`).find('.badge');
+            const isApproved = statusBadge.hasClass('bg-success');
+
+            displayCurrentExpenses(day, isApproved);
             updateTotalExpense(day);
         }
 
@@ -402,10 +472,10 @@
             if (expenses.length > 0) {
                 currentExpensesSection.show();
                 expenses.forEach((expense, index) => {
-                    const expenseName = expense.expenseName ?? expense.expenseTypeName || 'Bilinmeyen Masraf';
+                    const expenseName = expense.expenseName;
                     const actionButton = isApproved
                         ? `<span class="badge bg-success"><i class="fas fa-check me-1"></i>Onaylandı</span>`
-                        : `<span class="badge bg-secondary"><i class="fas fa-lock me-1"></i>Düzenlenemez</span>`;
+                        : `<button type="button" class="btn btn-sm btn-outline-danger remove-expense-btn" data-index="${index}" title="Masrafı Sil"><i class="fas fa-trash"></i></button>`;
 
                     let fileDisplay = '';
                     if (expense.fileId) {
@@ -415,16 +485,16 @@
                     }
 
                     const expenseItem = `
-                                                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                                                            <div>
-                                                                <h6 class="mb-1">${expenseName}</h6>
-                                                                <p class="mb-1"><strong>${expense.amount.toFixed(2)} ₺</strong></p>
-                                                                ${expense.description ? `<small class="text-muted">${expense.description}</small>` : ''}
-                                                                ${fileDisplay}
-                                                            </div>
-                                                            ${actionButton}
-                                                        </div>
-                                                    `;
+                                                                                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                                                <div>
+                                                                                                                    <h6 class="mb-1">${expenseName}</h6>
+                                                                                                                    <p class="mb-1"><strong>${expense.amount.toFixed(2)} ₺</strong></p>
+                                                                                                                    ${expense.description ? `<small class="text-muted">${expense.description}</small>` : ''}
+                                                                                                                    ${fileDisplay}
+                                                                                                                </div>
+                                                                                                                ${actionButton}
+                                                                                                            </div>
+                                                                                                        `;
                     expensesList.append(expenseItem);
                 });
             } else {
@@ -458,13 +528,70 @@
                 }).format(total);
                 button.find('.expense-count').html(`${count} Masraf<br/><small>${formattedTotal}</small>`);
             } else {
-                button.find('.expense-count').html('0 Masraf<br/><small>0,00 ₺</small>');
+                button.find('.expense-count').html('0 Masraf<br/><small>₺0,00</small>');
             }
 
             if (count > 0) {
                 button.removeClass('btn-outline-primary').addClass('btn-success');
             } else {
                 button.removeClass('btn-success').addClass('btn-outline-primary');
+            }
+        }
+
+        function clearExpenseForm() {
+            $('#expense-select').val('').trigger('change');
+            $('#txtAmount').val('');
+            $('#txtDescription').val('');
+            $('#fileReceipt').val('');
+            $('#expenseForm').removeClass('was-validated');
+        }
+
+        function addExpenseToDay() {
+            const expenseId = $('#expense-select').val();
+            const amount = parseFloat($('#txtAmount').val());
+            const description = $('#txtDescription').val().trim();
+            const receiptFile = $('#fileReceipt')[0].files[0];
+
+            if (!expenseId || !amount || !receiptFile) {
+                toastr.warning('Lütfen tüm gerekli alanları doldurun', 'Uyarı!');
+                return;
+            }
+
+            if (amount <= 0) {
+                toastr.warning('Tutar 0\'dan büyük olmalıdır', 'Uyarı!');
+                return;
+            }
+
+            const expenseName = $('#expense-select option:selected').text();
+            const newExpense = {
+                id: null, // Yeni expense için id null
+                expenseId: expenseId,
+                expenseName: expenseName,
+                amount: amount,
+                description: description || null,
+                receiptFile: receiptFile
+            };
+
+            if (!expenseData[currentEditingDay]) {
+                expenseData[currentEditingDay] = [];
+            }
+
+            expenseData[currentEditingDay].push(newExpense);
+            displayCurrentExpenses(currentEditingDay);
+            updateTotalExpense(currentEditingDay);
+            updateExpenseButton(currentEditingDay);
+            clearExpenseForm();
+
+            toastr.success('Masraf başarıyla eklendi', 'Başarılı!');
+        }
+
+        function removeExpenseFromDay(index) {
+            if (expenseData[currentEditingDay] && expenseData[currentEditingDay][index]) {
+                expenseData[currentEditingDay].splice(index, 1);
+                displayCurrentExpenses(currentEditingDay);
+                updateTotalExpense(currentEditingDay);
+                updateExpenseButton(currentEditingDay);
+                toastr.success('Masraf başarıyla silindi', 'Başarılı!');
             }
         }
 
@@ -688,7 +815,7 @@
         }
 
         function setupIndexPageExpenseModal() {
-            // Override expense modal for Index page - expenses are read-only
+            // Setup expense modal for Index page - expenses are editable
             $('#expenseModal').off('show.bs.modal').on('show.bs.modal', function (event) {
                 const button = $(event.relatedTarget);
                 const day = button.data('day');
@@ -699,12 +826,28 @@
                     const dateStr = `${day.toString().padStart(2, '0')}.${currentMonth.toString().padStart(2, '0')}.${currentYear} ${getDayOfWeekTurkish(date.getDay())}`;
                     $('#modalDateInfo').text(dateStr);
 
+                    // Modal başlığını güncelle
+                    $('#expenseModalLabel').html(`<i class="fas fa-receipt me-2"></i>${dateStr} - Masraf Bilgileri`);
+
                     loadExpensesForDay(day);
+                    clearExpenseForm();
                 }
             });
 
-            // Disable add expense functionality in Index page
-            $('#expenseForm').off('submit');
+            // Enable add expense functionality in Index page
+            $('#expenseForm').off('submit').on('submit', function (e) {
+                e.preventDefault();
+                if (this.checkValidity()) {
+                    addExpenseToDay();
+                }
+                $(this).addClass('was-validated');
+            });
+
+            // Setup remove expense event listener
+            $(document).off('click', '.remove-expense-btn').on('click', '.remove-expense-btn', function () {
+                const expenseIndex = $(this).data('index');
+                removeExpenseFromDay(expenseIndex);
+            });
         }
 
         // ===== TABLE STATE MANAGEMENT =====
@@ -728,50 +871,50 @@
 
         function showEmptyTable() {
             const emptyMessage = `
-                                            <tr>
-                                                <td colspan="13" class="text-center py-5">
-                                                    <div class="text-muted">
-                                                        <i class="fas fa-info-circle fa-2x mb-3"></i>
-                                                        <h5>Kullanıcı Seçin</h5>
-                                                        <p>Puantaj verilerini görüntülemek için lütfen bir kullanıcı seçin.</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        `;
+                                                                                                <tr>
+                                                                                                    <td colspan="13" class="text-center py-5">
+                                                                                                        <div class="text-muted">
+                                                                                                            <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                                                                                            <h5>Kullanıcı Seçin</h5>
+                                                                                                            <p>Puantaj verilerini görüntülemek için lütfen bir kullanıcı seçin.</p>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            `;
             $('#workRecordsTableBody').html(emptyMessage);
         }
 
         function showNoDataMessage(year, month) {
             const noDataMessage = `
-                                            <tr>
-                                                <td colspan="13" class="text-center py-5">
-                                                    <div class="text-muted">
-                                                        <i class="fas fa-calendar-times fa-2x mb-3 text-warning"></i>
-                                                        <h5>Puantaj Verisi Bulunamadı</h5>
-                                                        <p>Seçili kullanıcının ${month}/${year} ayına ait puantaj kaydı bulunmamaktadır.</p>
-                                                        <small>Personel henüz bu ay için puantaj doldurmamış olabilir.</small>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        `;
+                                                                                                <tr>
+                                                                                                    <td colspan="13" class="text-center py-5">
+                                                                                                        <div class="text-muted">
+                                                                                                            <i class="fas fa-calendar-times fa-2x mb-3 text-warning"></i>
+                                                                                                            <h5>Puantaj Verisi Bulunamadı</h5>
+                                                                                                            <p>Seçili kullanıcının ${month}/${year} ayına ait puantaj kaydı bulunmamaktadır.</p>
+                                                                                                            <small>Personel henüz bu ay için puantaj doldurmamış olabilir.</small>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            `;
             $('#workRecordsTableBody').html(noDataMessage);
         }
 
         function showErrorMessage() {
             const errorMessage = `
-                                            <tr>
-                                                <td colspan="13" class="text-center py-5">
-                                                    <div class="text-danger">
-                                                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                                                        <h5>Veri Yükleme Hatası</h5>
-                                                        <p>Puantaj verileri yüklenirken bir hata oluştu.</p>
-                                                        <button class="btn btn-outline-primary btn-sm" onclick="loadWorkRecordsByUser()">
-                                                            <i class="fas fa-redo me-1"></i>Tekrar Dene
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        `;
+                                                                                                <tr>
+                                                                                                    <td colspan="13" class="text-center py-5">
+                                                                                                        <div class="text-danger">
+                                                                                                            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                                                                                                            <h5>Veri Yükleme Hatası</h5>
+                                                                                                            <p>Puantaj verileri yüklenirken bir hata oluştu.</p>
+                                                                                                            <button class="btn btn-outline-primary btn-sm" onclick="loadWorkRecordsByUser()">
+                                                                                                                <i class="fas fa-redo me-1"></i>Tekrar Dene
+                                                                                                            </button>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            `;
             $('#workRecordsTableBody').html(errorMessage);
         }
 
@@ -853,10 +996,10 @@
                     const encoded = encodeURIComponent(reason);
                     const hasReason = !!reason;
                     statusBadge = `
-                                                    <span class="badge bg-danger status-rejected" data-reason="${encoded}" title="${hasReason ? 'Reddetme açıklamasını görmek için tıklayın' : 'Reddedildi'}">
-                                                        <i class="fas fa-times me-1"></i>Reddedildi${hasReason ? ' <i class=\"fas fa-exclamation-circle ms-1\" title=\"Açıklama var\"></i>' : ''}
-                                                    </span>
-                                                `;
+                                                                                                        <span class="badge bg-danger status-rejected" data-reason="${encoded}" title="${hasReason ? 'Reddetme açıklamasını görmek için tıklayın' : 'Reddedildi'}">
+                                                                                                            <i class="fas fa-times me-1"></i>Reddedildi${hasReason ? ' <i class=\"fas fa-exclamation-circle ms-1\" title=\"Açıklama var\"></i>' : ''}
+                                                                                                        </span>
+                                                                                                    `;
                 }
 
                 const row = createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge);
@@ -864,7 +1007,10 @@
 
                 // Populate expense data (sadece görüntüleme)
                 if (record.workRecordExpenses && record.workRecordExpenses.length > 0) {
-                    expenseData[day] = record.workRecordExpenses;
+                    expenseData[day] = record.workRecordExpenses.map(exp => ({
+                        ...exp,
+                        id: exp.id // Mevcut expense'lerin id'sini sakla
+                    }));
                     updateExpenseButton(day);
                 }
             });
@@ -885,124 +1031,124 @@
 
         function createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge) {
             return `
-                                            <tr data-day="${day}" data-record-id="${record.id}">
-                                                <td class="date-cell">
-                                                    <span class="badge bg-info">${formattedDate}</span>
-                                                    ${record.additionalStartTime || record.additionalEndTime ? `
-                                                        <br/>
-                                                        <button type="button" class="btn btn-xs btn-success additional-time-btn mt-1 w-75" disabled
-                                                            data-day="${day}" title="Ek Saat Mevcut">
-                                                            Ek Saat
-                                                        </button>
-                                                    ` : ''}
-                                                </td>
-                                                <td>
-                                                    <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${record.excuseReason || ''}">
-                                                        <option value="">Sebep seçin</option>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <div class="input-group">
-                                                        <input type="text" class="form-control time-input start-time" value="${startTime}" data-day="${day}" placeholder="08:00">
-                                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                    </div>
-                                                    <div class="additional-time-section" data-day="${day}" style="display: ${record.additionalStartTime ? 'block' : 'none'}; margin-top: 2px;">
-                                                        <div class="input-group">
-                                                            <input type="text" class="form-control form-control-sm additional-start-time"
-                                                                   data-day="${day}" placeholder="Ek Başlangıç" value="${record.additionalStartTime ? formatTimeSpan(record.additionalStartTime) : ''}">
-                                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="input-group">
-                                                        <input type="text" class="form-control time-input end-time" value="${endTime}" data-day="${day}" placeholder="17:00">
-                                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                    </div>
-                                                    <div class="additional-time-section" data-day="${day}" style="display: ${record.additionalEndTime ? 'block' : 'none'}; margin-top: 2px;">
-                                                        <div class="input-group">
-                                                            <input type="text" class="form-control form-control-sm additional-end-time"
-                                                                   data-day="${day}" placeholder="Ek Bitiş" value="${record.additionalEndTime ? formatTimeSpan(record.additionalEndTime) : ''}">
-                                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${record.projectId || ''}">
-                                                        <option value="">Proje seçin</option>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${record.equipmentId || ''}">
-                                                        <option value="">Ekipman seçin</option>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <select class="form-select form-select-sm province-select" data-day="${day}">
-                                                        <option value="">İl seçin</option>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <select class="form-select form-select-sm district-select" data-day="${day}">
-                                                        <option value="">İlçe seçin</option>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <button type="button" class="btn btn-primary expense-modal-btn w-100"
-                                                            data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal">
-                                                        <i class="fas fa-receipt me-1"></i>
-                                                        <span class="expense-count" data-day="${day}">0 Masraf<br/><small>0,00 ₺</small></span>
-                                                    </button>
-                                                </td>
-                                                <td>
-                                                    <div class="meal-section">
-                                                        <div class="meal-item">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}" data-meal="S" data-day="${day}" ${record.hasBreakfast ? 'checked' : ''}>
-                                                                <label class="form-check-label" for="s_${day}">S</label>
-                                                            </div>
-                                                        </div>
-                                                        <div class="meal-item">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}" data-meal="O" data-day="${day}" ${record.hasLunch ? 'checked' : ''}>
-                                                                <label class="form-check-label" for="o_${day}">Ö</label>
-                                                            </div>
-                                                        </div>
-                                                        <div class="meal-item">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}" data-meal="A" data-day="${day}" ${record.hasDinner ? 'checked' : ''}>
-                                                                <label class="form-check-label" for="a_${day}">A</label>
-                                                            </div>
-                                                        </div>
-                                                        <div class="meal-item">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}" data-meal="G" data-day="${day}" ${record.hasNightMeal ? 'checked' : ''} disabled>
-                                                                <label class="form-check-label" for="g_${day}">G</label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input travel-checkbox" type="checkbox" id="t_${day}" data-day="${day}" ${record.hasTravel ? 'checked' : ''}>
-                                                        <label class="form-check-label" for="t_${day}">Y</label>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    ${statusBadge}
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                        <button type="button" class="btn btn-outline-success" onclick="approveWorkRecord('${record.id}', '${formattedDate}')">
-                                                            <i class="fas fa-thumbs-up"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-danger" onclick="rejectWorkRecord('${record.id}','${formattedDate}')">
-                                                            <i class="fas fa-thumbs-down"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        `;
+                                                                                                <tr data-day="${day}" data-record-id="${record.id}">
+                                                                                                    <td class="date-cell">
+                                                                                                        <span class="badge bg-info">${formattedDate}</span>
+                                                                                                        ${record.additionalStartTime || record.additionalEndTime ? `
+                                                                                                            <br/>
+                                                                                                            <button type="button" class="btn btn-xs btn-success additional-time-btn mt-1 w-75" disabled
+                                                                                                                data-day="${day}" title="Ek Saat Mevcut">
+                                                                                                                Ek Saat
+                                                                                                            </button>
+                                                                                                        ` : ''}
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${record.excuseReason || ''}">
+                                                                                                            <option value="">Sebep seçin</option>
+                                                                                                        </select>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <div class="input-group">
+                                                                                                            <input type="text" class="form-control time-input start-time" value="${startTime}" data-day="${day}" placeholder="08:00">
+                                                                                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                        </div>
+                                                                                                        <div class="additional-time-section" data-day="${day}" style="display: ${record.additionalStartTime ? 'block' : 'none'}; margin-top: 2px;">
+                                                                                                            <div class="input-group">
+                                                                                                                <input type="text" class="form-control form-control-sm additional-start-time"
+                                                                                                                       data-day="${day}" placeholder="Ek Başlangıç" value="${record.additionalStartTime ? formatTimeSpan(record.additionalStartTime) : ''}">
+                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <div class="input-group">
+                                                                                                            <input type="text" class="form-control time-input end-time" value="${endTime}" data-day="${day}" placeholder="17:00">
+                                                                                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                        </div>
+                                                                                                        <div class="additional-time-section" data-day="${day}" style="display: ${record.additionalEndTime ? 'block' : 'none'}; margin-top: 2px;">
+                                                                                                            <div class="input-group">
+                                                                                                                <input type="text" class="form-control form-control-sm additional-end-time"
+                                                                                                                       data-day="${day}" placeholder="Ek Bitiş" value="${record.additionalEndTime ? formatTimeSpan(record.additionalEndTime) : ''}">
+                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${record.projectId || ''}">
+                                                                                                            <option value="">Proje seçin</option>
+                                                                                                        </select>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${record.equipmentId || ''}">
+                                                                                                            <option value="">Ekipman seçin</option>
+                                                                                                        </select>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <select class="form-select form-select-sm province-select" data-day="${day}">
+                                                                                                            <option value="">İl seçin</option>
+                                                                                                        </select>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <select class="form-select form-select-sm district-select" data-day="${day}">
+                                                                                                            <option value="">İlçe seçin</option>
+                                                                                                        </select>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <button type="button" class="btn btn-primary expense-modal-btn w-100"
+                                                                                                                data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal">
+                                                                                                            <i class="fas fa-receipt me-1"></i>
+                                                                                                            <span class="expense-count" data-day="${day}">0 Masraf<br/><small>₺0,00</small></span>
+                                                                                                        </button>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <div class="meal-section">
+                                                                                                            <div class="meal-item">
+                                                                                                                <div class="form-check">
+                                                                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}" data-meal="S" data-day="${day}" ${record.hasBreakfast ? 'checked' : ''}>
+                                                                                                                    <label class="form-check-label" for="s_${day}">S</label>
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                            <div class="meal-item">
+                                                                                                                <div class="form-check">
+                                                                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}" data-meal="O" data-day="${day}" ${record.hasLunch ? 'checked' : ''}>
+                                                                                                                    <label class="form-check-label" for="o_${day}">Ö</label>
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                            <div class="meal-item">
+                                                                                                                <div class="form-check">
+                                                                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}" data-meal="A" data-day="${day}" ${record.hasDinner ? 'checked' : ''}>
+                                                                                                                    <label class="form-check-label" for="a_${day}">A</label>
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                            <div class="meal-item">
+                                                                                                                <div class="form-check">
+                                                                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}" data-meal="G" data-day="${day}" ${record.hasNightMeal ? 'checked' : ''} disabled>
+                                                                                                                    <label class="form-check-label" for="g_${day}">G</label>
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <div class="form-check">
+                                                                                                            <input class="form-check-input travel-checkbox" type="checkbox" id="t_${day}" data-day="${day}" ${record.hasTravel ? 'checked' : ''}>
+                                                                                                            <label class="form-check-label" for="t_${day}">Y</label>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        ${statusBadge}
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <div class="btn-group btn-group-sm" role="group">
+                                                                                                            <button type="button" class="btn btn-outline-success" onclick="approveWorkRecord('${record.id}', '${formattedDate}')">
+                                                                                                                <i class="fas fa-thumbs-up"></i>
+                                                                                                            </button>
+                                                                                                            <button type="button" class="btn btn-outline-danger" onclick="rejectWorkRecord('${record.id}','${formattedDate}')">
+                                                                                                                <i class="fas fa-thumbs-down"></i>
+                                                                                                            </button>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            `;
         }
 
         // ===== USER MANAGEMENT =====
@@ -1149,10 +1295,11 @@
 
                 const dayExpenses = expenseData[day] || [];
                 const expenses = dayExpenses.map(exp => ({
+                    id: exp.id,
                     expenseId: exp.expenseId,
                     description: exp.description || null,
                     amount: exp.amount,
-                    receiptImageUrl: exp.receiptImageUrl || null
+                    receiptFile: exp.receiptFile || null
                 }));
 
                 const hasBreakfast = $(this).find('.meal-checkbox[data-meal="S"]').is(':checked');
@@ -1178,20 +1325,58 @@
                     HasDinner: hasDinner,
                     HasNightMeal: hasNightMeal,
                     HasTravel: hasTravel,
-                    Expenses: expenses,
+                    WorkRecordExpenses: expenses,
                     UserId: selectedUserId
                 });
             });
 
             try {
+                $('.btnUpdateWorkRecords').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Güncelleniyor...');
+
+                // FormData oluştur
+                const formData = new FormData();
+                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+                // Her work record için form data ekle
+                workRecords.forEach((record, index) => {
+                    formData.append(`[${index}].Date`, record.Date);
+                    formData.append(`[${index}].ExcuseReason`, record.ExcuseReason);
+                    formData.append(`[${index}].StartTime`, record.StartTime);
+                    formData.append(`[${index}].EndTime`, record.EndTime);
+                    formData.append(`[${index}].AdditionalStartTime`, record.AdditionalStartTime);
+                    formData.append(`[${index}].AdditionalEndTime`, record.AdditionalEndTime);
+                    formData.append(`[${index}].ProjectId`, record.ProjectId);
+                    formData.append(`[${index}].EquipmentId`, record.EquipmentId);
+                    formData.append(`[${index}].Province`, record.Province);
+                    formData.append(`[${index}].District`, record.District);
+                    formData.append(`[${index}].HasBreakfast`, record.HasBreakfast);
+                    formData.append(`[${index}].HasLunch`, record.HasLunch);
+                    formData.append(`[${index}].HasDinner`, record.HasDinner);
+                    formData.append(`[${index}].HasNightMeal`, record.HasNightMeal);
+                    formData.append(`[${index}].HasTravel`, record.HasTravel);
+                    formData.append(`[${index}].UserId`, record.UserId);
+
+                    // Expenses için
+                    if (record.WorkRecordExpenses && record.WorkRecordExpenses.length > 0) {
+                        record.WorkRecordExpenses.forEach((expense, expIndex) => {
+                            formData.append(`[${index}].WorkRecordExpenses[${expIndex}].Id`, expense.id);
+                            formData.append(`[${index}].WorkRecordExpenses[${expIndex}].ExpenseId`, expense.expenseId);
+                            formData.append(`[${index}].WorkRecordExpenses[${expIndex}].Description`, expense.description || "");
+                            formData.append(`[${index}].WorkRecordExpenses[${expIndex}].Amount`, expense.amount);
+                            // File upload için - sadece yeni dosyalar için
+                            if (expense.receiptFile) {
+                                formData.append(`[${index}].WorkRecordExpenses[${expIndex}].File.FormFile`, expense.receiptFile);
+                            }
+                        });
+                    }
+                });
+
                 const response = await $.ajax({
                     url: `/puantaj/toplu-guncelle/kullanici/${selectedUserId}`,
                     type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify(workRecords),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: formData,
+                    processData: false,
+                    contentType: false
                 });
 
                 if (response.isSuccess) {
@@ -1202,6 +1387,9 @@
                 }
             } catch (error) {
                 handleAjaxError(error, 'Puantaj kaydedilirken bir hata oluştu.');
+            } finally {
+                $('.btnUpdateWorkRecords').prop('disabled', false)
+                    .html('<i class="fas fa-edit me-2"></i>Güncelle');
             }
         }
 

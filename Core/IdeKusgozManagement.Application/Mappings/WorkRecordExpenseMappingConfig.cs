@@ -16,9 +16,6 @@ namespace IdeKusgozManagement.Application.Mappings
 
             config.NewConfig<CreateOrModifyWorkRecordExpenseDTO, IdtWorkRecordExpense>()
               .Ignore(x => x.File);
-
-            config.NewConfig<UpdateWorkRecordExpenseDTO, IdtWorkRecordExpense>()
-              .Ignore(x => x.File);
         }
     }
 }
