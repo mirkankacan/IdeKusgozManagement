@@ -11,7 +11,10 @@ namespace IdeKusgozManagement.Domain.Entities
         public decimal Amount { get; set; }
         public string? TargetUserId { get; set; }
         public string? FileId { get; set; }
-
+        public DateTime TicketDate { get; set; }
+        public virtual IdtFile? File { get; set; }
+        public virtual IdtProject Project { get; set; }
+        public virtual IdtEquipment Equipment { get; set; }
         public virtual ApplicationUser CreatedByUser { get; set; }
         public virtual ApplicationUser? TargetUser { get; set; }
     }

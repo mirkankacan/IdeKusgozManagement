@@ -557,17 +557,20 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
 
                     b.Property<string>("EquipmentId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("FileId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProjectId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("TargetUserId")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("TicketDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
@@ -581,6 +584,12 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedBy");
+
+                    b.HasIndex("EquipmentId");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("TargetUserId");
 
@@ -687,6 +696,10 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(350)
+                        .HasColumnType("nvarchar(350)");
+
                     b.Property<TimeSpan?>("StartTime")
                         .HasColumnType("time");
 
@@ -742,6 +755,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("FileId")
+                        .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
@@ -979,12 +993,35 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtEquipment", "Equipment")
+                        .WithMany("TrafficTickets")
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtFile", "File")
+                        .WithMany("TrafficTickets")
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtProject", "Project")
+                        .WithMany("TrafficTickets")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "TargetUser")
                         .WithMany()
                         .HasForeignKey("TargetUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("Equipment");
+
+                    b.Navigation("File");
+
+                    b.Navigation("Project");
 
                     b.Navigation("TargetUser");
                 });
@@ -1032,7 +1069,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.HasOne("IdeKusgozManagement.Domain.Entities.IdtFile", "File")
                         .WithMany("WorkRecordExpenses")
                         .HasForeignKey("FileId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("IdeKusgozManagement.Domain.Entities.IdtWorkRecord", "WorkRecord")
                         .WithMany("WorkRecordExpenses")
@@ -1100,6 +1138,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtEquipment", b =>
                 {
+                    b.Navigation("TrafficTickets");
+
                     b.Navigation("WorkRecords");
                 });
 
@@ -1112,6 +1152,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                 {
                     b.Navigation("LeaveRequests");
 
+                    b.Navigation("TrafficTickets");
+
                     b.Navigation("WorkRecordExpenses");
                 });
 
@@ -1122,6 +1164,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtProject", b =>
                 {
+                    b.Navigation("TrafficTickets");
+
                     b.Navigation("WorkRecords");
                 });
 

@@ -91,6 +91,13 @@ builder.Services.AddHttpClient<ILeaveRequestApiService, LeaveRequestApiService>(
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
 
+builder.Services.AddHttpClient<ITrafficTicketApiService, TrafficTicketApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<JwtTokenHandler>();
+
 builder.Services.AddHttpClient<IProjectApiService, ProjectApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);

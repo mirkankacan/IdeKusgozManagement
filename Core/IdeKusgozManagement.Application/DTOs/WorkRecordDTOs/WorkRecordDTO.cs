@@ -24,6 +24,7 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public bool HasNightMeal { get; set; }
         public bool HasTravel { get; set; }
         public WorkRecordStatus Status { get; set; }
+        public string? RejectReason { get; set; }
         public DateTime CreatedDate { get; set; }
         public string CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }

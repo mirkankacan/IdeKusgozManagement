@@ -205,7 +205,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}/reject?rejectReason={rejectReason}", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}/reject?rejectReason={Uri.EscapeDataString(rejectReason)}", null, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

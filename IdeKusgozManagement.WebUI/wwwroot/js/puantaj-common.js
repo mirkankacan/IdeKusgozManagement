@@ -312,7 +312,6 @@ function clearExpenseForm() {
     $('#expenseForm')[0].reset();
     $('#expenseForm').removeClass('was-validated');
     $('#expense-select').val('').trigger('change');
-    updateExpenseAddButtonState(); // Buton durumunu güncelle
 }
 
 function showTableLoading() {
@@ -450,7 +449,7 @@ async function initializeExcuseReasonSelect() {
             { value: 'Ücretsiz İzin', text: 'Ücretsiz İzin' },
             { value: 'Yıllık İzin', text: 'Yıllık İzin' },
             { value: 'Babalık İzni', text: 'Babalık İzni' },
-            { value: 'İdari İzin (Serbest Zaman İzni)', text: 'İdari İzin (Serbest Zaman İzni)' },
+            { value: 'İdari İzin', text: 'İdari İzin (Serbest Zaman İzni)' },
             { value: 'Cenaze İzni', text: 'Cenaze İzni' },
             { value: 'Evlilik İzni', text: 'Evlilik İzni' },
             { value: 'Süt İzni', text: 'Süt İzni' }
@@ -537,26 +536,9 @@ function setupExpenseEventListeners() {
         removeExpenseFromDay(expenseIndex);
     });
 
-    // Belge seçildiğinde masraf ekleme butonunu enable/disable yap
-    $('#fileReceipt').on('change', function() {
-        updateExpenseAddButtonState();
-    });
+  
 }
 
-function updateExpenseAddButtonState() {
-    const fileInput = $('#fileReceipt')[0];
-    const addButton = $('#btnAddExpense');
-    
-    if (fileInput.files && fileInput.files.length > 0) {
-        addButton.prop('disabled', false);
-        addButton.removeClass('btn-secondary').addClass('btn-primary');
-        addButton.html('<i class="fas fa-plus me-1"></i>Masraf Ekle');
-    } else {
-        addButton.prop('disabled', true);
-        addButton.removeClass('btn-primary').addClass('btn-secondary');
-        addButton.html('<i class="fas fa-lock me-1"></i>Belge Seçin');
-    }
-}
 
 function loadExpensesForDay(day) {
     if (!expenseData[day]) {
@@ -590,14 +572,13 @@ function displayCurrentExpenses(day, isApproved = false) {
             // Dosya gösterimi
             let fileDisplay = '';
             if (expense.fileId) {
-                const fileName = expense.originalFileName || 'Dosya';
                 fileDisplay = `
                     <br/>
                     <a href="/dosya/indir/${expense.fileId}"
                        download
                        class="text-muted text-decoration-underline">
                         <i class="fas fa-download me-1"></i>
-                        ${fileName}
+                        ${expense.originalFileName}
                     </a>
                 `;
             } else if (expense.receiptFile && expense.receiptFile.name) {

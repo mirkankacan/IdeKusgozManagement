@@ -12,7 +12,9 @@
   .fa-clock:hover {
       color: #007bff;
   }
-
+.status-rejected {
+  cursor: pointer;
+}
   input[type="checkbox"] {
       width: 16px;
       height: 16px;

@@ -43,7 +43,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var newFileName = $"{NewId.NextGuid()}{fileExtension}";
                 var dateFolder = DateTime.Now.ToString("dd-MM-yyyy");
 
-                var userFolder = "Anonymous";
+                var userFolder = "System";
                 if (!string.IsNullOrEmpty(uploadFileDTO.TargetUserId))
                 {
                     var user = await userService.GetUserByIdAsync(uploadFileDTO.TargetUserId);
