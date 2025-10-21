@@ -78,7 +78,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="updateWorkRecordDTO">Güncellenecek bilgiler</param>
         [HttpPut("batch-update/user/{userId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> BatchUpdateWorkRecordByUser(string userId, [FromForm] List<UpdateWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchUpdateWorkRecordByUser(string userId, [FromForm] List<CreateOrModifyWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {

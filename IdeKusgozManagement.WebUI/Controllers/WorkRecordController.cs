@@ -87,7 +87,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPut("toplu-guncelle/kullanici/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BatchUpdateWorkRecordsByUserId(string userId, [FromForm] List<UpdateWorkRecordViewModel> model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchUpdateWorkRecordsByUserId(string userId, [FromForm] List<CreateOrModifyWorkRecordViewModel> model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
