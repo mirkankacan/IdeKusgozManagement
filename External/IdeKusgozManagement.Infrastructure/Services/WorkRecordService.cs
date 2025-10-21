@@ -41,131 +41,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchUpdateWorkRecordsByUserIdAsync(string userId, IEnumerable<UpdateWorkRecordDTO> updateWorkRecordDTOs, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Seçilen kullanıcı bulunamadı.");
-                }
-                await unitOfWork.BeginTransactionAsync(cancellationToken);
-
-                var dates = updateWorkRecordDTOs.Select(x => x.Date.Date).Distinct().ToList();
-
-                var existingWorkRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
-                   .Where(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
-                   .ToListAsync(cancellationToken);
-
-                var recordsToUpdate = new List<IdtWorkRecord>();
-                var expensesToDelete = new List<string>();
-                var expensesToUpdate = new List<UpdateWorkRecordExpenseDTO>();
-
-                foreach (var dto in updateWorkRecordDTOs)
-                {
-                    var existingRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == dto.Date.Date);
-
-                    // Onaylanmış kayıtları atla
-                    if (existingRecord?.Status == WorkRecordStatus.Approved)
-                        continue;
-
-                    if (existingRecord != null)
-                    {
-                        // ========== GÜNCELLEME ==========
-                        existingRecord.ExcuseReason = dto.ExcuseReason;
-                        existingRecord.StartTime = dto.StartTime;
-                        existingRecord.EndTime = dto.EndTime;
-                        existingRecord.ProjectId = dto.ProjectId;
-                        existingRecord.EquipmentId = dto.EquipmentId;
-                        existingRecord.Province = dto.Province;
-                        existingRecord.District = dto.District;
-                        existingRecord.HasBreakfast = dto.HasBreakfast;
-                        existingRecord.HasLunch = dto.HasLunch;
-                        existingRecord.HasDinner = dto.HasDinner;
-                        existingRecord.HasNightMeal = dto.HasNightMeal;
-                        existingRecord.Status = WorkRecordStatus.Pending;
-
-                        recordsToUpdate.Add(existingRecord);
-
-                        // Eski expense'leri sil
-                        if (existingRecord.WorkRecordExpenses?.Any() == true)
-                        {
-                            expensesToDelete.AddRange(existingRecord.WorkRecordExpenses.Select(e => e.Id));
-                        }
-
-                        // Yeni expense'leri ekle
-                        if (dto.WorkRecordExpenses?.Any() == true)
-                        {
-                            foreach (var expense in dto.WorkRecordExpenses)
-                            {
-                                expense.WorkRecordId = existingRecord.Id;
-                            }
-                            expensesToUpdate.AddRange(dto.WorkRecordExpenses);
-                        }
-                    }
-                }
-
-                // WorkRecord işlemleri
-                if (recordsToUpdate.Any())
-                {
-                    unitOfWork.GetRepository<IdtWorkRecord>().UpdateRange(recordsToUpdate);
-                }
-
-                if (expensesToDelete.Any())
-                {
-                    await workRecordExpenseService.BatchDeleteWorkRecordExpensesAsync(expensesToDelete, cancellationToken);
-                }
-
-                if (expensesToUpdate.Any())
-                {
-                    await workRecordExpenseService.BatchUpdateWorkRecordExpensesAsync(expensesToUpdate, cancellationToken);
-                }
-
-                await unitOfWork.SaveChangesAsync(cancellationToken);
-                await unitOfWork.CommitTransactionAsync(cancellationToken);
-
-                var updatedCount = recordsToUpdate.Count;
-
-                logger.LogInformation("Toplu puantaj güncelleme işlemi başarıyla tamamlandı. UpdatedCount: {UpdatedCount}, UserId: {UserId}", updatedCount, userId);
-
-                // Bildirim gönder
-                var updatedRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
-                   .WhereAsNoTracking(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
-                   .Include(x => x.Equipment)
-                   .Include(x => x.Project)
-                   .Include(x => x.CreatedByUser)
-                   .Include(x => x.UpdatedByUser)
-                   .Include(x => x.WorkRecordExpenses)
-                       .ThenInclude(x => x.Expense)
-                   .Include(x => x.WorkRecordExpenses)
-                       .ThenInclude(x => x.File)
-                   .ToListAsync(cancellationToken);
-                var mappedUpdatedRecords = updatedRecords.Adapt<IEnumerable<WorkRecordDTO>>();
-
-                if (!mappedUpdatedRecords.Any())
-                {
-                    await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("İşlenmiş puantaj kayıtları bulunamadı");
-                }
-                var firstRecord = mappedUpdatedRecords.First();
-                CreateNotificationDTO notificationDTO = new()
-                {
-                    Message = $"{firstRecord.UpdatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için puantajınız güncellendi.",
-                    Type = NotificationType.WorkRecord,
-                    RedirectUrl = "/puantaj/ekle",
-                    TargetUsers = new List<string> { firstRecord.CreatedBy }
-                };
-                await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(mappedUpdatedRecords, $"Toplu puantaj kayıtları başarıyla güncellendi. {updatedCount} kayıt güncellendi");
-            }
-            catch (Exception ex)
-            {
-                await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                logger.LogError(ex, "BatchUpdateWorkRecordsByUserIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu puantaj kayıtları güncellenirken hata oluştu");
-            }
-        }
-
         public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
@@ -394,47 +269,36 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateModifyWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchUpdateWorkRecordsByUserIdAsync(string userId, IEnumerable<UpdateWorkRecordDTO> updateWorkRecordDTOs, CancellationToken cancellationToken = default)
         {
-            var userId = identityService.GetUserId();
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcı kimliği bulunamadı. Lütfen sisteme tekrar giriş yapın.");
-            }
-
             try
             {
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Seçilen kullanıcı bulunamadı.");
+                }
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                var dates = createWorkRecordDTOs.Select(x => x.Date.Date).Distinct().ToList();
+                var dates = updateWorkRecordDTOs.Select(x => x.Date.Date).Distinct().ToList();
 
-                // Mevcut kayıtları çek
                 var existingWorkRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
-                    .Where(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
-                    .Include(x => x.WorkRecordExpenses)
-                        .ThenInclude(x => x.File)
-                    .ToListAsync(cancellationToken);
+                   .Where(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
+                   .ToListAsync(cancellationToken);
 
-                var recordsToModify = new List<IdtWorkRecord>();
-                var recordsToAdd = new List<IdtWorkRecord>();
-                var expensesToAddOrModify = new List<CreateModifyWorkRecordExpenseDTO>();
+                var recordsToUpdate = new List<IdtWorkRecord>();
+                var expensesToDelete = new List<string>();
+                var expensesToUpdate = new List<UpdateWorkRecordExpenseDTO>();
 
-                foreach (var dto in createWorkRecordDTOs)
+                foreach (var dto in updateWorkRecordDTOs)
                 {
-                    // Saat kontrolü
-                    var check = CheckHoursIfValid(dto);
-                    if (!check.Item1)
-                        return ApiResponse<IEnumerable<WorkRecordDTO>>.Error(check.Item2);
+                    var existingRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == dto.Date.Date);
 
-                    IdtWorkRecord? existingRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == dto.Date.Date);
+                    // Onaylanmış kayıtları atla
+                    if (existingRecord?.Status == WorkRecordStatus.Approved)
+                        continue;
 
                     if (existingRecord != null)
                     {
-                        // Onaylanmış kayıtları atla
-                        if (existingRecord.Status == WorkRecordStatus.Approved)
-                            continue;
-
                         // ========== GÜNCELLEME ==========
                         existingRecord.ExcuseReason = dto.ExcuseReason;
                         existingRecord.StartTime = dto.StartTime;
@@ -447,97 +311,211 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         existingRecord.HasLunch = dto.HasLunch;
                         existingRecord.HasDinner = dto.HasDinner;
                         existingRecord.HasNightMeal = dto.HasNightMeal;
-                        existingRecord.AdditionalStartTime = dto.AdditionalStartTime;
-                        existingRecord.AdditionalEndTime = dto.AdditionalEndTime;
-                        existingRecord.HasTravel = dto.HasTravel;
                         existingRecord.Status = WorkRecordStatus.Pending;
 
-                        recordsToModify.Add(existingRecord);
+                        recordsToUpdate.Add(existingRecord);
 
-                        // Expense'leri güncelle
+                        // Eski expense'leri sil
+                        if (existingRecord.WorkRecordExpenses?.Any() == true)
+                        {
+                            expensesToDelete.AddRange(existingRecord.WorkRecordExpenses.Select(e => e.Id));
+                        }
+
+                        // Yeni expense'leri ekle
                         if (dto.WorkRecordExpenses?.Any() == true)
                         {
                             foreach (var expense in dto.WorkRecordExpenses)
                             {
                                 expense.WorkRecordId = existingRecord.Id;
-                                if (expense.File != null)
-                                    expense.File.FileType = FileType.Expense;
                             }
-                            expensesToAddOrModify.AddRange(dto.WorkRecordExpenses);
+                            expensesToUpdate.AddRange(dto.WorkRecordExpenses);
                         }
                     }
+                }
+
+                // WorkRecord işlemleri
+                if (recordsToUpdate.Any())
+                {
+                    unitOfWork.GetRepository<IdtWorkRecord>().UpdateRange(recordsToUpdate);
+                }
+
+                if (expensesToDelete.Any())
+                {
+                    await workRecordExpenseService.BatchDeleteWorkRecordExpensesAsync(expensesToDelete, cancellationToken);
+                }
+
+                if (expensesToUpdate.Any())
+                {
+                    await workRecordExpenseService.BatchUpdateWorkRecordExpensesAsync(expensesToUpdate, cancellationToken);
+                }
+
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                var updatedCount = recordsToUpdate.Count;
+
+                logger.LogInformation("Toplu puantaj güncelleme işlemi başarıyla tamamlandı. UpdatedCount: {UpdatedCount}, UserId: {UserId}", updatedCount, userId);
+
+                // Bildirim gönder
+                var updatedRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
+                   .WhereAsNoTracking(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
+                   .Include(x => x.Equipment)
+                   .Include(x => x.Project)
+                   .Include(x => x.CreatedByUser)
+                   .Include(x => x.UpdatedByUser)
+                   .Include(x => x.WorkRecordExpenses)
+                       .ThenInclude(x => x.Expense)
+                   .Include(x => x.WorkRecordExpenses)
+                       .ThenInclude(x => x.File)
+                   .ToListAsync(cancellationToken);
+                var mappedUpdatedRecords = updatedRecords.Adapt<IEnumerable<WorkRecordDTO>>();
+
+                if (!mappedUpdatedRecords.Any())
+                {
+                    await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("İşlenmiş puantaj kayıtları bulunamadı");
+                }
+                var firstRecord = mappedUpdatedRecords.First();
+                CreateNotificationDTO notificationDTO = new()
+                {
+                    Message = $"{firstRecord.UpdatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için puantajınız güncellendi.",
+                    Type = NotificationType.WorkRecord,
+                    RedirectUrl = "/puantaj/ekle",
+                    TargetUsers = new List<string> { firstRecord.CreatedBy }
+                };
+                await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(mappedUpdatedRecords, $"Toplu puantaj kayıtları başarıyla güncellendi. {updatedCount} kayıt güncellendi");
+            }
+            catch (Exception ex)
+            {
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                logger.LogError(ex, "BatchUpdateWorkRecordsByUserIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu puantaj kayıtları güncellenirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateOrModifyWorkRecordDTO> workRecordDTOs, CancellationToken cancellationToken = default)
+        {
+            var userId = identityService.GetUserId();
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcı kimliği bulunamadı. Lütfen sisteme tekrar giriş yapın.");
+            }
+
+            try
+            {
+                await unitOfWork.BeginTransactionAsync(cancellationToken);
+
+                var dates = workRecordDTOs.Select(x => x.Date.Date).Distinct().ToList();
+                var existingWorkRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
+                    .Where(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
+                    .ToListAsync(cancellationToken);
+
+                var recordsToAdd = new List<IdtWorkRecord>();
+                var recordsToUpdate = new List<IdtWorkRecord>();
+                var expensesToProcess = new List<CreateOrModifyWorkRecordExpenseDTO>();
+
+                foreach (var element in workRecordDTOs)
+                {
+                    // Saat kontrolü
+                    var check = CheckHoursIfValid(element);
+                    if (!check.Item1)
+                        return ApiResponse<IEnumerable<WorkRecordDTO>>.Error(check.Item2 ?? "Saat kontrolü başarısız");
+                    // İlgili tarihin mevcut kaydı
+                    var existingWorkRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == element.Date.Date);
+
+                    // ========== VAROLAN GÜNCELLEME ==========
+                    if (existingWorkRecord is not null)
+                    {
+                        existingWorkRecord.ExcuseReason = element.ExcuseReason ?? null;
+                        existingWorkRecord.StartTime = element.StartTime;
+                        existingWorkRecord.EndTime = element.EndTime;
+                        existingWorkRecord.ProjectId = element.ProjectId;
+                        existingWorkRecord.EquipmentId = element.EquipmentId;
+                        existingWorkRecord.Province = element.Province;
+                        existingWorkRecord.District = element.District;
+                        existingWorkRecord.HasBreakfast = element.HasBreakfast;
+                        existingWorkRecord.HasLunch = element.HasLunch;
+                        existingWorkRecord.HasDinner = element.HasDinner;
+                        existingWorkRecord.HasNightMeal = element.HasNightMeal;
+                        existingWorkRecord.AdditionalStartTime = element.AdditionalStartTime ?? null;
+                        existingWorkRecord.AdditionalEndTime = element.AdditionalEndTime ?? null;
+                        existingWorkRecord.HasTravel = element.HasTravel;
+                        existingWorkRecord.Status = WorkRecordStatus.Pending;
+
+                        recordsToUpdate.Add(existingWorkRecord);
+
+                        if (element.WorkRecordExpenses?.Any() == true)
+                        {
+                            foreach (var expense in element.WorkRecordExpenses)
+                            {
+                                expense.WorkRecordId = existingWorkRecord.Id;
+                            }
+                            expensesToProcess.AddRange(element.WorkRecordExpenses);
+                        }
+                    }
+                    // ========== YENİ KAYIT ==========
                     else
                     {
-                        // ========== YENİ KAYIT ==========
                         var newRecord = new IdtWorkRecord
                         {
-                            Date = dto.Date,
-                            ExcuseReason = dto.ExcuseReason,
-                            StartTime = dto.StartTime,
-                            EndTime = dto.EndTime,
-                            ProjectId = dto.ProjectId,
-                            EquipmentId = dto.EquipmentId,
-                            Province = dto.Province,
-                            District = dto.District,
-                            HasBreakfast = dto.HasBreakfast,
-                            HasLunch = dto.HasLunch,
-                            HasDinner = dto.HasDinner,
-                            HasNightMeal = dto.HasNightMeal,
-                            AdditionalStartTime = dto.AdditionalStartTime,
-                            AdditionalEndTime = dto.AdditionalEndTime,
-                            HasTravel = dto.HasTravel,
-                            Status = WorkRecordStatus.Pending,
+                            Date = element.Date,
+                            ExcuseReason = element.ExcuseReason ?? null,
+                            StartTime = element.StartTime,
+                            EndTime = element.EndTime,
+                            ProjectId = element.ProjectId,
+                            EquipmentId = element.EquipmentId,
+                            Province = element.Province,
+                            District = element.District,
+                            HasBreakfast = element.HasBreakfast,
+                            HasLunch = element.HasLunch,
+                            HasDinner = element.HasDinner,
+                            HasNightMeal = element.HasNightMeal,
+                            AdditionalStartTime = element.AdditionalStartTime ?? null,
+                            AdditionalEndTime = element.AdditionalEndTime ?? null,
+                            HasTravel = element.HasTravel,
+                            Status = WorkRecordStatus.Pending
                         };
 
                         recordsToAdd.Add(newRecord);
 
-                        // Expense'leri hazırla
-                        if (dto.WorkRecordExpenses?.Any() == true)
+                        if (element.WorkRecordExpenses?.Any() == true)
                         {
-                            foreach (var expense in dto.WorkRecordExpenses)
+                            foreach (var expense in element.WorkRecordExpenses)
                             {
                                 expense.WorkRecordId = newRecord.Id;
-                                if (expense.File != null)
-                                    expense.File.FileType = FileType.Expense;
                             }
-                            expensesToAddOrModify.AddRange(dto.WorkRecordExpenses);
+                            expensesToProcess.AddRange(element.WorkRecordExpenses);
                         }
                     }
                 }
 
-                // Hiçbir işlem yapılmadıysa
-                if (!recordsToModify.Any() && !recordsToAdd.Any())
+                if (recordsToUpdate.Any())
                 {
-                    await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("İşlem yapılacak kayıt bulunamadı.");
-                }
-
-                // WorkRecord işlemleri
-                if (recordsToModify.Any())
-                {
-                    unitOfWork.GetRepository<IdtWorkRecord>().UpdateRange(recordsToModify);
+                    unitOfWork.GetRepository<IdtWorkRecord>().UpdateRange(recordsToUpdate);
                 }
 
                 if (recordsToAdd.Any())
                 {
                     await unitOfWork.GetRepository<IdtWorkRecord>().AddRangeAsync(recordsToAdd, cancellationToken);
                 }
-
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                if (expensesToAddOrModify.Any())
+                if (expensesToProcess.Any())
                 {
-                    await workRecordExpenseService.BatchCreateOrModifyWorkRecordExpensesAsync(expensesToAddOrModify, cancellationToken);
+                    var expenseResult = await workRecordExpenseService.BatchCreateOrModifyWorkRecordExpensesAsync(expensesToProcess, cancellationToken);
+                    if (!expenseResult.IsSuccess)
+                    {
+                        await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                        return ApiResponse<IEnumerable<WorkRecordDTO>>.Error($"Puantaj masraf kayıtları işlenirken hata oluştu: {expenseResult.Message}");
+                    }
                 }
 
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                var totalModified = recordsToModify.Count;
-                var totalAdded = recordsToAdd.Count;
-
-                logger.LogInformation(
-                    "Toplu puantaj işlemi başarıyla tamamlandı. ModifiedCount: {ModifiedCount}, AddedCount: {AddedCount}, UserId: {UserId}",
-                    totalModified, totalAdded, userId);
+                var createdCount = recordsToAdd.Count;
+                var updatedCount = recordsToUpdate.Count;
 
                 // Son durumu getir
                 var finalRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
@@ -555,20 +533,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var mappedRecords = finalRecords.Adapt<IEnumerable<WorkRecordDTO>>();
 
                 // Bildirim gönder
-
                 var firstRecord = mappedRecords.First();
                 var notificationDTO = new CreateNotificationDTO
                 {
-                    Message = $"{firstRecord.CreatedByFullName} tarafından puantaj işlemi tamamlandı. {totalModified} güncellendi, {totalAdded} eklendi ({firstRecord.Date:MM/yyyy}).",
+                    Message = $"{firstRecord.CreatedByFullName} tarafından {firstRecord.Date:MM/yyyy} ayı için puantaj kayıt(lar)ı işlendi. {createdCount} kayıt eklendi, {updatedCount} kayıt güncellendi.",
                     Type = NotificationType.WorkRecord,
                     RedirectUrl = "/puantaj",
                     TargetUsers = await identityService.GetUserSuperiorsAsync(cancellationToken)
                 };
                 await notificationService.SendNotificationToSuperiorsAsync(notificationDTO, cancellationToken);
-
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(
-                    mappedRecords,
-                    $"Puantaj işlemi başarıyla tamamlandı. {totalModified} güncellendi, {totalAdded} eklendi.");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(mappedRecords, $"Puantaj kayıtları işlendi. {createdCount} kayıt eklendi, {updatedCount} kayıt güncellendi.");
             }
             catch (Exception ex)
             {
@@ -578,7 +552,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        private (bool, string?) CheckHoursIfValid(CreateModifyWorkRecordDTO dto)
+        private (bool, string?) CheckHoursIfValid(CreateOrModifyWorkRecordDTO dto)
         {
             if (dto.StartTime.HasValue && dto.EndTime.HasValue)
             {

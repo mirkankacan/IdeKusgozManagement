@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
 {
-    public class CreateWorkRecordViewModel
+    public class CreateOrModifyWorkRecordViewModel
     {
         [Required]
         public DateTime Date { get; set; }
@@ -35,6 +35,6 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         public bool HasNightMeal { get; set; } = false;
         public bool HasTravel { get; set; } = false;
 
-        public List<CreateModifyWorkRecordExpenseViewModel>? WorkRecordExpenses { get; set; } = new();
+        public List<CreateOrModifyWorkRecordExpenseViewModel>? WorkRecordExpenses { get; set; } = new();
     }
 }

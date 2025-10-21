@@ -57,7 +57,7 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchCreateWorkRecordsAsync(IEnumerable<CreateWorkRecordViewModel> createWorkRecordViewModels, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateOrModifyWorkRecordViewModel> createWorkRecordViewModels, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -111,6 +111,9 @@ namespace IdeKusgozManagement.WebUI.Services
                         for (int j = 0; j < record.WorkRecordExpenses.Count; j++)
                         {
                             var expense = record.WorkRecordExpenses[j];
+
+                            if (!string.IsNullOrEmpty(expense.Id))
+                                formData.Add(new StringContent(expense.Id), $"[{i}].WorkRecordExpenses[{j}].Id");
 
                             formData.Add(new StringContent(expense.ExpenseId), $"[{i}].WorkRecordExpenses[{j}].ExpenseId");
                             formData.Add(new StringContent(expense.Amount.ToString()), $"[{i}].WorkRecordExpenses[{j}].Amount");

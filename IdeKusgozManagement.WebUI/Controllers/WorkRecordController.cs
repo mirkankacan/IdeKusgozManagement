@@ -46,15 +46,15 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
-        [HttpPost("toplu-ekle")]
+        [HttpPost("toplu-ekle-guncelle")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateWorkRecord([FromForm] List<CreateWorkRecordViewModel> model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateOrModifyWorkRecord([FromForm] List<CreateOrModifyWorkRecordViewModel> model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var response = await _workRecordApiService.BatchCreateWorkRecordsAsync(model, cancellationToken);
+            var response = await _workRecordApiService.BatchCreateOrModifyWorkRecordsAsync(model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
