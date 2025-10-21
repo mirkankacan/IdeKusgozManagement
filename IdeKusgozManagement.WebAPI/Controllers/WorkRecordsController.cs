@@ -51,7 +51,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="createWorkRecordDTOs">Puantaj kaydı listesi</param>
         [HttpPost("batch-create-modify")]
-        public async Task<IActionResult> BatchCreateOrModifyWorkRecords([FromForm] List<CreateModifyWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchCreateOrModifyWorkRecords([FromForm] List<CreateOrModifyWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {

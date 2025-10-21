@@ -2,7 +2,7 @@
 
 namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
 {
-    public class CreateModifyWorkRecordDTO
+    public class CreateOrModifyWorkRecordDTO
     {
         public DateTime Date { get; set; }
         public string? ExcuseReason { get; set; }
@@ -19,6 +19,6 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public bool HasDinner { get; set; }
         public bool HasNightMeal { get; set; }
         public bool HasTravel { get; set; }
-        public List<CreateModifyWorkRecordExpenseDTO>? WorkRecordExpenses { get; set; }
+        public List<CreateOrModifyWorkRecordExpenseDTO>? WorkRecordExpenses { get; set; }
     }
 }

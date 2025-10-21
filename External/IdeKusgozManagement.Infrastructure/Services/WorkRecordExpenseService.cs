@@ -4,6 +4,7 @@ using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
+using IdeKusgozManagement.Domain.Enums;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -12,99 +13,118 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class WorkRecordExpenseService(IUnitOfWork unitOfWork, IFileService fileService, ILogger<WorkRecordExpenseService> logger, IIdentityService identityService) : IWorkRecordExpenseService
     {
-        public async Task<ApiResponse<IEnumerable<WorkRecordExpenseDTO>>> BatchCreateOrModifyWorkRecordExpensesAsync(IEnumerable<CreateModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordExpenseDTO>>> BatchCreateOrModifyWorkRecordExpensesAsync(IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
         {
             try
             {
                 var userId = identityService.GetUserId();
-                var workRecordIds = expenseDTOs.Select(x => x.WorkRecordId).Distinct().ToList();
 
+                var workRecordIds = expenseDTOs.Select(e => e.WorkRecordId).Distinct().ToList();
                 var existingExpenses = await unitOfWork.GetRepository<IdtWorkRecordExpense>()
                  .Where(x => workRecordIds.Contains(x.WorkRecordId) && x.CreatedBy == userId)
-                 .Include(x => x.File)
                  .ToListAsync(cancellationToken);
 
                 var expensesToCreate = new List<IdtWorkRecordExpense>();
-                var expensesToModify = new List<IdtWorkRecordExpense>();
-                var expensesToRemove = new List<IdtWorkRecordExpense>();
-                foreach (var dto in expenseDTOs)
+                var expensesToUpdate = new List<IdtWorkRecordExpense>();
+                var expensesToDelete = new List<IdtWorkRecordExpense>();
+                var filesToDelete = new List<string>();
+
+                // UI'dan gelen expense ID'leri (sadece ID'si olan kayıtlar)
+                var incomingExpenseIds = expenseDTOs
+                    .Where(e => !string.IsNullOrEmpty(e.Id))
+                    .Select(e => e.Id)
+                    .ToHashSet();
+
+                // Silinmesi gereken expense'leri bul
+                // Veritabanında var ama UI'dan gelen listede yok
+                expensesToDelete = existingExpenses
+                    .Where(existing => !incomingExpenseIds.Contains(existing.Id))
+                    .ToList();
+
+                // Silinecek expense'lerin dosyalarını topla
+                filesToDelete.AddRange(expensesToDelete
+                    .Where(e => !string.IsNullOrEmpty(e.FileId))
+                    .Select(e => e.FileId!)
+                    .ToList());
+
+                foreach (var element in expenseDTOs)
                 {
-                    var existingRecord = existingExpenses.FirstOrDefault(x => x.WorkRecordId == dto.WorkRecordId);
+                    IdtWorkRecordExpense? existingExpense = null;
 
-                    if (existingRecord != null)
+                    if (!string.IsNullOrEmpty(element.Id))
                     {
-                        // ========== GÜNCELLEME ==========
-                        if (string.IsNullOrEmpty(dto.ExpenseId) && dto.Amount <= 0)
-                        {
-                            var removeDTO = dto.Adapt<IdtWorkRecordExpense>();
-                            expensesToRemove.Add(removeDTO);
-                        }
-                        existingRecord.ExpenseId = dto.ExpenseId;
-                        existingRecord.Description = dto.Description ?? null;
-                        existingRecord.Amount = dto.Amount;
+                        existingExpense = existingExpenses.FirstOrDefault(x => x.WorkRecordId == element.WorkRecordId && x.Id == element.Id && x.CreatedBy == userId);
+                    }
 
-                        string fileId = existingRecord.FileId; // Mevcut dosyayı koru
+                    // ========== VAROLAN GÜNCELLEME ==========
+                    if (existingExpense is not null)
+                    {
+                        existingExpense.ExpenseId = element.ExpenseId;
+                        existingExpense.Amount = element.Amount;
+                        existingExpense.Description = element.Description ?? null;
 
-                        // Yeni dosya varsa
-                        if (dto.File != null && dto.File.FormFile != null && dto.File.FormFile.Length > 0)
+                        if (element.File != null && element.File.FormFile != null)
                         {
-                            // Eski dosyayı sil
-                            if (!string.IsNullOrEmpty(existingRecord.FileId))
-                            {
-                                await fileService.DeleteFileAsync(existingRecord.FileId, cancellationToken);
-                            }
+                            string? oldFileId = existingExpense.FileId ?? null;
 
                             // Yeni dosyayı yükle
-                            dto.File.TargetUserId = userId;
-                            var fileResult = await fileService.UploadFileAsync(dto.File, cancellationToken);
-                            if (!fileResult.IsSuccess)
-                            {
-                                throw new Exception($"Dosya yüklenirken hata oluştu: {fileResult.Message}");
-                            }
-                            fileId = fileResult.Data.Id;
-                        }
+                            element.File.TargetUserId = userId;
+                            element.File.FileType = FileType.Expense;
+                            var fileUploadServiceResult = await fileService.UploadFileAsync(element.File, cancellationToken);
 
-                        existingRecord.FileId = fileId;
-                        expensesToModify.Add(existingRecord);
+                            if (!fileUploadServiceResult.IsSuccess)
+                                throw new InvalidOperationException(message: $"Dosya yüklenirken hata oluştu: {fileUploadServiceResult.Message}");
+
+                            existingExpense.FileId = fileUploadServiceResult.Data.Id;
+
+                            // Eski dosyayı sil (yeni dosya başarıyla yüklendikten sonra)
+                            if (!string.IsNullOrEmpty(oldFileId))
+                            {
+                                filesToDelete.Add(oldFileId);
+                            }
+                        }
+                        expensesToUpdate.Add(existingExpense);
                     }
+                    // ========== YENİ KAYIT ==========
                     else
                     {
-                        // ========== YENİ KAYIT ==========
-                        string fileId = null;
+                        string? fileId = null;
 
-                        if (dto.File != null && dto.File.FormFile != null && dto.File.FormFile.Length > 0)
+                        if (element.File != null && element.File.FormFile != null)
                         {
-                            dto.File.TargetUserId = userId;
-                            var fileResult = await fileService.UploadFileAsync(dto.File, cancellationToken);
-                            if (!fileResult.IsSuccess)
-                            {
-                                throw new Exception($"Dosya yüklenirken hata oluştu: {fileResult.Message}");
-                            }
-                            fileId = fileResult.Data.Id;
+                            element.File.TargetUserId = userId;
+                            element.File.FileType = FileType.Expense;
+                            var fileUploadResult = await fileService.UploadFileAsync(element.File, cancellationToken);
+
+                            if (!fileUploadResult.IsSuccess)
+                                throw new InvalidOperationException($"Dosya yüklenirken hata oluştu: {fileUploadResult.Message}");
+
+                            fileId = fileUploadResult.Data.Id;
                         }
 
-                        var newRecord = new IdtWorkRecordExpense
+                        var newExpense = new IdtWorkRecordExpense
                         {
-                            WorkRecordId = dto.WorkRecordId,
-                            ExpenseId = dto.ExpenseId,
-                            Description = dto.Description ?? null,
-                            Amount = dto.Amount,
+                            WorkRecordId = element.WorkRecordId!,
+                            ExpenseId = element.ExpenseId,
+                            Description = element.Description ?? null,
+                            Amount = element.Amount,
                             FileId = fileId
                         };
-                        expensesToCreate.Add(newRecord);
+                        expensesToCreate.Add(newExpense);
                     }
                 }
 
-                // Veritabanı işlemleri
+                // Database işlemleri
+                if (expensesToDelete.Any())
+                {
+                    unitOfWork.GetRepository<IdtWorkRecordExpense>().RemoveRange(expensesToDelete);
+                }
 
-                if (expensesToRemove.Any())
+                if (expensesToUpdate.Any())
                 {
-                    unitOfWork.GetRepository<IdtWorkRecordExpense>().RemoveRange(expensesToRemove);
+                    unitOfWork.GetRepository<IdtWorkRecordExpense>().UpdateRange(expensesToUpdate);
                 }
-                if (expensesToModify.Any())
-                {
-                    unitOfWork.GetRepository<IdtWorkRecordExpense>().UpdateRange(expensesToModify);
-                }
+
                 if (expensesToCreate.Any())
                 {
                     await unitOfWork.GetRepository<IdtWorkRecordExpense>().AddRangeAsync(expensesToCreate, cancellationToken);
@@ -112,18 +132,29 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                // Tüm işlem yapılan kayıtları döndür
-                var allProcessedExpenses = new List<IdtWorkRecordExpense>();
-                allProcessedExpenses.AddRange(expensesToModify);
-                allProcessedExpenses.AddRange(expensesToCreate);
+                // Dosya silme işlemleri (database işlemleri başarılı olduktan sonra)
+                foreach (var fileId in filesToDelete.Distinct())
+                {
+                    var fileDeleteResult = await fileService.DeleteFileAsync(fileId, cancellationToken);
+                    if (!fileDeleteResult.IsSuccess)
+                    {
+                        logger.LogWarning("Dosya silinirken hata oluştu. FileId: {FileId}, Error: {Error}",
+                            fileId, fileDeleteResult.Message);
+                    }
+                }
 
-                var mappedExpenses = allProcessedExpenses.Adapt<IEnumerable<WorkRecordExpenseDTO>>();
+                var allExpenses = expensesToCreate.Concat(expensesToUpdate);
+                var mappedExpenses = allExpenses.Adapt<IEnumerable<WorkRecordExpenseDTO>>();
 
-                logger.LogInformation("Masraf kayıtları işlendi. ModifiedCount: {ModifiedCount}, AddedCount: {AddedCount}, UserId: {UserId}",
-                    expensesToModify.Count, expensesToCreate.Count, userId);
+                var updatedCount = expensesToUpdate.Count;
+                var createdCount = expensesToCreate.Count;
+                var deletedCount = expensesToDelete.Count;
+
+                logger.LogInformation("Puantaj masraf kayıtları işlendi. CreatedCount: {CreatedCount}, UpdatedCount: {UpdatedCount}, DeletedCount: {DeletedCount}, UserId: {UserId}",
+                    createdCount, updatedCount, deletedCount, userId);
 
                 return ApiResponse<IEnumerable<WorkRecordExpenseDTO>>.Success(mappedExpenses,
-                    $"Masraf kayıtları işlendi. {expensesToModify.Count} güncellendi, {expensesToCreate.Count} eklendi.");
+                    $"Puantaj masraf kayıtları işlendi. {createdCount} eklendi, {updatedCount} güncellendi, {deletedCount} silindi.");
             }
             catch (Exception ex)
             {
