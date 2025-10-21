@@ -12,5 +12,6 @@ namespace IdeKusgozManagement.Domain.Entities
         public FileType Type { get; set; }
         public virtual ICollection<IdtWorkRecordExpense> WorkRecordExpenses { get; set; } = new List<IdtWorkRecordExpense>();
         public virtual ICollection<IdtLeaveRequest> LeaveRequests { get; set; } = new List<IdtLeaveRequest>();
+        public virtual ICollection<IdtTrafficTicket> TrafficTickets { get; set; } = new List<IdtTrafficTicket>();
     }
 }

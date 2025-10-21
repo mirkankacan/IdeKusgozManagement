@@ -2,7 +2,7 @@
 {
     public enum TrafficTicketType
     {
-        Personal = 1,
+        Employee = 1,
         Company = 2
     }
 }

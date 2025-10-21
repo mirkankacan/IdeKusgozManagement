@@ -66,6 +66,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasDefaultValue(false);
 
+            builder.Property(x => x.RejectReason)
+                .HasMaxLength(350)
+                .IsRequired(false);
             builder.Property(x => x.Status)
                 .IsRequired()
                 .HasDefaultValue(WorkRecordStatus.Pending)

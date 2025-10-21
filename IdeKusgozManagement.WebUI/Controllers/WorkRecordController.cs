@@ -61,13 +61,13 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPut("toplu-reddet/kullanici/{userId}/tarih/{date}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BatchRejectWorkRecordsByUserId(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchRejectWorkRecordsByUserId(string userId, DateTime date, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
                 return BadRequest("Kullanıcı ID'si boş geçilemez");
             }
-            var response = await _workRecordApiService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
+            var response = await _workRecordApiService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, rejectReason, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
@@ -110,16 +110,17 @@ namespace IdeKusgozManagement.WebUI.Controllers
             var response = await _workRecordApiService.ApproveWorkRecordByIdAsync(workRecordId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPut("reddet/{workRecordId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RejectById(string workRecordId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RejectById(string workRecordId, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(workRecordId))
             {
                 return BadRequest("Puantaj ID'si boş geçilemez");
             }
-            var response = await _workRecordApiService.RejectWorkRecordByIdAsync(workRecordId, cancellationToken);
+            var response = await _workRecordApiService.RejectWorkRecordByIdAsync(workRecordId, rejectReason, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
     }

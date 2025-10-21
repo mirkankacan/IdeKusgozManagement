@@ -1,15 +1,13 @@
-﻿using IdeKusgozManagement.Domain.Enums;
-
-namespace IdeKusgozManagement.Application.DTOs.TrafficTicketDTOs
+﻿namespace IdeKusgozManagement.WebUI.Models.TrafficTicketModels
 {
-    public class TrafficTicketDTO
+    public class TrafficTicketViewModel
     {
         public string Id { get; set; }
         public string ProjectId { get; set; }
         public string ProjectName { get; set; }
         public string EquipmentId { get; set; }
         public string EquipmentName { get; set; }
-        public TrafficTicketType Type { get; set; }
+        public int Type { get; set; }
         public decimal Amount { get; set; }
 
         public string CreatedBy { get; set; }

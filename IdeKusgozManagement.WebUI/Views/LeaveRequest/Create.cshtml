@@ -16,6 +16,10 @@
             .fa-calendar:hover {
                 color: #007bff;
             }
+
+        a {
+            margin-left: 20px;
+        }
     </style>
 }
 @Html.AntiForgeryToken()
@@ -43,6 +47,7 @@
                                 <th>NET<br /> SÜRE</th>
                                 <th>TALEP<br />NEDENİ</th>
                                 <th>DURUM</th>
+                                <th>DÖKÜMAN</th>
                                 <th>OLUŞTURMA<br /> TARİHİ</th>
                                 <th>DURUM<br />DEĞİŞTİRİLME<br /> TARİHİ</th>
                                 <th>İŞLEMLER</th>
@@ -112,7 +117,12 @@
                         <div class="col-md-12">
                             <label for="file-document" class="form-label">Döküman (İsteğe Bağlı)</label>
                             <input class="form-control" type="file" id="file-document"
-                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" required>
+                            <div class="form-text">
+                                Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX
+                            </div>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Lütfen geçerli bir dosya seçiniz.</div>
                         </div>
                     </div>
                 </div>
@@ -261,6 +271,16 @@
                             } else {
                                 return `<span class="badge bg-secondary">${data}</span>`;
                             }
+                        }
+                    },
+                     {
+                        "data": "fileId",
+                        "render": function (data, type, row) {
+                            return `<a href="/dosya/indir/${data}"
+                                                           download
+                                                           class="text-muted text-decoration-underline">
+                                                            <i class="fas fa-file fa-lg"></i>
+                                                        </a>`;
                         }
                     },
                     {

@@ -119,7 +119,7 @@ namespace IdeKusgozManagement.WebUI.Services
                                 formData.Add(new StringContent(expense.Description), $"[{i}].WorkRecordExpenses[{j}].Description");
 
                             // Dosya varsa ekle
-                            if (expense.File != null)
+                            if (expense.File != null && expense.File.FormFile.Length > 0)
                             {
                                 var fileContent = new StreamContent(expense.File.FormFile.OpenReadStream());
                                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(expense.File.FormFile.ContentType);
@@ -194,11 +194,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, string? rejectReason, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/workrecords/batch-reject/user/{userId}/date/{date:yyyy-MM-dd}", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/workrecords/batch-reject/user/{userId}/date/{date:yyyy-MM-dd}?rejectReason={Uri.EscapeDataString(rejectReason)}", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -236,11 +236,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<WorkRecordViewModel>> RejectWorkRecordByIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<WorkRecordViewModel>> RejectWorkRecordByIdAsync(string userId, string? rejectReason, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/workrecords/{userId}/reject", null, cancellationToken);
+                var response = await _httpClient.PutAsync($"api/workrecords/{userId}/reject?rejectReason={Uri.EscapeDataString(rejectReason)}", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

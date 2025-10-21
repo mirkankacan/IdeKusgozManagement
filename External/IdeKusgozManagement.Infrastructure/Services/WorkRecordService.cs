@@ -222,7 +222,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, string? rejectReason, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -247,6 +247,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         continue;
                     }
                     workRecord.Status = WorkRecordStatus.Rejected;
+                    workRecord.RejectReason = rejectReason ?? null;
                 }
 
                 unitOfWork.GetRepository<IdtWorkRecord>().UpdateRange(workRecords);
@@ -335,7 +336,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<WorkRecordDTO>> RejectWorkRecordByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<WorkRecordDTO>> RejectWorkRecordByIdAsync(string id, string? rejectReason, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -352,7 +353,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ApiResponse<WorkRecordDTO>.Error(message: "Puantaj kaydı zaten daha önceden reddedilmiş");
                 }
                 workRecord.Status = WorkRecordStatus.Rejected;
-
+                workRecord.RejectReason = rejectReason ?? null;
                 unitOfWork.GetRepository<IdtWorkRecord>().Update(workRecord);
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -393,7 +394,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<WorkRecordDTO>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateModifyWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
         {
             var userId = identityService.GetUserId();
 
@@ -408,32 +409,32 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var dates = createWorkRecordDTOs.Select(x => x.Date.Date).Distinct().ToList();
 
+                // Mevcut kayıtları çek
                 var existingWorkRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
                     .Where(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
                     .Include(x => x.WorkRecordExpenses)
-                    .ThenInclude(x => x.File)
+                        .ThenInclude(x => x.File)
                     .ToListAsync(cancellationToken);
 
-                var recordsToUpdate = new List<IdtWorkRecord>();
+                var recordsToModify = new List<IdtWorkRecord>();
                 var recordsToAdd = new List<IdtWorkRecord>();
-                var expensesToAdd = new List<CreateWorkRecordExpenseDTO>();
-                var expensesToDelete = new List<string>();
+                var expensesToAddOrModify = new List<CreateModifyWorkRecordExpenseDTO>();
 
                 foreach (var dto in createWorkRecordDTOs)
                 {
-                    // Saat kontrolü - nullable için
+                    // Saat kontrolü
                     var check = CheckHoursIfValid(dto);
                     if (!check.Item1)
                         return ApiResponse<IEnumerable<WorkRecordDTO>>.Error(check.Item2);
 
-                    var existingRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == dto.Date.Date);
-
-                    // Onaylanmış kayıtları atla
-                    if (existingRecord?.Status == WorkRecordStatus.Approved)
-                        continue;
+                    IdtWorkRecord? existingRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == dto.Date.Date);
 
                     if (existingRecord != null)
                     {
+                        // Onaylanmış kayıtları atla
+                        if (existingRecord.Status == WorkRecordStatus.Approved)
+                            continue;
+
                         // ========== GÜNCELLEME ==========
                         existingRecord.ExcuseReason = dto.ExcuseReason;
                         existingRecord.StartTime = dto.StartTime;
@@ -451,15 +452,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         existingRecord.HasTravel = dto.HasTravel;
                         existingRecord.Status = WorkRecordStatus.Pending;
 
-                        recordsToUpdate.Add(existingRecord);
+                        recordsToModify.Add(existingRecord);
 
-                        // Eski expense'leri sil
-                        if (existingRecord.WorkRecordExpenses?.Any() == true)
-                        {
-                            expensesToDelete.AddRange(existingRecord.WorkRecordExpenses.Select(e => e.Id));
-                        }
-
-                        // Yeni expense'leri ekle
+                        // Expense'leri güncelle
                         if (dto.WorkRecordExpenses?.Any() == true)
                         {
                             foreach (var expense in dto.WorkRecordExpenses)
@@ -468,7 +463,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                                 if (expense.File != null)
                                     expense.File.FileType = FileType.Expense;
                             }
-                            expensesToAdd.AddRange(dto.WorkRecordExpenses);
+                            expensesToAddOrModify.AddRange(dto.WorkRecordExpenses);
                         }
                     }
                     else
@@ -496,6 +491,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                         recordsToAdd.Add(newRecord);
 
+                        // Expense'leri hazırla
                         if (dto.WorkRecordExpenses?.Any() == true)
                         {
                             foreach (var expense in dto.WorkRecordExpenses)
@@ -504,22 +500,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
                                 if (expense.File != null)
                                     expense.File.FileType = FileType.Expense;
                             }
-                            expensesToAdd.AddRange(dto.WorkRecordExpenses);
+                            expensesToAddOrModify.AddRange(dto.WorkRecordExpenses);
                         }
                     }
                 }
 
-                // Eğer hiçbir işlem yapılmadıysa (tüm kayıtlar onaylı)
-                if (!recordsToUpdate.Any() && !recordsToAdd.Any())
+                // Hiçbir işlem yapılmadıysa
+                if (!recordsToModify.Any() && !recordsToAdd.Any())
                 {
                     await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Seçilen tarihlerdeki tüm kayıtlar onaylanmış durumda. İşlem yapılamadı.");
+                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("İşlem yapılacak kayıt bulunamadı.");
                 }
 
                 // WorkRecord işlemleri
-                if (recordsToUpdate.Any())
+                if (recordsToModify.Any())
                 {
-                    unitOfWork.GetRepository<IdtWorkRecord>().UpdateRange(recordsToUpdate);
+                    unitOfWork.GetRepository<IdtWorkRecord>().UpdateRange(recordsToModify);
                 }
 
                 if (recordsToAdd.Any())
@@ -527,28 +523,24 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     await unitOfWork.GetRepository<IdtWorkRecord>().AddRangeAsync(recordsToAdd, cancellationToken);
                 }
 
-                if (expensesToDelete.Any())
-                {
-                    await workRecordExpenseService.BatchDeleteWorkRecordExpensesAsync(expensesToDelete, cancellationToken);
-                }
-
-                if (expensesToAdd.Any())
-                {
-                    await workRecordExpenseService.BatchCreateWorkRecordExpensesAsync(expensesToAdd, cancellationToken);
-                }
-
                 await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                if (expensesToAddOrModify.Any())
+                {
+                    await workRecordExpenseService.BatchCreateOrModifyWorkRecordExpensesAsync(expensesToAddOrModify, cancellationToken);
+                }
+
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                var updatedCount = recordsToUpdate.Count;
-                var addedCount = recordsToAdd.Count;
+                var totalModified = recordsToModify.Count;
+                var totalAdded = recordsToAdd.Count;
 
                 logger.LogInformation(
-                    "Toplu puantaj kaydı işlemi başarıyla tamamlandı. UpdatedCount: {UpdatedCount}, AddedCount: {AddedCount}, UserId: {UserId}",
-                    updatedCount, addedCount, userId);
+                    "Toplu puantaj işlemi başarıyla tamamlandı. ModifiedCount: {ModifiedCount}, AddedCount: {AddedCount}, UserId: {UserId}",
+                    totalModified, totalAdded, userId);
 
-                // Bildirim gönder
-                var createdRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
+                // Son durumu getir
+                var finalRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
                    .WhereAsNoTracking(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
                    .Include(x => x.Equipment)
                    .Include(x => x.Project)
@@ -560,21 +552,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                        .ThenInclude(x => x.File)
                    .ToListAsync(cancellationToken);
 
-                var mappedCreatedRecords = createdRecords.Adapt<IEnumerable<WorkRecordDTO>>();
+                var mappedRecords = finalRecords.Adapt<IEnumerable<WorkRecordDTO>>();
 
-                if (!mappedCreatedRecords.Any())
-                {
-                    // Bu durumda rollback'e gerek yok, zaten commit edildi
-                    logger.LogWarning("İşlem başarılı ama döndürülecek kayıt bulunamadı. UserId: {UserId}", userId);
-                    return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(
-                        Enumerable.Empty<WorkRecordDTO>(),
-                        $"Toplu puantaj kayıtları başarıyla işlendi. {updatedCount} kayıt güncellendi, {addedCount} yeni kayıt eklendi.");
-                }
+                // Bildirim gönder
 
-                var firstRecord = mappedCreatedRecords.First();
+                var firstRecord = mappedRecords.First();
                 var notificationDTO = new CreateNotificationDTO
                 {
-                    Message = $"{firstRecord.CreatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için toplu puantaj kayıtları başarıyla işlendi. {updatedCount} kayıt güncellendi, {addedCount} yeni kayıt eklendi.",
+                    Message = $"{firstRecord.CreatedByFullName} tarafından puantaj işlemi tamamlandı. {totalModified} güncellendi, {totalAdded} eklendi ({firstRecord.Date:MM/yyyy}).",
                     Type = NotificationType.WorkRecord,
                     RedirectUrl = "/puantaj",
                     TargetUsers = await identityService.GetUserSuperiorsAsync(cancellationToken)
@@ -582,18 +567,18 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await notificationService.SendNotificationToSuperiorsAsync(notificationDTO, cancellationToken);
 
                 return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(
-                    mappedCreatedRecords,
-                    $"Toplu puantaj kayıtları başarıyla işlendi. {updatedCount} kayıt güncellendi, {addedCount} yeni kayıt eklendi.");
+                    mappedRecords,
+                    $"Puantaj işlemi başarıyla tamamlandı. {totalModified} güncellendi, {totalAdded} eklendi.");
             }
             catch (Exception ex)
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "BatchCreateOrModifyWorkRecordsAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu puantaj kayıtları işlenirken hata oluştu");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Error("Puantaj kayıtları işlenirken hata oluştu");
             }
         }
 
-        private (bool, string?) CheckHoursIfValid(CreateWorkRecordDTO dto)
+        private (bool, string?) CheckHoursIfValid(CreateModifyWorkRecordDTO dto)
         {
             if (dto.StartTime.HasValue && dto.EndTime.HasValue)
             {

@@ -14,8 +14,10 @@ namespace IdeKusgozManagement.Application.Mappings
                             .Map(dest => dest.FilePath, src => src.File != null ? src.File.Path : null)
                             .Map(dest => dest.OriginalFileName, src => src.File != null ? src.File.OriginalName : null);
 
-            config.NewConfig<CreateWorkRecordExpenseDTO, IdtWorkRecordExpense>()
+            config.NewConfig<CreateModifyWorkRecordExpenseDTO, IdtWorkRecordExpense>()
               .Ignore(x => x.File);
+            config.NewConfig<UpdateWorkRecordExpenseDTO, IdtWorkRecordExpense>()
+           .Ignore(x => x.File);
         }
     }
 }

@@ -74,6 +74,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
+
                 // Tarih kontrolü
                 if (createLeaveRequestDTO.StartDate >= createLeaveRequestDTO.EndDate)
                 {
@@ -98,11 +99,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (createLeaveRequestDTO.File != null && createLeaveRequestDTO.File.FormFile.Length > 0)
                 {
+                    createLeaveRequestDTO.File.TargetUserId = identityService.GetUserId();
                     createLeaveRequestDTO.File.FileType = FileType.LeaveRequest;
                     var fileResult = await fileService.UploadFileAsync(createLeaveRequestDTO.File, cancellationToken);
 
                     if (!fileResult.IsSuccess)
                     {
+                        await unitOfWork.RollbackTransactionAsync(cancellationToken);
+
                         return ApiResponse<LeaveRequestDTO>.Error(fileResult.Message);
                     }
 
@@ -157,14 +161,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     return ApiResponse<bool>.Error("Sadece beklemede olan izin talepleri silinebilir");
                 }
+                await unitOfWork.BeginTransactionAsync(cancellationToken);
+
+                if (!string.IsNullOrEmpty(leaveRequest.FileId))
+                    await fileService.DeleteFileAsync(leaveRequest.FileId, cancellationToken);
 
                 unitOfWork.GetRepository<IdtLeaveRequest>().Remove(leaveRequest);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
-
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
                 return ApiResponse<bool>.Success(true, "İzin talebi başarıyla silindi");
             }
             catch (Exception ex)
             {
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "DeleteLeaveRequestAsync işleminde hata oluştu");
                 return ApiResponse<bool>.Error("İzin talebi silinirken hata oluştu");
             }

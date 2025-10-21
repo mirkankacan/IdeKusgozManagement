@@ -206,6 +206,9 @@
                     <li class="@(Context.Request.Path == "/kullanici" ? "active-page" : "")">
                         <a href="/kullanici"><i data-feather="users"></i>Kullanıcılar</a>
                     </li>
+                     <li class="@(Context.Request.Path == "/trafik-ceza" ? "active-page" : "")">
+                        <a href="/trafik-ceza"><i data-feather="alert-octagon"></i>Trafik Cezaları</a>
+                    </li>
 
                 }
                 @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || User.IsInRole("Şef"))

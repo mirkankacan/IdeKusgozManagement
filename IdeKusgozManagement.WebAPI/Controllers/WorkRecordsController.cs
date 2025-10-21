@@ -51,7 +51,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="createWorkRecordDTOs">Puantaj kaydı listesi</param>
         [HttpPost("batch-create-modify")]
-        public async Task<IActionResult> BatchCreateOrModifyWorkRecords([FromForm] List<CreateWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchCreateOrModifyWorkRecords([FromForm] List<CreateModifyWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
             {
@@ -127,13 +127,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="date">Tarih</param>
         [HttpPut("batch-reject/user/{userId}/date/{date:datetime}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> BatchRejectWorkRecordByUserAndDate(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchRejectWorkRecordByUserAndDate(string userId, DateTime date, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(userId))
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await workRecordService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
+            var result = await workRecordService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, rejectReason, cancellationToken);
             if (!result.IsSuccess)
             {
                 return BadRequest(result);
@@ -148,13 +148,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="id">Puantaj ID'si</param>
         [HttpPut("{id}/reject")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> RejectWorkRecordById(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RejectWorkRecordById(string id, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(id))
             {
                 return BadRequest("Puantaj ID'si gereklidir");
             }
-            var result = await workRecordService.RejectWorkRecordByIdAsync(id, cancellationToken);
+            var result = await workRecordService.RejectWorkRecordByIdAsync(id, rejectReason, cancellationToken);
             if (!result.IsSuccess)
             {
                 return BadRequest(result);
