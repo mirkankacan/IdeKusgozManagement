@@ -42,6 +42,7 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<IAdvanceService, AdvanceService>();
             services.AddScoped<ITrafficTicketService, TrafficTicketService>();
+            services.AddScoped<IHolidayService, HolidayService>();
 
             services.ConfigureOptions<JwtOptionsSetup>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();

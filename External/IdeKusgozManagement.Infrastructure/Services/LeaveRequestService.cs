@@ -1,23 +1,18 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
-using IdeKusgozManagement.Application.DTOs.HolidayDTOs;
 using IdeKusgozManagement.Application.DTOs.LeaveRequestDTOs;
 using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
-using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Domain.Enums;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class LeaveRequestService(IUnitOfWork unitOfWork, IMemoryCache memoryCache, IOptions<HolidayApiOptionsDTO> holidayApiOptions, ILogger<LeaveRequestService> logger, IFileService fileService, INotificationService notificationService, IIdentityService identityService) : ILeaveRequestService
+    public class LeaveRequestService(IUnitOfWork unitOfWork, ILogger<LeaveRequestService> logger, IFileService fileService, INotificationService notificationService, IIdentityService identityService, IHolidayService holidayService) : ILeaveRequestService
     {
         public async Task<ApiResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsAsync(CancellationToken cancellationToken = default)
         {
@@ -74,7 +69,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-
                 // Tarih kontrolü
                 if (createLeaveRequestDTO.StartDate >= createLeaveRequestDTO.EndDate)
                 {
@@ -91,7 +85,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var leaveRequest = createLeaveRequestDTO.Adapt<IdtLeaveRequest>();
                 leaveRequest.Status = LeaveRequestStatus.Pending; // Yeni talepler beklemede başlar
 
-                var workingDays = await CalculateWorkingDaysAsync(
+                var workingDays = await holidayService.CalculateWorkingDaysAsync(
                           createLeaveRequestDTO.StartDate.Date,
                           createLeaveRequestDTO.EndDate.Date);
 
@@ -184,8 +178,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 var leaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>().GetByIdAsync(leaveRequestId, cancellationToken);
-
-
 
                 if (leaveRequest == null)
                 {
@@ -297,7 +289,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-
                 var baseQuery = unitOfWork.GetRepository<IdtLeaveRequest>().WhereAsNoTracking(x => x.Status == status);
 
                 if (!string.IsNullOrEmpty(userId))
@@ -320,108 +311,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 logger.LogError(ex, "GetLeaveRequestByStatus işleminde hata oluştu");
                 return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error("Duruma göre izin talepleri getirilirken hata oluştu");
-            }
-        }
-
-        private async Task<List<HolidayDTO>> GetHolidaysByYearAsync(int year)
-        {
-            try
-            {
-                if (memoryCache.TryGetValue($"holidays_{year}", out List<HolidayDTO> cachedHolidays))
-                {
-                    return cachedHolidays;
-                }
-
-                using var httpClient = new HttpClient();
-                var requestUrl = $"{holidayApiOptions.Value.BaseUrl}/holidays?api_key={holidayApiOptions.Value.ApiKey}&country={holidayApiOptions.Value.Country}&year={year}";
-
-                var response = await httpClient.GetAsync(requestUrl);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var holidayResponse = JsonSerializer.Deserialize<HolidayApiResponseDTO>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    var holidays = holidayResponse?.Response?.Holidays ?? new List<HolidayDTO>();
-
-                    // Cache'e koy (süre yıl sonuna kadar)
-                    var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
-                    memoryCache.Set($"holidays_{year}", holidays, yearEnd);
-
-                    return holidays;
-                }
-
-                logger.LogWarning($"Holiday API çağrısı başarısız. Status: {response.StatusCode}, Year: {year}");
-                return new List<HolidayDTO>();
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, $"GetHolidaysByYearAsync işleminde hata oluştu");
-                return new List<HolidayDTO>();
-            }
-        }
-
-        private async Task<double> CalculateWorkingDaysAsync(DateTime startDate, DateTime endDate)
-        {
-            try
-            {
-                // Bayram listesini al
-                var holidays = await GetHolidaysByYearAsync(startDate.Year);
-
-                // Eğer tarihler farklı yıllara yayılıyorsa, her iki yılın bayramlarını al
-                if (startDate.Year != endDate.Year)
-                {
-                    var nextYearHolidays = await GetHolidaysByYearAsync(endDate.Year);
-                    holidays.AddRange(nextYearHolidays);
-                }
-
-                // Milli ve dini bayramları ayır
-                var nationalHolidays = holidays
-                    .Where(h => h.PrimaryType.Contains("National holiday")
-                             || h.PrimaryType.Contains("Holiday for Public Servants"))
-                    .Select(h => new DateTime(h.Date.Datetime.Year, h.Date.Datetime.Month, h.Date.Datetime.Day)).ToHashSet();
-
-                var halfDayHolidays = holidays
-                    .Where(h => h.PrimaryType.Contains("Half Day"))
-                    .Select(h => new DateTime(h.Date.Datetime.Year, h.Date.Datetime.Month, h.Date.Datetime.Day)).ToHashSet();
-
-                double workingDays = 0;
-                var currentDate = startDate;
-
-                while (currentDate <= endDate.Date)
-                {
-                    bool isWeekend = currentDate.DayOfWeek == DayOfWeek.Saturday ||
-                                     currentDate.DayOfWeek == DayOfWeek.Sunday;
-
-                    if (!isWeekend)
-                    {
-                        if (nationalHolidays.Contains(currentDate))
-                        {
-                            // Tam tatil → 0 gün ekle
-                        }
-                        else if (halfDayHolidays.Contains(currentDate))
-                        {
-                            workingDays += 0.5; // Yarım gün
-                        }
-                        else
-                        {
-                            workingDays += 1; // Normal iş günü
-                        }
-                    }
-
-                    currentDate = currentDate.AddDays(1);
-                }
-
-                return workingDays;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "CalculateWorkingDaysAsync işleminde hata oluştu");
-                // Hata durumunda basit hesaplama yap
-                return (endDate - startDate).Days + 1;
             }
         }
     }

@@ -83,7 +83,12 @@ builder.Services.AddHttpClient<IMessageApiService, MessageApiService>(client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<JwtTokenHandler>();
-
+builder.Services.AddHttpClient<IHolidayApiService, HolidayApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<JwtTokenHandler>();
 builder.Services.AddHttpClient<ILeaveRequestApiService, LeaveRequestApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
