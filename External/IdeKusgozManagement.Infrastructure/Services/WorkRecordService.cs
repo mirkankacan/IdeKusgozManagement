@@ -488,7 +488,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             existingRecord.HasNightMeal = element.HasNightMeal;
             existingRecord.AdditionalStartTime = element.AdditionalStartTime ?? null;
             existingRecord.AdditionalEndTime = element.AdditionalEndTime ?? null;
-            existingRecord.HasTravel = element.HasTravel;
+            existingRecord.TravelExpenseAmount = element.TravelExpenseAmount;
             existingRecord.Status = WorkRecordStatus.Pending;
         }
 
@@ -537,7 +537,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 HasNightMeal = element.HasNightMeal,
                 AdditionalStartTime = element.AdditionalStartTime ?? null,
                 AdditionalEndTime = element.AdditionalEndTime ?? null,
-                HasTravel = element.HasTravel,
+                TravelExpenseAmount = element.TravelExpenseAmount ?? null,
                 Status = WorkRecordStatus.Pending
             };
         }
@@ -573,7 +573,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                    existing.HasNightMeal != incoming.HasNightMeal ||
                    existing.AdditionalStartTime != (incoming.AdditionalStartTime ?? null) ||
                    existing.AdditionalEndTime != (incoming.AdditionalEndTime ?? null) ||
-                   existing.HasTravel != incoming.HasTravel;
+                   existing.TravelExpenseAmount != (incoming.TravelExpenseAmount ?? null);
         }
 
         private (bool, string?) CheckHoursIfValid(CreateOrModifyWorkRecordDTO dto)

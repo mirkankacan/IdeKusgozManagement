@@ -18,7 +18,7 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public bool HasLunch { get; set; }
         public bool HasDinner { get; set; }
         public bool HasNightMeal { get; set; }
-        public bool HasTravel { get; set; }
+        public string? TravelExpenseAmount { get; set; }
         public List<CreateOrModifyWorkRecordExpenseDTO>? WorkRecordExpenses { get; set; }
     }
 }

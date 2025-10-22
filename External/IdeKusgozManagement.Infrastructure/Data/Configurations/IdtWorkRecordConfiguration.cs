@@ -62,9 +62,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasDefaultValue(false);
 
-            builder.Property(x => x.HasTravel)
-                .IsRequired()
-                .HasDefaultValue(false);
+            builder.Property(x => x.TravelExpenseAmount)
+                .IsRequired(false)
+                .HasDefaultValue(null);
 
             builder.Property(x => x.RejectReason)
                 .HasMaxLength(350)

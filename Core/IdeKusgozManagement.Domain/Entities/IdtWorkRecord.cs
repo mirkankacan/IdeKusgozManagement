@@ -19,7 +19,7 @@ namespace IdeKusgozManagement.Domain.Entities
         public bool HasLunch { get; set; }
         public bool HasDinner { get; set; }
         public bool HasNightMeal { get; set; }
-        public bool HasTravel { get; set; }
+        public string? TravelExpenseAmount { get; set; }
         public string? RejectReason { get; set; }
 
         public WorkRecordStatus Status { get; set; } // 0 = Pending, 1 = Approved, 2 = Rejected

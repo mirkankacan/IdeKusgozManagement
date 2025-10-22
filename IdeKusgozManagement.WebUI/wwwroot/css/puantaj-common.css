@@ -8,7 +8,9 @@
   .fa-clock {
       cursor: pointer;
   }
-
+  label{
+      color:black !important;
+  }
   .fa-clock:hover {
       color: #007bff;
   }

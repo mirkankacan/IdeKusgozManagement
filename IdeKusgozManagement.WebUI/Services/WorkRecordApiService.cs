@@ -98,11 +98,13 @@ namespace IdeKusgozManagement.WebUI.Services
                     if (!string.IsNullOrEmpty(record.District))
                         formData.Add(new StringContent(record.District), $"[{i}].District");
 
+                    if (!string.IsNullOrEmpty(record.TravelExpenseAmount))
+                        formData.Add(new StringContent(record.TravelExpenseAmount), $"[{i}].TravelExpenseAmount");
+
                     formData.Add(new StringContent(record.HasBreakfast.ToString()), $"[{i}].HasBreakfast");
                     formData.Add(new StringContent(record.HasLunch.ToString()), $"[{i}].HasLunch");
                     formData.Add(new StringContent(record.HasDinner.ToString()), $"[{i}].HasDinner");
                     formData.Add(new StringContent(record.HasNightMeal.ToString()), $"[{i}].HasNightMeal");
-                    formData.Add(new StringContent(record.HasTravel.ToString()), $"[{i}].HasTravel");
 
                     // Expenses
                     if (record.WorkRecordExpenses != null && record.WorkRecordExpenses.Any())
@@ -192,11 +194,13 @@ namespace IdeKusgozManagement.WebUI.Services
                     if (!string.IsNullOrEmpty(record.District))
                         formData.Add(new StringContent(record.District), $"[{i}].District");
 
+                    if (!string.IsNullOrEmpty(record.TravelExpenseAmount))
+                        formData.Add(new StringContent(record.TravelExpenseAmount), $"[{i}].TravelExpenseAmount");
+
                     formData.Add(new StringContent(record.HasBreakfast.ToString()), $"[{i}].HasBreakfast");
                     formData.Add(new StringContent(record.HasLunch.ToString()), $"[{i}].HasLunch");
                     formData.Add(new StringContent(record.HasDinner.ToString()), $"[{i}].HasDinner");
                     formData.Add(new StringContent(record.HasNightMeal.ToString()), $"[{i}].HasNightMeal");
-                    formData.Add(new StringContent(record.HasTravel.ToString()), $"[{i}].HasTravel");
 
                     // Expenses
                     if (record.WorkRecordExpenses != null && record.WorkRecordExpenses.Any())
@@ -204,7 +208,6 @@ namespace IdeKusgozManagement.WebUI.Services
                         for (int j = 0; j < record.WorkRecordExpenses.Count; j++)
                         {
                             var expense = record.WorkRecordExpenses[j];
-
 
                             if (!string.IsNullOrEmpty(expense.Id))
                                 formData.Add(new StringContent(expense.Id), $"[{i}].WorkRecordExpenses[{j}].Id");

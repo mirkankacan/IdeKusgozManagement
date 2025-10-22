@@ -6,11 +6,13 @@
 @section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
 
     <link href="~/css/puantaj-common.css" rel="stylesheet" />
+
+
 
 }
 
@@ -23,8 +25,14 @@
                 <h5 class="card-title">
                     <i class="fas fa-calendar-day me-2"></i>
                     Puantaj Oluşturma Sayfası
+                
                 </h5>
-
+                <div class="mb-3">
+                    <small class="text-muted">
+                        <span class="badge bg-danger me-2">Tam Gün Resmi Tatil</span>
+                        <span class="badge bg-warning text-dark">Yarım Gün Resmi Tatil</span>
+                    </small>
+                </div>
                 <!-- Info Alert -->
                 <div id="infoAlert" class="alert alert-info d-none" role="alert">
                     <i class="fas fa-info-circle me-2"></i>
@@ -86,7 +94,7 @@
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table id="workRecordsTable" class="table table-striped table-hover">
+                        <table id="workRecordsTable" class="table table-hover">
                             <thead class="table-dark">
                                 <tr>
                                     <th>TARİH</th>
@@ -97,9 +105,9 @@
                                     <th>ÇALIŞILAN<br /> EKİPMAN</th>
                                     <th>ÇALIŞILAN<br /> İL</th>
                                     <th>ÇALIŞILAN<br /> İLÇE</th>
+                                    <th style="width:70px;max-width:70px;">YOL(₺)</th>
                                     <th style="width:120px;max-width:120px;">MASRAF</th>
                                     <th>YEMEK</th>
-                                    <th>YOL</th>
                                     <th>DURUM</th>
                                 </tr>
                             </thead>
@@ -121,7 +129,7 @@
 
 <!-- Modal -->
 <div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true"
-     data-bs-backdrop="static" data-bs-keyboard="false">
+    data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -163,7 +171,7 @@
                         <div class="col-md-12">
                             <label for="fileReceipt" class="form-label">Fatura</label>
                             <input type="file" class="form-control" id="fileReceipt" required
-                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
                             <div class="form-text">
                                 Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX
                             </div>
@@ -204,6 +212,7 @@
         let currentMonth = new Date().getMonth() + 1;
         let expenseData = {};
         let currentEditingDay = null;
+        let holidayData = {};
 
         // ===== UTILITY FUNCTIONS =====
         function getDayOfWeekTurkish(day) {
@@ -353,6 +362,7 @@
         async function initializeExcuseReasonSelect() {
             try {
                 const reasons = [
+                    { value: 'Çalışıyor', text: 'Çalışıyor' },
                     { value: 'Hafta Tatili', text: 'Hafta Tatili' },
                     { value: 'Rapor', text: 'Rapor' },
                     { value: 'Ücretsiz İzin', text: 'Ücretsiz İzin' },
@@ -363,16 +373,29 @@
                     { value: 'Evlilik İzni', text: 'Evlilik İzni' },
                     { value: 'Süt İzni', text: 'Süt İzni' }
                 ];
+
                 if (!window.isUserPersonel) {
                     reasons.push({ value: 'Devamsızlık', text: 'Devamsızlık' });
                 }
+
                 $('.excuse-reason-select').each(function () {
                     const currentSelect = $(this);
                     const currentValue = currentSelect.data('current-value');
+
                     currentSelect.empty();
                     currentSelect.append('<option value=""></option>');
+
                     reasons.forEach(reason => {
-                        const isSelected = currentValue === reason.value;
+                        let isSelected = false;
+
+                        // Eğer daha önceden bir değer seçilmişse onu kullan
+                        if (currentValue && currentValue !== '') {
+                            isSelected = currentValue === reason.value;
+                        } else {
+                            // Eğer hiç değer seçilmemişse "Çalışıyor" varsayılan olsun
+                            isSelected = reason.value === 'Çalışıyor';
+                        }
+
                         currentSelect.append(`<option value="${reason.value}" ${isSelected ? 'selected' : ''}>${reason.text}</option>`);
                     });
                 });
@@ -383,6 +406,7 @@
                     allowClear: true,
                     width: '100%'
                 });
+
             } catch (error) {
                 console.error('İzin sebep listesi yüklenirken hata:', error);
                 toastr.error('İzin sebep listesi yüklenirken hata oluştu', 'Hata!');
@@ -423,7 +447,7 @@
                     const date = new Date(currentYear, currentMonth - 1, currentEditingDay);
                     const dateStr = `${currentEditingDay.toString().padStart(2, '0')}.${currentMonth.toString().padStart(2, '0')}.${currentYear} ${getDayOfWeekTurkish(date.getDay())}`;
                     $('#modalDateInfo').text(dateStr);
-                    
+
                     // Modal başlığını güncelle
                     $('#expenseModalLabel').html(`<i class="fas fa-receipt me-2"></i>${dateStr} - Masraf Bilgileri`);
 
@@ -437,11 +461,11 @@
             if (!expenseData[day]) {
                 expenseData[day] = [];
             }
-            
+
             // Onaylanmış kayıt kontrolü
             const existingRecord = existingWorkRecords[day];
             const isApproved = existingRecord && existingRecord.status === 1;
-            
+
             displayCurrentExpenses(day, isApproved);
             updateTotalExpense(day);
         }
@@ -473,22 +497,22 @@
                     }
 
                     const expenseItem = `
-                                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <h6 class="mb-1">${expenseName}</h6>
-                                                    <p class="mb-1"><strong>${expense.amount.toFixed(2)} ₺</strong></p>
-                                                    ${expense.description ? `<small class="text-muted">${expense.description}</small>` : ''}
-                                                    ${fileDisplay}
-                                                </div>
-                                                ${actionButton}
-                                            </div>
-                                        `;
+                                                                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                            <div>
+                                                                                                <h6 class="mb-1">${expenseName}</h6>
+                                                                                                <p class="mb-1"><strong>${expense.amount.toFixed(2)} ₺</strong></p>
+                                                                                                ${expense.description ? `<small class="text-muted">${expense.description}</small>` : ''}
+                                                                                                ${fileDisplay}
+                                                                                            </div>
+                                                                                            ${actionButton}
+                                                                                        </div>
+                                                                                    `;
                     expensesList.append(expenseItem);
                 });
             } else {
                 currentExpensesSection.hide();
             }
-            
+
             // Onaylanmış kayıtlarda masraf ekleme formunu gizle
             if (shouldDisable) {
                 $('#addExpenseForm').hide();
@@ -551,11 +575,11 @@
             const expenses = expenseData[day] || [];
             const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
-               const formattedTotal = new Intl.NumberFormat('tr-TR', {
-                    style: 'currency',
-                    currency: 'TRY',
-                    minimumFractionDigits: 2
-                }).format(total);
+            const formattedTotal = new Intl.NumberFormat('tr-TR', {
+                style: 'currency',
+                currency: 'TRY',
+                minimumFractionDigits: 2
+            }).format(total);
             $('#totalExpenseAmount').text(formattedTotal);
 
             if (total > 0) {
@@ -899,8 +923,78 @@
                 }
             });
         }
+                   async function loadHolidays(year) {
+            try {
+                const response = await $.ajax({
+                    url: `/tatil/${year}/yili`,
+                    type: 'GET',
+                    dataType: 'json',
+                    timeout: 10000
+                });
+                if (response?.isSuccess && Array.isArray(response.data)) {
+                    holidayData = {};
+                    response.data.forEach(holiday => {
+                        if (holiday.date && holiday.name) {
+                            console.log('Raw holiday date:', holiday.date);
+                            console.log('Holiday primary type:', holiday.primaryType); // Debug log
 
-        // ===== DATA LOADING FUNCTIONS =====
+                            // Extract the ISO date string from the date object
+                            const isoString = holiday.date.iso;
+                            if (!isoString) {
+                                console.warn('No ISO date found for holiday:', holiday);
+                                return;
+                            }
+                            // Parse the ISO date (handles both date-only and datetime formats)
+                            const holidayDate = new Date(isoString);
+                            // Validate the date
+                            if (isNaN(holidayDate.getTime())) {
+                                console.warn('Invalid date for holiday:', holiday);
+                                return;
+                            }
+                            const day = holidayDate.getDate();
+                            const month = holidayDate.getMonth() + 1;
+                            const key = `${month}-${day}`;
+                            console.log(`Creating key: ${key} for holiday: ${holiday.name}, type: ${holiday.primaryType}`);
+
+                          holidayData[key] = {
+                        name: holiday.name,
+                        date: holiday.date,
+                        primaryType: holiday.primary_type // underscore'dan camelCase'e çevir
+                    };
+                        }
+                    });
+                    console.log('Loaded holidays:', holidayData);
+                    return true;
+                } else {
+                    console.warn('Geçersiz response formatı:', response);
+                    holidayData = {};
+                    return false;
+                }
+            } catch (error) {
+                console.error('Tatil verileri yüklenirken hata:', error);
+                holidayData = {};
+                return false;
+            }
+        }
+
+        function checkIfHoliday(day, month, year) {
+            if (!holidayData) return false;
+            const key = `${month}-${day}`;
+            const holiday = holidayData[key];
+            console.log('Holiday check for', key, ':', holiday);
+            return holiday || false;
+        }
+
+        // Yeni yardımcı fonksiyonlar
+        function isFullHoliday(day, month, year) {
+            const holiday = checkIfHoliday(day, month, year);
+            return holiday && holiday.primaryType === 'National holiday';
+        }
+
+        function isHalfDayHoliday(day, month, year) {
+            const holiday = checkIfHoliday(day, month, year);
+            return holiday && holiday.primaryType === 'Half Day';
+        }
         async function loadExistingWorkRecords(year, month) {
             try {
                 const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -985,6 +1079,7 @@
             currentYear = year;
             currentMonth = month;
 
+            await loadHolidays(year);
             await loadExistingWorkRecords(year, month);
 
             const daysInMonth = new Date(year, month, 0).getDate();
@@ -995,7 +1090,8 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month - 1, day);
                 const dayOfWeek = getDayOfWeekTurkish(date.getDay());
-                const isHoliday = date.getDay() === 0;
+                const isSunday = date.getDay() === 0;
+                const isHolidayDay = checkIfHoliday(day, month, year);
                 const formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year} ${dayOfWeek}`;
 
                 const existingRecord = existingWorkRecords[day];
@@ -1017,7 +1113,7 @@
                     hasLunch: existingRecord?.hasLunch || false,
                     hasDinner: existingRecord?.hasDinner || false,
                     hasNightMeal: existingRecord?.hasNightMeal || false,
-                    hasTravel: existingRecord?.hasTravel || false
+                    travelExpenseAmount: existingRecord?.travelExpenseAmount || ''
                 };
 
                 let statusBadge = generateStatusBadge(null, 'Yeni');
@@ -1030,15 +1126,15 @@
                     const encoded = encodeURIComponent(reason || '');
                     const hasReason = !!reason;
                     statusBadge = `
-                                            <span class="badge bg-danger status-rejected" data-reason="${encoded}" title="${hasReason ? 'Reddetme açıklamasını görmek için tıklayın' : 'Reddedildi'}">
-                                                <i class="fas fa-times me-1"></i>Reddedildi${hasReason ? ' <i class=\"fas fa-exclamation-circle ms-1\" title=\"Açıklama var\"></i>' : ''}
-                                            </span>
-                                        `;
+                                                                                        <span class="badge bg-danger status-rejected" data-reason="${encoded}" title="${hasReason ? 'Reddetme açıklamasını görmek için tıklayın' : 'Reddedildi'}">
+                                                                                            <i class="fas fa-times me-1"></i>Reddedildi${hasReason ? ' <i class=\"fas fa-exclamation-circle ms-1\" title=\"Açıklama var\"></i>' : ''}
+                                                                                        </span>
+                                                                                    `;
                 }
 
                 const disabledAttr = isApproved ? 'disabled' : '';
 
-                const row = createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr, isHoliday);
+                const row = createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr, isSunday);
                 $('#workRecordsTableBody').append(row);
 
                 // Update expense button if needed
@@ -1056,121 +1152,133 @@
         }
 
         function createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr, isHoliday = false) {
-            const holidayClass = isHoliday ? 'bg-warning' : 'bg-info';
+                   const holidayInfo = checkIfHoliday(day, currentMonth, currentYear);
+                const isSunday = isHoliday; // Pazar günü kontrolü
+                const isFullHolidayDay = isFullHoliday(day, currentMonth, currentYear);
+                const isHalfHolidayDay = isHalfDayHoliday(day, currentMonth, currentYear);
+
+                // Farklı renk sınıfları
+                let holidayClass = '';
+                if (isSunday || isFullHolidayDay) {
+                    holidayClass = 'table-danger'; // Kırmızı - Tam tatil
+                } else if (isHalfHolidayDay) {
+                    holidayClass = 'table-warning'; // Sarı - Yarım gün tatil
+                }
             const isApproved = existingWorkRecords[day] && existingWorkRecords[day].status === 1;
 
             return `
-                                    <tr data-day="${day}" data-record-id="${existingWorkRecords[day]?.id || ''}">
-                                        <td class="date-cell">
-                                            <span class="badge ${holidayClass}">${formattedDate}</span>
-                                            <br/>
-                                            <button type="button" class="btn btn-xs btn-outline-success additional-time-btn mt-1 w-75"
-                                                    data-day="${day}" title="Ek Saat Ekle" ${disabledAttr}>
-                                                Ek Saat
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </td>
-                                        <td>
-                                            <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${defaultValues.excuseReason}" ${disabledAttr}>
-                                                <option value="">Sebep seçin</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control time-input start-time" value="${defaultValues.startTime || ''}"
-                                                       data-day="${day}" placeholder="08:00" ${disabledAttr}>
-                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                            </div>
-                                            <div class="additional-time-section" data-day="${day}" style="display: ${defaultValues.additionalStartTime ? 'block' : 'none'}; margin-top: 2px;">
-                                                <div class="input-group">
-                                                    <input type="text" class="form-control form-control-sm additional-start-time"
-                                                           data-day="${day}" placeholder="Ek Başlangıç" value="${defaultValues.additionalStartTime || ''}" ${disabledAttr}>
-                                                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control time-input end-time" value="${defaultValues.endTime || ''}"
-                                                       data-day="${day}" placeholder="17:00" ${disabledAttr}>
-                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                            </div>
-                                            <div class="additional-time-section" data-day="${day}" style="display: ${defaultValues.additionalEndTime ? 'block' : 'none'}; margin-top: 2px;">
-                                                <div class="input-group">
-                                                    <input type="text" class="form-control form-control-sm additional-end-time"
-                                                           data-day="${day}" placeholder="Ek Bitiş" value="${defaultValues.additionalEndTime || ''}" ${disabledAttr}>
-                                                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${defaultValues.projectId}" ${disabledAttr}>
-                                                <option value="">Proje seçin</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${defaultValues.equipmentId}" ${disabledAttr}>
-                                                <option value="">Ekipman seçin</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <select class="form-select form-select-sm province-select" data-day="${day}" ${disabledAttr}>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <select class="form-select form-select-sm district-select" data-day="${day}" ${disabledAttr}>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <button type="button" class="btn ${isApproved ? 'btn-dark' : 'btn-primary'} expense-modal-btn w-100"
-                                                    data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal">
-                                                <i class="fas fa-receipt me-1"></i>
-                                                <span class="expense-count" data-day="${day}">0 Masraf<br/><small>₺0,00</small></span>
-                                            </button>
-                                        </td>
-                                        <td>
-                                            <div class="meal-section">
-                                                <div class="meal-item">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}"
-                                                               data-meal="S" data-day="${day}" ${defaultValues.hasBreakfast ? 'checked' : ''} ${disabledAttr}>
-                                                        <label class="form-check-label" for="s_${day}">S</label>
-                                                    </div>
-                                                </div>
-                                                <div class="meal-item">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}"
-                                                               data-meal="O" data-day="${day}" ${defaultValues.hasLunch ? 'checked' : ''} ${disabledAttr}>
-                                                        <label class="form-check-label" for="o_${day}">Ö</label>
-                                                    </div>
-                                                </div>
-                                                <div class="meal-item">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}"
-                                                               data-meal="A" data-day="${day}" ${defaultValues.hasDinner ? 'checked' : ''} ${disabledAttr}>
-                                                        <label class="form-check-label" for="a_${day}">A</label>
-                                                    </div>
-                                                </div>
-                                                <div class="meal-item">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}"
-                                                               data-meal="G" data-day="${day}" ${defaultValues.hasNightMeal ? 'checked' : ''} ${disabledAttr} disabled>
-                                                        <label class="form-check-label" for="g_${day}">G</label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="form-check">
-                                                <input class="form-check-input travel-checkbox" type="checkbox" id="t_${day}" data-day="${day}" ${defaultValues.hasTravel ? 'checked' : ''} ${disabledAttr}>
-                                                <label class="form-check-label" for="t_${day}">Y</label>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            ${statusBadge}
-                                        </td>
-                                    </tr>
-                                `;
+                                                                                <tr data-day="${day}" data-record-id="${existingWorkRecords[day]?.id || ''}" class="${holidayClass}">
+                                                                                    <td class="date-cell">
+                                                                                        <span class="badge bg-info">${formattedDate}</span>
+                                                                                        <br/>
+                                                                                        <button type="button" class="btn btn-xs btn-outline-success additional-time-btn mt-1 w-75"
+                                                                                                data-day="${day}" title="Ek Saat Ekle" ${disabledAttr}>
+                                                                                            Ek Saat
+                                                                                            <i class="fas fa-plus"></i>
+                                                                                        </button>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${defaultValues.excuseReason}" ${disabledAttr}>
+                                                                                            <option value="">Sebep seçin</option>
+                                                                                        </select>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <div class="input-group">
+                                                                                            <input type="text" class="form-control time-input start-time" value="${defaultValues.startTime || ''}"
+                                                                                                   data-day="${day}" placeholder="08:00" ${disabledAttr}>
+                                                                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                        </div>
+                                                                                        <div class="additional-time-section" data-day="${day}" style="display: ${defaultValues.additionalStartTime ? 'block' : 'none'}; margin-top: 2px;">
+                                                                                            <div class="input-group">
+                                                                                                <input type="text" class="form-control form-control-sm additional-start-time"
+                                                                                                       data-day="${day}" placeholder="Ek Başlangıç" value="${defaultValues.additionalStartTime || ''}" ${disabledAttr}>
+                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <div class="input-group">
+                                                                                            <input type="text" class="form-control time-input end-time" value="${defaultValues.endTime || ''}"
+                                                                                                   data-day="${day}" placeholder="17:00" ${disabledAttr}>
+                                                                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                        </div>
+                                                                                        <div class="additional-time-section" data-day="${day}" style="display: ${defaultValues.additionalEndTime ? 'block' : 'none'}; margin-top: 2px;">
+                                                                                            <div class="input-group">
+                                                                                                <input type="text" class="form-control form-control-sm additional-end-time"
+                                                                                                       data-day="${day}" placeholder="Ek Bitiş" value="${defaultValues.additionalEndTime || ''}" ${disabledAttr}>
+                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${defaultValues.projectId}" ${disabledAttr}>
+                                                                                            <option value="">Proje seçin</option>
+                                                                                        </select>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${defaultValues.equipmentId}" ${disabledAttr}>
+                                                                                            <option value="">Ekipman seçin</option>
+                                                                                        </select>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <select class="form-select form-select-sm province-select" data-day="${day}" ${disabledAttr}>
+                                                                                        </select>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <select class="form-select form-select-sm district-select" data-day="${day}" ${disabledAttr}>
+                                                                                        </select>
+                                                                                    </td>
+                                                                                       <td>
+                                                                                        <input type="text" class="form-control form-control-sm travel-expense-amount"
+                                                                                               data-day="${day}" placeholder="Yol masrafı"
+                                                                                               value="${defaultValues.travelExpenseAmount || ''}" ${disabledAttr}>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <button type="button" class="btn ${isApproved ? 'btn-dark' : 'btn-primary'} expense-modal-btn w-100"
+                                                                                                data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal">
+                                                                                            <i class="fas fa-receipt me-1"></i>
+                                                                                            <span class="expense-count" data-day="${day}">0 Masraf<br/><small>₺0,00</small></span>
+                                                                                        </button>
+                                                                                    </td>
+
+                                                                                    <td>
+                                                                                        <div class="meal-section">
+                                                                                            <div class="meal-item">
+                                                                                                <div class="form-check">
+                                                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="s_${day}"
+                                                                                                           data-meal="S" data-day="${day}" ${defaultValues.hasBreakfast ? 'checked' : ''} ${disabledAttr}>
+                                                                                                    <label class="form-check-label" for="s_${day}">S</label>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div class="meal-item">
+                                                                                                <div class="form-check">
+                                                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="o_${day}"
+                                                                                                           data-meal="O" data-day="${day}" ${defaultValues.hasLunch ? 'checked' : ''} ${disabledAttr}>
+                                                                                                    <label class="form-check-label" for="o_${day}">Ö</label>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div class="meal-item">
+                                                                                                <div class="form-check">
+                                                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="a_${day}"
+                                                                                                           data-meal="A" data-day="${day}" ${defaultValues.hasDinner ? 'checked' : ''} ${disabledAttr}>
+                                                                                                    <label class="form-check-label" for="a_${day}">A</label>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div class="meal-item">
+                                                                                                <div class="form-check">
+                                                                                                    <input class="form-check-input meal-checkbox" type="checkbox" id="g_${day}"
+                                                                                                           data-meal="G" data-day="${day}" ${defaultValues.hasNightMeal ? 'checked' : ''} ${disabledAttr} disabled>
+                                                                                                    <label class="form-check-label" for="g_${day}">G</label>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </td>
+
+                                                                                    <td>
+                                                                                        ${statusBadge}
+                                                                                    </td>
+                                                                                </tr>
+                                                                            `;
         }
 
         // ===== SAVE FUNCTION =====
@@ -1221,12 +1329,11 @@
                     amount: exp.amount,
                     receiptFile: exp.receiptFile
                 }));
-                console.log(expenses)
                 const hasBreakfast = $(this).find('.meal-checkbox[data-meal="S"]').is(':checked');
                 const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
                 const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
                 const hasNightMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');
-                const hasTravel = $(this).find('.travel-checkbox').is(':checked');
+                const travelExpenseAmount = $(this).find('.travel-expense-amount').val();
 
                 const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
@@ -1245,7 +1352,7 @@
                     HasLunch: hasLunch,
                     HasDinner: hasDinner,
                     HasNightMeal: hasNightMeal,
-                    HasTravel: hasTravel,
+                    TravelExpenseAmount: travelExpenseAmount || "",
                     WorkRecordExpenses: expenses
                 });
             });
@@ -1279,7 +1386,7 @@
                     formData.append(`[${index}].HasLunch`, record.HasLunch);
                     formData.append(`[${index}].HasDinner`, record.HasDinner);
                     formData.append(`[${index}].HasNightMeal`, record.HasNightMeal);
-                    formData.append(`[${index}].HasTravel`, record.HasTravel);
+                    formData.append(`[${index}].TravelExpenseAmount`, record.TravelExpenseAmount);
 
                     // Expenses için
                     if (record.WorkRecordExpenses && record.WorkRecordExpenses.length > 0) {
