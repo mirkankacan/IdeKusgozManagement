@@ -9,10 +9,12 @@ namespace IdeKusgozManagement.WebUI.Controllers
     public class LeaveRequestController : Controller
     {
         private readonly ILeaveRequestApiService _leaveRequestApiService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public LeaveRequestController(ILeaveRequestApiService leaveRequestApiService)
+        public LeaveRequestController(ILeaveRequestApiService leaveRequestApiService, IHttpContextAccessor httpContextAccessor)
         {
             _leaveRequestApiService = leaveRequestApiService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -82,6 +84,19 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [HttpGet("durum/{status}")]
         public async Task<IActionResult> GetLeaveRequestsByStatus(int status, [FromQuery] string? userId, CancellationToken cancellationToken = default)
         {
+            var response = await _leaveRequestApiService.GetLeaveRequestsByStatusAsync(status, userId, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize]
+        [HttpGet("listem/durum/{status}")]
+        public async Task<IActionResult> GetMyLeaveRequestsByStatus(int status, CancellationToken cancellationToken = default)
+        {
+            var userId = _httpContextAccessor.HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized("Lütfen tekrar giriş yapınız");
+            }
             var response = await _leaveRequestApiService.GetLeaveRequestsByStatusAsync(status, userId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }

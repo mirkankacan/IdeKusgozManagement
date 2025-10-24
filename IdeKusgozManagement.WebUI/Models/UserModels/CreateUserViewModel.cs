@@ -21,7 +21,7 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
 
         [Required]
         public bool IsExpatriate { get; set; }
-
+        public string? Email { get; set; } = null;
         public List<string>? SuperiorIds { get; set; } = new();
     }
 }

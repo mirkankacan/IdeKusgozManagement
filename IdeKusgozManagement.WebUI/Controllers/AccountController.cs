@@ -82,6 +82,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPost("giris-yap")]
         [AllowAnonymous]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login([FromBody] LoginViewModel model, CancellationToken cancellationToken = default)
         {
             try
@@ -90,57 +91,74 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 {
                     return BadRequest("Geçersiz giriş bilgileri");
                 }
-
-                var response = await _authApiService.LoginAsync(model, cancellationToken);
-
-                if (!response.IsSuccess)
-                {
-                    return BadRequest(response.Errors?.Any() == true ? response.Errors : new[] { response.Message });
-                }
-
-                // Session'a kullanıcı bilgilerini kaydet
-                var httpContext = _httpContextAccessor.HttpContext;
-                if (httpContext != null && response.Data != null)
-                {
-                    httpContext.Session.SetString("JwtToken", response.Data.Token);
-                    httpContext.Session.SetString("RefreshToken", response.Data.RefreshToken);
-                    httpContext.Session.SetString("UserId", response.Data.UserId);
-                    httpContext.Session.SetString("TCNo", response.Data.TCNo);
-                    httpContext.Session.SetString("FullNameWithExp", response.Data.FullNameWithExp);
-                    httpContext.Session.SetString("FullName", response.Data.FullName);
-                    httpContext.Session.SetString("RoleName", response.Data.RoleName);
-
-                    // Cookie authentication için claims oluştur
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, response.Data.UserId),
-                        new Claim("TCNo", response.Data.TCNo),
-                        new Claim("FullNameWithExp", response.Data.FullNameWithExp),
-                        new Claim("FullName", response.Data.FullName),
-                        new Claim(ClaimTypes.GivenName, response.Data.Name),
-                        new Claim(ClaimTypes.Surname, response.Data.Surname),
-                        new Claim(ClaimTypes.Role, response.Data.RoleName)
-                    };
-
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var authProperties = new AuthenticationProperties
-                    {
-                        IsPersistent = model.RememberMe,
-                    };
-
-                    await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                        new ClaimsPrincipal(claimsIdentity), authProperties);
-                }
-
-                var role = response.Data?.RoleName;
-                var redirectUrl = GetRoleRedirectUrl(role);
-
-                return Ok(redirectUrl);
+                return await LoginProcessAsync(model, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Login işleminde hata oluştu");
                 return BadRequest("Bir hata oluştu. Lütfen tekrar deneyin.");
+            }
+        }
+
+        [HttpGet("sifremi-unuttum")]
+        [AllowAnonymous]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost("sifremi-unuttum")]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordViewModel model, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return View("Geçersiz şifre sıfırlama bilgileri");
+                }
+
+                var response = await _authApiService.SendResetPasswordEmailAsync(model, cancellationToken);
+
+                return response.IsSuccess ? Ok(response) : BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ForgotPassword işleminde hata oluştu");
+                return BadRequest("Bir hata oluştu. Lütfen tekrar deneyin.");
+            }
+        }
+
+        [HttpPost("sifre-sifirla")]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordViewModel model, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest("Geçersiz şifre sıfırlama bilgileri");
+                }
+                var resetResponse = await _authApiService.ResetPasswordAsync(model, cancellationToken);
+
+                if (!resetResponse.IsSuccess)
+                {
+                    return BadRequest(resetResponse);
+                }
+
+                var loginModel = new LoginViewModel
+                {
+                    TCNo = model.TCNo,
+                    Password = model.NewPassword,
+                    RememberMe = true
+                };
+                return await LoginProcessAsync(loginModel, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Şifre sıfırlanırken bir hata oluştu. Lütfen tekrar deneyin.");
             }
         }
 
@@ -182,7 +200,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             model.RoleName = null;
-            model.IsActive = null;
+            model.IsActive = true;
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -246,6 +264,54 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 "Admin" or "Yönetici" or "Şef" or "Personel" => "/ana-sayfa",
                 _ => "/erisim-engellendi"
             };
+        }
+
+        private async Task<IActionResult> LoginProcessAsync(LoginViewModel model, CancellationToken cancellationToken = default)
+        {
+            var response = await _authApiService.LoginAsync(model, cancellationToken);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response.Errors?.Any() == true ? response.Errors : new[] { response.Message });
+            }
+
+            // Session'a kullanıcı bilgilerini kaydet
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null && response.Data != null)
+            {
+                httpContext.Session.SetString("JwtToken", response.Data.Token);
+                httpContext.Session.SetString("RefreshToken", response.Data.RefreshToken);
+                httpContext.Session.SetString("UserId", response.Data.UserId);
+                httpContext.Session.SetString("TCNo", response.Data.TCNo);
+                httpContext.Session.SetString("FullNameWithExp", response.Data.FullNameWithExp);
+                httpContext.Session.SetString("FullName", response.Data.FullName);
+                httpContext.Session.SetString("RoleName", response.Data.RoleName);
+
+                // Cookie authentication için claims oluştur
+                var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, response.Data.UserId),
+                        new Claim("TCNo", response.Data.TCNo),
+                        new Claim("FullNameWithExp", response.Data.FullNameWithExp),
+                        new Claim("FullName", response.Data.FullName),
+                        new Claim(ClaimTypes.GivenName, response.Data.Name),
+                        new Claim(ClaimTypes.Surname, response.Data.Surname),
+                        new Claim(ClaimTypes.Role, response.Data.RoleName)
+                    };
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = model.RememberMe,
+                };
+
+                await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity), authProperties);
+            }
+
+            var role = response.Data?.RoleName;
+            var redirectUrl = GetRoleRedirectUrl(role);
+            return Ok(redirectUrl);
         }
     }
 }

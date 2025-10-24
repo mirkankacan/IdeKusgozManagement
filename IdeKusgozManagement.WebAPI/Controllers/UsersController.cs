@@ -211,5 +211,38 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             var result = await userService.ChangePasswordAsync(userId, changePasswordDTO);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
+
+        /// <summary>
+        /// Kullanıcının kalan izin günleri ile ilgili bilgileri getirir
+        /// </summary>
+        /// <param name="userId">Kullanıcı ID'si</param>
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        [HttpGet("{userId}/annual-leave")]
+        public async Task<IActionResult> GetAnnualLeaveByUser(string userId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+
+            var result = await userService.GetAnnualLeaveDaysByUserAsync(userId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Oturumdaki kullanıcının kalan izin günleri ile ilgili bilgileri getirir
+        /// </summary>
+        [HttpGet("my-annual-leave")]
+        public async Task<IActionResult> GetMyAnnualLeave(CancellationToken cancellationToken = default)
+        {
+            var userId = identityService.GetUserId();
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Kullanıcı kimliği bulunamadı. Lütfen tekrar giriş yapınız.");
+            }
+
+            var result = await userService.GetAnnualLeaveDaysByUserAsync(userId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
     }
 }

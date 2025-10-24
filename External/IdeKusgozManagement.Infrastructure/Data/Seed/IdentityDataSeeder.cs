@@ -29,12 +29,12 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                 adminUser = new ApplicationUser
                 {
                     UserName = "1",
-                    Email = "1",
+                    Email = "mirkankacan@ideaktif.com.tr",
                     IsActive = true,
                     TCNo = "1",
                     Name = "Admin",
                     Surname = "User",
-                    IsExpatriate = true
+                    IsExpatriate = true,
                 };
                 var result = await userManager.CreateAsync(adminUser, password);
                 if (result.Succeeded)
@@ -53,7 +53,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                 unitManagerUser = new ApplicationUser
                 {
                     UserName = "2",
-                    Email = "2",
+                    Email = "mirkankacan@ideaktif.com.tr",
                     IsActive = true,
                     TCNo = "2",
                     Name = "Birim Yönetici",
@@ -77,7 +77,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                 chiefUser = new ApplicationUser
                 {
                     UserName = "3",
-                    Email = "3",
+                    Email = "mirkankacan@ideaktif.com.tr",
                     IsActive = true,
                     TCNo = "3",
                     Name = "Şef",
@@ -101,7 +101,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                 personnelUser = new ApplicationUser
                 {
                     UserName = "4",
-                    Email = "4",
+                    Email = "mirkankacan@ideaktif.com.tr",
                     IsActive = true,
                     TCNo = "4",
                     Name = "Personel",

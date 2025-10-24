@@ -17,5 +17,7 @@ namespace IdeKusgozManagement.Domain.Entities
         public DateTime? RefreshTokenExpires { get; set; }
         public string TCNo { get; set; }
         public bool IsExpatriate { get; set; }
+        public string? PasswordResetCode { get; set; }
+        public DateTime? PasswordResetCodeExpires { get; set; }
     }
 }

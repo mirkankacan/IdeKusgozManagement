@@ -31,6 +31,10 @@
                     <i class="fas fa-calendar-check me-2"></i>
                     İzin Taleplerim
                 </h5>
+                <div class="mb-3">
+                    <span id="remainingLeaveDays" class="badge bg-warning me-2 text-dark">Kalan İzin: 0 Gün</span>
+                    <span id="usedLeaveDays" class="badge bg-danger me-2">Kullanılan İzin: 0 Gün</span>
+                </div>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                         data-bs-target="#createLeaveRequestModal">
                     <i class="fas fa-plus me-2"></i>İzin Talebi Oluştur
@@ -74,7 +78,7 @@
             <form id="createLeaveRequestForm" class="needs-validation" novalidate>
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-12">
+                        <div class="col-md-8">
                             <label for="date-leave" class="form-label">İzin Tarih Aralığı</label>
                             <div class="input-group">
 
@@ -87,7 +91,11 @@
                             <div class="valid-feedback">İyi görünüyor!</div>
                             <div class="invalid-feedback">Geçerli bir tarih aralığı seçiniz.</div>
                         </div>
-
+                        <div class="col-md-4">
+                            <label for="net-leave-day" class="form-label">Net İzin Günü</label>
+                            <input type="text" class="form-control" id="net-leave-day" disabled readonly
+                                   placeholder="Net izin günü">
+                        </div>
                         <div class="col-md-12">
                             <label for="select-leave-reason" class="form-label">İzin Türü</label>
                             <select class="form-select select-leave-reason" id="select-leave-reason" required>
@@ -117,12 +125,11 @@
                         <div class="col-md-12">
                             <label for="file-document" class="form-label">Döküman (İsteğe Bağlı)</label>
                             <input class="form-control" type="file" id="file-document"
-                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" required>
+                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
                             <div class="form-text">
                                 Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX
                             </div>
-                            <div class="valid-feedback">İyi görünüyor!</div>
-                            <div class="invalid-feedback">Lütfen geçerli bir dosya seçiniz.</div>
+
                         </div>
                     </div>
                 </div>
@@ -145,29 +152,7 @@
 
         $(document).ready(async function () {
             await initializeDataTable();
-
-            var turkishLocale = {
-                "format": 'DD/MM/YYYY',
-                "separator": ' - ',
-                "applyLabel": 'Uygula',
-                "cancelLabel": 'İptal',
-                "fromLabel": 'Başlangıç',
-                "toLabel": 'Bitiş',
-                "customRangeLabel": 'Özel',
-                "weekLabel": 'Hf',
-                "daysOfWeek": [
-                    "Pz",
-                    "Pt",
-                    "Sl",
-                    "Çr",
-                    "Pr",
-                    "Cm",
-                    "Ct"
-                ], "monthNames": ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
-                "firstDay": 1
-
-            };
-
+            await getMyRemainingLeaveDays();
             $('#date-leave').daterangepicker({
                 locale: turkishLocale,
                 opens: 'left',
@@ -176,8 +161,17 @@
 
             });
 
-            $('#date-leave').on('apply.daterangepicker', function (ev, picker) {
+            $('#date-leave').on('apply.daterangepicker', async function (ev, picker) {
                 $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+                  const startDate = picker.startDate.format('YYYY-MM-DD');
+                const endDate = picker.endDate.format('YYYY-MM-DD');
+
+                // Net izin günü hesaplama
+                await calculateNetLeaveDays(startDate, endDate);
+
+                // Form validation'ı tetikleme
+                $(this)[0].setCustomValidity('');
+                $(this).removeClass('is-invalid').addClass('is-valid');
             });
 
             $('#date-leave').on('cancel.daterangepicker', function (ev, picker) {
@@ -196,6 +190,66 @@
             });
 
         });
+           async function getMyRemainingLeaveDays() {
+            try {
+                const response = await $.ajax({
+                    url: `/kullanici/kalan-izinlerim`,
+                    type: 'GET',
+                    contentType: 'application/json'
+                });
+
+                if (response && response.data && response.isSuccess) {
+                    $('#remainingLeaveDays').text("Kalan İzin: " + response.data.remainingDays + " gün");
+                    $('#usedLeaveDays').text("Kullanılan İzin: " + response.data.usedDays + " gün");
+                } else {
+                    $('#remainingLeaveDays').text("Kalan İzin: Hesaplama başarısız");
+                    $('#usedLeaveDays').text("Kalan İzin: Hesaplama başarısız");
+                }
+            } catch (error) {
+                    $('#remainingLeaveDays').text("Kalan İzin: Hata");
+                    $('#usedLeaveDays').text("Kalan İzin: Hata");
+
+               if (error.responseJSON) {
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                toastr.error(errorMessage);
+            }
+        }
+                async function calculateNetLeaveDays(startDate, endDate) {
+            try {
+                const response = await $.ajax({
+                    url: `/tatil/baslangic/${startDate}/bitis/${endDate}`,
+                    type: 'GET',
+                    contentType: 'application/json'
+                });
+
+                if (response && response.data && response.isSuccess) {
+                    $('#net-leave-day').val(response.data);
+                } else {
+                    $('#net-leave-day').val('Hesaplanamadı');
+                }
+            } catch (error) {
+                $('#net-leave-day').val('Hata');
+               if (error.responseJSON) {
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                toastr.error(errorMessage);
+            }
+        }
         async function initializeDataTable() {
             myLeaveRequestsTable = $('#myLeaveRequestsTable').DataTable({
                 "processing": true,
@@ -276,11 +330,12 @@
                      {
                         "data": "fileId",
                         "render": function (data, type, row) {
-                            return `<a href="/dosya/indir/${data}"
+
+                            return data ? `<a href="/dosya/indir/${data}"
                                                            download
                                                            class="text-muted text-decoration-underline">
                                                             <i class="fas fa-file fa-lg"></i>
-                                                        </a>`;
+                                                        </a>` : '';
                         }
                     },
                     {

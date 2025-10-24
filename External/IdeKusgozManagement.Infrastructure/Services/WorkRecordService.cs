@@ -475,7 +475,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
         private void UpdateWorkRecordFields(IdtWorkRecord existingRecord, CreateOrModifyWorkRecordDTO element)
         {
-            existingRecord.ExcuseReason = element.ExcuseReason ?? null;
+            existingRecord.DailyStatus = element.DailyStatus;
             existingRecord.StartTime = element.StartTime;
             existingRecord.EndTime = element.EndTime;
             existingRecord.ProjectId = element.ProjectId;
@@ -524,7 +524,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return new IdtWorkRecord
             {
                 Date = element.Date,
-                ExcuseReason = element.ExcuseReason ?? null,
+                DailyStatus = element.DailyStatus,
                 StartTime = element.StartTime,
                 EndTime = element.EndTime,
                 ProjectId = element.ProjectId,
@@ -560,7 +560,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
         private bool HasWorkRecordChanges(IdtWorkRecord existing, CreateOrModifyWorkRecordDTO incoming)
         {
-            return existing.ExcuseReason != (incoming.ExcuseReason ?? null) ||
+            return existing.DailyStatus != incoming.DailyStatus ||
                    existing.StartTime != incoming.StartTime ||
                    existing.EndTime != incoming.EndTime ||
                    existing.ProjectId != incoming.ProjectId ||

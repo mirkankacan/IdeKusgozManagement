@@ -70,7 +70,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             try
             {
                 // Tarih kontrolü
-                if (createLeaveRequestDTO.StartDate >= createLeaveRequestDTO.EndDate)
+                if (createLeaveRequestDTO.StartDate > createLeaveRequestDTO.EndDate)
                 {
                     return ApiResponse<LeaveRequestDTO>.Error("Başlangıç tarihi bitiş tarihinden önce olmalıdır");
                 }
@@ -85,11 +85,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var leaveRequest = createLeaveRequestDTO.Adapt<IdtLeaveRequest>();
                 leaveRequest.Status = LeaveRequestStatus.Pending; // Yeni talepler beklemede başlar
 
-                var workingDays = await holidayService.CalculateWorkingDaysAsync(
+                var calcResponse = await holidayService.CalculateWorkingDaysAsync(
                           createLeaveRequestDTO.StartDate.Date,
                           createLeaveRequestDTO.EndDate.Date);
 
-                leaveRequest.Duration = $"{workingDays} gün";
+                leaveRequest.Duration = $"{calcResponse.Data} gün";
 
                 if (createLeaveRequestDTO.File != null && createLeaveRequestDTO.File.FormFile.Length > 0)
                 {

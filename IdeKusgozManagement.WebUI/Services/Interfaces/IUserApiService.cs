@@ -28,5 +28,9 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
         Task<ApiResponse<bool>> DisableUserAsync(string userId, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> ChangePasswordAsync(string userId, ChangePasswordViewModel model, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<AnnualLeaveCalculationViewModel>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<AnnualLeaveCalculationViewModel>> GetMyAnnualLeaveDaysAsync(CancellationToken cancellationToken = default);
     }
 }

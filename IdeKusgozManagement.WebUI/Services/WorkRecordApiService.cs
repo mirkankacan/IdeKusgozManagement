@@ -71,8 +71,7 @@ namespace IdeKusgozManagement.WebUI.Services
                     // Ana work record alanları
                     formData.Add(new StringContent(record.Date.ToString("yyyy-MM-dd")), $"[{i}].Date");
 
-                    if (!string.IsNullOrEmpty(record.ExcuseReason))
-                        formData.Add(new StringContent(record.ExcuseReason), $"[{i}].ExcuseReason");
+                        formData.Add(new StringContent(record.DailyStatus), $"[{i}].DailyStatus");
 
                     if (record.StartTime.HasValue)
                         formData.Add(new StringContent(record.StartTime.Value.ToString(@"hh\:mm")), $"[{i}].StartTime");
@@ -167,8 +166,7 @@ namespace IdeKusgozManagement.WebUI.Services
                     // Ana work record alanları
                     formData.Add(new StringContent(record.Date.ToString("yyyy-MM-dd")), $"[{i}].Date");
 
-                    if (!string.IsNullOrEmpty(record.ExcuseReason))
-                        formData.Add(new StringContent(record.ExcuseReason), $"[{i}].ExcuseReason");
+                        formData.Add(new StringContent(record.DailyStatus), $"[{i}].DailyStatus");
 
                     if (record.StartTime.HasValue)
                         formData.Add(new StringContent(record.StartTime.Value.ToString(@"hh\:mm")), $"[{i}].StartTime");

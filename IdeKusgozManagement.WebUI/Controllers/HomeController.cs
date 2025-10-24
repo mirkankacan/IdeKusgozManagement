@@ -33,6 +33,9 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public IActionResult Social()
         {
             var jwtToken = _httpContextAccessor.HttpContext.Session.GetString("JwtToken");
+            if (string.IsNullOrEmpty(jwtToken))
+                return Unauthorized("Lütfen tekrar giriş yapınız");
+
             ViewData["JwtToken"] = jwtToken;
             return View();
         }
@@ -51,7 +54,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             var roleName = _httpContextAccessor.HttpContext.Session.GetString("RoleName");
             if (string.IsNullOrEmpty(roleName))
             {
-                return BadRequest("Rol bilgisi bulunamadı.");
+                return Unauthorized("Rol bilgisi bulunamadı. Lütfen tekrar giriş yapınız.");
             }
 
             ApiResponse<IEnumerable<LeaveRequestViewModel>> response;
@@ -68,7 +71,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 case "Personel":
                     var userId = _httpContextAccessor.HttpContext.Session.GetString("UserId");
                     if (string.IsNullOrEmpty(userId))
-                        return Unauthorized("Kullanıcı bilgisi bulunamadı");
+                        return Unauthorized("Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yapınız.");
 
                     response = await _leaveRequestApiService.GetLeaveRequestsByStatusAsync(1, userId, cancellationToken);
                     break;
@@ -86,7 +89,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             var roleName = _httpContextAccessor.HttpContext.Session.GetString("RoleName");
             if (string.IsNullOrEmpty(roleName))
             {
-                return BadRequest("Rol bilgisi bulunamadı.");
+                return Unauthorized("Rol bilgisi bulunamadı. Lütfen tekrar giriş yapınız.");
             }
 
             ApiResponse<IEnumerable<ProjectViewModel>> response;
@@ -102,7 +105,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 case "Personel":
                     var userId = _httpContextAccessor.HttpContext.Session.GetString("UserId");
                     if (string.IsNullOrEmpty(userId))
-                        return Unauthorized("Kullanıcı bilgisi bulunamadı");
+                        return Unauthorized("Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yapınız.");
                     response = await _projectApiService.GetActiveProjectsAsync(cancellationToken);
                     break;
 

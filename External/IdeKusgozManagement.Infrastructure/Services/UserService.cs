@@ -102,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var user = createUserDTO.Adapt<ApplicationUser>();
                 user.UserName = user.TCNo;
-                user.Email = null;
+                user.Email = user.Email;
                 var result = await userManager.CreateAsync(user, createUserDTO.Password);
                 if (!result.Succeeded)
                 {
@@ -206,7 +206,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 user.UserName = updateUserDTO.TCNo;
-                user.Email = null;
+                user.Email = updateUserDTO.Email;
                 user.TCNo = updateUserDTO.TCNo;
                 user.Name = updateUserDTO.Name;
                 user.Surname = updateUserDTO.Surname;
@@ -474,6 +474,33 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 logger.LogError(ex, "GetSubordinatesByUserId işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<IEnumerable<UserDTO>>.Error("Atanmış kullanıcılar getirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<AnnualLeaveCalculationDTO>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(userId))
+                    return ApiResponse<AnnualLeaveCalculationDTO>.Error("Kullanıcı ID'si boş geçilemez");
+
+                var parameters = new object[] { userId };
+
+                var funcResults = await unitOfWork.ExecuteTableValuedFunctionAsync<AnnualLeaveCalculationDTO>(
+                        "dbo.IDF_AnnualLeaveCalculation",
+                        parameters,
+                        cancellationToken);
+
+                var result = funcResults.FirstOrDefault();
+
+                return result != null
+                    ? ApiResponse<AnnualLeaveCalculationDTO>.Success(result)
+                    : ApiResponse<AnnualLeaveCalculationDTO>.Error("Veri alınamadı");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetAnnualLeaveDaysAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                return ApiResponse<AnnualLeaveCalculationDTO>.Error("Kullanıcının yıllık izin verileri alınırken hata oluştu");
             }
         }
     }

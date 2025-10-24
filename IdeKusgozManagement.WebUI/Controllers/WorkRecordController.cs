@@ -9,10 +9,12 @@ namespace IdeKusgozManagement.WebUI.Controllers
     public class WorkRecordController : Controller
     {
         private readonly IWorkRecordApiService _workRecordApiService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public WorkRecordController(IWorkRecordApiService workRecordApiService)
+        public WorkRecordController(IWorkRecordApiService workRecordApiService, IHttpContextAccessor httpContextAccessor)
         {
             _workRecordApiService = workRecordApiService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [Authorize(Roles = "Admin,Yönetici,Şef")]
@@ -42,6 +44,11 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [HttpGet("ekle")]
         public IActionResult Create()
         {
+            var userId = _httpContextAccessor.HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Lütfen tekrar giriş yapınız");
+
+            ViewData["UserId"] = userId;
             return View();
         }
 

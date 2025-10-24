@@ -55,5 +55,31 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             var result = await authService.RefreshTokenAsync(refreshTokenDTO);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO resetPasswordDTO)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await authService.ResetPasswordAsync(resetPasswordDTO);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpPost("send-reset-email")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SendResetPasswordEmail([FromBody] ForgotPasswordDTO forgotPasswordDTO)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await authService.SendResetPasswordEmailAsync(forgotPasswordDTO);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
     }
 }

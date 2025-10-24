@@ -238,27 +238,6 @@
             await initializeSelects();
             await initializeDataTable();
 
-            var turkishLocale = {
-                "format": 'DD/MM/YYYY',
-                "separator": ' - ',
-                "applyLabel": 'Uygula',
-                "cancelLabel": 'İptal',
-                "fromLabel": 'Başlangıç',
-                "toLabel": 'Bitiş',
-                "customRangeLabel": 'Özel',
-                "weekLabel": 'Hf',
-                "daysOfWeek": [
-                    "Pz",
-                    "Pt",
-                    "Sl",
-                    "Çr",
-                    "Pr",
-                    "Cm",
-                    "Ct"
-                ], "monthNames": ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
-                "firstDay": 1
-            };
-
             $('.date-trafficTicket').daterangepicker({
                 locale: turkishLocale,
                 opens: 'left',
@@ -499,11 +478,11 @@
                     {
                         "data": "fileId",
                         "render": function (data, type, row) {
-                            return `<a href="/dosya/indir/${data}"
+                              return data ? `<a href="/dosya/indir/${data}"
                                                            download
                                                            class="text-muted text-decoration-underline">
                                                             <i class="fas fa-file fa-lg"></i>
-                                                        </a>`;
+                                                        </a>` : '';
                         }
                     },
                     {

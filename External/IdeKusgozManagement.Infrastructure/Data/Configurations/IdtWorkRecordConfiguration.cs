@@ -14,9 +14,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.Property(x => x.Date)
                 .IsRequired();
 
-            builder.Property(x => x.ExcuseReason)
+            builder.Property(x => x.DailyStatus)
                 .HasMaxLength(100)
-                .IsRequired(false); // Nullable
+                .IsRequired();
 
             builder.Property(x => x.StartTime)
                 .IsRequired(false); // Nullable

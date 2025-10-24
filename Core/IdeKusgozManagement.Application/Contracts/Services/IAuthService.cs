@@ -10,5 +10,9 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
         Task<ApiResponse<bool>> LogoutAsync(CancellationToken cancellationToken = default);
 
         Task<ApiResponse<TokenDTO>> RefreshTokenAsync(CreateTokenByRefreshTokenDTO createTokenByRefreshTokenDTO, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordDTO dto, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<bool>> SendResetPasswordEmailAsync(ForgotPasswordDTO dto, CancellationToken cancellationToken = default);
     }
 }
