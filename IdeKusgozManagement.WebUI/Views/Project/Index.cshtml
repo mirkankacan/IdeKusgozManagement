@@ -96,7 +96,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Ekipman Güncelleme Penceresi</h5>
+                <h5 class="modal-title">Proje Güncelleme Penceresi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form class="needs-validation" novalidate id="updateProjectForm">
@@ -142,27 +142,6 @@
             setupEventListeners();
 
             await initializeDataTable();
-              var turkishLocale = {
-                "format": 'DD/MM/YYYY',
-                "separator": ' - ',
-                "applyLabel": 'Uygula',
-                "cancelLabel": 'İptal',
-                "fromLabel": 'Başlangıç',
-                "toLabel": 'Bitiş',
-                "customRangeLabel": 'Özel',
-                "weekLabel": 'Hf',
-                "daysOfWeek": [
-                    "Pz",
-                    "Pt",
-                    "Sl",
-                    "Çr",
-                    "Pr",
-                    "Cm",
-                    "Ct"
-                ], "monthNames": ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
-                "firstDay": 1
-
-            };
 
             $('.date-project').daterangepicker({
                 locale: turkishLocale,

@@ -348,7 +348,7 @@
             }
         }
 
-        async function initializeExcuseReasonSelect() {
+        async function initializeDailyStatusSelect() {
             try {
                 const reasons = [
                     { value: 'Hafta Tatili', text: 'Hafta Tatili' },
@@ -364,7 +364,7 @@
                 if (!window.isUserPersonel) {
                     reasons.push({ value: 'Devamsızlık', text: 'Devamsızlık' });
                 }
-                $('.excuse-reason-select').each(function () {
+                $('.daily-status-select').each(function () {
                     const currentSelect = $(this);
                     const currentValue = currentSelect.data('current-value');
                     currentSelect.empty();
@@ -375,7 +375,7 @@
                     });
                 });
 
-                $('.excuse-reason-select').select2({
+                $('.daily-status-select').select2({
                     placeholder: 'Sebep seçin',
                     theme: 'bootstrap-5',
                     allowClear: true,
@@ -415,7 +415,7 @@
             await initializeEquipmentSelect();
             initializeLocationSelects();
             await initializeProjectSelect();
-            await initializeExcuseReasonSelect();
+            await initializeDailyStatusSelect();
             await initializeExpenseSelect();
             initializeUserSelect();
         }
@@ -1043,8 +1043,8 @@
                                                                                                         ` : ''}
                                                                                                     </td>
                                                                                                     <td>
-                                                                                                        <select class="form-select form-select-sm excuse-reason-select" data-day="${day}" data-current-value="${record.excuseReason || ''}">
-                                                                                                            <option value="">Sebep seçin</option>
+                                                                                                        <select class="form-select form-select-sm daily-status-select" data-day="${day}" data-current-value="${record.dailyStatus}">
+                                                                                                            <option value="">Günlük durum seçin</option>
                                                                                                         </select>
                                                                                                     </td>
                                                                                                     <td>
@@ -1283,7 +1283,7 @@
                 if ($(this).find('td').length === 1) return; // Skip message rows
 
                 const day = $(this).data('day');
-                const excuseReason = $(this).find('.excuse-reason-select').val();
+                const dailyStatus = $(this).find('.daily-status-select').val();
                 const startTime = $(this).find('.start-time').val();
                 const endTime = $(this).find('.end-time').val();
                 const additionalStartTime = $(this).find('.additional-start-time').val();
@@ -1311,7 +1311,7 @@
 
                 workRecords.push({
                     Date: formattedDate,
-                    ExcuseReason: excuseReason || "",
+                    DailyStatus: dailyStatus,
                     StartTime: startTime,
                     EndTime: endTime,
                     AdditionalStartTime: additionalStartTime || "",
@@ -1340,7 +1340,7 @@
                 // Her work record için form data ekle
                 workRecords.forEach((record, index) => {
                     formData.append(`[${index}].Date`, record.Date);
-                    formData.append(`[${index}].ExcuseReason`, record.ExcuseReason);
+                    formData.append(`[${index}].DailyStatus`, record.DailyStatus);
                     formData.append(`[${index}].StartTime`, record.StartTime);
                     formData.append(`[${index}].EndTime`, record.EndTime);
                     formData.append(`[${index}].AdditionalStartTime`, record.AdditionalStartTime);

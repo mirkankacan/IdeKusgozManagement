@@ -126,13 +126,23 @@
                                 Geçerli bir seçenek seçiniz.
                             </div>
                         </div>
+                       
                         <div class="col-md-12">
                             <label for="selectCSuperior" class="form-label">Üstleri</label>
                             <select class="form-select superior-select" id="selectCSuperior">
                             </select>
 
                         </div>
-
+                        <div class="col-md-12">
+                            <label for="txtCEmail" class="form-label">E-posta</label>
+                            <input type="email" class="form-control" id="txtCEmail" value="">
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir e-posta adresi giriniz.
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -247,6 +257,17 @@
                                 Geçerli bir seçenek seçiniz.
                             </div>
                         </div>
+                        <div class="col-md-12">
+                            <label for="txtUEmail" class="form-label">E-posta</label>
+                            <input type="text" class="form-control" id="txtUEmail" value="">
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir e-posta adresi giriniz.
+                            </div>
+                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -302,6 +323,7 @@
             $('#txtCPassword').val('');
             $('#txtCName').val('');
             $('#txtCSurname').val('');
+            $('#txtCEmail').val('');
 
             // Select2 alanlarını temizle
             $('#selectCRole').val('').trigger('change');
@@ -312,6 +334,7 @@
             $('#txtUPassword').val('');
             $('#txtUName').val('');
             $('#txtUSurname').val('');
+            $('#txtUEmail').val('');
 
             // Select2 alanlarını temizle
             $('#selectURole').val('').trigger('change');
@@ -466,6 +489,7 @@
                     Name: $('#txtCName').val().trim(),
                     Surname: $('#txtCSurname').val().trim(),
                     Password: $('#txtCPassword').val(),
+                    Email: $('#txtCEmail').val().trim() || null,
                     RoleName: $('#selectCRole').val(),
                     IsExpatriate: $('#selectCExpatriate').val() == "true",
                     SuperiorIds: $('#selectCSuperior').val() || []
@@ -526,6 +550,7 @@
                     Password: $("#txtUPassword").val().trim() || null,
                     Name: $('#txtUName').val().trim(),
                     Surname: $('#txtUSurname').val().trim(),
+                    Email: $('#txtUEmail').val().trim() || null,
                     RoleName: $('#selectURole').val(),
                     IsExpatriate: $('#selectUExpatriate').val() == "true",
                     IsActive: $('#selectUStatus').val() == "true",
@@ -787,6 +812,7 @@
                     $('#txtUPassword').val('');
                     $('#txtUName').val(userData.name || '');
                     $('#txtUSurname').val(userData.surname || '');
+                    $('#txtUEmail').val(userData.email || '');
                     $('#selectUExpatriate').val(userData.isExpatriate ? "true" : "false");
                     $('#selectURole').val(userData.roleName);
                     $('#selectUStatus').val(userData.isActive ? "true" : "false");

@@ -11,6 +11,7 @@
         public bool IsActive { get; set; }
         public bool IsExpatriate { get; set; }
         public string RoleName { get; set; }
+        public string? Email { get; set; }
         public List<string> SuperiorIds { get; set; }
     }
 }

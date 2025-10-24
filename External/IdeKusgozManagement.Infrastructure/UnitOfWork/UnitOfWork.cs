@@ -2,6 +2,7 @@ using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities.Base;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using IdeKusgozManagement.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace IdeKusgozManagement.Infrastructure.UnitOfWork
@@ -31,6 +32,32 @@ namespace IdeKusgozManagement.Infrastructure.UnitOfWork
             }
 
             return (IGenericRepository<T>)_repositories[type];
+        }
+
+        public async Task<IEnumerable<TResult>> ExecuteTableValuedFunctionAsync<TResult>(
+           string functionName,
+           object[] parameters,
+           CancellationToken cancellationToken = default) where TResult : class
+        {
+            var parameterPlaceholders = string.Join(",", parameters.Select((_, i) => $"{{{i}}}"));
+            var sql = $"SELECT * FROM {functionName}({parameterPlaceholders})";
+
+            return await _context.Database
+                .SqlQueryRaw<TResult>(sql, parameters)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<TResult?> ExecuteScalarFunctionAsync<TResult>(
+            string functionName,
+            object[] parameters,
+            CancellationToken cancellationToken = default)
+        {
+            var parameterPlaceholders = string.Join(",", parameters.Select((_, i) => $"{{{i}}}"));
+            var sql = $"SELECT {functionName}({parameterPlaceholders})";
+
+            return await _context.Database
+                .SqlQueryRaw<TResult>(sql, parameters)
+                .FirstOrDefaultAsync(cancellationToken);
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

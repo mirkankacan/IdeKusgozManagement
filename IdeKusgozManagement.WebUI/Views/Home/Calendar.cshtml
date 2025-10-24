@@ -175,14 +175,6 @@
                                 const endDate = new Date(leave.endDate);
                                 endDate.setDate(endDate.getDate() + 1);
 
-                                // Debug için konsola yazdır
-                                console.log('Leave event:', {
-                                    title: leave.createdByFullName,
-                                    start: startDate.toISOString(),
-                                    end: endDate.toISOString(),
-                                    originalStart: leave.startDate,
-                                    originalEnd: leave.endDate
-                                });
 
                                 return {
                                     id: 'leave-' + leave.id,
@@ -211,19 +203,12 @@
 
                         // Projeleri event'lere çevir
                         if (projectData.isSuccess && projectData.data) {
-                            const projectEvents = projectData.data.map(project => {
+                            const projectEvents = projectData.data
+                            .filter(project => project.name !== 'Merkez')
+                            .map(project => {
                                 const startDate = new Date(project.startDate);
                                 const endDate = new Date(project.endDate);
                                 endDate.setDate(endDate.getDate() + 1);
-
-                                // Debug için konsola yazdır
-                                console.log('Project event:', {
-                                    title: project.name,
-                                    start: startDate.toISOString(),
-                                    end: endDate.toISOString(),
-                                    originalStart: project.startDate,
-                                    originalEnd: project.endDate
-                                });
 
                                 return {
                                     id: 'project-' + project.id,
@@ -246,10 +231,7 @@
                             events = events.concat(projectEvents);
                         }
 
-                        // Debug için toplam event sayısını konsola yazdır
-                        console.log('Total events created:', events.length);
-                        console.log('Events:', events);
-
+        
                         successCallback(events);
 
                     } catch (error) {

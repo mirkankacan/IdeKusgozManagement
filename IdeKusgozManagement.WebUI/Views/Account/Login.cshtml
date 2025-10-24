@@ -40,8 +40,10 @@
                         <div class="authent-text text-center mb-4">
                             <p>Devam etmek için lütfen giriş yapınız.</p>
                         </div>
+                        @Html.AntiForgeryToken()
 
                         <form id="loginForm">
+
                             <div class="mb-3">
                                 <div class="form-floating">
                                     <input type="text" class="form-control" id="txtTCNo"
@@ -64,12 +66,14 @@
                             </div>
 
                             <div class="d-grid">
-                                <button id="btnLogin" type="submit" class="btn btn-info">Giriş Yap</button>
+                                <button id="btnLogin" type="submit" class="btn btn-info"><i data-feather="log-in"></i> Giriş Yap</button>
                             </div>
 
                             <div id="errorArea" class="text-danger text-center mt-3"></div>
                         </form>
-
+                        <div class="authent-reg">
+                            <p>Şifreni mi Unuttun? <a href="/sifremi-unuttum">Hemen Sıfırla!</a></p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -101,6 +105,9 @@
                 method: "POST",
                 contentType: "application/json",
                 data: JSON.stringify(loginDto),
+                   headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
                 success: function (response) {
                     toastr.success("Giriş başarılı.", "Başarılı");
                     const redirectUrl = response;
@@ -119,8 +126,11 @@
                     toastr.error(errorMessage, "Hata");
                 },
                 complete: function () {
-                    $('#btnLogin').attr("disabled", false).html('<i data-feather="log-in"></i> Giriş Yap');
+                    setTimeout(() => {
+                         $('#btnLogin').attr("disabled", false).html('<i data-feather="log-in"></i> Giriş Yap');
                     feather.replace();
+                    }, 1000);
+                   
                 }
             });
         });

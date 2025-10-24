@@ -61,7 +61,9 @@
       padding: 0.125rem 0.25rem;
       width: 100%;
   }
-
+  .date-cell{
+      font-size:medium !important;
+  }
   .date-cell .additional-time-btn {
       width: 100%;
       margin-top: 2px;

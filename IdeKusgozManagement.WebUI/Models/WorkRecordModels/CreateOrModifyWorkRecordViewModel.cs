@@ -8,7 +8,7 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         [Required]
         public DateTime Date { get; set; }
 
-        public string? ExcuseReason { get; set; } = null;
+        public string DailyStatus { get; set; }
 
         public TimeSpan? StartTime { get; set; } = null;
 

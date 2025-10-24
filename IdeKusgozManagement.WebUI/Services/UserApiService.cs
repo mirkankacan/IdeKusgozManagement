@@ -282,5 +282,47 @@ namespace IdeKusgozManagement.WebUI.Services
                 return new ApiResponse<UserViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
+
+        public async Task<ApiResponse<AnnualLeaveCalculationViewModel>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/users/{userId}/annual-leave", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<AnnualLeaveCalculationViewModel>>(content);
+                    return apiResponse ?? new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Kullanıcı bulunamadı" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<AnnualLeaveCalculationViewModel>> GetMyAnnualLeaveDaysAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/users/my-annual-leave", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<AnnualLeaveCalculationViewModel>>(content);
+                    return apiResponse ?? new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Kullanıcı bulunamadı" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
     }
 }

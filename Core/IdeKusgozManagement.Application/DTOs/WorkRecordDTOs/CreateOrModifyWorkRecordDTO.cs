@@ -5,7 +5,7 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
     public class CreateOrModifyWorkRecordDTO
     {
         public DateTime Date { get; set; }
-        public string? ExcuseReason { get; set; }
+        public string DailyStatus { get; set; }
         public TimeSpan? StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
         public TimeSpan? AdditionalStartTime { get; set; }

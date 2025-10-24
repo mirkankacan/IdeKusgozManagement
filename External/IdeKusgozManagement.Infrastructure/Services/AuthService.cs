@@ -1,4 +1,5 @@
 ﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.AuthDTOs;
 using IdeKusgozManagement.Application.Interfaces.Providers;
 using IdeKusgozManagement.Application.Interfaces.Services;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IJwtProvider jwtProvider, IIdentityService identityService, ILogger<AuthService> logger) : IAuthService
+    public class AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IJwtProvider jwtProvider, IIdentityService identityService, ILogger<AuthService> logger, IEmailService emailService) : IAuthService
     {
         public async Task<ApiResponse<TokenDTO>> LoginAsync(LoginDTO loginDTO, CancellationToken cancellationToken = default)
         {
@@ -107,7 +108,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 // Refresh token süresi dolmuş mu kontrol et
-                if (user.RefreshTokenExpires == null || user.RefreshTokenExpires <= DateTime.Now)
+                if (user.RefreshTokenExpires == null || user.RefreshTokenExpires <= DateTime.UtcNow)
                 {
                     logger.LogWarning("Refresh token denemesi başarısız. Refresh token süresi dolmuş. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
                     return ApiResponse<TokenDTO>.Error("Refresh token süresi dolmuş");
@@ -125,6 +126,116 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "RefreshTokenAsync işleminde hata oluştu. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
                 return ApiResponse<TokenDTO>.Error("Token yenileme işlemi sırasında bir hata oluştu");
             }
+        }
+
+        public async Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordDTO dto, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var user = await userManager.FindByNameAsync(dto.TCNo);
+                if (user == null)
+                {
+                    logger.LogWarning("Şifre sıfırlama denemesi. Kullanıcı bulunamadı. TCNo: {TCNo}", dto.TCNo);
+                    return ApiResponse<bool>.Error("Bu TC numarasına kayıtlı kullanıcı bulunamadı");
+                }
+
+                // Kullanıcı aktif mi kontrol et
+                if (!user.IsActive)
+                {
+                    return ApiResponse<bool>.Error("Hesabınız pasif durumda");
+                }
+                if (string.IsNullOrEmpty(user.PasswordResetCode) || user.PasswordResetCode != dto.VerificationCode)
+                {
+                    logger.LogWarning("Şifre sıfırlama denemesi. Geçersiz doğrulama kodu. TCNo: {TCNo}, Girilen Kod: {Code}", dto.TCNo, dto.VerificationCode);
+                    return ApiResponse<bool>.Error("Geçersiz doğrulama kodu");
+                }
+                if (user.PasswordResetCodeExpires == null || user.PasswordResetCodeExpires <= DateTime.UtcNow)
+                {
+                    logger.LogWarning("Şifre sıfırlama denemesi. Doğrulama kodu süresi dolmuş. TCNo: {TCNo}", dto.TCNo);
+                    return ApiResponse<bool>.Error("Doğrulama kodunun süresi dolmuş. Lütfen yeni kod talep edin.");
+                }
+                if (dto.NewPassword != dto.ConfirmPassword)
+                {
+                    logger.LogWarning("Şifre sıfırlama denemesi. Şifre ve onay şifresi uyuşmuyor. TCNo: {TCNo}", dto.TCNo);
+                    return ApiResponse<bool>.Error("Şifre ve onay şifresi uyuşmuyor");
+                }
+                // Şifre güncelleme kontrolü
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                var result = await userManager.ResetPasswordAsync(user, token, dto.NewPassword);
+
+                // Doğrulama kodunu temizle
+                user.PasswordResetCode = null;
+                user.PasswordResetCodeExpires = null;
+
+                user.RefreshToken = null;
+                user.RefreshTokenExpires = null;
+
+                await userManager.UpdateAsync(user);
+
+                logger.LogInformation("Şifre başarıyla sıfırlandı. TCNo: {TCNo}", dto.TCNo);
+                return ApiResponse<bool>.Success(true, "Şifreniz başarıyla güncellendi");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "ResetPasswordAsync işleminde hata oluştu. TCNo: {TCNo}", dto.TCNo);
+                return ApiResponse<bool>.Error("Şifre sıfırlama işlemi sırasında bir hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<bool>> SendResetPasswordEmailAsync(ForgotPasswordDTO dto, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var user = await userManager.FindByNameAsync(dto.TCNo);
+                if (user == null)
+                {
+                    logger.LogWarning("Şifre sıfırlama talebi. Kullanıcı bulunamadı. TCNo: {TCNo}", dto.TCNo);
+                    return ApiResponse<bool>.Error("Gönderilen TC numarasına kayıtlı kullanıcı bulunamadı");
+                }
+
+                if (string.IsNullOrEmpty(user.Email))
+                {
+                    logger.LogWarning("Şifre sıfırlama talebi. Kullanıcının email adresi yok. Email: {Email}", user.Email);
+                    return ApiResponse<bool>.Error("Bu TC numarasına kayıtlı e-posta adresi bulunamadı");
+                }
+                // Kullanıcı aktif mi kontrol et
+                if (!user.IsActive)
+                {
+                    logger.LogWarning("Şifre sıfırlama talebi. Kullanıcı pasif durumda. Email: {Email}", user.Email);
+                    return ApiResponse<bool>.Error("Bu TC numarasına ait kayıtlı hesap pasif durumda");
+                }
+
+                // 6 haneli doğrulama kodu oluştur
+                var verificationCode = GenerateVerificationCode();
+
+                // Kodu ve süresini veritabanına kaydet
+                user.PasswordResetCode = verificationCode;
+                user.PasswordResetCodeExpires = DateTime.UtcNow.AddMinutes(5); // 5 dakika geçerli
+                await userManager.UpdateAsync(user);
+
+                // Email gönder
+                var emailServiceResponse = await emailService.SendVerificationCodeEmailAsync(user.Email, verificationCode, user.Name + " " + user.Surname, cancellationToken);
+
+                if (!emailServiceResponse.IsSuccess)
+                {
+                    logger.LogError("Doğrulama kodu emaili gönderilemedi. Email: {Email}", user.Email);
+                    return ApiResponse<bool>.Error("Email gönderilirken bir hata oluştu");
+                }
+
+                logger.LogInformation("Doğrulama kodu emaili başarıyla gönderildi. Email: {Email}", user.Email);
+                return ApiResponse<bool>.Success(true, "Doğrulama kodu email adresinize gönderilmiştir. Kod 5 dakika geçerlidir.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "SendResetPasswordEmailAsync işleminde hata oluştu. TCNo: {TCNo}", dto.TCNo);
+                return ApiResponse<bool>.Error("Doğrulama kodu gönderilirken bir hata oluştu");
+            }
+        }
+
+        private static string GenerateVerificationCode()
+        {
+            var random = new Random();
+            return random.Next(100000, 999999).ToString(); // 6 haneli kod
         }
     }
 }

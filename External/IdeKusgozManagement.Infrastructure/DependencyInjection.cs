@@ -43,10 +43,12 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IAdvanceService, AdvanceService>();
             services.AddScoped<ITrafficTicketService, TrafficTicketService>();
             services.AddScoped<IHolidayService, HolidayService>();
+            services.AddScoped<IEmailService, EmailService>();
 
             services.ConfigureOptions<JwtOptionsSetup>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();
             services.ConfigureOptions<HolidayApiOptionsSetup>();
+            services.ConfigureOptions<EmailOptionsSetup>();
 
             services.AddMemoryCache();
 

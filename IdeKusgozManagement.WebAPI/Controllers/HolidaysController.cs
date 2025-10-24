@@ -19,5 +19,20 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             var result = await holidayService.GetHolidaysByYearAsync(year, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
+
+        [HttpGet("start/{startDate:datetime}/end/{endDate:datetime}")]
+        public async Task<IActionResult> CalculateWorkingDays(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+        {
+            if (endDate < startDate)
+            {
+                return BadRequest("Bitiş tarihi, başlangıç tarihinden önce olamaz.");
+            }
+            if (startDate < new DateTime(2025, 1, 1))
+            {
+                return BadRequest("Başlangıç tarihi 2025'ten önce olamaz.");
+            }
+            var result = await holidayService.CalculateWorkingDaysAsync(startDate, endDate, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
     }
 }

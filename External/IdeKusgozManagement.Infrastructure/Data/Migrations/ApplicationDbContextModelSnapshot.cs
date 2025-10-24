@@ -98,6 +98,12 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PasswordResetCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("PasswordResetCodeExpires")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
 
@@ -645,6 +651,11 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DailyStatus")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
@@ -658,10 +669,6 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.Property<string>("EquipmentId")
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ExcuseReason")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("HasBreakfast")
                         .ValueGeneratedOnAdd()

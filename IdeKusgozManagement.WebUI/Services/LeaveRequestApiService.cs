@@ -71,9 +71,8 @@ namespace IdeKusgozManagement.WebUI.Services
                 formData.Add(new StringContent(model.Reason), "Reason");
 
                 if (!string.IsNullOrEmpty(model.Description))
-                {
                     formData.Add(new StringContent(model.Description), "Description");
-                }
+
 
                 // Add file if exists
                 if (model.File?.FormFile != null)

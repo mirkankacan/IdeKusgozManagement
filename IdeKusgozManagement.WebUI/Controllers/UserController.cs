@@ -176,5 +176,26 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             var response = await _userApiService.GetUserByIdAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response.Data) : BadRequest(response);
         }
+
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [HttpGet("{userId}/kalan-izinler")]
+        public async Task<IActionResult> GetAnnualLeaveByUser(string userId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+
+            var result = await _userApiService.GetAnnualLeaveDaysByUserAsync(userId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        [Authorize]
+        [HttpGet("kalan-izinlerim")]
+        public async Task<IActionResult> GetMyAnnualLeave(CancellationToken cancellationToken = default)
+        {
+            var result = await _userApiService.GetMyAnnualLeaveDaysAsync(cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
     }
 }

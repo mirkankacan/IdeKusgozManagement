@@ -177,11 +177,11 @@
                      {
                         "data": "fileId",
                         "render": function (data, type, row) {
-                            return `<a href="/dosya/indir/${data}"
+                               return data ? `<a href="/dosya/indir/${data}"
                                                            download
                                                            class="text-muted text-decoration-underline">
                                                             <i class="fas fa-file fa-lg"></i>
-                                                        </a>`;
+                                                        </a>` : '';
                         }
                     },
                     {

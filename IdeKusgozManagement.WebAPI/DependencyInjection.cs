@@ -1,8 +1,10 @@
-﻿using IdeKusgozManagement.Domain.Entities;
+﻿using IdeKusgozManagement.Application.DTOs.OptionDTOs;
+using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -21,8 +23,8 @@ namespace IdeKusgozManagement.WebAPI
         {
             var connectionString = configuration.GetConnectionString("SqlConnection");
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
-
-            // Serilog configuration (unchanged for brevity)
+            using var tempServiceProvider = services.BuildServiceProvider();
+            var emailOptions = tempServiceProvider.GetRequiredService<IOptions<EmailOptionsDTO>>();
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
@@ -79,7 +81,7 @@ namespace IdeKusgozManagement.WebAPI
                         columnOptions: GetErrorColumnOptions()))
                 .WriteTo.Email(
                     from: configuration["EmailConfiguration:FromEmail"],
-                    to: GetEmailRecipients(configuration),
+                    to: GetEmailRecipients(emailOptions),
                     host: configuration["EmailConfiguration:Host"],
                     port: int.Parse(configuration["EmailConfiguration:Port"] ?? "587"),
                     connectionSecurity: MailKit.Security.SecureSocketOptions.StartTls,
@@ -235,14 +237,14 @@ namespace IdeKusgozManagement.WebAPI
             return columnOptions;
         }
 
-        private static string GetEmailRecipients(IConfiguration configuration)
+        private static string GetEmailRecipients(IOptions<EmailOptionsDTO> options)
         {
-            var toEmails = configuration.GetSection("EmailConfiguration:ToEmails").Get<string[]>();
-            if (toEmails != null && toEmails.Length > 0)
+            var smtpOptions = options.Value;
+            if (smtpOptions.ToEmails != null && smtpOptions.ToEmails.Length > 0)
             {
-                return string.Join(",", toEmails);
+                return string.Join(",", smtpOptions.ToEmails);
             }
-            return configuration["EmailConfiguration:ToEmail"] ?? configuration["EmailConfiguration:FromEmail"];
+            return smtpOptions.FromEmail;
         }
     }
 }

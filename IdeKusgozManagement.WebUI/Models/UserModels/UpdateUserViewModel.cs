@@ -15,8 +15,9 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
 
         public string? Password { get; set; }
 
-        public bool? IsActive { get; set; }
-        public string? RoleName { get; set; }
+        public bool IsActive { get; set; }
+        public string? RoleName { get; set; } = null;
+        public string? Email { get; set; } = null;
 
         [Required]
         public bool IsExpatriate { get; set; }
