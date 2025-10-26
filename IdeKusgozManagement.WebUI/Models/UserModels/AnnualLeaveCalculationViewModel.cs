@@ -2,7 +2,7 @@
 {
     public class AnnualLeaveCalculationViewModel
     {
-        public double UsedDays { get; set; }
-        public double RemainingDays { get; set; }
+        public decimal UsedDays { get; set; }
+        public decimal RemainingDays { get; set; }
     }
 }

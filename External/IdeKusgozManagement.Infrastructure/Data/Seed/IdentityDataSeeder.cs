@@ -47,7 +47,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     throw new Exception("Admin kullanıcısı oluşturulamadı: " + errors);
                 }
             }
-            var unitManagerUser = await userManager.FindByEmailAsync("2");
+            var unitManagerUser = await userManager.FindByNameAsync("2");
             if (unitManagerUser == null)
             {
                 unitManagerUser = new ApplicationUser
@@ -71,7 +71,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     throw new Exception("Birim yönetici kullanıcısı oluşturulamadı: " + errors);
                 }
             }
-            var chiefUser = await userManager.FindByEmailAsync("3");
+            var chiefUser = await userManager.FindByNameAsync("3");
             if (chiefUser == null)
             {
                 chiefUser = new ApplicationUser
@@ -95,7 +95,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     throw new Exception("Şef kullanıcısı oluşturulamadı: " + errors);
                 }
             }
-            var personnelUser = await userManager.FindByEmailAsync("4");
+            var personnelUser = await userManager.FindByNameAsync("4");
             if (personnelUser == null)
             {
                 personnelUser = new ApplicationUser

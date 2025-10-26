@@ -117,10 +117,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 foreach (var workRecord in workRecords)
                 {
-                    if (workRecord.Status == WorkRecordStatus.Rejected)
-                    {
-                        continue;
-                    }
+
                     workRecord.Status = WorkRecordStatus.Rejected;
                     workRecord.RejectReason = rejectReason ?? null;
                 }
@@ -223,10 +220,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     return ApiResponse<WorkRecordDTO>.Error(message: "Belirtilen puantaj kaydı bulunamadı");
                 }
-                if (workRecord.Status == WorkRecordStatus.Rejected)
-                {
-                    return ApiResponse<WorkRecordDTO>.Error(message: "Puantaj kaydı zaten daha önceden reddedilmiş");
-                }
+
                 workRecord.Status = WorkRecordStatus.Rejected;
                 workRecord.RejectReason = rejectReason ?? null;
                 unitOfWork.GetRepository<IdtWorkRecord>().Update(workRecord);

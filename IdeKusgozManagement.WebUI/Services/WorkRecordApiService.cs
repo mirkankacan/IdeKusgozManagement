@@ -71,7 +71,7 @@ namespace IdeKusgozManagement.WebUI.Services
                     // Ana work record alanları
                     formData.Add(new StringContent(record.Date.ToString("yyyy-MM-dd")), $"[{i}].Date");
 
-                        formData.Add(new StringContent(record.DailyStatus), $"[{i}].DailyStatus");
+                    formData.Add(new StringContent(record.DailyStatus), $"[{i}].DailyStatus");
 
                     if (record.StartTime.HasValue)
                         formData.Add(new StringContent(record.StartTime.Value.ToString(@"hh\:mm")), $"[{i}].StartTime");
@@ -166,7 +166,7 @@ namespace IdeKusgozManagement.WebUI.Services
                     // Ana work record alanları
                     formData.Add(new StringContent(record.Date.ToString("yyyy-MM-dd")), $"[{i}].Date");
 
-                        formData.Add(new StringContent(record.DailyStatus), $"[{i}].DailyStatus");
+                    formData.Add(new StringContent(record.DailyStatus), $"[{i}].DailyStatus");
 
                     if (record.StartTime.HasValue)
                         formData.Add(new StringContent(record.StartTime.Value.ToString(@"hh\:mm")), $"[{i}].StartTime");
@@ -259,7 +259,8 @@ namespace IdeKusgozManagement.WebUI.Services
                     return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Onaylama başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
+                return errorResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Toplu onaylama başarısız" };
             }
             catch (Exception ex)
             {
@@ -271,7 +272,10 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/workrecords/batch-reject/user/{userId}/date/{date:yyyy-MM-dd}?rejectReason={Uri.EscapeDataString(rejectReason)}", null, cancellationToken);
+                var encodedRejectReason = string.IsNullOrEmpty(rejectReason)
+                    ? string.Empty
+                    : Uri.EscapeDataString(rejectReason);
+                var response = await _httpClient.PutAsync($"api/workrecords/batch-reject/user/{userId}/date/{date:yyyy-MM-dd}?rejectReason={encodedRejectReason}", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -279,8 +283,8 @@ namespace IdeKusgozManagement.WebUI.Services
                     var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
                     return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
-
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Reddetme başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
+                return errorResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Toplu reddetme başarısız" };
             }
             catch (Exception ex)
             {
@@ -300,8 +304,8 @@ namespace IdeKusgozManagement.WebUI.Services
                     var apiResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
                     return apiResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
-
-                return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Onaylama başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
+                return errorResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Onaylama başarısız" };
             }
             catch (Exception ex)
             {
@@ -313,7 +317,11 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/workrecords/{userId}/reject?rejectReason={Uri.EscapeDataString(rejectReason)}", null, cancellationToken);
+                var encodedRejectReason = string.IsNullOrEmpty(rejectReason)
+                 ? string.Empty
+                 : Uri.EscapeDataString(rejectReason);
+
+                var response = await _httpClient.PutAsync($"api/workrecords/{userId}/reject?rejectReason={encodedRejectReason}", null, cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -321,8 +329,8 @@ namespace IdeKusgozManagement.WebUI.Services
                     var apiResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
                     return apiResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
-
-                return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Onaylama başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
+                return errorResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Reddetme başarısız" };
             }
             catch (Exception ex)
             {
