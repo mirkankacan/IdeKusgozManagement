@@ -35,6 +35,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     Name = "Admin",
                     Surname = "User",
                     IsExpatriate = true,
+                    HireDate = new DateTime(2019, 1, 1)
                 };
                 var result = await userManager.CreateAsync(adminUser, password);
                 if (result.Succeeded)
@@ -58,7 +59,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     TCNo = "2",
                     Name = "Birim Yönetici",
                     Surname = "User",
-                    IsExpatriate = false
+                    IsExpatriate = false,
+                    HireDate = new DateTime(2024, 1, 1)
+
                 };
                 var result = await userManager.CreateAsync(unitManagerUser, password);
                 if (result.Succeeded)
@@ -82,7 +85,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     TCNo = "3",
                     Name = "Şef",
                     Surname = "User",
-                    IsExpatriate = false
+                    IsExpatriate = false,
+                    HireDate = new DateTime(2024, 1, 1)
+
                 };
                 var result = await userManager.CreateAsync(chiefUser, password);
                 if (result.Succeeded)
@@ -106,7 +111,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     TCNo = "4",
                     Name = "Personel",
                     Surname = "User",
-                    IsExpatriate = false
+                    IsExpatriate = false,
+                    HireDate = new DateTime(2024, 1, 1)
+
                 };
                 var result = await userManager.CreateAsync(personnelUser, password);
                 if (result.Succeeded)

@@ -18,6 +18,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasColumnType("decimal(18,2)");
 
+            builder.Property(x => x.Year)
+                .IsRequired();
+
             builder.HasOne(x => x.User)
                   .WithMany()
                   .HasForeignKey(x => x.UserId)

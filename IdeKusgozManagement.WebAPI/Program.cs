@@ -24,31 +24,55 @@ builder.Services.AddSignalR(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-using (var scope = app.Services.CreateScope())
+// Database initialization
+using var scope = app.Services.CreateScope();
+var services = scope.ServiceProvider;
+var logger = services.GetRequiredService<ILogger<Program>>();
+
+try
 {
-    var services = scope.ServiceProvider;
-    try
+    var context = services.GetRequiredService<ApplicationDbContext>();
+
+    // Database connection check (all environments)
+    var canConnect = context.Database.CanConnect();
+    if (!canConnect)
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        var canConnect = context.Database.CanConnect();
-        Console.WriteLine($"Can connect to database: {canConnect}");
+        logger.LogError("Database connection failed!");
+        throw new Exception("Database is not accessible");
+    }
+
+    Console.WriteLine("Database connection: OK");
+    logger.LogInformation("Database connection established successfully");
+
+    // Development-only migration
+    if (app.Environment.IsDevelopment())
+    {
         context.Database.Migrate();
         Console.WriteLine("Database migration completed successfully");
-
-        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-        var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
-        await IdentityDataSeeder.SeedAdminUserAndRolesAsync(userManager, roleManager);
+        logger.LogInformation("Database migration completed");
     }
-    catch (Exception ex)
+
+    // Seed admin user and roles
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+    await IdentityDataSeeder.SeedAdminUserAndRolesAsync(userManager, roleManager);
+
+    logger.LogInformation("Database initialization completed successfully");
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "Database initialization failed: {Message}", ex.Message);
+    Console.WriteLine($"Database error: {ex.Message}");
+    Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
+
+    // Fail fast in production
+    if (!app.Environment.IsDevelopment())
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Database error: {Message}", ex.Message);
-        Console.WriteLine($"Database error: {ex.Message}");
-        Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
+        throw;
     }
 }
-// Environment-specific middleware
+
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -61,7 +85,9 @@ else
     app.UseHsts();
     app.UseHttpsRedirection();
 }
+
 app.UseStaticFiles();
+
 // Security and CORS
 app.UseCors();
 app.UseRouting();
@@ -78,6 +104,7 @@ app.UseEndpoints(endpoints =>
     // SignalR Hubs
     endpoints.MapHub<CommunicationHub>("/communicationHub");
 });
+
 app.Lifetime.ApplicationStopping.Register(Log.CloseAndFlush);
 
 app.Run();

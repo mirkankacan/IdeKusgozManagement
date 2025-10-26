@@ -477,30 +477,30 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<AnnualLeaveCalculationDTO>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<AnnualLeaveBalanceDTO>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (string.IsNullOrEmpty(userId))
-                    return ApiResponse<AnnualLeaveCalculationDTO>.Error("Kullanıcı ID'si boş geçilemez");
+                    return ApiResponse<AnnualLeaveBalanceDTO>.Error("Kullanıcı ID'si boş geçilemez");
 
                 var parameters = new object[] { userId };
 
-                var funcResults = await unitOfWork.ExecuteTableValuedFunctionAsync<AnnualLeaveCalculationDTO>(
-                        "dbo.IDF_AnnualLeaveCalculation",
+                var funcResults = await unitOfWork.ExecuteTableValuedFunctionAsync<AnnualLeaveBalanceDTO>(
+                        "dbo.IDF_AnnualLeaveBalance",
                         parameters,
                         cancellationToken);
 
                 var result = funcResults.FirstOrDefault();
 
                 return result != null
-                    ? ApiResponse<AnnualLeaveCalculationDTO>.Success(result)
-                    : ApiResponse<AnnualLeaveCalculationDTO>.Error("Veri alınamadı");
+                    ? ApiResponse<AnnualLeaveBalanceDTO>.Success(result)
+                    : ApiResponse<AnnualLeaveBalanceDTO>.Error("Veri alınamadı");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetAnnualLeaveDaysAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ApiResponse<AnnualLeaveCalculationDTO>.Error("Kullanıcının yıllık izin verileri alınırken hata oluştu");
+                return ApiResponse<AnnualLeaveBalanceDTO>.Error("Kullanıcının yıllık izin verileri alınırken hata oluştu");
             }
         }
     }
