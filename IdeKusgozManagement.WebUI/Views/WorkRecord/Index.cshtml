@@ -1241,8 +1241,8 @@
                             }
                             return response;
                         } catch (error) {
-                            const errorMessage = handleAjaxError(error, 'Onaylama başarısız');
-                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            handleAjaxError(error, 'Onaylama başarısız');
+                           
                             return false;
                         }
                     },
@@ -1433,8 +1433,7 @@
 
                             return response;
                         } catch (error) {
-                            const errorMessage = handleAjaxError(error, 'Onaylama başarısız');
-                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                                            handleAjaxError(error, 'Onaylama başarısız');
                             return false;
                         }
                     },
@@ -1452,8 +1451,7 @@
 
         async function rejectWorkRecords() {
             const selectedUserId = $('#user-select').val();
-            const year = parseInt($('#year-select').val());
-            const month = parseInt($('#month-select').val());
+   
 
             if (!selectedUserId) {
                 toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
@@ -1470,11 +1468,10 @@
             }
         }
 
-        async function confirmRejectWithReason() {
+             async function confirmRejectWithReason() {
             try {
                 const mode = $('#txtRejectMode').val();
                 const reason = ($('#txtWorkRecordRejectReason').val() || '').trim();
-
                 if (mode === 'single') {
                     const id = $('#txtRejectWorkRecordId').val();
                     const url = `/puantaj/reddet/${id}${reason ? `?rejectReason=${encodeURIComponent(reason)}` : ''}`;
@@ -1485,13 +1482,10 @@
                             'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                         }
                     });
-
                     if (response.isSuccess) {
                         toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');
                         $('#rejectWorkRecordModal').modal('hide');
                         await loadWorkRecordsByUser();
-                    } else {
-                        toastr.error(response.message || 'Reddetme başarısız', 'Hata!');
                     }
                 } else if (mode === 'bulk') {
                     const selectedUserId = $('#user-select').val();
@@ -1506,18 +1500,14 @@
                             'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                         }
                     });
-
                     if (response.isSuccess) {
                         toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');
                         $('#rejectWorkRecordModal').modal('hide');
                         await loadWorkRecordsByUser();
-                    } else {
-                        toastr.error(response.message || 'Reddetme başarısız', 'Hata!');
                     }
                 }
             } catch (error) {
-                const errorMessage = handleAjaxError(error, 'Reddetme başarısız');
-                toastr.error(errorMessage, 'Hata!');
+                handleAjaxError(error, 'Reddetme başarısız'); 
             }
         }
     </script>

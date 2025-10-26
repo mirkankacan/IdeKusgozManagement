@@ -1,10 +1,12 @@
 using IdeKusgozManagement.Application;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure;
+using IdeKusgozManagement.Infrastructure.Data.Context;
 using IdeKusgozManagement.Infrastructure.Data.Seed;
 using IdeKusgozManagement.Infrastructure.Hubs;
 using IdeKusgozManagement.WebAPI;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +30,12 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var canConnect = context.Database.CanConnect();
+        Console.WriteLine($"Can connect to database: {canConnect}");
+        context.Database.Migrate();
+        Console.WriteLine("Database migration completed successfully");
+
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
         await IdentityDataSeeder.SeedAdminUserAndRolesAsync(userManager, roleManager);
@@ -35,7 +43,9 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred during database seeding");
+        logger.LogError(ex, "Database error: {Message}", ex.Message);
+        Console.WriteLine($"Database error: {ex.Message}");
+        Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
     }
 }
 // Environment-specific middleware

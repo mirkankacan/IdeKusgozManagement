@@ -11,6 +11,8 @@
                               <h5 class="card-title">Profil Güncelleme Sayfası</h5>
 
                 <form  class="row g-3 needs-validation" novalidate>
+                    @Html.AntiForgeryToken()
+
                     <input type="hidden" id="txtUserId" readonly disabled value="@Model.Data.Id" />
                     <div class="col-md-6">
                         <label for="txtTCNo" class="form-label">TC No</label>
@@ -42,7 +44,6 @@
                         <div class="invalid-feedback">Geçerli bir soyisim giriniz.</div>
                     </div>
 
-                    @Html.AntiForgeryToken()
                     <div class="col-12">
                         <button class="btn btn-primary w-100" id="btnUpdateProfile" type="submit">Güncelle</button>
                     </div>

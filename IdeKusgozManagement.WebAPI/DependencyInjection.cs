@@ -3,6 +3,7 @@ using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
@@ -25,6 +26,9 @@ namespace IdeKusgozManagement.WebAPI
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
             using var tempServiceProvider = services.BuildServiceProvider();
             var emailOptions = tempServiceProvider.GetRequiredService<IOptions<EmailOptionsDTO>>();
+
+            bool databaseExists = CheckDatabaseExists(connectionString);
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
@@ -53,32 +57,43 @@ namespace IdeKusgozManagement.WebAPI
                     rollOnFileSizeLimit: true,
                     shared: true,
                     outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-                .WriteTo.Logger(lc => lc
-                    .Filter.ByIncludingOnly(evt => evt.Level == LogEventLevel.Information || evt.Level == LogEventLevel.Debug)
-                    .WriteTo.MSSqlServer(
-                        connectionString: connectionString,
-                        sinkOptions: new MSSqlServerSinkOptions
-                        {
-                            TableName = "InformationLogs",
-                            SchemaName = "dbo",
-                            AutoCreateSqlTable = true,
-                            BatchPostingLimit = 1000,
-                            BatchPeriod = TimeSpan.FromSeconds(30)
-                        },
-                        columnOptions: GetInformationColumnOptions()))
-                .WriteTo.Logger(lc => lc
-                    .Filter.ByIncludingOnly(evt => evt.Level >= LogEventLevel.Warning)
-                    .WriteTo.MSSqlServer(
-                        connectionString: connectionString,
-                        sinkOptions: new MSSqlServerSinkOptions
-                        {
-                            TableName = "ErrorLogs",
-                            SchemaName = "dbo",
-                            AutoCreateSqlTable = true,
-                            BatchPostingLimit = 100,
-                            BatchPeriod = TimeSpan.FromSeconds(10)
-                        },
-                        columnOptions: GetErrorColumnOptions()))
+                // Veritabanı varsa SQL Server sink'leri ekle
+                .WriteTo.Logger(lc =>
+                {
+                    if (databaseExists)
+                    {
+                        lc.Filter.ByIncludingOnly(evt => evt.Level == LogEventLevel.Information || evt.Level == LogEventLevel.Debug)
+                          .WriteTo.MSSqlServer(
+                              connectionString: connectionString,
+                              sinkOptions: new MSSqlServerSinkOptions
+                              {
+                                  TableName = "InformationLogs",
+                                  SchemaName = "dbo",
+                                  AutoCreateSqlTable = true,
+                                  BatchPostingLimit = 1000,
+                                  BatchPeriod = TimeSpan.FromSeconds(30)
+                              },
+                              columnOptions: GetInformationColumnOptions());
+                    }
+                })
+                .WriteTo.Logger(lc =>
+                {
+                    if (databaseExists)
+                    {
+                        lc.Filter.ByIncludingOnly(evt => evt.Level >= LogEventLevel.Warning)
+                          .WriteTo.MSSqlServer(
+                              connectionString: connectionString,
+                              sinkOptions: new MSSqlServerSinkOptions
+                              {
+                                  TableName = "ErrorLogs",
+                                  SchemaName = "dbo",
+                                  AutoCreateSqlTable = true,
+                                  BatchPostingLimit = 100,
+                                  BatchPeriod = TimeSpan.FromSeconds(10)
+                              },
+                              columnOptions: GetErrorColumnOptions());
+                    }
+                })
                 .WriteTo.Email(
                     from: configuration["EmailConfiguration:FromEmail"],
                     to: GetEmailRecipients(emailOptions),
@@ -202,7 +217,20 @@ namespace IdeKusgozManagement.WebAPI
             return services;
         }
 
-        // Diğer metodlar aynı kalır...
+        private static bool CheckDatabaseExists(string connectionString)
+        {
+            try
+            {
+                using var connection = new SqlConnection(connectionString);
+                connection.Open();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static ColumnOptions GetInformationColumnOptions()
         {
             var columnOptions = new ColumnOptions();
