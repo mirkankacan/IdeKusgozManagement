@@ -68,6 +68,24 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [ValidateAntiForgeryToken]
+        [HttpPut("guncelle/{leaveRequestId}")]
+        public async Task<IActionResult> UpdateLeaveRequest(string leaveRequestId, [FromForm] UpdateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(leaveRequestId))
+            {
+                return BadRequest("İzin isteği ID'si gereklidir");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var response = await _leaveRequestApiService.UpdateLeaveRequestAsync(leaveRequestId, model, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize]
+        [ValidateAntiForgeryToken]
         [HttpDelete("{leaveRequestId}")]
         public async Task<IActionResult> DeleteLeaveRequest(string leaveRequestId, CancellationToken cancellationToken = default)
         {

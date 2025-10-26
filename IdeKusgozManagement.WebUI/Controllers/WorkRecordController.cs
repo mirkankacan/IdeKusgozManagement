@@ -53,7 +53,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize]
-        [HttpPost("toplu-ekle-guncelle")]
+        [HttpPost("toplu-ekle-duzenle")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateOrModifyWorkRecord([FromForm] List<CreateOrModifyWorkRecordViewModel> model, CancellationToken cancellationToken = default)
         {
