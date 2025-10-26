@@ -100,12 +100,29 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
             var result = await leaveRequestService.CreateLeaveRequestAsync(createLeaveRequestDTO, cancellationToken);
 
-            if (!result.IsSuccess)
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// İzin talebini günceller
+        /// </summary>
+        /// <param name="leaveRequestId">İzin talebi ID'si</param>
+        /// <param name="updateLeaveRequestDTO">İzin talebi bilgileri</param>
+        [HttpPut("{leaveRequestId}")]
+        public async Task<IActionResult> UpdateLeaveRequest(string leaveRequestId, [FromForm] UpdateLeaveRequestDTO updateLeaveRequestDTO, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(leaveRequestId))
             {
-                return BadRequest(result);
+                return BadRequest("İzin talebi ID'si gereklidir");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
             }
 
-            return Ok(result);
+            var result = await leaveRequestService.UpdateLeaveRequestAsync(leaveRequestId, updateLeaveRequestDTO, cancellationToken);
+
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -137,13 +154,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("İzin talebi ID'si gereklidir");
             }
             var result = await leaveRequestService.ApproveLeaveRequestAsync(leaveRequestId, cancellationToken);
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result);
-            }
-
-            return Ok(result);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -160,13 +171,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await leaveRequestService.RejectLeaveRequestAsync(leaveRequestId, rejectReason, cancellationToken);
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result);
-            }
-
-            return Ok(result);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }
 }

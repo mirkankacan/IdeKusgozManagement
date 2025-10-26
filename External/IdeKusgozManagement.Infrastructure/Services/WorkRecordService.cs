@@ -63,9 +63,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 foreach (var workRecord in workRecords)
                 {
                     if (workRecord.Status == WorkRecordStatus.Approved)
-                    {
                         continue;
-                    }
+
                     workRecord.Status = WorkRecordStatus.Approved;
                 }
 
@@ -117,7 +116,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 foreach (var workRecord in workRecords)
                 {
-
                     workRecord.Status = WorkRecordStatus.Rejected;
                     workRecord.RejectReason = rejectReason ?? null;
                 }
@@ -276,6 +274,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var recordsToUpdate = new List<IdtWorkRecord>();
                 var expensesToProcess = new List<CreateOrModifyWorkRecordExpenseDTO>();
+                var changedFieldsSet = new HashSet<string>();
 
                 foreach (var element in workRecordDTOs)
                 {
@@ -290,10 +289,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     // ========== VAROLAN GÜNCELLEME ==========
                     if (existingWorkRecord is not null)
                     {
-                        bool hasChanges = HasWorkRecordChanges(existingWorkRecord, element);
+                        if (existingWorkRecord.Status == WorkRecordStatus.Approved)
+                            continue;
 
-                        if (hasChanges)
+                        var changedFields = GetChangedFields(existingWorkRecord, element);
+                        if (changedFields.Any())
                         {
+                            changedFieldsSet.UnionWith(changedFields);
                             UpdateWorkRecordFields(existingWorkRecord, element);
                             recordsToUpdate.Add(existingWorkRecord);
                         }
@@ -327,7 +329,10 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
 
                 var updatedCount = recordsToUpdate.Count();
-                var processedExpenseCount = expensesToProcess.Count();
+
+                // Sadece gerçek masrafları say (dummy expense'leri hariç tut)
+                var actualExpenseCount = expensesToProcess.Count(e => e.ExpenseId != Guid.Empty.ToString());
+                var processedExpenseCount = actualExpenseCount;
 
                 var mappedRecords = await GetFinalWorkRecords(dates, userId, cancellationToken);
 
@@ -335,9 +340,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (updatedCount > 0 || processedExpenseCount > 0)
                 {
                     var firstRecord = mappedRecords.First();
+                    string? changedFieldsText = changedFieldsSet.Any() ? $" Değişen alanlar: {string.Join(", ", changedFieldsSet)}." : "";
+                    var message = $"{firstRecord.UpdatedByFullName} tarafından {firstRecord.Date:MM/yyyy} ayı için puantaj kayıt(lar)ı güncellendi. {updatedCount} kayıt güncellendi";
+
+                    if (processedExpenseCount > 0)
+                    {
+                        message += $", {processedExpenseCount} masraf işlendi";
+                    }
+
+                    message += changedFieldsText;
+
                     var notificationDTO = new CreateNotificationDTO
                     {
-                        Message = $"{firstRecord.UpdatedByFullName} tarafından {firstRecord.Date:MM/yyyy} ayı için puantaj kayıt(lar)ı güncellendi. {updatedCount} kayıt güncellendi, {processedExpenseCount} masraf işlendi.",
+                        Message = message,
                         Type = NotificationType.WorkRecord,
                         RedirectUrl = "/puantaj/ekle",
                         TargetUsers = new List<string> { firstRecord.CreatedBy }
@@ -345,7 +360,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
                 }
 
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(mappedRecords, $"Puantaj kayıtları işlendi. {updatedCount} kayıt güncellendi, {processedExpenseCount} masraf işlendi.");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(mappedRecords, $"Puantaj kayıtları işlendi. {updatedCount} kayıt güncellendi.");
             }
             catch (Exception ex)
             {
@@ -393,9 +408,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         if (existingWorkRecord.Status == WorkRecordStatus.Approved)
                             continue;
 
-                        bool hasChanges = HasWorkRecordChanges(existingWorkRecord, element);
+                        var changedFields = GetChangedFields(existingWorkRecord, element);
 
-                        if (hasChanges)
+                        if (changedFields.Any())
                         {
                             UpdateWorkRecordFields(existingWorkRecord, element);
                             recordsToUpdate.Add(existingWorkRecord);
@@ -439,7 +454,10 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var createdCount = recordsToAdd.Count();
                 var updatedCount = recordsToUpdate.Count();
-                var processedExpenseCount = expensesToProcess.Count();
+
+                // Sadece gerçek masrafları say (dummy expense'leri hariç tut)
+                var actualExpenseCount = expensesToProcess.Count(e => e.ExpenseId != Guid.Empty.ToString());
+                var processedExpenseCount = actualExpenseCount;
 
                 var mappedRecords = await GetFinalWorkRecords(dates, userId, cancellationToken);
 
@@ -447,9 +465,18 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (updatedCount > 0 || createdCount > 0 || processedExpenseCount > 0)
                 {
                     var firstRecord = mappedRecords.First();
+                    var message = $"{firstRecord.CreatedByFullName} tarafından {firstRecord.Date:MM/yyyy} ayı için puantaj kayıt(lar)ı işlendi. {createdCount} kayıt eklendi, {updatedCount} kayıt güncellendi";
+
+                    if (processedExpenseCount > 0)
+                    {
+                        message += $", {processedExpenseCount} masraf işlendi";
+                    }
+
+                    message += ".";
+
                     var notificationDTO = new CreateNotificationDTO
                     {
-                        Message = $"{firstRecord.CreatedByFullName} tarafından {firstRecord.Date:MM/yyyy} ayı için puantaj kayıt(lar)ı işlendi. {createdCount} kayıt eklendi, {updatedCount} kayıt güncellendi, {processedExpenseCount} masraf işlendi.",
+                        Message = message,
                         Type = NotificationType.WorkRecord,
                         RedirectUrl = "/puantaj",
                         TargetUsers = await identityService.GetUserSuperiorsAsync(cancellationToken)
@@ -457,7 +484,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     await notificationService.SendNotificationToSuperiorsAsync(notificationDTO, cancellationToken);
                 }
 
-                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(mappedRecords, $"Puantaj kayıtları işlendi. {createdCount} kayıt eklendi, {updatedCount} kayıt güncellendi, {processedExpenseCount} masraf işlendi.");
+                return ApiResponse<IEnumerable<WorkRecordDTO>>.Success(mappedRecords, $"Puantaj kayıtları işlendi. {createdCount} kayıt eklendi, {updatedCount} kayıt güncellendi.");
             }
             catch (Exception ex)
             {
@@ -552,22 +579,53 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return finalRecords.Adapt<IEnumerable<WorkRecordDTO>>();
         }
 
-        private bool HasWorkRecordChanges(IdtWorkRecord existing, CreateOrModifyWorkRecordDTO incoming)
+        private List<string> GetChangedFields(IdtWorkRecord existing, CreateOrModifyWorkRecordDTO incoming)
         {
-            return existing.DailyStatus != incoming.DailyStatus ||
-                   existing.StartTime != incoming.StartTime ||
-                   existing.EndTime != incoming.EndTime ||
-                   existing.ProjectId != incoming.ProjectId ||
-                   existing.EquipmentId != incoming.EquipmentId ||
-                   existing.Province != incoming.Province ||
-                   existing.District != incoming.District ||
-                   existing.HasBreakfast != incoming.HasBreakfast ||
-                   existing.HasLunch != incoming.HasLunch ||
-                   existing.HasDinner != incoming.HasDinner ||
-                   existing.HasNightMeal != incoming.HasNightMeal ||
-                   existing.AdditionalStartTime != (incoming.AdditionalStartTime ?? null) ||
-                   existing.AdditionalEndTime != (incoming.AdditionalEndTime ?? null) ||
-                   existing.TravelExpenseAmount != (incoming.TravelExpenseAmount ?? null);
+            var changedFields = new List<string>();
+
+            if (existing.DailyStatus != incoming.DailyStatus)
+                changedFields.Add("Günlük Durum");
+
+            if (existing.StartTime != incoming.StartTime)
+                changedFields.Add("Başlama Saati");
+
+            if (existing.EndTime != incoming.EndTime)
+                changedFields.Add("Bitiş Saati");
+
+            if (existing.ProjectId != incoming.ProjectId)
+                changedFields.Add("Proje");
+
+            if (existing.EquipmentId != incoming.EquipmentId)
+                changedFields.Add("Ekipman");
+
+            if (existing.Province != incoming.Province)
+                changedFields.Add("İl");
+
+            if (existing.District != incoming.District)
+                changedFields.Add("İlçe");
+
+            if (existing.HasBreakfast != incoming.HasBreakfast)
+                changedFields.Add("Sabah Yemeği");
+
+            if (existing.HasLunch != incoming.HasLunch)
+                changedFields.Add("Öğle Yemeği");
+
+            if (existing.HasDinner != incoming.HasDinner)
+                changedFields.Add("Akşam Yemeği");
+
+            if (existing.HasNightMeal != incoming.HasNightMeal)
+                changedFields.Add("Gece Yemeği");
+
+            if (existing.AdditionalStartTime != (incoming.AdditionalStartTime ?? null))
+                changedFields.Add("Ek Başlama Saati");
+
+            if (existing.AdditionalEndTime != (incoming.AdditionalEndTime ?? null))
+                changedFields.Add("Ek Bitiş Saati");
+
+            if (existing.TravelExpenseAmount != (incoming.TravelExpenseAmount ?? null))
+                changedFields.Add("Yol Masrafı");
+
+            return changedFields;
         }
 
         private (bool, string?) CheckHoursIfValid(CreateOrModifyWorkRecordDTO dto)

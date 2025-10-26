@@ -82,7 +82,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPost("giris-yap")]
         [AllowAnonymous]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login([FromBody] LoginViewModel model, CancellationToken cancellationToken = default)
         {
             try
@@ -109,7 +108,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPost("sifremi-unuttum")]
         [AllowAnonymous]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordViewModel model, CancellationToken cancellationToken = default)
         {
             try
@@ -132,7 +130,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPost("sifre-sifirla")]
         [AllowAnonymous]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordViewModel model, CancellationToken cancellationToken = default)
         {
             try

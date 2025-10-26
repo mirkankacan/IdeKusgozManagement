@@ -76,7 +76,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 // Geçmiş tarih kontrolü
-                if (createLeaveRequestDTO.StartDate < DateTime.Today)
+                if (createLeaveRequestDTO.StartDate.Date < DateTime.Today.Date)
                 {
                     return ApiResponse<LeaveRequestDTO>.Error("Geçmiş tarihli izin talebi oluşturulamaz");
                 }
@@ -111,8 +111,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
 
                 var createdLeaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>()
-                    .Where(x => x.Id == leaveRequest.Id)
-                    .AsNoTracking()
+                    .WhereAsNoTracking(x => x.Id == leaveRequest.Id)
                     .Include(x => x.CreatedByUser)
                     .Include(x => x.UpdatedByUser)
                     .Include(x => x.File)
@@ -122,7 +121,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 CreateNotificationDTO createNotification = new()
                 {
-                    Message = $"{leaveRequestDTO.CreatedByFullName} tarafından, {leaveRequestDTO.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde yeni bir izin talebi oluşturuldu.",
+                    Message = $"{leaveRequestDTO.CreatedByFullName} tarafından {leaveRequestDTO.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde yeni bir izin talebi oluşturuldu.",
                     Type = NotificationType.LeaveRequest,
                     RedirectUrl = "/izin",
                     TargetRoles = await identityService.GetUserSuperiorsAsync()
@@ -312,6 +311,132 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "GetLeaveRequestByStatus işleminde hata oluştu");
                 return ApiResponse<IEnumerable<LeaveRequestDTO>>.Error("Duruma göre izin talepleri getirilirken hata oluştu");
             }
+        }
+
+        public async Task<ApiResponse<bool>> UpdateLeaveRequestAsync(string leaveRequestId, UpdateLeaveRequestDTO updateLeaveRequestDTO, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Tarih kontrolü
+                if (updateLeaveRequestDTO.StartDate > updateLeaveRequestDTO.EndDate)
+                {
+                    return ApiResponse<bool>.Error("Başlangıç tarihi bitiş tarihinden önce olmalıdır");
+                }
+                // Geçmiş tarih kontrolü
+                if (updateLeaveRequestDTO.StartDate.Date < DateTime.Today.Date)
+                {
+                    return ApiResponse<bool>.Error("Geçmiş tarihli izin talebi oluşturulamaz");
+                }
+
+                await unitOfWork.BeginTransactionAsync(cancellationToken);
+                var userRole = identityService.GetUserRole();
+                var leaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>().GetByIdAsync(leaveRequestId, cancellationToken);
+                if (leaveRequest == null)
+                {
+                    return ApiResponse<bool>.Error("İzin talebi bulunamadı");
+                }
+                if (leaveRequest.Status == LeaveRequestStatus.Approved && (userRole != "Yönetici" || userRole != "Admin"))
+                {
+                    return ApiResponse<bool>.Error("İzin talebi daha önceden onaylanmış güncelleme yetkiniz bulunmamaktadır");
+                }
+
+                var changedFields = GetChangedFields(leaveRequest, updateLeaveRequestDTO);
+
+                string changedFieldsText = changedFields.Any() ? $" Değişen alanlar: {string.Join(", ", changedFields)}." : "";
+
+                var calcResponse = await holidayService.CalculateWorkingDaysAsync(
+                          updateLeaveRequestDTO.StartDate.Date,
+                          updateLeaveRequestDTO.EndDate.Date);
+
+                leaveRequest.StartDate = updateLeaveRequestDTO.StartDate;
+                leaveRequest.EndDate = updateLeaveRequestDTO.EndDate;
+                leaveRequest.Reason = updateLeaveRequestDTO.Reason;
+                leaveRequest.Description = updateLeaveRequestDTO.Description ?? null;
+                leaveRequest.Status = LeaveRequestStatus.Pending;
+                leaveRequest.Duration = $"{calcResponse.Data} gün";
+
+                bool hasFileChange = updateLeaveRequestDTO.File != null && updateLeaveRequestDTO.File.FormFile != null;
+
+                if (hasFileChange)
+                {
+                    string? oldFileId = leaveRequest.FileId ?? null;
+
+                    updateLeaveRequestDTO.File.TargetUserId = identityService.GetUserId();
+                    updateLeaveRequestDTO.File.FileType = FileType.LeaveRequest;
+                    var fileUploadResult = await fileService.UploadFileAsync(updateLeaveRequestDTO.File, cancellationToken);
+
+                    if (!fileUploadResult.IsSuccess)
+                    {
+                        await unitOfWork.RollbackTransactionAsync(cancellationToken);
+
+                        return ApiResponse<bool>.Error(fileUploadResult.Message);
+                    }
+                    if (!string.IsNullOrEmpty(oldFileId))
+                    {
+                        var fileDeleteResult = await fileService.DeleteFileAsync(oldFileId, cancellationToken);
+                        if (!fileDeleteResult.IsSuccess)
+                        {
+                            logger.LogWarning("Dosya silinirken hata oluştu. FileId: {FileId}, Error: {Error}",
+                                oldFileId, fileDeleteResult.Message);
+                        }
+                    }
+
+                    leaveRequest.FileId = fileUploadResult.Data.Id;
+
+                }
+
+                unitOfWork.GetRepository<IdtLeaveRequest>().Update(leaveRequest);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                var updatedLeaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>()
+                    .WhereAsNoTracking(x => x.Id == leaveRequest.Id)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.File)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                var leaveRequestDTO = updatedLeaveRequest.Adapt<LeaveRequestDTO>();
+
+                CreateNotificationDTO createNotification = new()
+                {
+                    Message = $"{leaveRequestDTO.UpdatedByFullName} tarafından {leaveRequestDTO.UpdatedDate?.ToString("dd.MM.yyyy HH:mm")} tarihinde, {leaveRequest.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde oluşturmuş olduğunuz izin talebiniz güncellendi.{changedFieldsText}",
+                    Type = NotificationType.LeaveRequest,
+                    RedirectUrl = "/izin/istek-olustur",
+                    TargetUsers = new() { leaveRequestDTO.CreatedBy }
+                };
+
+                await notificationService.SendNotificationToUsersAsync(createNotification, cancellationToken);
+                return ApiResponse<bool>.Success(true, "İzin talebi başarıyla güncellendi");
+            }
+            catch (Exception ex)
+            {
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                logger.LogError(ex, "UpdateLeaveRequestAsync işleminde hata oluştu");
+                return ApiResponse<bool>.Error("İzin talebi güncellenirken hata oluştu");
+            }
+        }
+
+        private List<string> GetChangedFields(IdtLeaveRequest existing, UpdateLeaveRequestDTO incoming)
+        {
+            var changedFields = new List<string>();
+
+            if (existing.StartDate.Date != incoming.StartDate.Date)
+                changedFields.Add("Başlangıç Tarihi");
+
+            if (existing.EndDate.Date != incoming.EndDate.Date)
+                changedFields.Add("Bitiş Tarihi");
+
+            if (existing.Reason != incoming.Reason)
+                changedFields.Add("İzin Sebebi");
+
+            if (existing.Description != incoming.Description)
+                changedFields.Add("Açıklama");
+
+            if (!string.IsNullOrEmpty(existing.FileId) && incoming.File != null && incoming.File.FormFile != null)
+                changedFields.Add("Döküman");
+
+            return changedFields;
         }
     }
 }

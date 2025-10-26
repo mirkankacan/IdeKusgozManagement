@@ -6,10 +6,20 @@
 @section Styles {
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <style>
         a {
             margin-left: 20px;
+        }
+
+        .fa-calendar {
+            cursor: pointer;
+        }
+
+        .fa-calendar:hover {
+            color: #007bff;
         }
     </style>
 }
@@ -33,7 +43,7 @@
                                 <th>TALEP<br /> EDEN</th>
                                 <th>BAŞLANGIÇ<br /> TARİHİ</th>
                                 <th>BİTİŞ<br /> TARİHİ</th>
-                                <th>NET<br/> SÜRE</th>
+                                <th>NET<br /> SÜRE</th>
                                 <th>SEBEP</th>
                                 <th>DURUM</th>
                                 <th>DÖKÜMAN</th>
@@ -51,6 +61,80 @@
     </div>
 </div>
 
+<!-- Update Modal -->
+<div class="modal fade" id="updateLeaveRequestModal" tabindex="-1" aria-labelledby="updateLeaveRequestModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">İzin Talebi Güncelleme Penceresi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="updateLeaveRequestForm" class="needs-validation" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" id="txtUpdateLeaveRequestId">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="date-update-leave" class="form-label">İzin Tarih Aralığı</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control date-update-leave" id="date-update-leave"
+                                    required placeholder="Başlangıç - Bitiş">
+                                <span class="input-group-text">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli bir tarih aralığı seçiniz.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="net-update-leave-day" class="form-label">Net İzin Günü</label>
+                            <input type="text" class="form-control" id="net-update-leave-day" disabled readonly
+                                placeholder="Net izin günü">
+                        </div>
+                        <div class="col-md-12">
+                            <label for="select-update-leave-reason" class="form-label">İzin Sebebi</label>
+                            <select class="form-select select-update-leave-reason" id="select-update-leave-reason"
+                                required>
+                                <option value="" selected disabled>İzin sebebi seçiniz...</option>
+                                <option value="Rapor">Rapor</option>
+                                <option value="Ücretsiz İzin">Ücretsiz İzin</option>
+                                <option value="Yıllık İzin">Yıllık İzin</option>
+                                <option value="Babalık İzni">Babalık İzni</option>
+                                <option value="İdari İzin">İdari İzin (Serbest Zaman İzni)</option>
+                                <option value="Cenaze İzni">Cenaze İzni</option>
+                                <option value="Evlilik İzni">Evlilik İzni</option>
+                                <option value="Süt İzni">Süt İzni</option>
+                                <option value="Devamsızlık">Devamsızlık</option>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli izin sebebi seçiniz.</div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label for="txt-update-description" class="form-label">Açıklama (İsteğe Bağlı)</label>
+                            <textarea class="form-control" id="txt-update-description" rows="3"
+                                placeholder="Açıklama..."></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="file-update-document" class="form-label">Döküman (İsteğe Bağlı)</label>
+                            <input class="form-control" type="file" id="file-update-document"
+                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                            <div class="form-text">
+                                Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX (Sadece yeni dosya seçtiğinizde
+                                güncellenir)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-pen me-1"></i>Güncelle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -60,10 +144,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="txtRejectLeaveRequestId" value="" disabled readonly/>
+                <input type="hidden" id="txtRejectLeaveRequestId" value="" disabled readonly />
                 <div class="mb-3">
                     <label for="txt-rejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
-                    <textarea class="form-control" id="txtRejectReason" rows="3" placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
+                    <textarea class="form-control" id="txtRejectReason" rows="3"
+                        placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -79,14 +164,60 @@
 @section Scripts {
     <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
     <script>
         let leaveRequestsTable;
+
 
         $(document).ready(async function () {
             await initializeDataTable();
             $(document).on('click', '#btnRejectLeaveRequest', async function () {
                 await rejectLeaveRequest();
+            });
+
+            // Setup date range picker for update modal
+            $('#date-update-leave').daterangepicker({
+                locale: turkishLocale,
+                opens: 'left',
+                autoUpdateInput: false,
+                autoApply: true
+            });
+
+            $('#date-update-leave').on('apply.daterangepicker', async function (ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+                const startDate = picker.startDate.format('YYYY-MM-DD');
+                const endDate = picker.endDate.format('YYYY-MM-DD');
+
+                // Calculate net leave days
+                await calculateNetUpdateLeaveDays(startDate, endDate);
+
+                // Trigger form validation
+                $(this)[0].setCustomValidity('');
+                $(this).removeClass('is-invalid').addClass('is-valid');
+            });
+
+            $('#date-update-leave').on('cancel.daterangepicker', function (ev, picker) {
+                $(this).val('');
+            });
+
+            $('.fa-calendar').parent().on('click', function () {
+                $(this).closest('.input-group').find('.date-update-leave').focus();
+            });
+
+            // Setup form submission
+            $('#updateLeaveRequestForm').on('submit', function (e) {
+                e.preventDefault();
+                if (this.checkValidity()) {
+                    updateLeaveRequest();
+                }
+                $(this).addClass('was-validated');
+            });
+
+            // Clear form when modal hides
+            $('#updateLeaveRequestModal').on('hidden.bs.modal', function () {
+                $('#updateLeaveRequestForm')[0].reset();
+                $('#updateLeaveRequestForm').removeClass('was-validated');
             });
         });
 
@@ -174,26 +305,27 @@
                             }
                         }
                     },
-                     {
+                    {
                         "data": "fileId",
                         "render": function (data, type, row) {
-                               return data ? `<a href="/dosya/indir/${data}"
-                                                           download
-                                                           class="text-muted text-decoration-underline">
-                                                            <i class="fas fa-file fa-lg"></i>
-                                                        </a>` : '';
+                            return data ? `<a href="/dosya/indir/${data}"
+                                                                                                           download
+                                                                                                           class="text-muted text-decoration-underline">
+                                                                                                            <i class="fas fa-file fa-lg"></i>
+                                                                                                        </a>` : '';
                         }
                     },
                     {
                         "data": "createdDate",
                         "render": function (data) {
-        return data ? new Date(data).toLocaleString('tr-TR', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit'
-              }) : '';                        }
+                            return data ? new Date(data).toLocaleString('tr-TR', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) : '';
+                        }
                     },
                     {
                         "data": null,
@@ -201,23 +333,52 @@
                         "orderable": false,
                         "className": "text-center",
                         "render": function (data, type, row) {
-                             return row.status === 0 ? `
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button type="button" class="btn btn-outline-success btn-sm"
-                                        onclick="approveLeaveRequest('${row.id}')" title="Onayla">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                     <button type="button" class="btn btn-outline-danger btn-sm"
-                  onclick="openRejectModal('${row.id}')"  title="Reddet">
-                    <i class="fas fa-times"></i>
-                </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm"
-                                        onclick="deleteLeaveRequest('${row.id}')" title="Sil">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            ` : "";
-
+                            const isAdmin = @Html.Raw(Json.Serialize(User.IsInRole("Admin")));
+                            const isUnitManagaer = @Html.Raw(Json.Serialize(User.IsInRole("Yönetici")));
+                            if (isAdmin || isUnitManagaer) {
+                                return `
+                                                                        <div class="btn-group btn-group-sm" role="group">
+                                                                            <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                                onclick="loadLeaveRequestForEdit('${row.id}')" title="Düzenle">
+                                                                                <i class="fas fa-edit"></i>
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-outline-success btn-sm"
+                                                                                onclick="approveLeaveRequest('${row.id}')" title="Onayla">
+                                                                                <i class="fas fa-check"></i>
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                onclick="openRejectModal('${row.id}')" title="Reddet">
+                                                                                <i class="fas fa-times"></i>
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                onclick="deleteLeaveRequest('${row.id}')" title="Sil">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    `;
+                            }
+                            else {
+                                return row.status === 0 ? `
+                                                                                <div class="btn-group btn-group-sm" role="group">
+                                                                                    <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                                        onclick="loadLeaveRequestForEdit('${row.id}')" title="Düzenle">
+                                                                                        <i class="fas fa-edit"></i>
+                                                                                    </button>
+                                                                                    <button type="button" class="btn btn-outline-success btn-sm"
+                                                                                        onclick="approveLeaveRequest('${row.id}')" title="Onayla">
+                                                                                        <i class="fas fa-check"></i>
+                                                                                    </button>
+                                                                                     <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                  onclick="openRejectModal('${row.id}')"  title="Reddet">
+                                                                    <i class="fas fa-times"></i>
+                                                                </button>
+                                                                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                        onclick="deleteLeaveRequest('${row.id}')" title="Sil">
+                                                                                        <i class="fas fa-trash"></i>
+                                                                                    </button>
+                                                                                </div>
+                                                                            ` : "";
+                            }
                         }
                     }
                 ],
@@ -228,7 +389,7 @@
                 "pageLength": 10,
                 "responsive": true,
                 "searchDelay": 300,
-                "order": [[7, "desc"]], // Order by created date desc
+                "order": [[8, "desc"]], // Order by created date desc
                 "drawCallback": function () {
                     var api = this.api();
                     var pageInfo = api.page.info();
@@ -295,7 +456,7 @@
                 console.error('Onaylama hatası:', error);
             }
         }
-                function openRejectModal(id) {
+        function openRejectModal(id) {
             $('#txtRejectLeaveRequestId').val(id);
             $('#txtRejectReason').val('');
             $('#rejectModal').modal('show');
@@ -303,7 +464,7 @@
 
         async function rejectLeaveRequest() {
             try {
-                        const leaveRequestId = $('#txtRejectLeaveRequestId').val();
+                const leaveRequestId = $('#txtRejectLeaveRequestId').val();
 
                 if (!leaveRequestId) {
                     toastr.error('İzin talebi ID\'si bulunamadı');
@@ -347,6 +508,136 @@
             } finally {
                 const submitBtn = $('#btnRejectLeaveRequest');
                 submitBtn.prop('disabled', false).html('<i class="fas fa-times me-1"></i>Reddet');
+            }
+        }
+
+        async function calculateNetUpdateLeaveDays(startDate, endDate) {
+            try {
+                const response = await $.ajax({
+                    url: `/tatil/baslangic/${startDate}/bitis/${endDate}`,
+                    type: 'GET',
+                    contentType: 'application/json'
+                });
+
+                if (response && response.data && response.isSuccess) {
+                    $('#net-update-leave-day').val(response.data);
+                } else {
+                    $('#net-update-leave-day').val('Hesaplanamadı');
+                }
+            } catch (error) {
+                $('#net-update-leave-day').val('Hata');
+                if (error.responseJSON) {
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                toastr.error(errorMessage);
+            }
+        }
+
+        async function loadLeaveRequestForEdit(leaveRequestId) {
+            try {
+                const response = await $.ajax({
+                    url: `/izin/${leaveRequestId}`,
+                    type: 'GET'
+                });
+
+                if (response.isSuccess && response.data) {
+                    const data = response.data;
+                    $('#txtUpdateLeaveRequestId').val(data.id);
+
+                    // Set date range using moment format (daterangepicker uses moment.js)
+                    const picker = $('#date-update-leave').data('daterangepicker');
+                    const startDate = moment(data.startDate);
+                    const endDate = moment(data.endDate);
+
+                    picker.setStartDate(startDate);
+                    picker.setEndDate(endDate);
+
+                    // Format the display value
+                    $('#date-update-leave').val(startDate.format('DD/MM/YYYY') + ' - ' + endDate.format('DD/MM/YYYY'));
+
+                    // Calculate net leave days
+                    const startDateFormatted = data.startDate.split('T')[0];
+                    const endDateFormatted = data.endDate.split('T')[0];
+                    await calculateNetUpdateLeaveDays(startDateFormatted, endDateFormatted);
+
+                    // Set reason
+                    $('#select-update-leave-reason').val(data.reason);
+
+                    // Set description
+                    $('#txt-update-description').val(data.description || '');
+
+                    // Clear file input
+                    $('#file-update-document').val('');
+
+                    // Show modal
+                    $('#updateLeaveRequestModal').modal('show');
+                } else {
+                    toastr.error(response.message || 'İzin talebi yüklenemedi', 'Hata!');
+                }
+            } catch (error) {
+                console.error('Load leave request error:', error);
+                let errorMessage = 'İzin talebi yüklenirken hata oluştu';
+                if (error.responseJSON && error.responseJSON.message) {
+                    errorMessage = error.responseJSON.message;
+                }
+                toastr.error(errorMessage, 'Hata!');
+            }
+        }
+
+        async function updateLeaveRequest() {
+            try {
+                var picker = $('#date-update-leave').data('daterangepicker');
+                var startDate = picker.startDate.format('YYYY-MM-DD');
+                var endDate = picker.endDate.format('YYYY-MM-DD');
+
+                // Create FormData for file upload support
+                const formData = new FormData();
+                formData.append('StartDate', startDate);
+                formData.append('EndDate', endDate);
+                formData.append('Reason', $('#select-update-leave-reason').val());
+                formData.append('Description', $('#txt-update-description').val().trim());
+                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+                // Add file if uploaded
+                const file = $('#file-update-document')[0];
+                if (file.files.length > 0) {
+                    formData.append('File.FormFile', file.files[0]);
+                }
+
+                const leaveRequestId = $('#txtUpdateLeaveRequestId').val();
+
+                const response = await $.ajax({
+                    url: `/izin/guncelle/${leaveRequestId}`,
+                    type: 'PUT',
+                    data: formData,
+                    processData: false,
+                    contentType: false
+                });
+
+                if (response.isSuccess) {
+                    toastr.success(response.message, 'Başarılı!');
+                    $('#updateLeaveRequestModal').modal('hide');
+                    leaveRequestsTable.ajax.reload(null, false);
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                console.error('Update leave request error:', error);
+                let errorMessage = 'İzin talebi güncellenirken hata oluştu';
+                if (error.responseJSON) {
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                }
+                toastr.error(errorMessage, 'Hata!');
             }
         }
 

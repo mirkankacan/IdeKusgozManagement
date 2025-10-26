@@ -73,7 +73,6 @@ namespace IdeKusgozManagement.WebUI.Services
                 if (!string.IsNullOrEmpty(model.Description))
                     formData.Add(new StringContent(model.Description), "Description");
 
-
                 // Add file if exists
                 if (model.File?.FormFile != null)
                 {
@@ -105,6 +104,58 @@ namespace IdeKusgozManagement.WebUI.Services
             catch (Exception ex)
             {
                 return new ApiResponse<LeaveRequestViewModel>
+                {
+                    IsSuccess = false,
+                    Message = "Bir hata oluştu"
+                };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> UpdateLeaveRequestAsync(string leaveRequestId, UpdateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                MultipartFormDataContent? formData = new MultipartFormDataContent();
+
+                // Add form fields
+                formData.Add(new StringContent(model.StartDate.ToString("yyyy-MM-dd")), "StartDate");
+                formData.Add(new StringContent(model.EndDate.ToString("yyyy-MM-dd")), "EndDate");
+                formData.Add(new StringContent(model.Reason), "Reason");
+
+                if (!string.IsNullOrEmpty(model.Description))
+                    formData.Add(new StringContent(model.Description), "Description");
+
+                // Add file if exists
+                if (model.File?.FormFile != null)
+                {
+                    var fileContent = new StreamContent(model.File.FormFile.OpenReadStream());
+                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.File.FormFile.ContentType);
+                    formData.Add(fileContent, "File.FormFile", model.File.FormFile.FileName);
+                }
+
+                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}", formData, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                    return apiResponse ?? new ApiResponse<bool>
+                    {
+                        IsSuccess = false,
+                        Message = "Veri alınamadı"
+                    };
+                }
+
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
+                return errorResponse ?? new ApiResponse<bool>
+                {
+                    IsSuccess = false,
+                    Message = $"API çağrısı başarısız: {response.StatusCode}"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<bool>
                 {
                     IsSuccess = false,
                     Message = "Bir hata oluştu"

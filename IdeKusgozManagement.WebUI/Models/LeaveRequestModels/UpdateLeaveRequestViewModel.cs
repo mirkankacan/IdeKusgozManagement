@@ -1,9 +1,9 @@
-using IdeKusgozManagement.WebUI.Models.FileModels;
+﻿using IdeKusgozManagement.WebUI.Models.FileModels;
 using System.ComponentModel.DataAnnotations;
 
 namespace IdeKusgozManagement.WebUI.Models.LeaveRequestModels
 {
-    public class CreateLeaveRequestViewModel
+    public class UpdateLeaveRequestViewModel
     {
         [Required]
         public DateTime StartDate { get; set; }
