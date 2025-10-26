@@ -32,8 +32,11 @@
                     İzin Taleplerim
                 </h5>
                 <div class="mb-3">
-                    <span id="remainingLeaveDays" class="badge bg-warning me-2 text-dark">Kalan İzin: 0 Gün</span>
-                    <span id="usedLeaveDays" class="badge bg-danger me-2">Kullanılan İzin: 0 Gün</span>
+                    <span id="totalEntitlement" class="badge bg-info me-2 text-dark">Toplam Hak Edilen İzin: 0 Gün</span>
+                    <span id="totalUsedDays" class="badge bg-danger me-2">Toplam Kullanılan İzin: 0 Gün</span>
+                    <span id="remainingDays" class="badge bg-success me-2">Kalan İzin: 0 Gün</span>
+                  @*   <span id="currentYearEntitlement" class="badge bg-warning me-2 text-dark">Bu Yıl Hak Edilen İzin: 0 Gün</span>
+                    <span id="currentYearUsedDays" class="badge bg-secondary me-2">Bu Yıl Kullanılan İzin: 0 Gün</span> *@
                 </div>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                         data-bs-target="#createLeaveRequestModal">
@@ -190,7 +193,7 @@
             });
 
         });
-           async function getMyRemainingLeaveDays() {
+                 async function getMyRemainingLeaveDays() {
             try {
                 const response = await $.ajax({
                     url: `/kullanici/kalan-izinlerim`,
@@ -199,17 +202,33 @@
                 });
 
                 if (response && response.data && response.isSuccess) {
-                    $('#remainingLeaveDays').text("Kalan İzin: " + response.data.remainingDays + " gün");
-                    $('#usedLeaveDays').text("Kullanılan İzin: " + response.data.usedDays + " gün");
-                } else {
-                    $('#remainingLeaveDays').text("Kalan İzin: Hesaplama başarısız");
-                    $('#usedLeaveDays').text("Kalan İzin: Hesaplama başarısız");
-                }
-            } catch (error) {
-                    $('#remainingLeaveDays').text("Kalan İzin: Hata");
-                    $('#usedLeaveDays').text("Kalan İzin: Hata");
+                    // Ana bilgiler
+                    $('#remainingDays').text("Kalan İzin: " + response.data.remainingDays + " Gün");
+                    $('#totalEntitlement').text("Toplam Hak Edilen İzin: " + response.data.totalEntitlement + " Gün");
+                    $('#totalUsedDays').text("Toplam Kullanılan İzin: " + response.data.totalUsedDays + " Gün");
 
-               if (error.responseJSON) {
+                    // Bu yıl bilgileri
+                    // $('#currentYearEntitlement').text("Bu Yıl Hak Edilen İzin: " + response.data.currentYearEntitlement + " Gün");
+                    // $('#currentYearUsedDays').text("Bu Yıl Kullanılan İzin: " + response.data.currentYearUsed + " Gün");
+
+                } else {
+                    $('#remainingDays').text("Kalan İzin: Hesaplama başarısız");
+                    $('#totalEntitlement').text("Toplam Hak Edilen İzin: 0 Gün");
+                    $('#totalUsedDays').text("Toplam Kullanılan İzin: 0 Gün");
+                    // $('#currentYearEntitlement').text("Bu Yıl Hak Edilen İzin: 0 Gün");
+                    // $('#currentYearUsedDays').text("Bu Yıl Kullanılan İzin: 0 Gün");
+                }
+
+            } catch (error) {
+                $('#remainingDays').text("Kalan İzin: Hata");
+                $('#totalEntitlement').text("Toplam Hak Edilen İzin: Hata");
+                $('#totalUsedDays').text("Toplam Kullanılan İzin: Hata");
+                // $('#currentYearEntitlement').text("Bu Yıl Hak Edilen İzin: Hata");
+                // $('#currentYearUsedDays').text("Bu Yıl Kullanılan İzin: Hata");
+
+                // Error mesajını hazırla
+                let errorMessage = "Bir hata oluştu.";
+                if (error.responseJSON) {
                     if (error.responseJSON.message) {
                         errorMessage = error.responseJSON.message;
                     } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {

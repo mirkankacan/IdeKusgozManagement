@@ -283,7 +283,7 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<AnnualLeaveCalculationViewModel>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<AnnualLeaveBalanceViewModel>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -292,19 +292,19 @@ namespace IdeKusgozManagement.WebUI.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<AnnualLeaveCalculationViewModel>>(content);
-                    return apiResponse ?? new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<AnnualLeaveBalanceViewModel>>(content);
+                    return apiResponse ?? new ApiResponse<AnnualLeaveBalanceViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                return new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Kullanıcı bulunamadı" };
+                return new ApiResponse<AnnualLeaveBalanceViewModel> { IsSuccess = false, Message = "Kullanıcı bulunamadı" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<AnnualLeaveBalanceViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
 
-        public async Task<ApiResponse<AnnualLeaveCalculationViewModel>> GetMyAnnualLeaveDaysAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<AnnualLeaveBalanceViewModel>> GetMyAnnualLeaveDaysAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -313,15 +313,15 @@ namespace IdeKusgozManagement.WebUI.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<AnnualLeaveCalculationViewModel>>(content);
-                    return apiResponse ?? new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<AnnualLeaveBalanceViewModel>>(content);
+                    return apiResponse ?? new ApiResponse<AnnualLeaveBalanceViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                return new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Kullanıcı bulunamadı" };
+                return new ApiResponse<AnnualLeaveBalanceViewModel> { IsSuccess = false, Message = "Kullanıcı bulunamadı" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<AnnualLeaveCalculationViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<AnnualLeaveBalanceViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
     }

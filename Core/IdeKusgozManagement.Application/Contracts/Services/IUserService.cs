@@ -27,6 +27,6 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
 
         Task<ApiResponse<bool>> ChangePasswordAsync(string userId, ChangePasswordDTO changePasswordDTO);
 
-        Task<ApiResponse<AnnualLeaveCalculationDTO>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<AnnualLeaveBalanceDTO>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default);
     }
 }

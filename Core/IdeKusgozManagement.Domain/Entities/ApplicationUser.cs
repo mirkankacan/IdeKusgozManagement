@@ -19,5 +19,7 @@ namespace IdeKusgozManagement.Domain.Entities
         public bool IsExpatriate { get; set; }
         public string? PasswordResetCode { get; set; }
         public DateTime? PasswordResetCodeExpires { get; set; }
+        public DateTime HireDate { get; set; }
+        public DateTime? TerminationDate { get; set; }
     }
 }
