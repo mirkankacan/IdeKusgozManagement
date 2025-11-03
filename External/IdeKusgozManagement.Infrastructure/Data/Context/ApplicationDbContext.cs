@@ -30,6 +30,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         public DbSet<IdtWorkRecordExpense> IdtWorkRecordExpenses => Set<IdtWorkRecordExpense>();
         public DbSet<IdtTrafficTicket> IdtTrafficTickets => Set<IdtTrafficTicket>();
         public DbSet<IdtAnnualLeaveEntitlement> IdtAnnualLeaveEntitlements => Set<IdtAnnualLeaveEntitlement>();
+        public DbSet<IdtDepartment> IdtDepartments => Set<IdtDepartment>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

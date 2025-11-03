@@ -1,7 +1,7 @@
-﻿@{
+﻿@inject IConfiguration Configuration
+@{
     var fullName = User.FindFirstValue("FullName")!;
     var fullNameWithExp = User.FindFirstValue("FullNameWithExp")!;
-
 }
 
 <!DOCTYPE html>
@@ -12,7 +12,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="İdeaktif Danışmanlık ve Yazılım Ltd.">
-    <!-- The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+      <!-- Favicon dosyaları -->
+    <link rel="icon" type="image/png" sizes="16x16" href="~/theme/assets/images/favicons/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="~/theme/assets/images/favicons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="72x72" href="~/theme/assets/images/favicons/favicon-72.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="~/theme/assets/images/favicons/favicon-96.png">
+    <link rel="shortcut icon" href="~/theme/assets/images/favicons/favicon-32.png">
     <!-- Title -->
     <title>@ViewData["Title"] • Kuşgöz İzmir Vinç</title>
 
@@ -33,7 +39,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/themes/light.min.css">
     @await RenderSectionAsync("Styles", required: false)
     <style>
-        /* Notification Styles */
+       .modal-dialog-scrollable form {
+      max-height: calc(100vh - 200px);
+      /* header + footer yüksekliğini çıkar */
+      overflow-y: auto;
+  }
+
         .bold-notif-text {
             font-weight: bold !important;
             background-color: #e3f2fd !important;
@@ -314,7 +325,9 @@
                 "firstDay": 1
 
             };
-window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
+    window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
+            window.signalRUrl = '@Configuration.GetSection("ApiSettings")["SignalRUrl"]';
+
 </script>
     @await RenderSectionAsync("Scripts", required: false)
 

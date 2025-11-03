@@ -19,6 +19,9 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
         public string? RoleName { get; set; } = null;
         public string? Email { get; set; } = null;
 
+        public DateTime? HireDate { get; set; } = null;
+        public DateTime? TerminationDate { get; set; } = null;
+
         [Required]
         public bool IsExpatriate { get; set; }
 

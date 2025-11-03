@@ -1,4 +1,5 @@
 // Realtime Manager - Common SignalR functionality
+
 class RealtimeManager {
     constructor() {
         this.connection = null;
@@ -13,9 +14,10 @@ class RealtimeManager {
             this.connection = new signalR.HubConnectionBuilder()
                 .withUrl(hubUrl, {
                     accessTokenFactory: () => token,
-                    transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
+                    transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling,
+                    skipNegotiation: false
                 })
-                .withAutomaticReconnect([0, 2000, 10000, 30000])
+                .withAutomaticReconnect([0, 2000, 10000, 30000, 60000])
                 .configureLogging(signalR.LogLevel.Error)
                 .build();
 
@@ -190,7 +192,9 @@ class NotificationManager extends RealtimeManager {
     }
 
     async setupSignalR() {
-        const success = await this.initializeConnection('http://localhost:5291/communicationHub');
+        const signalRUrl = window.signalRUrl.replace(/\/$/, '') + '/communicationHub';
+
+        const success = await this.initializeConnection(signalRUrl);
         if (success) {
             this.on("NewNotification", notification => this.handleNewNotification(notification));
         }
@@ -514,13 +518,13 @@ class MessageManager extends RealtimeManager {
     }
 
     async setupSignalR() {
-        const success = await this.initializeConnection('http://localhost:5291/communicationHub');
+        const signalRUrl = window.signalRUrl.replace(/\/$/, '') + '/communicationHub';
+
+        const success = await this.initializeConnection(signalRUrl);
         if (success) {
             this.on("NewMessage", message => {
-                console.log('Received NewMessage via SignalR:', message);
                 this.handleNewMessage(message);
             });
-            console.log('SignalR connection established for messages');
         } else {
             console.error('Failed to establish SignalR connection for messages');
         }
@@ -605,7 +609,6 @@ class MessageManager extends RealtimeManager {
         }
 
         this.messages.forEach(message => {
-            console.log(message)
             messagesContainer.append(this.createMessageHtml(message));
         });
     }
@@ -614,7 +617,7 @@ class MessageManager extends RealtimeManager {
         const formattedDate = new Date(message.createdDate).toLocaleDateString('tr-TR', {
             day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
-        const isAll = !message.targetRoles && !message.targetUsers; 
+        const isAll = !message.targetRoles && !message.targetUsers;
         let targets;
         if (isAll) {
             targets = `
@@ -657,11 +660,9 @@ class MessageManager extends RealtimeManager {
     handleNewMessage(message) {
         // Mesaj zaten varsa tekrar ekleme
         if (this.messages.find(m => m.id === message.id)) {
-            console.log('Message already exists, skipping:', message.id);
             return;
         }
 
-        console.log('Adding new message to UI:', message);
         this.messages.unshift(message);
         this.messages.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
         this.renderAllMessages();
@@ -689,7 +690,6 @@ class MessageManager extends RealtimeManager {
         }
 
         try {
-            console.log('Sending message:', { content: messageContent, targetRoles, targetUsers });
             const response = await fetch('/mesaj', {
                 method: 'POST',
                 headers: {
@@ -698,23 +698,21 @@ class MessageManager extends RealtimeManager {
                 },
                 body: JSON.stringify({
                     content: messageContent,
-                    targetRoles: targetRoles,     
-                    targetUsers: targetUsers     
+                    targetRoles: targetRoles,
+                    targetUsers: targetUsers
                 })
             });
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('Message send response:', result);
                 if (result.isSuccess) {
                     // Mesajı hemen UI'ya ekle (gönderen kişi için)
                     if (result.data) {
-                        console.log('Adding message to UI immediately:', result.data);
                         this.handleNewMessage(result.data);
                     } else {
                         console.warn('No message data in response');
                     }
-                    
+
                     messageInput.val('');
                     roleSelect.val(null).trigger('change');
                     userSelect.val(null).trigger('change');

@@ -103,6 +103,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var user = createUserDTO.Adapt<ApplicationUser>();
                 user.UserName = user.TCNo;
                 user.Email = user.Email;
+                user.HireDate = createUserDTO.HireDate ?? DateTime.Now;
                 var result = await userManager.CreateAsync(user, createUserDTO.Password);
                 if (!result.Succeeded)
                 {

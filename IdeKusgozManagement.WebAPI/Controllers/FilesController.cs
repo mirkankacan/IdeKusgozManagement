@@ -10,12 +10,12 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [ApiController]
     public class FilesController(IFileService fileService) : ControllerBase
     {
-        [HttpPost]
+        [HttpPost("upload")]
         public async Task<IActionResult> UploadFile([FromForm] UploadFileDTO uploadFileDTO, CancellationToken cancellationToken = default)
         {
-            if (!ModelState.IsValid)
+            if (uploadFileDTO.FormFile == null || uploadFileDTO.FormFile.Length == 0)
             {
-                return BadRequest(ModelState);
+                return BadRequest("Dosya seçilmedi veya boş dosya");
             }
 
             var result = await fileService.UploadFileAsync(uploadFileDTO, cancellationToken);

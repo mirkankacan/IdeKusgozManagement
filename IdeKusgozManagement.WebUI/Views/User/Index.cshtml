@@ -8,10 +8,12 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <!-- Or for RTL support -->
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
 }
 @Html.AntiForgeryToken()
 <div class="row">
@@ -52,7 +54,7 @@
 <!-- Modal -->
 <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true"
     data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Kullanıcı Oluşturma Penceresi</h5>
@@ -74,7 +76,7 @@
                         <div class="col-md-6">
                             <label for="txtCPassword" class="form-label">Şifre</label>
                             <input type="password" class="form-control" id="txtCPassword" value="" required
-                                autocomplete="new-password" data-lpignore="true">
+                                   autocomplete="new-password" data-lpignore="true">
                             <div class="valid-feedback">
                                 İyi görünüyor!
                             </div>
@@ -126,8 +128,17 @@
                                 Geçerli bir seçenek seçiniz.
                             </div>
                         </div>
-                       
-                        <div class="col-md-12">
+                         <div class="col-md-6">
+                            <label for="c-hireDate" class="form-label">İşe Başlangıç Tarihi</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control date-user" id="c-hireDate"
+                                       required placeholder="İşe başlangıç tarihini seçin">
+                                <span class="input-group-text">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <label for="selectCSuperior" class="form-label">Üstleri</label>
                             <select class="form-select superior-select" id="selectCSuperior">
                             </select>
@@ -143,13 +154,16 @@
                                 Geçerli bir e-posta adresi giriniz.
                             </div>
                         </div>
+                      
+                       
                     </div>
                 </div>
 
-                    <div class="modal-footer">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
-                    <button class="btn btn-primary w-100" type="submit" id="btnCreateUser"><i
-                            class="fas fa-user-plus me-1"></i>Oluştur</button>
+                    <button class="btn btn-primary w-100" type="submit" id="btnCreateUser">
+                        <i class="fas fa-user-plus me-1"></i>Oluştur
+                    </button>
                 </div>
             </form>
         </div>
@@ -157,8 +171,8 @@
 </div>
 <!-- Modal -->
 <div class="modal fade" id="updateUserModal" tabindex="-1" aria-labelledby="updateUserModalLabel" aria-hidden="true"
-    data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Kullanıcı Güncelleme Penceresi</h5>
@@ -181,7 +195,7 @@
                         <div class="col-md-6">
                             <label for="txtUPassword" class="form-label">Şifre</label>
                             <input type="password" class="form-control" id="txtUPassword" value=""
-                                autocomplete="new-password" data-lpignore="true">
+                                   autocomplete="new-password" data-lpignore="true">
                             <div class="form-text text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
                                 Boş bırakırsanız şifre değişmez, doldurursanız şifre güncellenir.
@@ -230,6 +244,26 @@
                             </select>
 
                         </div>
+                          <div class="col-md-6">
+                            <label for="u-hireDate" class="form-label">İşe Başlangıç Tarihi</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control date-user" id="u-hireDate"
+                                       required placeholder="İşe başlangıç tarihini seçin">
+                                <span class="input-group-text">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="u-terminationDate" class="form-label">İş Çıkış Tarihi</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control date-user" id="u-terminationDate"
+                                       required placeholder="İş çıkış tarihini seçin">
+                                <span class="input-group-text">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <label for="selectUStatus" class="form-label">Durum</label>
                             <select class="form-select" id="selectUStatus" required="">
@@ -267,7 +301,7 @@
                                 Geçerli bir e-posta adresi giriniz.
                             </div>
                         </div>
-
+                      
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -283,6 +317,7 @@
 
     <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
     <script>
         let usersTable;
@@ -309,6 +344,21 @@
                 e.stopPropagation();
                 await createUser();
             });
+                $('.date-user').daterangepicker({
+                locale: turkishLocale,
+                opens: 'left',
+                autoUpdateInput: false,
+                autoApply: true,
+                singleDatePicker: true
+            });
+
+            $('#c-hireDate').on('apply.daterangepicker', function (ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY'));
+            });
+
+            $('#c-hireDate').on('cancel.daterangepicker', function (ev, picker) {
+                $(this).val('');
+            });
         });
         function initializeSelect2() {
             $('.superior-select').select2({
@@ -324,6 +374,7 @@
             $('#txtCName').val('');
             $('#txtCSurname').val('');
             $('#txtCEmail').val('');
+            $('#c-hireDate').val('');
 
             // Select2 alanlarını temizle
             $('#selectCRole').val('').trigger('change');
@@ -484,6 +535,8 @@
                     form.classList.add('was-validated');
                     return;
                 }
+                var picker = $('#c-hireDate').data('daterangepicker');
+                var hireDate = picker.startDate.format('YYYY-MM-DD');
                 const userData = {
                     TCNo: $('#txtCTCNo').val().trim(),
                     Name: $('#txtCName').val().trim(),
@@ -491,6 +544,7 @@
                     Password: $('#txtCPassword').val(),
                     Email: $('#txtCEmail').val().trim() || null,
                     RoleName: $('#selectCRole').val(),
+                    HireDate: hireDate,
                     IsExpatriate: $('#selectCExpatriate').val() == "true",
                     SuperiorIds: $('#selectCSuperior').val() || []
                 };
@@ -543,15 +597,20 @@
                     form.classList.add('was-validated');
                     return;
                 }
-
+                  var hirePicker = $('#u-hireDate').data('daterangepicker');
+                var hireDate = hirePicker.startDate.format('YYYY-MM-DD');
+                  var terminationPicker = $('#u-terminationDate').data('daterangepicker');
+                var terminationDate = terminationPicker.startDate.format('YYYY-MM-DD');
                 const userData = {
                     Id: $('#txtUUserId').val(),
                     TCNo: $('#txtUTCNo').val().trim(),
                     Password: $("#txtUPassword").val().trim() || null,
                     Name: $('#txtUName').val().trim(),
                     Surname: $('#txtUSurname').val().trim(),
-                    Email: $('#txtUEmail').val().trim() || null,
+                    Email: $('#txtUEmail').val().trim(),
                     RoleName: $('#selectURole').val(),
+                    HireDate: hireDate,
+                    TerminationDate: terminationDate || null,
                     IsExpatriate: $('#selectUExpatriate').val() == "true",
                     IsActive: $('#selectUStatus').val() == "true",
                     SuperiorIds: $('#selectUSuperior').val() || []
@@ -815,6 +874,17 @@
                     $('#txtUEmail').val(userData.email || '');
                     $('#selectUExpatriate').val(userData.isExpatriate ? "true" : "false");
                     $('#selectURole').val(userData.roleName);
+                    if (userData.hireDate && $('#u-hireDate').data('daterangepicker')) {
+                        const hireDate = moment(userData.hireDate);
+                        $('#u-hireDate').val(hireDate.format('DD/MM/YYYY'));
+                        $('#u-hireDate').data('daterangepicker').setStartDate(hireDate);
+                    }
+                       if (userData.terminationDate && $('#u-terminationDate').data('daterangepicker')) {
+                        const terminationDate = moment(userData.terminationDate);
+                        $('#u-terminationDate').val(terminationDate.format('DD/MM/YYYY'));
+                        $('#u-terminationDate').data('daterangepicker').setStartDate(terminationDate);
+                    }
+               
                     $('#selectUStatus').val(userData.isActive ? "true" : "false");
                     if (userData.superiorIds && Array.isArray(userData.superiorIds) && userData.superiorIds.length > 0) {
                         $('#selectUSuperior').val(userData.superiorIds).trigger('change');

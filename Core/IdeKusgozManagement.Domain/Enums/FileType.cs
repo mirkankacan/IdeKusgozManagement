@@ -14,6 +14,7 @@
         {
             return fileType.ToString() + "s";
         }
+
         public static string ToStringValue(this FileType fileType)
         {
             return fileType.ToString();

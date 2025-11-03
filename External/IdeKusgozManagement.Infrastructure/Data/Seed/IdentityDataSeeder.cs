@@ -61,7 +61,6 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     Surname = "User",
                     IsExpatriate = false,
                     HireDate = new DateTime(2024, 1, 1)
-
                 };
                 var result = await userManager.CreateAsync(unitManagerUser, password);
                 if (result.Succeeded)
@@ -87,7 +86,6 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     Surname = "User",
                     IsExpatriate = false,
                     HireDate = new DateTime(2024, 1, 1)
-
                 };
                 var result = await userManager.CreateAsync(chiefUser, password);
                 if (result.Succeeded)
@@ -112,8 +110,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     Name = "Personel",
                     Surname = "User",
                     IsExpatriate = false,
-                    HireDate = new DateTime(2024, 1, 1)
-
+                    HireDate = new DateTime(2024, 1, 1),
+                    DepartmentId = "BE6ED7FC-9E42-40A0-86D6-2EC576795F24"
                 };
                 var result = await userManager.CreateAsync(personnelUser, password);
                 if (result.Succeeded)

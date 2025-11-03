@@ -228,7 +228,6 @@
     <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 
     <script>
         let trafficTicketsTable;
@@ -575,7 +574,6 @@
         async function createtrafficTicket() {
             var picker = $('#c-date-trafficTicket').data('daterangepicker');
             var ticketDate = picker.startDate.format('YYYY-MM-DD');
-            console.log(ticketDate)
             const formData = new FormData();
             formData.append('ProjectId', $('#selectCProject').val());
             formData.append('EquipmentId', $('#selectCEquipment').val());

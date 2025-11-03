@@ -15,6 +15,7 @@ using Serilog.Sinks.MSSqlServer;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Net;
+using System.Text.Json;
 
 namespace IdeKusgozManagement.WebAPI
 {
@@ -148,18 +149,27 @@ namespace IdeKusgozManagement.WebAPI
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("http://localhost:5290") // Tüm client URL'leri
-                          .WithMethods("GET", "POST", "PUT", "DELETE")
-                          .WithHeaders(
-                              "Content-Type",
-                              "Authorization",
-                              "X-Requested-With",
-                              "Accept",
-                              "Origin",
-                              "X-SignalR-User-Agent"
-                          )
-                          .WithExposedHeaders("X-Pagination")
-                          .AllowCredentials();
+                    policy.WithOrigins(
+               "http://localhost:5290",
+               "http://192.168.2.253:5290",
+               "http://92.45.19.226:80",
+               "http://92.45.19.226",
+               "http://portal.izmircrane.com",
+               "https://portal.izmircrane.com"
+           )
+                           .WithMethods("GET", "POST", "PUT", "DELETE")
+                        .WithHeaders(
+                           "Content-Type",
+                        "Authorization",
+                        "X-Requested-With",
+                        "Accept",
+                        "Origin",
+                        "X-SignalR-User-Agent",
+                        "Cache-Control"
+                        )
+                        .WithExposedHeaders("X-Pagination")
+                        .AllowCredentials()
+                        .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
                 });
             });
 
@@ -184,8 +194,17 @@ namespace IdeKusgozManagement.WebAPI
 
             services.AddSignalR(options =>
             {
-                options.EnableDetailedErrors = true; // Hata detayları için
-            });
+                options.EnableDetailedErrors = true;
+                options.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
+                options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+                options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+                options.StreamBufferCapacity = 10;
+                options.MaximumParallelInvocationsPerClient = 1;
+            })
+               .AddJsonProtocol(options =>
+               {
+                   options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+               });
 
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(setup =>

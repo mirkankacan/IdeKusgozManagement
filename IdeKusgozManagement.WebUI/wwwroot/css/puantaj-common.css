@@ -1,142 +1,140 @@
-  .time-input {
-      text-align: center;
-      padding: 0.25rem 0.5rem;
-      cursor: pointer;
-      font-size: 0.85rem;
-  }
-
-  .fa-clock {
-      cursor: pointer;
-  }
-  label{
-      color:black !important;
-  }
-  .fa-clock:hover {
-      color: #007bff;
-  }
-.status-rejected {
-  cursor: pointer;
+.time-input {
+    text-align: center;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.85rem;
 }
-  input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-  }
 
-  .table th {
-      vertical-align: middle;
-      text-align: center;
-      font-size: 0.7rem;
-      padding: 0.25rem 0.1rem !important;
-      white-space: nowrap;
-      width:max-content;
-      max-width:max-content;
-      min-width:max-content;
-  }
+.fa-clock {
+    cursor: pointer;
+}
 
-  .table td {
-      vertical-align: middle;
-      text-align: center;
-      padding: 0.25rem 0.1rem !important;
-      font-size: 0.85rem;
-  }
+label {
+    color: black !important;
+}
 
-  .project-input {
-      font-size: 0.85rem;
-  }
+.fa-clock:hover {
+    color: #007bff;
+}
 
-  .table .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
-      font-size: 0.85rem !important;
-  }
+.status-rejected {
+    cursor: pointer;
+}
 
-  .table .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option {
-      font-size: 0.85rem
-  }
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
 
-  .table .select2-selection__rendered {
-      font-size: 0.85rem;
-  }
+.table th {
+    vertical-align: middle;
+    text-align: center;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.1rem !important;
+    white-space: nowrap;
+    width: max-content;
+    max-width: max-content;
+    min-width: max-content;
+}
 
-  .additional-time-btn {
-      font-size: 0.65rem;
-      padding: 0.125rem 0.25rem;
-      width: 100%;
-  }
-  .date-cell{
-      font-size:medium !important;
-  }
-  .date-cell .additional-time-btn {
-      width: 100%;
-      margin-top: 2px;
-  }
+.table td {
+    vertical-align: middle;
+    text-align: center;
+    padding: 0.25rem 0.1rem !important;
+    font-size: 0.85rem;
+}
 
-  .additional-time-section {
-      margin-top: 2px;
-  }
+.project-input {
+    font-size: 0.85rem;
+}
 
-  .additional-time-section .form-control-sm {
-      font-size: 0.7rem;
-      padding: 0.1rem 0.2rem;
-      height: calc(1.5em + 0.2rem);
-      text-align: center;
-  }
+.table .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
+    font-size: 0.85rem !important;
+}
 
-  .additional-time-section .input-group-text-sm {
-      font-size: 0.7rem;
-      padding: 0.1rem 0.2rem;
-      height: calc(1.5em + 0.2rem);
-  }
+.table .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option {
+    font-size: 0.85rem
+}
 
-  .additional-time-section .input-group {
-      margin-bottom: 0;
-  }
+.table .select2-selection__rendered {
+    font-size: 0.85rem;
+}
 
-  .table .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered .select2-selection__placeholder {
-      font-size: 0.85rem;
-  }
+.additional-time-btn {
+    font-size: 0.65rem;
+    padding: 0.125rem 0.25rem;
+    width: 100%;
+}
 
-  /* Masraf Modal Stilleri */
-  .expense-modal-btn {
-      font-size: 0.85rem;
-  }
+.date-cell {
+    font-size: medium !important;
+}
 
-  .expense-count {
-      font-weight: bold;
-  }
+    .date-cell .additional-time-btn {
+        width: 100%;
+        margin-top: 2px;
+    }
 
+.additional-time-section {
+    margin-top: 2px;
+}
 
+    .additional-time-section .form-control-sm {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.2rem;
+        height: calc(1.5em + 0.2rem);
+        text-align: center;
+    }
 
-  .list-group-item {
-      border: 1px solid #dee2e6;
-      margin-bottom: 0.25rem;
-  }
+    .additional-time-section .input-group-text-sm {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.2rem;
+        height: calc(1.5em + 0.2rem);
+    }
 
-  .remove-expense-btn {
-      min-width: 35px;
-      height: 35px;
-  }
+    .additional-time-section .input-group {
+        margin-bottom: 0;
+    }
 
-  .meal-section {
-      display: flex;
-      justify-content: center;
-      gap: 0.25rem;
-  }
+.table .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered .select2-selection__placeholder {
+    font-size: 0.85rem;
+}
 
-  .meal-item {
-      text-align: center;
-  }
+/* Masraf Modal Stilleri */
+.expense-modal-btn {
+    font-size: 0.85rem;
+}
 
-  .spinner-border {
-      width: 3rem;
-      height: 3rem;
-  }
+.expense-count {
+    font-weight: bold;
+}
 
-  /* Loading sırasında tablo başlıklarını gizle */
-  .table-loading #workRecordsTable {
-      display: none !important;
-  }
+.list-group-item {
+    border: 1px solid #dee2e6;
+    margin-bottom: 0.25rem;
+}
 
-  .modal-dialog-scrollable #expenseForm {
-      max-height: calc(100vh - 200px);
-      /* header + footer yüksekliğini çıkar */
-      overflow-y: auto;
-  }
+.remove-expense-btn {
+    min-width: 35px;
+    height: 35px;
+}
+
+.meal-section {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.meal-item {
+    text-align: center;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Loading sırasında tablo başlıklarını gizle */
+.table-loading #workRecordsTable {
+    display: none !important;
+}

@@ -9,6 +9,7 @@
         public string RoleName { get; set; }
         public string? Email { get; set; }
         public bool IsExpatriate { get; set; }
+        public DateTime? HireDate { get; set; }
         public List<string> SuperiorIds { get; set; } = new();
     }
 }
