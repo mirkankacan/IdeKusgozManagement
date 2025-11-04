@@ -236,7 +236,16 @@
             setupEventListeners();
             await initializeSelects();
             await initializeDataTable();
-
+               $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
             $('.date-trafficTicket').daterangepicker({
                 locale: turkishLocale,
                 opens: 'left',
@@ -580,6 +589,7 @@
             formData.append('Type', parseInt($('#selectCType').val()));
             formData.append('Amount', parseFloat($('#txtCAmount').val()));
             formData.append('TicketDate', ticketDate);
+                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
 
             if ($('#selectCType').val() === '1') {
                 formData.append('TargetUserId', $('#selectCUser').val());
@@ -596,10 +606,7 @@
                     type: 'POST',
                     data: formData,
                     processData: false,
-                    contentType: false,
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    contentType: false
                 });
 
                 if (response.isSuccess) {
@@ -661,6 +668,7 @@
             formData.append('Type', parseInt($('#selectUType').val()));
             formData.append('Amount', parseFloat($('#txtUAmount').val()));
             formData.append('TicketDate', ticketDate);
+                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
 
             if ($('#selectUType').val() === '1') {
                 formData.append('TargetUserId', $('#selectUUser').val());
@@ -677,10 +685,7 @@
                     type: 'PUT',
                     data: formData,
                     processData: false,
-                    contentType: false,
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    contentType: false
                 });
 
                 if (response.isSuccess) {
@@ -711,10 +716,7 @@
                     try {
                         const response = await $.ajax({
                             url: `/trafik-ceza/${trafficTicketId}`,
-                            type: 'DELETE',
-                            headers: {
-                                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                            }
+                            type: 'DELETE'
                         });
 
                         if (response.isSuccess) {

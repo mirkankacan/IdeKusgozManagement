@@ -116,6 +116,16 @@
             setupEventListeners();
 
             await initializeDataTable();
+               $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
         });
 
         async function initializeDataTable() {
@@ -265,10 +275,7 @@
                     url: '/ekipman',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify(equipmentData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(equipmentData)
                 });
 
                 if (response.isSuccess) {
@@ -315,10 +322,7 @@
                     url: `/ekipman/${equipmentId}`,
                     type: 'PUT',
                     contentType: 'application/json',
-                    data: JSON.stringify(equipmentData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(equipmentData)
                 });
 
                 if (response.isSuccess) {
@@ -349,10 +353,7 @@
                     try {
                         const response = await $.ajax({
                             url: `/ekipman/${equipmentId}`,
-                            type: 'DELETE',
-                            headers: {
-                                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                            }
+                            type: 'DELETE'
                         });
 
                         if (response.isSuccess) {
@@ -386,10 +387,7 @@
                             const response = await $.ajax({
                                 url: `/ekipman/${equipmentId}/aktif-et`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
@@ -444,10 +442,7 @@
                             const response = await $.ajax({
                                 url: `/ekipman/${equipmentId}/pasif-et`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {

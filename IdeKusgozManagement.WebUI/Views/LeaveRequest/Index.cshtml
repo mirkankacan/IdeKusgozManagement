@@ -169,9 +169,18 @@
     <script>
         let leaveRequestsTable;
 
-
         $(document).ready(async function () {
             await initializeDataTable();
+               $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
             $(document).on('click', '#btnRejectLeaveRequest', async function () {
                 await rejectLeaveRequest();
             });
@@ -419,10 +428,7 @@
                             const response = await $.ajax({
                                 url: `/izin/${leaveRequestId}/onayla`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
@@ -480,10 +486,7 @@
                 const response = await $.ajax({
                     url: `/izin/${leaveRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : null}`,
                     type: 'PUT',
-                    contentType: 'application/json',
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    contentType: 'application/json'
                 });
 
                 toastr.success('İzin talebi başarıyla reddedildi.');
@@ -658,10 +661,7 @@
                             const response = await $.ajax({
                                 url: `/izin/${leaveRequestId}`,
                                 type: 'DELETE',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {

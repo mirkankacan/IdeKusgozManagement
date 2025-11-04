@@ -164,6 +164,16 @@
             initializeDropzone();
             initializeSelect2();
             await initializeUserSelect();
+               $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
         });
 
         function initializeSelect2() {
@@ -514,10 +524,7 @@
                             const response = await $.ajax({
                                 url: `/dosya/${fileId}`,
                                 type: 'DELETE',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {

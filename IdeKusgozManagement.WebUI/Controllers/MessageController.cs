@@ -22,6 +22,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             var response = await _messageApiService.GetMessagesAsync(pageSize, pageNumber, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost]
@@ -30,8 +31,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
             var response = await _messageApiService.CreateMessageAsync(model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
-        [ValidateAntiForgeryToken]
 
+        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpDelete("{messageId}")]
         public async Task<IActionResult> DeleteMessage(string messageId, CancellationToken cancellationToken = default)

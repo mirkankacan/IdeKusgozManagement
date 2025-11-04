@@ -11,14 +11,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class FilesController(IFileService fileService) : ControllerBase
     {
         [HttpPost("upload")]
-        public async Task<IActionResult> UploadFile([FromForm] UploadFileDTO uploadFileDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UploadFile([FromForm] List<UploadFileDTO> files, CancellationToken cancellationToken = default)
         {
-            if (uploadFileDTO.FormFile == null || uploadFileDTO.FormFile.Length == 0)
+            if (files.Any())
             {
-                return BadRequest("Dosya seçilmedi veya boş dosya");
+                return BadRequest("Dosya(lar) seçilmedi veya boş dosya");
             }
 
-            var result = await fileService.UploadFileAsync(uploadFileDTO, cancellationToken);
+            var result = await fileService.UploadFileAsync(files, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

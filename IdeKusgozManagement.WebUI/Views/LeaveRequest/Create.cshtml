@@ -35,7 +35,7 @@
                     <span id="totalEntitlement" class="badge bg-info me-2 text-dark">Toplam Hak Edilen İzin: 0 Gün</span>
                     <span id="totalUsedDays" class="badge bg-danger me-2">Toplam Kullanılan İzin: 0 Gün</span>
                     <span id="remainingDays" class="badge bg-success me-2">Kalan İzin: 0 Gün</span>
-                  @*   <span id="currentYearEntitlement" class="badge bg-warning me-2 text-dark">Bu Yıl Hak Edilen İzin: 0 Gün</span>
+                    @*   <span id="currentYearEntitlement" class="badge bg-warning me-2 text-dark">Bu Yıl Hak Edilen İzin: 0 Gün</span>
                     <span id="currentYearUsedDays" class="badge bg-secondary me-2">Bu Yıl Kullanılan İzin: 0 Gün</span> *@
                 </div>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
@@ -156,6 +156,16 @@
         $(document).ready(async function () {
             await initializeDataTable();
             await getMyRemainingLeaveDays();
+               $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
             $('#date-leave').daterangepicker({
                 locale: turkishLocale,
                 opens: 'left',
@@ -483,10 +493,7 @@
                             const response = await $.ajax({
                                 url: `/izin/${leaveRequestId}`,
                                 type: 'DELETE',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {

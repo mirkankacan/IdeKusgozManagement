@@ -15,83 +15,113 @@ namespace IdeKusgozManagement.Infrastructure.Services
     {
         private readonly PhysicalFileProvider _physicalFileProvider = (PhysicalFileProvider)fileProvider;
 
-        public async Task<ApiResponse<FileDTO>> UploadFileAsync(UploadFileDTO uploadFileDTO, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<List<FileDTO>>> UploadFileAsync(List<UploadFileDTO> files, CancellationToken cancellationToken = default)
         {
             try
             {
-                // Validasyonlar
-                if (uploadFileDTO == null || uploadFileDTO.FormFile.Length == 0)
+                if (!files.Any())
                 {
-                    return ApiResponse<FileDTO>.Error("Dosya boş veya geçersiz");
+                    return ApiResponse<List<FileDTO>>.Error("Dosya(lar) boş veya geçersiz");
                 }
-                var fileExtension = Path.GetExtension(uploadFileDTO.FormFile.FileName).ToLowerInvariant();
-                if (string.IsNullOrWhiteSpace(fileExtension))
-                {
-                    return ApiResponse<FileDTO>.Error("Geçersiz dosya formatı");
-                }
+
                 var wwwrootPath = _physicalFileProvider.Root;
                 if (string.IsNullOrEmpty(wwwrootPath))
                 {
-                    return ApiResponse<FileDTO>.Error("wwwroot klasörü bulunamadı");
-                }
-                if (uploadFileDTO.FileType == null)
-                {
-                    uploadFileDTO.FileType = FileType.Other;
+                    return ApiResponse<List<FileDTO>>.Error("wwwroot klasörü bulunamadı");
                 }
 
-                // Dosya yolu oluştur
-                var newFileName = $"{NewId.NextGuid()}{fileExtension}";
+                var uploadedFiles = new List<FileDTO>();
                 var dateFolder = DateTime.Now.ToString("dd-MM-yyyy");
 
-                var userFolder = "System";
-                if (!string.IsNullOrEmpty(uploadFileDTO.TargetUserId))
+                foreach (var uploadFileDTO in files)
                 {
-                    var user = await userService.GetUserByIdAsync(uploadFileDTO.TargetUserId);
-                    userFolder = user.Data.FullName;
+                    // Her dosya için validasyon
+                    if (uploadFileDTO.FormFile == null || uploadFileDTO.FormFile.Length == 0)
+                    {
+                        logger.LogWarning("Boş dosya atlandı: {FileName}", uploadFileDTO.FormFile?.FileName ?? "Unknown");
+                        throw new Exception("Boş dosya yüklenemez");
+                    }
+
+                    var fileExtension = Path.GetExtension(uploadFileDTO.FormFile.FileName).ToLowerInvariant();
+                    if (string.IsNullOrWhiteSpace(fileExtension))
+                    {
+                        logger.LogWarning("Geçersiz dosya formatı atlandı: {FileName}", uploadFileDTO.FormFile.FileName);
+                        throw new Exception("Geçersiz dosya formatı");
+                    }
+
+                    if (uploadFileDTO.FileType == null)
+                    {
+                        uploadFileDTO.FileType = FileType.Other;
+                    }
+
+                    // Kullanıcı klasörü belirleme
+                    var userFolder = "System";
+                    if (!string.IsNullOrEmpty(uploadFileDTO.TargetUserId))
+                    {
+                        var userResult = await userService.GetUserByIdAsync(uploadFileDTO.TargetUserId);
+                        if (userResult.IsSuccess && userResult.Data != null)
+                        {
+                            userFolder = userResult.Data.FullName;
+                        }
+                    }
+
+                    // Dosya yolu oluştur
+                    var newFileName = $"{NewId.NextGuid()}{fileExtension}";
+                    var fullFolderPath = Path.Combine(
+                        wwwrootPath,
+                        "Uploads",
+                        uploadFileDTO.FileType.ToFolderName(),
+                        userFolder,
+                        dateFolder);
+
+                    if (!Directory.Exists(fullFolderPath))
+                    {
+                        Directory.CreateDirectory(fullFolderPath);
+                    }
+
+                    var uploadPath = Path.Combine(fullFolderPath, newFileName);
+
+                    // Fiziksel dosyayı kaydet
+                    await using var stream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                    await uploadFileDTO.FormFile.CopyToAsync(stream, cancellationToken);
+
+                    // Relative path
+                    var relativePath = $"/Uploads/{uploadFileDTO.FileType.ToFolderName()}/{userFolder}/{dateFolder}/{newFileName}";
+
+                    // Entity oluştur
+                    var file = new IdtFile
+                    {
+                        Name = newFileName,
+                        Path = relativePath,
+                        OriginalName = uploadFileDTO.FormFile.FileName,
+                        TargetUserId = uploadFileDTO.TargetUserId ?? null,
+                        Type = uploadFileDTO.FileType
+                    };
+
+                    await unitOfWork.GetRepository<IdtFile>().AddAsync(file, cancellationToken);
+
+                    var fileDTO = new FileDTO
+                    {
+                        Id = file.Id,
+                        Name = file.Name,
+                        Path = file.Path,
+                        OriginalName = file.OriginalName
+                    };
+
+                    uploadedFiles.Add(fileDTO);
+
+                    logger.LogInformation("Dosya yüklendi: {FileName}, CreatedBy: {CreatedBy}", file.Name, file.CreatedBy);
                 }
 
-                var fullFolderPath = Path.Combine(
-                    wwwrootPath,
-                    "Uploads",
-                    uploadFileDTO.FileType.ToFolderName(),
-                    userFolder,
-                    dateFolder);
-                if (!Directory.Exists(fullFolderPath))
-                {
-                    Directory.CreateDirectory(fullFolderPath);
-                }
-                var uploadPath = Path.Combine(fullFolderPath, newFileName);
-                // Fiziksel dosyayı kaydet
-                await using var stream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write, FileShare.None);
-                await uploadFileDTO.FormFile.CopyToAsync(stream, cancellationToken);
-                // Relative path
-                var relativePath = $"/Uploads/{uploadFileDTO.FileType.ToFolderName()}/{userFolder}/{dateFolder}/{newFileName}";
-
-                // Entity oluştur
-                var file = new IdtFile
-                {
-                    Name = newFileName,
-                    Path = relativePath,
-                    OriginalName = uploadFileDTO.FormFile.FileName,
-                    TargetUserId = uploadFileDTO.TargetUserId ?? null,
-                    Type = uploadFileDTO.FileType
-                };
-
-                await unitOfWork.GetRepository<IdtFile>().AddAsync(file, cancellationToken);
-
+                // Tüm dosyalar işlendikten sonra tek seferde kaydet
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                logger.LogInformation("Dosya yüklendi: {FileName}, CreatedBy: {CreatedBy}", file.Name, file.CreatedBy);
-
-                var fileDTO = new FileDTO
+                if (!uploadedFiles.Any())
                 {
-                    Id = file.Id,
-                    Name = file.Name,
-                    Path = file.Path,
-                    OriginalName = file.OriginalName
-                };
+                    return ApiResponse<List<FileDTO>>.Error("Hiçbir dosya yüklenemedi");
+                }
 
-                return ApiResponse<FileDTO>.Success(fileDTO);
+                return ApiResponse<List<FileDTO>>.Success(uploadedFiles);
             }
             catch (Exception ex)
             {
@@ -136,7 +166,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-
                 var file = await unitOfWork.GetRepository<IdtFile>().GetByIdAsync(fileId, cancellationToken);
                 if (file == null)
                 {

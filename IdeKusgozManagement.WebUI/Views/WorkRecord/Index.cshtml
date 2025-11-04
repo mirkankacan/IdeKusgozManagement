@@ -6,9 +6,9 @@
 @section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
 
     <link href="~/css/puantaj-common.css" rel="stylesheet" />
 
@@ -181,7 +181,7 @@
                         <div class="col-md-12">
                             <label for="fileReceipt" class="form-label">Fatura</label>
                             <input type="file" class="form-control" id="fileReceipt" required
-                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
                             <div class="form-text">
                                 Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX
                             </div>
@@ -211,7 +211,7 @@
 
 <!-- Reject Work Record Modal -->
 <div class="modal fade" id="rejectWorkRecordModal" tabindex="-1" aria-labelledby="rejectWorkRecordModalLabel"
-    aria-hidden="true">
+     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -224,7 +224,7 @@
                 <div class="mb-3">
                     <label for="txtWorkRecordRejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
                     <textarea class="form-control" id="txtWorkRecordRejectReason" rows="3" maxlength="349"
-                        placeholder="Reddetme sebebini açıklayın..."></textarea>
+                              placeholder="Reddetme sebebini açıklayın..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -471,6 +471,16 @@
         // ===== PAGE INITIALIZATION =====
         $(document).ready(async function () {
             await initializePage();
+                $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
         });
 
         async function initializePage() {
@@ -1016,10 +1026,7 @@
                         try {
                             const response = await $.ajax({
                                 url: `/puantaj/onayla/${id}`,
-                                type: 'PUT',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                type: 'PUT'
                             });
                             if (!response.isSuccess) {
                                 Swal.showValidationMessage(`Hata: ${response.message}`);
@@ -1208,10 +1215,7 @@
 
                             const response = await $.ajax({
                                 url: `/puantaj/toplu-onayla/kullanici/${selectedUserId}/tarih/${formattedDate}`,
-                                type: 'PUT',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                type: 'PUT'
                             });
 
                             if (!response.isSuccess) {
@@ -1240,7 +1244,6 @@
         async function rejectWorkRecords() {
             const selectedUserId = $('#user-select').val();
 
-
             if (!selectedUserId) {
                 toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
                 return;
@@ -1265,10 +1268,7 @@
                     const url = `/puantaj/reddet/${id}${reason ? `?rejectReason=${encodeURIComponent(reason)}` : ''}`;
                     const response = await $.ajax({
                         url: url,
-                        type: 'PUT',
-                        headers: {
-                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                        }
+                        type: 'PUT'
                     });
                     if (response.isSuccess) {
                         toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');
@@ -1283,10 +1283,7 @@
                     const url = `/puantaj/toplu-reddet/kullanici/${selectedUserId}/tarih/${formattedDate}${reason ? `?rejectReason=${encodeURIComponent(reason)}` : ''}`;
                     const response = await $.ajax({
                         url: url,
-                        type: 'PUT',
-                        headers: {
-                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                        }
+                        type: 'PUT'
                     });
                     if (response.isSuccess) {
                         toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');

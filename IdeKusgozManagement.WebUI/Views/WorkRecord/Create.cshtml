@@ -425,7 +425,6 @@
                     startDate.setHours(0, 0, 0, 0);
                     endDate.setHours(0, 0, 0, 0);
 
-
                     // Check if the target date falls within the leave request date range
                     if (targetDate >= startDate && targetDate <= endDate) {
                         return leaveRequest.reason;
@@ -439,6 +438,16 @@
         // ===== PAGE INITIALIZATION =====
         $(document).ready(async function () {
             await initializePage();
+                $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
         });
 
         async function initializePage() {

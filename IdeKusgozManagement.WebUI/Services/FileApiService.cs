@@ -78,15 +78,18 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<FileViewModel>> UploadFileAsync(UploadFileViewModel model, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<FileViewModel>> UploadFileAsync(List<UploadFileViewModel> files, CancellationToken cancellationToken = default)
         {
             try
             {
                 using var formData = new MultipartFormDataContent();
 
-                var fileContent = new StreamContent(model.FormFile.OpenReadStream());
-                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(model.FormFile.ContentType);
-                formData.Add(fileContent, $"FormFile", model.FormFile.FileName);
+                foreach (var file in files)
+                {
+                    var fileContent = new StreamContent(file.FormFile.OpenReadStream());
+                    fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.FormFile.ContentType);
+                    formData.Add(fileContent, $"FormFile", file.FormFile.FileName);
+                }
 
                 var response = await _httpClient.PostAsync($"api/files/upload", formData, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);

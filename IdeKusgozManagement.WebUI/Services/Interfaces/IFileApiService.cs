@@ -10,6 +10,6 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
 
         Task<ApiResponse<bool>> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<FileViewModel>> UploadFileAsync(UploadFileViewModel model, CancellationToken cancellationToken = default);
+        Task<ApiResponse<FileViewModel>> UploadFileAsync(List<UploadFileViewModel> files, CancellationToken cancellationToken = default);
     }
 }

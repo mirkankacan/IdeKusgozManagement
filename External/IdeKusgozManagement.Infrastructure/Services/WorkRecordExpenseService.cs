@@ -1,5 +1,6 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
@@ -103,18 +104,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
                             // Yeni dosyayı yükle
                             element.File.TargetUserId = userId;
                             element.File.FileType = FileType.Expense;
-                            var fileUploadServiceResult = await fileService.UploadFileAsync(element.File, cancellationToken);
+                            var fileList = new List<UploadFileDTO> { element.File };
+
+                            var fileUploadServiceResult = await fileService.UploadFileAsync(fileList, cancellationToken);
 
                             if (!fileUploadServiceResult.IsSuccess)
                                 throw new InvalidOperationException(message: $"Dosya yüklenirken hata oluştu: {fileUploadServiceResult.Message}");
-
-                            existingExpense.FileId = fileUploadServiceResult.Data.Id;
 
                             // Eski dosyayı sil (yeni dosya başarıyla yüklendikten sonra)
                             if (!string.IsNullOrEmpty(oldFileId))
                             {
                                 filesToDelete.Add(oldFileId);
                             }
+                            existingExpense.FileId = fileUploadServiceResult.Data.FirstOrDefault()?.Id;
                         }
 
                         expensesToUpdate.Add(existingExpense);
@@ -129,12 +131,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     {
                         element.File.TargetUserId = userId;
                         element.File.FileType = FileType.Expense;
-                        var fileUploadResult = await fileService.UploadFileAsync(element.File, cancellationToken);
+                        var fileList = new List<UploadFileDTO> { element.File };
+
+                        var fileUploadResult = await fileService.UploadFileAsync(fileList, cancellationToken);
 
                         if (!fileUploadResult.IsSuccess)
                             throw new InvalidOperationException($"Dosya yüklenirken hata oluştu: {fileUploadResult.Message}");
 
-                        fileId = fileUploadResult.Data.Id;
+                        fileId = fileUploadResult.Data.FirstOrDefault()?.Id;
                     }
 
                     var newExpense = new IdtWorkRecordExpense
@@ -193,6 +197,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return ApiResponse<IEnumerable<WorkRecordExpenseDTO>>.Success(mappedExpenses,
                 $"Puantaj masraf kayıtları işlendi. {createdCount} eklendi, {updatedCount} güncellendi, {deletedCount} silindi.");
         }
+
         public async Task<ApiResponse<bool>> BatchDeleteWorkRecordExpensesAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
         {
             try

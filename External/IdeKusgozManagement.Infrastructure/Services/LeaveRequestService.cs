@@ -1,5 +1,6 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.DTOs.LeaveRequestDTOs;
 using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
@@ -95,7 +96,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     createLeaveRequestDTO.File.TargetUserId = identityService.GetUserId();
                     createLeaveRequestDTO.File.FileType = FileType.LeaveRequest;
-                    var fileResult = await fileService.UploadFileAsync(createLeaveRequestDTO.File, cancellationToken);
+                    var fileList = new List<UploadFileDTO> { createLeaveRequestDTO.File };
+
+                    var fileResult = await fileService.UploadFileAsync(fileList, cancellationToken);
 
                     if (!fileResult.IsSuccess)
                     {
@@ -104,7 +107,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         return ApiResponse<LeaveRequestDTO>.Error(fileResult.Message);
                     }
 
-                    leaveRequest.FileId = fileResult.Data.Id;
+                    leaveRequest.FileId = fileResult.Data.FirstOrDefault().Id;
                 }
                 await unitOfWork.GetRepository<IdtLeaveRequest>().AddAsync(leaveRequest, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -124,7 +127,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     Message = $"{leaveRequestDTO.CreatedByFullName} tarafından {leaveRequestDTO.CreatedDate.ToString("dd.MM.yyyy HH:mm")} tarihinde yeni bir izin talebi oluşturuldu.",
                     Type = NotificationType.LeaveRequest,
                     RedirectUrl = "/izin",
-                    TargetRoles = await identityService.GetUserSuperiorsAsync()
+                    TargetUsers = await identityService.GetUserSuperiorsAsync()
                 };
                 await notificationService.SendNotificationToSuperiorsAsync(createNotification, cancellationToken);
                 return ApiResponse<LeaveRequestDTO>.Success(leaveRequestDTO, "İzin talebi başarıyla oluşturuldu");
@@ -363,7 +366,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     updateLeaveRequestDTO.File.TargetUserId = identityService.GetUserId();
                     updateLeaveRequestDTO.File.FileType = FileType.LeaveRequest;
-                    var fileUploadResult = await fileService.UploadFileAsync(updateLeaveRequestDTO.File, cancellationToken);
+                    var fileList = new List<UploadFileDTO> { updateLeaveRequestDTO.File };
+
+                    var fileUploadResult = await fileService.UploadFileAsync(fileList, cancellationToken);
 
                     if (!fileUploadResult.IsSuccess)
                     {
@@ -381,8 +386,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         }
                     }
 
-                    leaveRequest.FileId = fileUploadResult.Data.Id;
-
+                    leaveRequest.FileId = fileUploadResult.Data.FirstOrDefault()?.Id;
                 }
 
                 unitOfWork.GetRepository<IdtLeaveRequest>().Update(leaveRequest);

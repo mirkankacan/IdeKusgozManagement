@@ -154,8 +154,7 @@
                                 Geçerli bir e-posta adresi giriniz.
                             </div>
                         </div>
-                      
-                       
+
                     </div>
                 </div>
 
@@ -258,7 +257,7 @@
                             <label for="u-terminationDate" class="form-label">İş Çıkış Tarihi</label>
                             <div class="input-group">
                                 <input type="text" class="form-control date-user" id="u-terminationDate"
-                                       required placeholder="İş çıkış tarihini seçin">
+                                        placeholder="İş çıkış tarihini seçin">
                                 <span class="input-group-text">
                                     <i class="fas fa-calendar"></i>
                                 </span>
@@ -301,7 +300,7 @@
                                 Geçerli bir e-posta adresi giriniz.
                             </div>
                         </div>
-                      
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -327,6 +326,16 @@
             await getRoles();
             initializeSelect2();
             await getSuperiorUsers();
+                $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
             $('#createUserModal').on('hidden.bs.modal', function () {
                 clearCreateUserForm();
             });
@@ -556,10 +565,7 @@
                     url: '/kullanici/olustur',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify(userData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(userData)
                 });
 
                 toastr.success('Kullanıcı başarıyla oluşturuldu!');
@@ -630,10 +636,7 @@
                     url: `/kullanici/guncelle/${userData.Id}`,
                     type: 'PUT',
                     contentType: 'application/json',
-                    data: JSON.stringify(userData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(userData)
                 });
 
                 toastr.success('Kullanıcı başarıyla güncellendi!');
@@ -681,10 +684,7 @@
                             const response = await $.ajax({
                                 url: `/kullanici/aktif-et/${userId}`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
@@ -741,10 +741,7 @@
                             const response = await $.ajax({
                                 url: `/kullanici/pasif-et/${userId}`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
@@ -801,10 +798,7 @@
                             const response = await $.ajax({
                                 url: `/kullanici/sil/${userId}`,
                                 type: 'DELETE',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
@@ -884,7 +878,7 @@
                         $('#u-terminationDate').val(terminationDate.format('DD/MM/YYYY'));
                         $('#u-terminationDate').data('daterangepicker').setStartDate(terminationDate);
                     }
-               
+
                     $('#selectUStatus').val(userData.isActive ? "true" : "false");
                     if (userData.superiorIds && Array.isArray(userData.superiorIds) && userData.superiorIds.length > 0) {
                         $('#selectUSuperior').val(userData.superiorIds).trigger('change');

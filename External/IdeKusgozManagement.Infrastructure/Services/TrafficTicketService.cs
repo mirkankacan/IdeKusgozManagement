@@ -1,5 +1,6 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.DTOs.TrafficTicketDTOs;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
@@ -24,7 +25,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     createTrafficTicketDTO.File.TargetUserId = !string.IsNullOrEmpty(createTrafficTicketDTO.TargetUserId) ? createTrafficTicketDTO.TargetUserId : null;
 
                     createTrafficTicketDTO.File.FileType = FileType.TrafficTicket;
-                    var fileResult = await fileService.UploadFileAsync(createTrafficTicketDTO.File, cancellationToken);
+                    var fileList = new List<UploadFileDTO> { createTrafficTicketDTO.File };
+
+                    var fileResult = await fileService.UploadFileAsync(fileList, cancellationToken);
 
                     if (!fileResult.IsSuccess)
                     {
@@ -32,7 +35,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         return ApiResponse<string>.Error(fileResult.Message);
                     }
 
-                    newTicket.FileId = fileResult.Data.Id;
+                    newTicket.FileId = fileResult.Data.FirstOrDefault()?.Id;
                 }
                 await unitOfWork.GetRepository<IdtTrafficTicket>().AddAsync(newTicket, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -148,7 +151,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     updateTrafficTicketDTO.File.TargetUserId = !string.IsNullOrEmpty(updateTrafficTicketDTO.TargetUserId) ? updateTrafficTicketDTO.TargetUserId : null;
                     updateTrafficTicketDTO.File.FileType = FileType.TrafficTicket;
-                    var fileResult = await fileService.UploadFileAsync(updateTrafficTicketDTO.File, cancellationToken);
+                    var fileList = new List<UploadFileDTO> { updateTrafficTicketDTO.File };
+
+                    var fileResult = await fileService.UploadFileAsync(fileList, cancellationToken);
 
                     if (!fileResult.IsSuccess)
                     {
@@ -156,7 +161,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         return ApiResponse<bool>.Error(fileResult.Message);
                     }
 
-                    ticket.FileId = fileResult.Data.Id;
+                    ticket.FileId = fileResult.Data.FirstOrDefault()?.Id;
                 }
                 unitOfWork.GetRepository<IdtTrafficTicket>().Update(ticket);
                 await unitOfWork.SaveChangesAsync(cancellationToken);

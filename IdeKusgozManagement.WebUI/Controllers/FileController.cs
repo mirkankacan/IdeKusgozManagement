@@ -40,14 +40,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPost("yukle")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadFile([FromForm] UploadFileViewModel model)
+        public async Task<IActionResult> UploadFile([FromForm] List<UploadFileViewModel> files)
         {
-            if (model.FormFile == null || model.FormFile.Length == 0)
+            if (!files.Any())
             {
-                return BadRequest("Dosya yükleme zorunludur");
+                return BadRequest("Dosya(lar) yükleme zorunludur");
             }
 
-            var result = await _fileApiService.UploadFileAsync(model);
+            var result = await _fileApiService.UploadFileAsync(files);
 
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }

@@ -128,7 +128,16 @@
                         setupEventListeners();
 
             await initializeDataTable();
-
+               $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
         });
         async function initializeDataTable() {
             advancesTable = $('#advancesTable').DataTable({
@@ -382,10 +391,7 @@
                     url: '/avans/istek-olustur',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify(advanceData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(advanceData)
                 });
 
                 if (response.isSuccess) {
@@ -436,10 +442,7 @@
                     url: `/avans/${expenseId}`,
                     type: 'PUT',
                     contentType: 'application/json',
-                    data: JSON.stringify(advanceData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(advanceData)
                 });
 
                 if (response.isSuccess) {
@@ -471,10 +474,7 @@
                             const response = await $.ajax({
                                 url: `/avans/${advanceRequestId}`,
                                 type: 'DELETE',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
@@ -526,10 +526,7 @@
                             const response = await $.ajax({
                                 url: `/avans/${advanceId}/onayla`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
@@ -585,10 +582,7 @@
                 const response = await $.ajax({
                     url: `/avans/${advanceRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : null}`,
                     type: 'PUT',
-                    contentType: 'application/json',
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    contentType: 'application/json'
                 });
 
                 toastr.success('Avans talebi başarıyla reddedildi.');

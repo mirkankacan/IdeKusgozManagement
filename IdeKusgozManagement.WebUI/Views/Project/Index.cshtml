@@ -142,7 +142,16 @@
             setupEventListeners();
 
             await initializeDataTable();
-
+               $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
             $('.date-project').daterangepicker({
                 locale: turkishLocale,
                 opens: 'left',
@@ -332,10 +341,7 @@
                     url: '/proje',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify(projectData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(projectData)
                 });
 
                 if (response.isSuccess) {
@@ -395,10 +401,7 @@
                     url: `/proje/${projectId}`,
                     type: 'PUT',
                     contentType: 'application/json',
-                    data: JSON.stringify(projectData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(projectData)
                 });
 
                 if (response.isSuccess) {
@@ -429,10 +432,7 @@
                     try {
                         const response = await $.ajax({
                             url: `/proje/${projectId}`,
-                            type: 'DELETE',
-                            headers: {
-                                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                            }
+                            type: 'DELETE'
                         });
 
                         if (response.isSuccess) {
@@ -466,10 +466,7 @@
                             const response = await $.ajax({
                                 url: `/proje/${projectId}/aktif-et`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
@@ -523,10 +520,7 @@
                             const response = await $.ajax({
                                 url: `/proje/${projectId}/pasif-et`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {

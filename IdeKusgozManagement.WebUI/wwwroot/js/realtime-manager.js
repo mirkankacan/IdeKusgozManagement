@@ -119,6 +119,23 @@ class RealtimeManager {
     getUserName() { return this.connectionInfo.userName; }
     getRoleName() { return this.connectionInfo.roleName; }
 
+    getAntiforgeryToken() {
+        const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+        return tokenInput ? tokenInput.value : null;
+    }
+
+    getRequestHeaders(includeContentType = true) {
+        const headers = {};
+        if (includeContentType) {
+            headers['Content-Type'] = 'application/json';
+        }
+        const token = this.getAntiforgeryToken();
+        if (token) {
+            headers['X-CSRF-TOKEN'] = token;
+        }
+        return headers;
+    }
+
     on(eventName, callback) {
         if (this.connection) this.connection.on(eventName, callback);
     }
@@ -384,7 +401,7 @@ class NotificationManager extends RealtimeManager {
             const response = await fetch(`/bildirim/${notificationId}/okundu`, {
                 method: 'PUT',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/json' }
+                headers: this.getRequestHeaders()
             });
             const result = await response.json();
 
@@ -419,7 +436,7 @@ class NotificationManager extends RealtimeManager {
             const response = await fetch('/bildirim/hepsini-okundu', {
                 method: 'PUT',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/json' }
+                headers: this.getRequestHeaders()
             });
 
             if (response.ok) {
@@ -692,10 +709,7 @@ class MessageManager extends RealtimeManager {
         try {
             const response = await fetch('/mesaj', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                },
+                headers: this.getRequestHeaders(),
                 body: JSON.stringify({
                     content: messageContent,
                     targetRoles: targetRoles,

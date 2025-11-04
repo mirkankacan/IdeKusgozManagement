@@ -18,7 +18,7 @@
                     Masraf Türü Yönetimi
                 </h5>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                    data-bs-target="#createExpenseModal">
+                        data-bs-target="#createExpenseModal">
                     <i class="fas fa-plus me-2"></i>Masraf Türü Ekle
                 </button>
                 <br />
@@ -45,7 +45,7 @@
 
 <!-- Create Expense Modal -->
 <div class="modal fade" id="createExpenseModal" tabindex="-1" aria-labelledby="createExpenseModalLabel"
-    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -74,7 +74,7 @@
 
 <!-- Update Expense Modal -->
 <div class="modal fade" id="updateExpenseModal" tabindex="-1" aria-labelledby="updateExpenseModalLabel"
-    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -112,6 +112,16 @@
             setupEventListeners();
 
             await initializeDataTable();
+                 $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
         });
         async function initializeDataTable() {
             expensesTable = $('#expensesTable').DataTable({
@@ -259,10 +269,7 @@
                     url: '/masraf',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify(expenseData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(expenseData)
                 });
 
                 if (response.isSuccess) {
@@ -309,10 +316,7 @@
                     url: `/masraf/${expenseId}`,
                     type: 'PUT',
                     contentType: 'application/json',
-                    data: JSON.stringify(expenseData),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    }
+                    data: JSON.stringify(expenseData)
                 });
 
                 if (response.isSuccess) {
@@ -343,10 +347,7 @@
                     try {
                         const response = await $.ajax({
                             url: `/masraf/${expenseId}`,
-                            type: 'DELETE',
-                            headers: {
-                                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                            }
+                            type: 'DELETE'
                         });
 
                         if (response.isSuccess) {
@@ -380,10 +381,7 @@
                             const response = await $.ajax({
                                 url: `/masraf/${expenseId}/aktif-et`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
@@ -437,10 +435,7 @@
                             const response = await $.ajax({
                                 url: `/masraf/${expenseId}/pasif-et`,
                                 type: 'PUT',
-                                contentType: 'application/json',
-                                headers: {
-                                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                }
+                                contentType: 'application/json'
                             });
                             return response;
                         } catch (error) {
