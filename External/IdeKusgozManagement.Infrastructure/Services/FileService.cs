@@ -4,14 +4,14 @@ using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
-using IdeKusgozManagement.Domain.Enums;
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class FileService(IUnitOfWork unitOfWork, IFileProvider fileProvider, ILogger<FileService> logger, IUserService userService) : IFileService
+    public class FileService(IUnitOfWork unitOfWork, IFileProvider fileProvider, ILogger<FileService> logger, IUserService userService, IDepartmentService departmentService, IAIService aiService) : IFileService
     {
         private readonly PhysicalFileProvider _physicalFileProvider = (PhysicalFileProvider)fileProvider;
 
@@ -19,107 +19,36 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                if (!files.Any())
-                {
-                    return ApiResponse<List<FileDTO>>.Error("Dosya(lar) boş veya geçersiz");
-                }
-
                 var wwwrootPath = _physicalFileProvider.Root;
                 if (string.IsNullOrEmpty(wwwrootPath))
                 {
                     return ApiResponse<List<FileDTO>>.Error("wwwroot klasörü bulunamadı");
                 }
 
-                var uploadedFiles = new List<FileDTO>();
                 var dateFolder = DateTime.Now.ToString("dd-MM-yyyy");
+                var newFiles = new List<IdtFile>();
+                var uploadedFiles = new List<FileDTO>();
 
-                foreach (var uploadFileDTO in files)
+                foreach (var file in files)
                 {
-                    // Her dosya için validasyon
-                    if (uploadFileDTO.FormFile == null || uploadFileDTO.FormFile.Length == 0)
-                    {
-                        logger.LogWarning("Boş dosya atlandı: {FileName}", uploadFileDTO.FormFile?.FileName ?? "Unknown");
-                        throw new Exception("Boş dosya yüklenemez");
-                    }
+                    // Dosya validasyonu
+                    ValidateFile(file);
 
-                    var fileExtension = Path.GetExtension(uploadFileDTO.FormFile.FileName).ToLowerInvariant();
-                    if (string.IsNullOrWhiteSpace(fileExtension))
-                    {
-                        logger.LogWarning("Geçersiz dosya formatı atlandı: {FileName}", uploadFileDTO.FormFile.FileName);
-                        throw new Exception("Geçersiz dosya formatı");
-                    }
+                    // Folder bilgilerini al
+                    var (userFolder, documentTypeName, renewalPeriodInMonths) = await GetFolderInfoAsync(file, cancellationToken);
 
-                    if (uploadFileDTO.FileType == null)
-                    {
-                        uploadFileDTO.FileType = FileType.Other;
-                    }
+                    // Dosya yükleme işlemi
+                    var (newFile, fileDTO) = await ProcessFileUploadAsync(file, wwwrootPath, documentTypeName, renewalPeriodInMonths, userFolder, dateFolder, cancellationToken);
 
-                    // Kullanıcı klasörü belirleme
-                    var userFolder = "System";
-                    if (!string.IsNullOrEmpty(uploadFileDTO.TargetUserId))
-                    {
-                        var userResult = await userService.GetUserByIdAsync(uploadFileDTO.TargetUserId);
-                        if (userResult.IsSuccess && userResult.Data != null)
-                        {
-                            userFolder = userResult.Data.FullName;
-                        }
-                    }
-
-                    // Dosya yolu oluştur
-                    var newFileName = $"{NewId.NextGuid()}{fileExtension}";
-                    var fullFolderPath = Path.Combine(
-                        wwwrootPath,
-                        "Uploads",
-                        uploadFileDTO.FileType.ToFolderName(),
-                        userFolder,
-                        dateFolder);
-
-                    if (!Directory.Exists(fullFolderPath))
-                    {
-                        Directory.CreateDirectory(fullFolderPath);
-                    }
-
-                    var uploadPath = Path.Combine(fullFolderPath, newFileName);
-
-                    // Fiziksel dosyayı kaydet
-                    await using var stream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write, FileShare.None);
-                    await uploadFileDTO.FormFile.CopyToAsync(stream, cancellationToken);
-
-                    // Relative path
-                    var relativePath = $"/Uploads/{uploadFileDTO.FileType.ToFolderName()}/{userFolder}/{dateFolder}/{newFileName}";
-
-                    // Entity oluştur
-                    var file = new IdtFile
-                    {
-                        Name = newFileName,
-                        Path = relativePath,
-                        OriginalName = uploadFileDTO.FormFile.FileName,
-                        TargetUserId = uploadFileDTO.TargetUserId ?? null,
-                        Type = uploadFileDTO.FileType
-                    };
-
-                    await unitOfWork.GetRepository<IdtFile>().AddAsync(file, cancellationToken);
-
-                    var fileDTO = new FileDTO
-                    {
-                        Id = file.Id,
-                        Name = file.Name,
-                        Path = file.Path,
-                        OriginalName = file.OriginalName
-                    };
-
+                    newFiles.Add(newFile);
                     uploadedFiles.Add(fileDTO);
 
-                    logger.LogInformation("Dosya yüklendi: {FileName}, CreatedBy: {CreatedBy}", file.Name, file.CreatedBy);
+                    logger.LogInformation("Dosya yüklendi: {FileName}, CreatedBy: {CreatedBy}", newFile.Name, newFile.CreatedBy);
                 }
 
-                // Tüm dosyalar işlendikten sonra tek seferde kaydet
+                // Tüm dosyaları tek seferde veritabanına ekle
+                await unitOfWork.GetRepository<IdtFile>().AddRangeAsync(newFiles, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
-
-                if (!uploadedFiles.Any())
-                {
-                    return ApiResponse<List<FileDTO>>.Error("Hiçbir dosya yüklenemedi");
-                }
 
                 return ApiResponse<List<FileDTO>>.Success(uploadedFiles);
             }
@@ -128,6 +57,114 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "Dosya yüklenirken hata oluştu");
                 throw;
             }
+        }
+
+        private void ValidateFile(UploadFileDTO file)
+        {
+            if (file.FormFile == null || file.FormFile.Length == 0)
+            {
+                logger.LogWarning("Boş dosya atlandı: {FileName}", file.FormFile?.FileName ?? "Unknown");
+                throw new Exception("Boş dosya yüklenemez");
+            }
+
+            var fileExtension = Path.GetExtension(file.FormFile.FileName).ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(fileExtension))
+            {
+                logger.LogWarning("Geçersiz dosya formatı atlandı: {FileName}", file.FormFile.FileName);
+                throw new Exception("Geçersiz dosya formatı");
+            }
+        }
+
+        private async Task<(string userFolder, string documentTypeName, int? renewalPeriodInMonths)> GetFolderInfoAsync(UploadFileDTO file, CancellationToken cancellationToken)
+        {
+            var userFolder = "Firma";
+            if (!string.IsNullOrEmpty(file.TargetUserId))
+            {
+                var userResult = await userService.GetUserByIdAsync(file.TargetUserId);
+                if (userResult.IsSuccess && userResult.Data != null)
+                {
+                    userFolder = userResult.Data.FullName;
+                }
+            }
+
+            var documentTypeName = "";
+            int? renewalPeriodInMonths = null;
+            var departmentResult = await departmentService.GetDocumentTypeByIdAsync(file.DocumentTypeId, cancellationToken);
+            if (departmentResult.IsSuccess && departmentResult.Data != null)
+            {
+                documentTypeName = departmentResult.Data.Name;
+                renewalPeriodInMonths = departmentResult.Data.RenewalPeriodInMonths;
+            }
+
+            return (userFolder, documentTypeName, renewalPeriodInMonths);
+        }
+
+        private async Task<(IdtFile newFile, FileDTO fileDTO)> ProcessFileUploadAsync(UploadFileDTO file, string wwwrootPath, string documentTypeName, int? renewalPeriodInMonths, string userFolder, string dateFolder, CancellationToken cancellationToken)
+        {
+            var fileExtension = Path.GetExtension(file.FormFile.FileName).ToLowerInvariant();
+            var newFileName = $"{NewId.NextGuid()}{fileExtension}";
+            var fullFolderPath = Path.Combine(wwwrootPath, "Uploads", documentTypeName, userFolder, dateFolder);
+            var contentType = GetContentType(fileExtension);
+            if (!Directory.Exists(fullFolderPath))
+            {
+                Directory.CreateDirectory(fullFolderPath);
+            }
+
+            var uploadPath = Path.Combine(fullFolderPath, newFileName);
+
+            using var memoryStream = new MemoryStream();
+            await file.FormFile.CopyToAsync(memoryStream);
+            var pdfBytes = memoryStream.ToArray();
+
+            DateTime? startDate = file.StartDate;
+            DateTime? endDate = file.EndDate;
+            if (file.HasRenewalPeriod.HasValue)
+            {
+                if (file.HasRenewalPeriod.Value == true && file.StartDate == null && file.EndDate == null)
+                {
+                    var aiResponse = await aiService.AnalyzeDocumentDateAsync(pdfBytes, contentType, documentTypeName);
+
+                    if (aiResponse.IsSuccess && !string.IsNullOrEmpty(aiResponse.Data.SelectedDate))
+                    {
+                        startDate = DateTime.Parse(aiResponse.Data.SelectedDate);
+                        endDate = startDate.Value.AddMonths(renewalPeriodInMonths!.Value);
+                    }
+                }
+            }
+
+            // Dosyayı kaydet
+            await using var sourceStream = file.FormFile.OpenReadStream();
+            await using var fileStream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await sourceStream.CopyToAsync(fileStream, cancellationToken);
+
+            var relativePath = $"/Uploads/{documentTypeName}/{userFolder}/{dateFolder}/{newFileName}";
+
+            var newFile = new IdtFile
+            {
+                Name = newFileName,
+                Path = relativePath,
+                OriginalName = file.FormFile.FileName,
+                TargetUserId = file.TargetUserId,
+                DocumentTypeId = file.DocumentTypeId!,
+                DepartmentId = file.DepartmentId ?? null,
+                StartDate = startDate,
+                EndDate = endDate,
+            };
+
+            var fileDTO = new FileDTO
+            {
+                Id = newFile.Id,
+                Name = newFile.Name,
+                OriginalName = newFile.OriginalName,
+                DepartmentId = newFile.DepartmentId,
+                DocumentTypeId = newFile.DocumentTypeId,
+                TargetUserId = newFile.TargetUserId,
+                StartDate = newFile.StartDate,
+                EndDate = newFile.EndDate,
+                CreatedDate = newFile.CreatedDate
+            };
+
+            return (newFile, fileDTO);
         }
 
         public async Task<ApiResponse<bool>> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default)
@@ -166,26 +203,33 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var file = await unitOfWork.GetRepository<IdtFile>().GetByIdAsync(fileId, cancellationToken);
+                var file = await unitOfWork.GetRepository<IdtFile>()
+                    .WhereAsNoTracking(x => x.Id == fileId)
+                    .Include(x => x.Department)
+                    .Include(x => x.DocumentType)
+                    .Include(x => x.TargetUser)
+                    .FirstOrDefaultAsync(cancellationToken);
+
                 if (file == null)
                 {
                     logger.LogWarning("Dosya kaydı bulunamadı: {FileId}", fileId);
-                    return ApiResponse<FileDTO>.Success(null, "Dosya kaydı bulunamadı");
+                    return ApiResponse<FileDTO>.Success(new FileDTO(), "Dosya kaydı bulunamadı");
                 }
-                var fullPath = Path.Combine(_physicalFileProvider.Root, file.Path.TrimStart('/'));
-                var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
-                var extension = Path.GetExtension(file.OriginalName).ToLowerInvariant();
-
-                var contentType = GetContentType(extension);
 
                 var fileDTO = new FileDTO
                 {
                     Id = file.Id,
                     Name = file.Name,
-                    Path = fullPath,
                     OriginalName = file.OriginalName,
-                    FileStream = fileStream,
-                    ContentType = contentType
+                    DepartmentId = file.DepartmentId,
+                    DocumentTypeId = file.DocumentTypeId,
+                    TargetUserId = file.TargetUserId,
+                    TargetUserName = file.TargetUser?.Name + " " + file.TargetUser?.Surname,
+                    DocumentTypeName = file.DocumentType.Name,
+                    DepartmentName = file.Department?.Name,
+                    EndDate = file.EndDate,
+                    StartDate = file.StartDate,
+                    CreatedDate = file.CreatedDate
                 };
 
                 return ApiResponse<FileDTO>.Success(fileDTO);
@@ -194,6 +238,97 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 logger.LogError(ex, "Dosya okunamadı: {FileId}", fileId);
                 return ApiResponse<FileDTO>.Error("Dosya okunamadı");
+            }
+        }
+
+        public async Task<ApiResponse<(FileStream fileStream, string contentType, string originalName)>> GetFileStreamByIdAsync(string id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var file = await unitOfWork.GetRepository<IdtFile>()
+                    .WhereAsNoTracking(x => x.Id == id)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (file == null)
+                {
+                    logger.LogWarning("Dosya bulunamadı. FileId: {FileId}", id);
+                    return ApiResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya bulunamadı");
+                }
+
+                var fullPath = Path.Combine(_physicalFileProvider.Root, file.Path.TrimStart('/'));
+
+                if (!File.Exists(fullPath))
+                {
+                    logger.LogWarning("Fiziksel dosya bulunamadı. FileId: {FileId}, Path: {Path}", id, fullPath);
+                    return ApiResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya yolu bulunamadı");
+                }
+
+                var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
+                var extension = Path.GetExtension(file.OriginalName).ToLowerInvariant();
+                var contentType = GetContentType(extension);
+                return ApiResponse<(FileStream fileStream, string contentType, string originalName)>.Success((fileStream, contentType, file.OriginalName), "Dosya kaydı bulunamadı");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Dosya stream'i okunamadı. FileId: {FileId}", id);
+                return ApiResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya stream'i okunamadı");
+            }
+        }
+
+        public async Task<ApiResponse<List<FileDTO>>> GetFilesByParamsAsync(string? userId, string? documentType, string? departmentId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var query = unitOfWork.GetRepository<IdtFile>().WhereAsNoTracking(x => x.Id != null);
+                query = query.Include(x => x.TargetUser)
+                                   .Include(x => x.DocumentType)
+                                   .Include(x => x.Department);
+                if (!string.IsNullOrWhiteSpace(userId))
+                    query = query.Where(x => x.TargetUserId == userId);
+
+                if (!string.IsNullOrWhiteSpace(documentType))
+                    query = query.Where(x => x.DocumentTypeId == documentType);
+
+                if (!string.IsNullOrWhiteSpace(departmentId))
+                    query = query.Where(x => x.DepartmentId == departmentId);
+
+                var files = await query.ToListAsync(cancellationToken);
+
+                if (!files.Any())
+                {
+                    return ApiResponse<List<FileDTO>>.Success(new List<FileDTO>(), "Dosya kaydı bulunamadı");
+                }
+
+                var fileDTOs = new List<FileDTO>();
+
+                foreach (var file in files)
+                {
+                    var fileDTO = new FileDTO
+                    {
+                        Id = file.Id,
+                        Name = file.Name,
+                        OriginalName = file.OriginalName,
+                        DepartmentId = file.DepartmentId,
+                        DocumentTypeId = file.DocumentTypeId,
+                        TargetUserId = file.TargetUserId,
+                        TargetUserName = file.TargetUser?.Name + " " + file.TargetUser?.Surname,
+                        DocumentTypeName = file.DocumentType.Name,
+                        DepartmentName = file.Department?.Name,
+                        EndDate = file.EndDate,
+                        StartDate = file.StartDate,
+                        CreatedDate = file.CreatedDate
+                    };
+
+                    fileDTOs.Add(fileDTO);
+                }
+
+                return ApiResponse<List<FileDTO>>.Success(fileDTOs);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Dosyalar okunamadı. UserId: {UserId}, DocumentType: {DocumentType}, DepartmentId: {DepartmentId}",
+                    userId, documentType, departmentId);
+                return ApiResponse<List<FileDTO>>.Error("Dosyalar okunamadı");
             }
         }
 

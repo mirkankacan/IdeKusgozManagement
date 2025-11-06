@@ -10,10 +10,11 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [ApiController]
     public class FilesController(IFileService fileService) : ControllerBase
     {
+        [RequestSizeLimit(50 * 1024 * 1024)]
         [HttpPost("upload")]
         public async Task<IActionResult> UploadFile([FromForm] List<UploadFileDTO> files, CancellationToken cancellationToken = default)
         {
-            if (files.Any())
+            if (!files.Any())
             {
                 return BadRequest("Dosya(lar) seçilmedi veya boş dosya");
             }
@@ -33,17 +34,34 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
             return Ok(result);
         }
-
-        [HttpGet("download/{id}")]
-        public async Task<IActionResult> DownloadFile(string id, CancellationToken cancellationToken = default)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteFile(string id, CancellationToken cancellationToken = default)
         {
-            var result = await fileService.GetFileByIdAsync(id, cancellationToken);
+            var result = await fileService.DeleteFileAsync(id, cancellationToken);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        [HttpGet("by-params")]
+        public async Task<IActionResult> GetFilesByParams([FromQuery] string? userId, [FromQuery] string? documentType, [FromQuery] string? departmentId, CancellationToken cancellationToken = default)
+        {
+            var result = await fileService.GetFilesByParamsAsync(userId, documentType, departmentId, cancellationToken);
             if (!result.IsSuccess || result.Data == null)
             {
                 return NotFound(result);
             }
 
-            return File(result.Data.FileStream, result.Data.ContentType, result.Data.OriginalName);
+            return Ok(result);
+        }
+
+        [HttpGet("download/{id}")]
+        public async Task<IActionResult> DownloadFile(string id, CancellationToken cancellationToken = default)
+        {
+            var result = await fileService.GetFileStreamByIdAsync(id, cancellationToken);
+            return result.IsSuccess ? File(result.Data.fileStream, result.Data.contentType, result.Data.originalName) : BadRequest(result);
         }
     }
 }

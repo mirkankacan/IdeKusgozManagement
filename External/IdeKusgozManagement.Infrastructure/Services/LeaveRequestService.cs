@@ -95,7 +95,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (createLeaveRequestDTO.File != null && createLeaveRequestDTO.File.FormFile.Length > 0)
                 {
                     createLeaveRequestDTO.File.TargetUserId = identityService.GetUserId();
-                    createLeaveRequestDTO.File.FileType = FileType.LeaveRequest;
+                    createLeaveRequestDTO.File.DocumentTypeId = "ED9DA894-0421-4AB1-8672-0F2104B85A5F";
                     var fileList = new List<UploadFileDTO> { createLeaveRequestDTO.File };
 
                     var fileResult = await fileService.UploadFileAsync(fileList, cancellationToken);
@@ -365,7 +365,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     string? oldFileId = leaveRequest.FileId ?? null;
 
                     updateLeaveRequestDTO.File.TargetUserId = identityService.GetUserId();
-                    updateLeaveRequestDTO.File.FileType = FileType.LeaveRequest;
+                    updateLeaveRequestDTO.File.DocumentTypeId = "ED9DA894-0421-4AB1-8672-0F2104B85A5F";
                     var fileList = new List<UploadFileDTO> { updateLeaveRequestDTO.File };
 
                     var fileUploadResult = await fileService.UploadFileAsync(fileList, cancellationToken);

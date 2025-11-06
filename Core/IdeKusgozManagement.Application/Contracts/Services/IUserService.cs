@@ -6,6 +6,7 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
     public interface IUserService
     {
         Task<ApiResponse<IEnumerable<UserDTO>>> GetUsersAsync(CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<IEnumerable<UserDTO>>> GetSubordinatesByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 

@@ -21,7 +21,7 @@ namespace IdeKusgozManagement.Domain.Entities
         public DateTime? PasswordResetCodeExpires { get; set; }
         public DateTime HireDate { get; set; }
         public DateTime? TerminationDate { get; set; }
-        public string? DepartmentId { get; set; }
-        public virtual IdtDepartment? Department { get; set; }
+        public string DepartmentId { get; set; }
+        public virtual IdtDepartment Department { get; set; }
     }
 }

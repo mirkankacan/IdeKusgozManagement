@@ -65,6 +65,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DepartmentId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Email")
@@ -292,6 +293,77 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.ToTable("IdtDepartments");
                 });
 
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtDepartmentDocumentType", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DepartmentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("DocumentTypeId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("DocumentTypeId");
+
+                    b.ToTable("IdtDepartmentDocumentTypes");
+                });
+
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtDocumentType", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("RenewalPeriodInMonths")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("IdtDocumentTypes");
+                });
+
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtEquipment", b =>
                 {
                     b.Property<string>("Id")
@@ -370,6 +442,18 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DepartmentId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("DocumentTypeId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(450)
@@ -385,12 +469,12 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("TargetUserId")
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -399,6 +483,12 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("DocumentTypeId");
+
+                    b.HasIndex("TargetUserId");
 
                     b.ToTable("IdtFiles");
                 });
@@ -972,7 +1062,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.HasOne("IdeKusgozManagement.Domain.Entities.IdtDepartment", "Department")
                         .WithMany("Users")
                         .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
 
                     b.Navigation("Department");
                 });
@@ -1018,6 +1109,50 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtDepartmentDocumentType", b =>
+                {
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtDepartment", "Department")
+                        .WithMany("RequiredDocuments")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtDocumentType", "DocumentType")
+                        .WithMany("RequiredByDepartments")
+                        .HasForeignKey("DocumentTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
+                    b.Navigation("DocumentType");
+                });
+
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtFile", b =>
+                {
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtDepartment", "Department")
+                        .WithMany("Files")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtDocumentType", "DocumentType")
+                        .WithMany("Files")
+                        .HasForeignKey("DocumentTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "TargetUser")
+                        .WithMany()
+                        .HasForeignKey("TargetUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("DocumentType");
+
+                    b.Navigation("TargetUser");
                 });
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtLeaveRequest", b =>
@@ -1239,7 +1374,18 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtDepartment", b =>
                 {
+                    b.Navigation("Files");
+
+                    b.Navigation("RequiredDocuments");
+
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtDocumentType", b =>
+                {
+                    b.Navigation("Files");
+
+                    b.Navigation("RequiredByDepartments");
                 });
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtEquipment", b =>

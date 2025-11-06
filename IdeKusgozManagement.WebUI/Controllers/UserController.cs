@@ -70,7 +70,18 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+        [Authorize(Roles = "Admin, Yönetici,Şef")]
+        [HttpGet("departman/{departmentId}")]
+        public async Task<IActionResult> GetUsersByDepartment(string departmentId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(departmentId))
+            {
+                return BadRequest("Departman ID'si gereklidir");
+            }
+            var response = await _userApiService.GetUsersByDepartmentAsync(departmentId, cancellationToken);
 
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("aktif-roller")]
         public async Task<IActionResult> GetActiveRoles(CancellationToken cancellationToken = default)

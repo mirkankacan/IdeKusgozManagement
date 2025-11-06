@@ -5,7 +5,6 @@ using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
-using IdeKusgozManagement.Domain.Enums;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -103,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                             // Yeni dosyayı yükle
                             element.File.TargetUserId = userId;
-                            element.File.FileType = FileType.Expense;
+                            element.File.DocumentTypeId = "D3DDD53B-BAF1-4677-A760-B058DC9DC883";
                             var fileList = new List<UploadFileDTO> { element.File };
 
                             var fileUploadServiceResult = await fileService.UploadFileAsync(fileList, cancellationToken);
@@ -130,7 +129,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     if (element.File != null && element.File.FormFile != null)
                     {
                         element.File.TargetUserId = userId;
-                        element.File.FileType = FileType.Expense;
+                        element.File.DocumentTypeId = "D3DDD53B-BAF1-4677-A760-B058DC9DC883";
                         var fileList = new List<UploadFileDTO> { element.File };
 
                         var fileUploadResult = await fileService.UploadFileAsync(fileList, cancellationToken);

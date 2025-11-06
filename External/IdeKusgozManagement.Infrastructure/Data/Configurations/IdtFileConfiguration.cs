@@ -19,15 +19,40 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.Property(x => x.OriginalName)
                 .IsRequired()
                 .HasMaxLength(450);
-
+            builder.Property(x => x.DocumentTypeId)
+                .IsRequired()
+                .HasMaxLength(450);
             builder.Property(x => x.TargetUserId)
+             .IsRequired(false)
+             .HasMaxLength(450)
+             .HasDefaultValue(null);
+            builder.Property(x => x.DepartmentId)
                 .IsRequired(false)
                 .HasMaxLength(450)
                 .HasDefaultValue(null);
+            builder.Property(x => x.StartDate)
+                .IsRequired(false)
+                .HasDefaultValue(null);
+            builder.Property(x => x.EndDate)
+                .IsRequired(false)
+                .HasDefaultValue(null);
 
-            builder.Property(x => x.Type)
-                .IsRequired()
-                .HasConversion<int>();
+            builder.HasOne(x => x.TargetUser)
+             .WithMany()
+             .HasForeignKey(x => x.TargetUserId)
+             .OnDelete(DeleteBehavior.Restrict)
+             .IsRequired(false);
+
+            builder.HasOne(x => x.Department)
+                .WithMany(x => x.Files)
+                .HasForeignKey(x => x.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+
+            builder.HasOne(x => x.DocumentType)
+                .WithMany(x => x.Files)
+                .HasForeignKey(x => x.DocumentTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

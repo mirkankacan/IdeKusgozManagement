@@ -128,16 +128,7 @@
                         setupEventListeners();
 
             await initializeDataTable();
-               $.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (settings.type !== 'GET') {
-                        const token = $('input[name="__RequestVerificationToken"]').val();
-                        if (token) {
-                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
-                        }
-                    }
-                }
-            });
+
         });
         async function initializeDataTable() {
             advancesTable = $('#advancesTable').DataTable({

@@ -324,5 +324,26 @@ namespace IdeKusgozManagement.WebUI.Services
                 return new ApiResponse<AnnualLeaveBalanceViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
+
+        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/users/by-department/{departmentId}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<UserViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Kullanıcı bulunamadı" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
     }
 }

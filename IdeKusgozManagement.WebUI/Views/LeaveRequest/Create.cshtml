@@ -156,16 +156,7 @@
         $(document).ready(async function () {
             await initializeDataTable();
             await getMyRemainingLeaveDays();
-               $.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (settings.type !== 'GET') {
-                        const token = $('input[name="__RequestVerificationToken"]').val();
-                        if (token) {
-                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
-                        }
-                    }
-                }
-            });
+
             $('#date-leave').daterangepicker({
                 locale: turkishLocale,
                 opens: 'left',

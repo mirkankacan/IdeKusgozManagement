@@ -6,8 +6,10 @@
 @section Styles {
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
     <style>
         .dropzone {
@@ -19,39 +21,54 @@
             padding: 20px;
         }
 
-            .dropzone:hover {
-                border-color: #0056b3;
-                background: #e3f2fd;
+            .dropzone .dz-preview .dz-progress {
+                border:unset;
+                background:unset;
             }
+        .dropzone:hover {
+            border-color: #0056b3;
+            background: #e3f2fd;
+        }
 
-            .dropzone.dz-drag-hover {
-                border-color: #28a745;
-                background: #d4edda;
-            }
+        .dropzone.dz-drag-hover {
+            border-color: #28a745;
+            background: #d4edda;
+        }
 
-            .dropzone .dz-preview {
-                margin: 10px;
-                min-height: 0;
-            }
+        .dropzone .dz-preview {
+            margin: 10px;
+            min-height: 0;
+        }
 
-                .dropzone .dz-preview .dz-image {
-                    border-radius: 8px;
-                    overflow: hidden;
-                }
+        .dropzone .dz-preview .dz-image {
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-                .dropzone .dz-preview .dz-error-message {
-                    background: #dc3545;
-                    color: white;
-                    border-radius: 4px;
-                    padding: 5px 10px;
-                    font-size: 12px;
-                }
+        .dropzone .dz-preview .dz-error-message {
+            background: #dc3545;
+            color: white;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
 
         .file-type-section {
             background: #f8f9fa;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
+        }
+
+        .dropzone.dz-disabled {
+            opacity: 0.6;
+            pointer-events: none;
+            cursor: not-allowed;
+            background: #e9ecef;
+        }
+
+        .dropzone.dz-disabled .dz-message {
+            opacity: 0.5;
         }
     </style>
 }
@@ -66,41 +83,83 @@
                     <i class="fas fa-file me-2"></i>
                     Evrak Yükleme
                 </h5>
-
                 <!-- File Type Selection -->
                 <div class="file-type-section">
                     <div class="row">
                         <div class="col-md-6">
-                            <label for="fileType" class="form-label">Dosya Türü</label>
-                            <select id="fileType" class="form-select">
-                                <option value="">Dosya türünü seçin</option>
-                                <option value="1">Resim</option>
-                                <option value="2">Doküman</option>
-                                <option value="3">PDF</option>
-                                <option value="4">Diğer</option>
+                            <label for="department-select" class="form-label">Departman</label> <span class="text-danger">*</span>
+                            <select id="department-select" class="form-select">
+                                <option value="">Departman seçin</option>
                             </select>
                         </div>
+                        <div class="col-md-6">
+                            <label for="document-type-select" class="form-label">Evrak Tipi</label>  <span class="text-danger">*</span>
+                            <select id="document-type-select" class="form-select">
+                                <option value="">Evrak tipini seçin</option>
+                            </select>
+                        </div>
+
+                    </div>
+                      <div class="row mt-2">
                         <div class="col-md-6">
                             <label for="user-select" class="form-label">Hedef Kullanıcı</label>
                             <select id="user-select" class="form-select">
                                 <option value="">Kullanıcı seçin</option>
-
                             </select>
                         </div>
-                    </div>
+                        <div class="col-md-2 mt-5">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="hasRenewalPeriodCheckbox">
+                                <label class="form-check-label" for="hasRenewalPeriodCheckbox">
+                                    Süreli mi?
+                                </label>
+                            </div>
+                        </div>
+                        <div id="dateRangeContainer" style="display: none;" class="col-md-4">
+                            <label for="date-range" class="form-label">Tarih Aralığı</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="date-range" placeholder="Başlangıç - Bitiş">
+                                <span class="input-group-text">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                'Süreli mi' seçeneği seçilip tarih aralığı seçilmeden evrak yüklenirse başlangıç tarihini yapay zeka tespit eder. Bitiş tarihi sistemdeki yenileme süresi ile hesaplanır
+                            </small>
+                        </div>
+                      </div>
+
                 </div>
 
                 <!-- Dropzone Area -->
-                <form id="fileUploadForm" class="dropzone" action="/dosya/yukle" method="post" enctype="multipart/form-data">
+                <form id="fileUploadForm" class="dropzone mt-3" action="/dosya/yukle" method="post"
+                    enctype="multipart/form-data">
                     <div class="dz-message" data-dz-message>
                         <div class="text-center">
                             <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">Dosyalarınızı buraya sürükleyip bırakın</h5>
-                            <p class="text-muted mb-0">veya <strong>tıklayarak</strong> dosya seçin</p>
+                            <h5 class="text-muted" id="dropzone-message">Lütfen önce departman ve evrak tipi seçin</h5>
+                            <p class="text-muted mb-0" id="dropzone-submessage"></p>
                             <small class="text-muted">Maksimum dosya boyutu: 50MB</small>
                         </div>
                     </div>
                 </form>
+
+                <div id="uploadButtonsContainer" class="d-flex justify-content-between align-items-center mt-3"
+                    style="display: none !important;">
+                    <div>
+                        <button type="button" id="uploadBtn" class="btn btn-primary me-2">
+                            <i class="fas fa-upload me-1"></i> Dosyaları Yükle
+                        </button>
+                        <button type="button" id="clearBtn" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Temizle
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Dosyaları seçtikten sonra "Dosyaları Yükle" butonuna basın
+                    </small>
+                </div>
 
                 <!-- Upload Progress -->
                 <div id="uploadProgress" class="mt-4" style="display: none;">
@@ -110,40 +169,8 @@
                     </div>
                     <div class="progress">
                         <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
-                             role="progressbar" style="width: 0%"></div>
+                            role="progressbar" style="width: 0%"></div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Files List -->
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <i class="fas fa-list me-2"></i>
-                    Yüklenen Dosyalar
-                </h5>
-
-                <div class="table-responsive">
-                    <table id="filesTable" class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th width="5%">#</th>
-                                <th>Dosya Adı</th>
-                                <th>Dosya Türü</th>
-                                <th>Boyut</th>
-                                <th>Hedef Kullanıcı</th>
-                                <th>Durum</th>
-                                <th>Yükleme Tarihi</th>
-                                <th width="10%">İşlemler</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
                 </div>
             </div>
         </div>
@@ -154,6 +181,7 @@
     <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
     <script>
         let filesTable;
@@ -162,37 +190,137 @@
         $(document).ready(async function () {
             // await initializeDataTable();
             initializeDropzone();
-            initializeSelect2();
-            await initializeUserSelect();
-               $.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (settings.type !== 'GET') {
-                        const token = $('input[name="__RequestVerificationToken"]').val();
-                        if (token) {
-                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
-                        }
-                    }
-                }
-            });
+            await initializeDepartmentSelect();
+            // Initialize document type and user selects as empty initially
+            await initializeDocumentTypeSelect(null);
+            await initializeUserSelect(null);
+            // Initial dropzone status check
+            checkDropzoneStatus();
+            // Initialize checkbox handler (daterangepicker checkbox işaretlendiğinde initialize edilecek)
+            initializeTemporaryCheckbox();
         });
 
-        function initializeSelect2() {
-            $('#fileType').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Dosya türünü seçin',
-                allowClear: false
-            });
+        async function initializeDocumentTypeSelect(departmentId) {
+            try {
+                if (!departmentId) {
+                    $('#document-type-select').empty();
+                    $('#document-type-select').append('<option value="">Evrak tipini seçin</option>');
+                    $('#document-type-select').select2({
+                        placeholder: 'Evrak tipini seçin',
+                        theme: 'bootstrap-5',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                    return;
+                }
+
+                const response = await $.ajax({
+                    url: `/dokuman-tip-liste/${departmentId}`,
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#document-type-select').empty();
+                    $('#document-type-select').append('<option value="">Evrak tipini seçin</option>');
+                    response.data.forEach(docType => {
+                        $('#document-type-select').append(`<option value="${docType.id}">${docType.name}</option>`);
+                    });
+                }
+
+                $('#document-type-select').select2({
+                    placeholder: 'Evrak tipini seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                // Document type change event listener (for select2)
+                $('#document-type-select').on('change select2:select select2:clear', function () {
+                    checkDropzoneStatus();
+                });
+            } catch (error) {
+                console.error('Evrak tipi listesi yüklenirken hata:', error);
+                toastr.error('Evrak tipi listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        async function initializeDepartmentSelect() {
+            try {
+                const response = await $.ajax({
+                    url: '/departman-liste',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#department-select').empty();
+                    $('#department-select').append('<option value="">Departman seçin</option>');
+                    response.data.forEach(department => {
+                        $('#department-select').append(`<option value="${department.id}">${department.name}</option>`);
+                    });
+                }
+
+                $('#department-select').select2({
+                    placeholder: 'Departman seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                // Department change event listener
+                $('#department-select').on('change', async function () {
+                    const departmentId = $(this).val();
+
+                    // Reset document type and user selects
+                    $('#document-type-select').val(null).trigger('change');
+                    $('#user-select').val(null).trigger('change');
+
+                    if (departmentId) {
+                        await initializeDocumentTypeSelect(departmentId);
+                        await initializeUserSelect(departmentId);
+                    } else {
+                        await initializeDocumentTypeSelect(null);
+                        await initializeUserSelect(null);
+                    }
+
+                    // Dropzone durumunu kontrol et
+                    checkDropzoneStatus();
+                });
+            } catch (error) {
+                console.error('Departman listesi yüklenirken hata:', error);
+                toastr.error('Departman listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        function checkDropzoneStatus() {
+            const departmentId = $("#department-select").val();
+            const documentTypeId = $("#document-type-select").val();
+            const isEnabled = departmentId && documentTypeId;
+
+            if (myDropzone) {
+                if (isEnabled) {
+                    myDropzone.enable();
+                    $("#fileUploadForm").removeClass("dz-disabled");
+                    $("#dropzone-message").text("Dosyalarınızı buraya sürükleyip bırakın");
+                    $("#dropzone-submessage").html("veya <strong>tıklayarak</strong> dosya seçin");
+                } else {
+                    myDropzone.disable();
+                    $("#fileUploadForm").addClass("dz-disabled");
+                    $("#dropzone-message").text("Lütfen önce departman ve evrak tipi seçin");
+                    $("#dropzone-submessage").text("");
+                }
+            }
         }
 
         function initializeDropzone() {
-            // Disable auto discover
             Dropzone.autoDiscover = false;
 
             myDropzone = new Dropzone("#fileUploadForm", {
-                url: "/dosya/yukle",
+                url: "/FileUpload/yukle",
                 method: "post",
-                paramName: "FormFile",
-                maxFilesize: 50, // MB
+                paramName: "files",
+                maxFilesize: 50,
                 maxFiles: 5,
                 acceptedFiles: "image/*,application/pdf,.doc,.docx,.txt,.xlsx,.xls",
                 addRemoveLinks: true,
@@ -203,73 +331,73 @@
                 dictInvalidFileType: "Bu dosya türü desteklenmiyor",
                 dictFileTooBig: "Dosya çok büyük ({{filesize}}MB). Maksimum: {{maxFilesize}}MB",
                 dictMaxFilesExceeded: "Maksimum {{maxFiles}} dosya yükleyebilirsiniz",
-                autoProcessQueue: false,
-                uploadMultiple: false,
+                autoProcessQueue: false, // Otomatik yükleme kapalı
+                uploadMultiple: false,   // Manuel gönderim için false
                 parallelUploads: 1,
+                disabled: true, // Başlangıçta disabled
 
-                init: function() {
+                init: function () {
                     const dropzone = this;
-                    let totalFiles = 0;
-                    let processedFiles = 0;
 
-                    // Handle file addition
-                    this.on("addedfile", function(file) {
+                    // Dropzone'u başlangıçta disabled yap
+                    dropzone.disable();
+                    $("#fileUploadForm").addClass("dz-disabled");
+
+                    // Dosya eklenmeye çalışıldığında kontrol et
+                    this.on("addedfile", function (file) {
+                        const departmentId = $("#department-select").val();
+                        const documentTypeId = $("#document-type-select").val();
+
+                        if (!departmentId || !documentTypeId) {
+                            toastr.warning("Lütfen önce departman ve evrak tipi seçin!", 'Uyarı!');
+                            dropzone.removeFile(file);
+                            return;
+                        }
+
                         console.log("Dosya eklendi:", file.name);
-                        totalFiles++;
+                        // Butonları göster
+                        updateUploadButtonsVisibility();
                     });
 
-                    // Handle file removal
-                    this.on("removedfile", function(file) {
+                    this.on("removedfile", function (file) {
                         console.log("Dosya kaldırıldı:", file.name);
-                        totalFiles--;
-                        if (totalFiles === 0) {
+                        if (dropzone.files.length === 0) {
                             hideProgress();
+                            // Butonları gizle
+                            updateUploadButtonsVisibility();
                         }
                     });
 
-                    // Start upload when files are added
-                    this.on("addedfiles", function(files) {
-                        if (files.length > 0) {
-                            setTimeout(() => {
-                                processFiles();
-                            }, 500);
-                        }
-                    });
+                    // Dosya eklendiğinde otomatik işlem yapmayı kaldırdık
+                    // this.on("addedfiles", function (files) {
+                    //     if (files.length > 0) {
+                    //         setTimeout(() => {
+                    //             processAllFiles();
+                    //         }, 500);
+                    //     }
+                    // });
 
-                    // Handle sending additional data
-                    this.on("sending", function(file, xhr, formData) {
-                        const fileType = $("#fileType").val();
-                        const targetUserId = $("#targetUserId").val();
-                        const token = $('input[name="__RequestVerificationToken"]').val();
+                    this.on("success", function (file, response) {
+                        console.log("Dosya yükleme başarılı:", response);
 
-                        formData.append("__RequestVerificationToken", token);
-                        formData.append("FileType", fileType);
-                        formData.append("TargetUserId", targetUserId);
-
-                    });
-
-                    // Handle upload progress
-                    this.on("uploadprogress", function(file, progress) {
-                        updateProgress(progress);
-                    });
-
-                    // Handle successful upload
-                    this.on("success", function(file, response) {
-                        processedFiles++;
-                        console.log("Yükleme başarılı:", response);
-
-                        if (response && response.isSuccess) {
-                            toastr.success(`${file.name} başarıyla yüklendi`, 'Başarılı!');
+                        if (response && response.success) {
+                            toastr.success("Dosyalar başarıyla yüklendi", 'Başarılı!');
                         } else {
                             toastr.error(response?.message || "Yükleme başarısız", 'Hata!');
                         }
 
-                        checkUploadComplete();
+                        hideProgress();
+
+                        if (typeof filesTable !== 'undefined' && filesTable.ajax) {
+                            filesTable.ajax.reload(null, false);
+                        }
+
+                        setTimeout(() => {
+                            dropzone.removeAllFiles();
+                        }, 2000);
                     });
 
-                    // Handle upload error
-                    this.on("error", function(file, errorMessage) {
-                        processedFiles++;
+                    this.on("error", function (file, errorMessage) {
                         console.log("Yükleme hatası:", errorMessage);
 
                         let message = "Yükleme sırasında hata oluştu";
@@ -279,189 +407,209 @@
                             message = errorMessage.message;
                         }
 
-                        toastr.error(`${file.name}: ${message}`, 'Hata!');
-                        checkUploadComplete();
+                        toastr.error(message, 'Hata!');
+                        hideProgress();
                     });
 
-                    function processFiles() {
-                        const fileType = $("#fileType").val();
+                    this.on("totaluploadprogress", function (uploadProgress) {
+                        updateProgress(uploadProgress);
+                    });
 
-                        if (!fileType) {
-                            toastr.warning("Lütfen dosya türünü seçin!", 'Uyarı!');
-                            dropzone.removeAllFiles();
+                    // Upload butonuna click event'i ekle
+                    $("#uploadBtn").on("click", function () {
+                        processAllFiles();
+                    });
+
+                    // Clear butonuna click event'i ekle
+                    $("#clearBtn").on("click", function () {
+                        dropzone.removeAllFiles(true);
+                        hideProgress();
+                        updateUploadButtonsVisibility();
+                    });
+
+                    // Manuel dosya yükleme fonksiyonu
+                    function processAllFiles() {
+                        const departmentId = $("#department-select").val();
+                        const documentTypeId = $("#document-type-select").val();
+                        const targetUserId = $("#user-select").val();
+                        // Validasyonlar
+                        if (!departmentId) {
+                            toastr.warning("Lütfen departman seçin!", 'Uyarı!');
                             return;
                         }
 
+                        if (!documentTypeId) {
+                            toastr.warning("Lütfen evrak tipini seçin!", 'Uyarı!');
+                            return;
+                        }
+
+                        const files = dropzone.getAcceptedFiles();
+                        if (files.length === 0) {
+                            toastr.warning("Lütfen en az bir dosya seçin!", 'Uyarı!');
+                            return;
+                        }
+
+                        console.log(`${files.length} dosya toplu olarak yüklenecek...`);
+
+                        // Manuel FormData oluştur ve gönder
+                        uploadFilesManually(files, departmentId, documentTypeId, targetUserId);
+                    }
+
+                    function uploadFilesManually(files, departmentId, documentTypeId, targetUserId) {
+                        const formData = new FormData();
+
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        formData.append("__RequestVerificationToken", token);
+
+                        // Süreli mi kontrolü
+                        const hasRenewalPeriod = $('#hasRenewalPeriodCheckbox').is(':checked');
+                        let startDate = null;
+                        let endDate = null;
+
+                                   if (hasRenewalPeriod) {
+            const dateRangeValue = $('#date-range').val();
+            const picker = $('#date-range').data('daterangepicker');
+
+            // Sadece tarihler seçilmiş ise startDate/endDate set et
+            if (dateRangeValue && dateRangeValue.trim() !== '' && picker && picker.startDate && picker.endDate) {
+                startDate = picker.startDate.format('YYYY-MM-DD');
+                endDate = picker.endDate.format('YYYY-MM-DD');
+            }
+            // Tarih seçilmemiş ise startDate/endDate null kalır, AI PDF'den bulacak
+        }
+                          files.forEach(function (file, index) {
+                            formData.append(`[${index}].FormFile`, file);
+                            formData.append(`[${index}].DepartmentId`, departmentId);
+                            formData.append(`[${index}].DocumentTypeId`, documentTypeId);
+                             formData.append(`[${index}].HasRenewalPeriod`, hasRenewalPeriod);
+                        if (targetUserId) {
+                                   formData.append(`[${index}].TargetUserId`, targetUserId);
+                               }
+
+                               if (hasRenewalPeriod && startDate && endDate) {
+                                   formData.append(`[${index}].StartDate`, startDate);
+                                   formData.append(`[${index}].EndDate`, endDate);
+                               }
+                        });
+
+                        // Progress göster
                         showProgress();
-                        processedFiles = 0;
-                        dropzone.processQueue();
-                    }
+                        $("#uploadBtn").prop('disabled', true).text('Yükleniyor...');
 
-                    function checkUploadComplete() {
-                        if (processedFiles === totalFiles) {
-                            hideProgress();
-                            filesTable.ajax.reload(null, false);
+                        // AJAX ile gönder
+                        $.ajax({
+                            url: '/dosya/yukle',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            xhr: function () {
+                                const xhr = new window.XMLHttpRequest();
+                                // Progress tracking
+                                xhr.upload.addEventListener("progress", function (evt) {
+                                    if (evt.lengthComputable) {
+                                        const percentComplete = (evt.loaded / evt.total) * 100;
+                                        updateProgress(percentComplete);
+                                    }
+                                }, false);
+                                return xhr;
+                            },
+                            success: function (response) {
+                                console.log('Başarılı:', response);
 
-                            // Clear the dropzone after successful upload
-                            setTimeout(() => {
-                                dropzone.removeAllFiles();
-                                totalFiles = 0;
-                                processedFiles = 0;
-                            }, 2000);
-                        }
+                                if (response && response.success) {
+                                    toastr.success(`${files.length} dosya başarıyla yüklendi!`, 'Başarılı!');
+                                } else {
+                                    toastr.success(response?.message || 'Dosyalar başarıyla yüklendi!', 'Başarılı!');
+                                }
+
+                                // Tabloyu yenile
+                                if (typeof filesTable !== 'undefined' && filesTable.ajax) {
+                                    filesTable.ajax.reload(null, false);
+                                }
+
+                                // Dosyaları temizle
+                                setTimeout(() => {
+                                    dropzone.removeAllFiles(true);
+                                    updateUploadButtonsVisibility();
+                                }, 2000);
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Hata:', xhr.responseText);
+
+                                let errorMessage = 'Yükleme sırasında hata oluştu!';
+
+                                try {
+                                    const errorResponse = JSON.parse(xhr.responseText);
+                                    if (errorResponse.message) {
+                                        errorMessage = errorResponse.message;
+                                    } else if (errorResponse.errors && errorResponse.errors.length > 0) {
+                                        errorMessage = errorResponse.errors.join(', ');
+                                    }
+                                } catch (e) {
+                                    errorMessage = xhr.responseText || errorMessage;
+                                }
+
+                                toastr.error(errorMessage, 'Hata!');
+                            },
+                            complete: function () {
+                                hideProgress();
+                                $("#uploadBtn").prop('disabled', false).text('Dosyaları Yükle');
+                            }
+                        });
                     }
                 }
             });
         }
 
-        async function initializeDataTable() {
-            filesTable = $('#filesTable').DataTable({
-                "processing": true,
-                "ajax": {
-                    "url": `/dosya/liste/${userId}`,
-                    "type": "GET",
-                    "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
-                        }
-                        return [];
-                    },
-                    "error": function (xhr, error, code) {
-                        console.error('DataTables AJAX error:', error);
-                        let errorMessage = 'Veriler yüklenirken hata oluştu';
-                        try {
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMessage += ': ' + xhr.responseJSON.message;
-                            } else if (xhr.responseText) {
-                                errorMessage += ': ' + xhr.responseText;
-                            }
-                        } catch (e) {
-                            errorMessage += ': ' + error;
-                        }
-                        toastr.error(errorMessage);
-                    }
-                },
-                "columns": [
-                    {
-                        "data": null,
-                        "width": "5%",
-                        "orderable": false,
-                        "className": "text-center",
-                        "render": function (data, type, row, meta) {
-                            return '';
-                        }
-                    },
-                    {
-                        "data": "fileName",
-                        "render": function (data) {
-                            return data || '';
-                        }
-                    },
-                    {
-                        "data": "fileType",
-                        "className": "text-center",
-                        "render": function (data) {
-                            const types = {
-                                1: '<span class="badge bg-info">Resim</span>',
-                                2: '<span class="badge bg-primary">Doküman</span>',
-                                3: '<span class="badge bg-danger">PDF</span>',
-                                4: '<span class="badge bg-secondary">Diğer</span>'
-                            };
-                            return types[data] || '<span class="badge bg-secondary">Bilinmiyor</span>';
-                        }
-                    },
-                    {
-                        "data": "fileSize",
-                        "className": "text-center",
-                        "render": function (data) {
-                            if (!data) return '';
-                            const size = parseInt(data);
-                            if (size < 1024) return size + ' B';
-                            if (size < 1048576) return Math.round(size / 1024) + ' KB';
-                            return Math.round(size / 1048576) + ' MB';
-                        }
-                    },
-                    {
-                        "data": "targetUserId",
-                        "render": function (data) {
-                            return data || '-';
-                        }
-                    },
-                    {
-                        "data": "status",
-                        "className": "text-center",
-                        "render": function (data, type, row) {
-                            if (data === 1) {
-                                return '<span class="badge bg-success">Aktif</span>';
-                            } else {
-                                return '<span class="badge bg-secondary">Pasif</span>';
-                            }
-                        }
-                    },
-                    {
-                        "data": "createdDate",
-                        "render": function (data) {
-                            return data ? new Date(data).toLocaleString('tr-TR', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            }) : '';
-                        }
-                    },
-                    {
-                        "data": null,
-                        "width": "10%",
-                        "orderable": false,
-                        "className": "text-center",
-                        "render": function (data, type, row) {
-                            let actions = '';
+        function updateUploadButtonsVisibility() {
+            if (myDropzone && myDropzone.files.length > 0) {
+                $("#uploadButtonsContainer").show();
+            } else {
+                $("#uploadButtonsContainer").hide();
+            }
+        }
 
-                            // Download button
-                            if (row.id) {
-                                actions += `
-                                    <a href="/dosya/indir/${row.id}"
-                                       class="btn btn-outline-primary btn-sm me-1"
-                                       title="İndir" download>
-                                        <i class="fas fa-download"></i>
-                                    </a>
-                                `;
-                            }
+            function initializeDateRangePicker() {
+            // Daterangepicker'ı sadece bir kez initialize et
+            if ($('#date-range').data('daterangepicker')) {
+                return; // Zaten initialize edilmiş
+            }
 
-                            // Delete button
-                            actions += `
-                                <button type="button"
-                                        class="btn btn-outline-danger btn-sm"
-                                        onclick="deleteFile('${row.id}')"
-                                        title="Sil">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            `;
+            $('#date-range').daterangepicker({
+                locale: turkishLocale,
+                opens: 'left',
+                autoUpdateInput: false,
+                autoApply: true,              
+            });
 
-                            return actions;
-                        }
-                    }
-                ],
-                "language": {
-                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
-                },
-                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
-                "pageLength": 10,
-                "responsive": true,
-                "searchDelay": 300,
-                "order": [[6, "desc"]], // Order by created date desc
-                "drawCallback": function () {
-                    var api = this.api();
-                    var pageInfo = api.page.info();
+            $('#date-range').on('apply.daterangepicker', function (ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            });
 
-                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
-                        cell.innerHTML = pageInfo.start + i + 1;
-                    });
-                    $('[title]').tooltip();
+            $('#date-range').on('cancel.daterangepicker', function (ev, picker) {
+                $(this).val('');
+            });
+
+            // Calendar icon'a tıklandığında input'u focus et
+            $('#dateRangeContainer .fa-calendar').parent().on('click', function () {
+                $(this).closest('.input-group').find('#date-range').focus();
+            });
+        }
+        function initializeTemporaryCheckbox() {
+            $('#hasRenewalPeriodCheckbox').on('change', function () {
+                if ($(this).is(':checked')) {
+                    // Daterangepicker'ı initialize et
+                    initializeDateRangePicker();
+                    $('#dateRangeContainer').slideDown();
+                } else {
+                    $('#dateRangeContainer').slideUp();
+                    $('#date-range').val('');
                 }
             });
         }
+
+   
 
         function showProgress() {
             $("#uploadProgress").show();
@@ -477,10 +625,22 @@
             $("#progressBar").css("width", percentage + "%");
             $("#progressText").text(percentage + "%");
         }
-          async function initializeUserSelect() {
+        async function initializeUserSelect(departmentId) {
             try {
+                if (!departmentId) {
+                    $('#user-select').empty();
+                    $('#user-select').append('<option value="">Kullanıcı seçin</option>');
+                    $('#user-select').select2({
+                        placeholder: 'Kullanıcı seçin',
+                        theme: 'bootstrap-5',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                    return;
+                }
+
                 const response = await $.ajax({
-                    url: '/kullanici/liste',
+                    url: `/kullanici/departman/${departmentId}`,
                     type: 'GET',
                     dataType: 'json'
                 });
@@ -507,7 +667,7 @@
                 toastr.error('Kullanıcı listesi yüklenirken hata oluştu', 'Hata!');
             }
         }
-          async function deleteFile(fileId) {
+        async function deleteFile(fileId) {
             try {
                 const result = await Swal.fire({
                     title: 'Evrağı Sil',
@@ -537,7 +697,7 @@
                                 }
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                                                        return false;
+                            return false;
 
                         }
                     },

@@ -1,0 +1,463 @@
+﻿@{
+    ViewData["Title"] = "Evrak Yönetimi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+}
+
+@Html.AntiForgeryToken()
+
+<!-- Files List -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-file-shield me-2"></i>
+                    Yüklenen Evraklar
+                </h5>
+                <div class="file-type-section">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="department-select" class="form-label">Departman</label>
+                            <select id="department-select" class="form-select">
+                                <option value="">Departman seçin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="document-type-select" class="form-label">Evrak Tipi</label>
+                            <select id="document-type-select" class="form-select">
+                                <option value="">Evrak tipini seçin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="user-select" class="form-label">Hedef Kullanıcı</label>
+                            <select id="user-select" class="form-select">
+                                <option value="">Kullanıcı seçin</option>
+                            </select>
+                        </div>
+                      
+                    </div>
+      
+                </div>
+                <div class="table-responsive mt-5">
+                    <table id="filesTable" class="table table-striped table-hover display" style="width:100%">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>DOSYA<br />ADI</th>
+                                <th>İLGİLİ<br />KULLANICI<br />ADI</th>
+                                <th>İLGİLİ<br />DEPARTMAN<br />ADI</th>
+                                <th>DOKÜMAN<br />TİPİ</th>
+                                <th>BAŞLANGIÇ<br />TARİHİ</th>
+                                <th>BİTİŞ<br />TARİİH</th>
+                                <th>YÜKLEME<br />TARİİH</th>
+                                <th>İŞLEMLER</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+               let filesTable;
+        let debouncedUpdate; // Global scope'ta tanımla
+
+        $(document).ready(async function () {
+            // Debounce fonksiyonunu bir kez oluştur
+            debouncedUpdate = debounce(updateDocuments, 300);
+
+            await initializeDataTable();
+            await initializeDepartmentSelect();
+            await initializeDocumentTypeSelect(null);
+            await initializeUserSelect(null);
+            bindSelectEvents(); // İlk event binding
+        });
+
+        async function getDocuments(){
+            if (filesTable) {
+                filesTable.ajax.reload(null, false);
+            }
+        }
+
+        async function initializeDocumentTypeSelect(departmentId) {
+            try {
+                // Event'i geçici olarak kaldır
+                $('#document-type-select').off('change.autofilter');
+
+                if (!departmentId) {
+                    $('#document-type-select').empty();
+                    $('#document-type-select').append('<option value="">Evrak tipini seçin</option>');
+                    $('#document-type-select').select2({
+                        placeholder: 'Evrak tipini seçin',
+                        theme: 'bootstrap-5',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                    return;
+                }
+
+                const response = await $.ajax({
+                    url: `/dokuman-tip-liste/${departmentId}`,
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#document-type-select').empty();
+                    $('#document-type-select').append('<option value="">Evrak tipini seçin</option>');
+                    response.data.forEach(docType => {
+                        $('#document-type-select').append(`<option value="${docType.id}">${docType.name}</option>`);
+                    });
+                }
+
+                $('#document-type-select').select2({
+                    placeholder: 'Evrak tipini seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                // Event'i tekrar bağla
+                $('#document-type-select').on('change.autofilter', debouncedUpdate);
+
+            } catch (error) {
+                console.error('Evrak tipi listesi yüklenirken hata:', error);
+                toastr.error('Evrak tipi listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        async function initializeDepartmentSelect() {
+            try {
+                const response = await $.ajax({
+                    url: '/departman-liste',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#department-select').empty();
+                    $('#department-select').append('<option value="">Departman seçin</option>');
+                    response.data.forEach(department => {
+                        $('#department-select').append(`<option value="${department.id}">${department.name}</option>`);
+                    });
+                }
+
+                $('#department-select').select2({
+                    placeholder: 'Departman seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                // *** BURADA EVENT BINDING KALDIRDIK - sadece bindSelectEvents'te yapılacak ***
+
+            } catch (error) {
+                console.error('Departman listesi yüklenirken hata:', error);
+                toastr.error('Departman listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        async function initializeUserSelect(departmentId) {
+            try {
+                // Event'i geçici olarak kaldır
+                $('#user-select').off('change.autofilter');
+
+                if (!departmentId) {
+                    $('#user-select').empty();
+                    $('#user-select').append('<option value="">Kullanıcı seçin</option>');
+                    $('#user-select').select2({
+                        placeholder: 'Kullanıcı seçin',
+                        theme: 'bootstrap-5',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                    return;
+                }
+
+                const response = await $.ajax({
+                    url: `/kullanici/departman/${departmentId}`,
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#user-select').empty();
+                    $('#user-select').append('<option value="">Kullanıcı seçin</option>');
+                    response.data.forEach(user => {
+                        $('#user-select').append(`<option value="${user.id}">${user.fullName}</option>`);
+                    });
+                }
+
+                $('#user-select').select2({
+                    placeholder: 'Kullanıcı seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                // Event'i tekrar bağla
+                $('#user-select').on('change.autofilter', debouncedUpdate);
+
+            } catch (error) {
+                console.error('Kullanıcı listesi yüklenirken hata:', error);
+                toastr.error('Kullanıcı listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        async function updateDocuments() {
+            if (filesTable) {
+                const newUrl = buildApiUrl();
+                filesTable.ajax.url(newUrl).load();
+            }
+        }
+
+        // Event binding - OnChange ile otomatik filtreleme
+        function bindSelectEvents() {
+            // Önce tüm event'leri temizle
+            $('#department-select, #user-select, #document-type-select').off('change.autofilter');
+
+            // User ve Document Type select'leri için otomatik filtreleme
+            $('#user-select, #document-type-select').on('change.autofilter', debouncedUpdate);
+
+            // Department select'i özel - diğer select'leri de etkiliyor
+            $('#department-select').on('change.autofilter', async function () {
+                const departmentId = $(this).val();
+
+                // Loading state
+                $('#document-type-select, #user-select').prop('disabled', true);
+
+                try {
+                    // Diğer select'leri sıfırla (event tetiklemesin)
+                    $('#document-type-select').off('change.autofilter').val(null).trigger('change');
+                    $('#user-select').off('change.autofilter').val(null).trigger('change');
+
+                    // Department'a göre diğer select'leri güncelle
+                    if (departmentId) {
+                        await initializeDocumentTypeSelect(departmentId);
+                        await initializeUserSelect(departmentId);
+                    } else {
+                        await initializeDocumentTypeSelect(null);
+                        await initializeUserSelect(null);
+                    }
+
+                    // Filtreyi uygula
+                    updateDocuments();
+
+                } finally {
+                    // Loading state'i kaldır
+                    $('#document-type-select, #user-select').prop('disabled', false);
+                }
+            });
+        }
+
+        // Debounce function - tek seferlik oluştur
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        }
+
+        function buildApiUrl() {
+            const userId = $('#user-select').val() || '';
+            const documentType = $('#document-type-select').val() || '';
+            const departmentId = $('#department-select').val() || '';
+
+            const params = new URLSearchParams();
+            if (userId) params.append('userId', userId);
+            if (documentType) params.append('documentType', documentType);
+            if (departmentId) params.append('departmentId', departmentId);
+
+            return `/dosya/liste/p?${params.toString()}`;
+        }
+
+        async function initializeDataTable() {
+            const initialUrl = buildApiUrl();
+            filesTable = $('#filesTable').DataTable({
+                "processing": true,
+                "ajax": {
+                    "url": "/dosya/liste/p",
+                    "type": "GET",
+                    "dataSrc": function (json) {
+                        if (json && json.isSuccess && json.data) {
+                            return json.data;
+                        }
+                        return [];
+                    },
+                    "error": function (xhr, error, code) {
+                        console.error('DataTables AJAX error:', error);
+                        let errorMessage = 'Veriler yüklenirken hata oluştu';
+                        try {
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage += ': ' + xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                errorMessage += ': ' + xhr.responseText;
+                            }
+                        } catch (e) {
+                            errorMessage += ': ' + error;
+                        }
+                        toastr.error(errorMessage);
+                    }
+                },
+                "columns": [
+                    {
+                        "data": null,
+                        "width": "5%",
+                        "orderable": false,
+                        "className": "text-center",
+                        "render": function (data, type, row, meta) {
+                            return '';
+                        }
+                    },
+                    {
+                        "data": "originalName",
+                        "render": function (data) {
+                            return data;
+                        }
+                    },
+                    {
+                        "data": "targetUserName",
+                        "render": function (data) {
+                            return data;
+                        }
+                    },
+                    {
+                        "data": "departmentName",
+                        "render": function (data) {
+                            return data;
+                        }
+                    },
+                    {
+                        "data": "documentTypeName",
+                        "render": function (data) {
+                            return data;
+                        }
+                    },
+                    {
+                        "data": "startDate",
+                        "render": function (data) {
+                            return data ? new Date(data).toLocaleDateString('tr-TR') : '';
+                        }
+                    },
+                    {
+                        "data": "endDate",
+                        "render": function (data) {
+                            return data ? new Date(data).toLocaleDateString('tr-TR') : '';
+                        }
+                    },
+                     {
+                        "data": "createdDate",
+                        "render": function (data) {
+                            return data ? new Date(data).toLocaleDateString('tr-TR') : '';
+                        }
+                    },
+                    {
+                        "data": null,
+                        "width": "10%",
+                        "orderable": false,
+                        "className": "text-center",
+                        "render": function (data, type, row) {
+                            return `
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a class="btn btn-outline-primary btn-sm"
+                                        href="/dosya/indir/${row.id}" title="İndir" download>
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteFile('${row.id}')" title="Sil">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                "language": {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
+                },
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "responsive": true,
+                "searchDelay": 300,
+                "order": [[7, "desc"]],
+                "drawCallback": function () {
+                    var api = this.api();
+                    var pageInfo = api.page.info();
+
+                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                        cell.innerHTML = pageInfo.start + i + 1;
+                    });
+                    $('[title]').tooltip();
+                }
+            });
+        }
+        async function deleteFile(fileId) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Evrağı Sil',
+                    text: 'Bu evrağı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-trash"></i> Evet, Sil',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await $.ajax({
+                                url: `/dosya/${fileId}`,
+                                type: 'DELETE',
+                                contentType: 'application/json'
+                            });
+                            return response;
+                        } catch (error) {
+                            let errorMessage = 'Silme başarısız';
+                            if (error.responseJSON) {
+                                if (error.responseJSON.message) {
+                                    errorMessage = error.responseJSON.message;
+                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                                    errorMessage = error.responseJSON.errors.join(', ');
+                                }
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            return false;
+
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Evrak başarıyla silindi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    filesTable.ajax.reload(null, false);
+                }
+
+            } catch (error) {
+                console.error('Silme hatası:', error);
+            }
+        }
+    </script>
+}

@@ -473,7 +473,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "GetSubordinatesByUserId işleminde hata oluştu. UserId: {UserId}", userId);
+                logger.LogError(ex, "GetSubordinatesByUserIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<IEnumerable<UserDTO>>.Error("Atanmış kullanıcılar getirilirken hata oluştu");
             }
         }
@@ -500,8 +500,30 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "GetAnnualLeaveDaysAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                logger.LogError(ex, "GetAnnualLeaveDaysByUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 return ApiResponse<AnnualLeaveBalanceDTO>.Error("Kullanıcının yıllık izin verileri alınırken hata oluştu");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(departmentId))
+                {
+                    return ApiResponse<IEnumerable<UserDTO>>.Error("Departman ID'si boş geçilemez");
+                }
+
+                var users = await userManager.Users.Where(x => x.DepartmentId == departmentId && x.IsActive == true).ToListAsync(cancellationToken);
+
+                var mappedUsers = users.Adapt<IEnumerable<UserDTO>>();
+
+                return ApiResponse<IEnumerable<UserDTO>>.Success(mappedUsers);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetUsersByDepartmentAsync işleminde hata oluştu. DepartmentId: {DepartmentId}", departmentId);
+                return ApiResponse<IEnumerable<UserDTO>>.Error("Departmana göre kullanıcılar getirilirken hata oluştu");
             }
         }
     }

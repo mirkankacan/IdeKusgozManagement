@@ -23,6 +23,21 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         /// <summary>
+        /// Departmana göre aktif kullanıcıları getirir
+        /// </summary>
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        [HttpGet("by-department/{departmentId}")]
+        public async Task<IActionResult> GetUsersByDepartment(string departmentId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(departmentId))
+            {
+                return BadRequest("Departman ID'si gereklidir");
+            }
+            var result = await userService.GetUsersByDepartmentAsync(departmentId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
         /// Admin, Şef, Yönetici rolüne sahip olan kullanıcıları getirir
         /// </summary>
         [RoleFilter("Admin", "Yönetici")]

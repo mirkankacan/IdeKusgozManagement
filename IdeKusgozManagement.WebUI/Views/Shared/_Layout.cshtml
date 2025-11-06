@@ -245,8 +245,20 @@
                     <li class="@(Context.Request.Path == "/avans" ? "active-page" : "")">
                         <a href="/avans"><i data-feather="book-open"></i>Avanslar</a>
                     </li>
+                  
                 }
-
+                @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || User.IsInRole("Şef"))
+                {
+                     <li class="sidebar-title">
+                        Evrak İşlemleri
+                    </li>
+                       <li class="@(Context.Request.Path == "/dosya" ? "active-page" : "")">
+                        <a href="/dosya"><i data-feather="archive"></i>Evraklar</a>
+                    </li>
+                    <li class="@(Context.Request.Path == "/dosya/yukle" ? "active-page" : "")">
+                        <a href="/dosya/yukle"><i data-feather="upload"></i>Evrak Yükle</a>
+                    </li>
+                }
                 <li class="sidebar-title">
                     Personel İşlemleri
                 </li>
@@ -327,7 +339,20 @@
             };
     window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
             window.signalRUrl = '@Configuration.GetSection("ApiSettings")["SignalRUrl"]';
-
+            
+        $(document).ready(async function () {
+         
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (settings.type !== 'GET') {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        if (token) {
+                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                        }
+                    }
+                }
+            });
+        });
 </script>
     @await RenderSectionAsync("Scripts", required: false)
 

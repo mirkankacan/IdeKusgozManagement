@@ -50,12 +50,11 @@ try
         context.Database.Migrate();
         Console.WriteLine("Database migration completed successfully");
         logger.LogInformation("Database migration completed");
-    }
 
-    // Seed admin user and roles
-    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
-    await IdentityDataSeeder.SeedAdminUserAndRolesAsync(userManager, roleManager);
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+        await IdentityDataSeeder.SeedAdminUserAndRolesAsync(userManager, roleManager);
+    }
 
     logger.LogInformation("Database initialization completed successfully");
 }

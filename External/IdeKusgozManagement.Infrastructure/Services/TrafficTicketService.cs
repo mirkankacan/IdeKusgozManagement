@@ -4,7 +4,6 @@ using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.DTOs.TrafficTicketDTOs;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
-using IdeKusgozManagement.Domain.Enums;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -24,7 +23,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     createTrafficTicketDTO.File.TargetUserId = !string.IsNullOrEmpty(createTrafficTicketDTO.TargetUserId) ? createTrafficTicketDTO.TargetUserId : null;
 
-                    createTrafficTicketDTO.File.FileType = FileType.TrafficTicket;
+                    createTrafficTicketDTO.File.DocumentTypeId = "52E008EE-FFD3-440F-A6BD-CF0E5F1128C1";
                     var fileList = new List<UploadFileDTO> { createTrafficTicketDTO.File };
 
                     var fileResult = await fileService.UploadFileAsync(fileList, cancellationToken);
@@ -150,7 +149,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         await fileService.DeleteFileAsync(ticket.FileId, cancellationToken);
 
                     updateTrafficTicketDTO.File.TargetUserId = !string.IsNullOrEmpty(updateTrafficTicketDTO.TargetUserId) ? updateTrafficTicketDTO.TargetUserId : null;
-                    updateTrafficTicketDTO.File.FileType = FileType.TrafficTicket;
+                    updateTrafficTicketDTO.File.DocumentTypeId = "52E008EE-FFD3-440F-A6BD-CF0E5F1128C1";
                     var fileList = new List<UploadFileDTO> { updateTrafficTicketDTO.File };
 
                     var fileResult = await fileService.UploadFileAsync(fileList, cancellationToken);

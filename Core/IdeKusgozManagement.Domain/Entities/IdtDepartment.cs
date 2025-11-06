@@ -6,5 +6,7 @@ namespace IdeKusgozManagement.Domain.Entities
     {
         public string Name { get; set; }
         public virtual ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
+        public virtual ICollection<IdtDepartmentDocumentType> RequiredDocuments { get; set; } = new List<IdtDepartmentDocumentType>();
+        public virtual ICollection<IdtFile> Files { get; set; } = new List<IdtFile>();
     }
 }
