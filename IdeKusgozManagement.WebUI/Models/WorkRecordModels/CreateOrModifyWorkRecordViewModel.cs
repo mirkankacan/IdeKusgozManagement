@@ -33,7 +33,7 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         public bool HasDinner { get; set; } = false;
 
         public bool HasNightMeal { get; set; } = false;
-        public string? TravelExpenseAmount { get; set; } = null;
+        public decimal? TravelExpenseAmount { get; set; } = null;
 
         public List<CreateOrModifyWorkRecordExpenseViewModel>? WorkRecordExpenses { get; set; } = new();
     }

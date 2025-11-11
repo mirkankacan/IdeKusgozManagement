@@ -7,7 +7,7 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
@@ -21,38 +21,38 @@
             padding: 20px;
         }
 
-        .dropzone .dz-preview .dz-progress {
-            border: unset;
-            background: unset;
-        }
+            .dropzone .dz-preview .dz-progress {
+                border: unset;
+                background: unset;
+            }
 
-        .dropzone:hover {
-            border-color: #0056b3;
-            background: #e3f2fd;
-        }
+            .dropzone:hover {
+                border-color: #0056b3;
+                background: #e3f2fd;
+            }
 
-        .dropzone.dz-drag-hover {
-            border-color: #28a745;
-            background: #d4edda;
-        }
+            .dropzone.dz-drag-hover {
+                border-color: #28a745;
+                background: #d4edda;
+            }
 
-        .dropzone .dz-preview {
-            margin: 10px;
-            min-height: 0;
-        }
+            .dropzone .dz-preview {
+                margin: 10px;
+                min-height: 0;
+            }
 
-        .dropzone .dz-preview .dz-image {
-            border-radius: 8px;
-            overflow: hidden;
-        }
+                .dropzone .dz-preview .dz-image {
+                    border-radius: 8px;
+                    overflow: hidden;
+                }
 
-        .dropzone .dz-preview .dz-error-message {
-            background: #dc3545;
-            color: white;
-            border-radius: 4px;
-            padding: 5px 10px;
-            font-size: 12px;
-        }
+                .dropzone .dz-preview .dz-error-message {
+                    background: #dc3545;
+                    color: white;
+                    border-radius: 4px;
+                    padding: 5px 10px;
+                    font-size: 12px;
+                }
 
         .file-type-section {
             background: #f8f9fa;
@@ -68,9 +68,9 @@
             background: #e9ecef;
         }
 
-        .dropzone.dz-disabled .dz-message {
-            opacity: 0.5;
-        }
+            .dropzone.dz-disabled .dz-message {
+                opacity: 0.5;
+            }
     </style>
 }
 
@@ -135,11 +135,12 @@
 
                 <!-- Dropzone Area -->
                 <form id="fileUploadForm" class="dropzone mt-3" action="/dosya/yukle" method="post"
-                    enctype="multipart/form-data">
+                      enctype="multipart/form-data">
                     <div class="dz-message" data-dz-message>
                         <div class="text-center">
                             <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted" id="dropzone-message">Lütfen önce departman ve doküman tipi seçin
+                            <h5 class="text-muted" id="dropzone-message">
+                                Lütfen önce departman ve doküman tipi seçin
                             </h5>
                             <p class="text-muted mb-0" id="dropzone-submessage"></p>
                             <small class="text-muted">Maksimum dosya boyutu: 50MB</small>
@@ -170,7 +171,7 @@
                     </div>
                     <div class="progress">
                         <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
-                            role="progressbar" style="width: 0%"></div>
+                             role="progressbar" style="width: 0%"></div>
                     </div>
                     <div id="progressStatus" class="text-muted small mt-2"></div>
                 </div>
@@ -248,11 +249,9 @@
 
                     // Target seçimi
                     if (urlParams.targetId && currentDepartmentScope !== 3) {
-                        // Kısa bir gecikme ekle ki select2 tam yüklensin
                         setTimeout(() => {
                             $('#target-select').val(urlParams.targetId).trigger('change.select2');
-                                                checkDropzoneStatus();
-
+                              checkDropzoneStatus();
                         }, 150);
                     }
                     if (urlParams.hasRenewal === 'true') {

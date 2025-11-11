@@ -63,8 +63,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .HasDefaultValue(false);
 
             builder.Property(x => x.TravelExpenseAmount)
-                .IsRequired(false)
-                .HasDefaultValue(null);
+                   .IsRequired(false)
+                   .HasDefaultValue(null)
+                   .HasColumnType("decimal(18,2)");
 
             builder.Property(x => x.RejectReason)
                 .HasMaxLength(350)

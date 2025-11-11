@@ -21,7 +21,7 @@ namespace IdeKusgozManagement.WebUI.Models.WorkRecordModels
         public bool HasLunch { get; set; }
         public bool HasDinner { get; set; }
         public bool HasNightMeal { get; set; }
-        public bool HasTravel { get; set; }
+        public decimal? TravelExpenseAmount { get; set; }
         public int Status { get; set; }
         public string? RejectReason { get; set; }
 

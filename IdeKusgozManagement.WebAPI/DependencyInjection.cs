@@ -157,7 +157,7 @@ namespace IdeKusgozManagement.WebAPI
                "http://portal.izmircrane.com",
                "https://portal.izmircrane.com"
            )
-                           .WithMethods("GET", "POST", "PUT", "DELETE")
+                        .WithMethods("GET", "POST", "PUT", "DELETE")
                         .WithHeaders(
                            "Content-Type",
                         "Authorization",
