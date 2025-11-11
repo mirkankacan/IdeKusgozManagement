@@ -7,7 +7,11 @@
         public string Path { get; set; }
         public string OriginalName { get; set; }
         public string? TargetUserId { get; set; }
+        public string? TargetEquipmentId { get; set; }
+        public string? TargetProjectId { get; set; }
         public string? TargetUserName { get; set; }
+        public string? TargetEquipmentName { get; set; }
+        public string? TargetProjectName { get; set; }
         public string? DepartmentId { get; set; }
         public string? DepartmentName { get; set; }
         public string DocumentTypeId { get; set; }

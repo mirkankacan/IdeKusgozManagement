@@ -4,6 +4,7 @@ using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
+using IdeKusgozManagement.Infrastructure.Helpers;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class FileService(IUnitOfWork unitOfWork, IFileProvider fileProvider, ILogger<FileService> logger, IUserService userService, IDepartmentService departmentService, IAIService aiService) : IFileService
+    public class FileService(IUnitOfWork unitOfWork, IFileProvider fileProvider, ILogger<FileService> logger, IUserService userService, IDocumentService documentService, IAIService aiService) : IFileService
     {
         private readonly PhysicalFileProvider _physicalFileProvider = (PhysicalFileProvider)fileProvider;
 
@@ -89,7 +90,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
             var documentTypeName = "";
             int? renewalPeriodInMonths = null;
-            var departmentResult = await departmentService.GetDocumentTypeByIdAsync(file.DocumentTypeId, cancellationToken);
+            var departmentResult = await documentService.GetDocumentTypeByIdAsync(file.DocumentTypeId, cancellationToken);
             if (departmentResult.IsSuccess && departmentResult.Data != null)
             {
                 documentTypeName = departmentResult.Data.Name;
@@ -104,7 +105,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             var fileExtension = Path.GetExtension(file.FormFile.FileName).ToLowerInvariant();
             var newFileName = $"{NewId.NextGuid()}{fileExtension}";
             var fullFolderPath = Path.Combine(wwwrootPath, "Uploads", documentTypeName, userFolder, dateFolder);
-            var contentType = GetContentType(fileExtension);
+            var contentType = FileHelper.GetContentType(fileExtension);
             if (!Directory.Exists(fullFolderPath))
             {
                 Directory.CreateDirectory(fullFolderPath);
@@ -112,22 +113,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
             var uploadPath = Path.Combine(fullFolderPath, newFileName);
 
-            using var memoryStream = new MemoryStream();
-            await file.FormFile.CopyToAsync(memoryStream);
-            var pdfBytes = memoryStream.ToArray();
-
             DateTime? startDate = file.StartDate;
             DateTime? endDate = file.EndDate;
             if (file.HasRenewalPeriod.HasValue)
             {
                 if (file.HasRenewalPeriod.Value == true && file.StartDate == null && file.EndDate == null)
                 {
-                    var aiResponse = await aiService.AnalyzeDocumentDateAsync(pdfBytes, contentType, documentTypeName);
+                    var aiResponse = await aiService.AnalyzeDocumentDateAsync(file.FormFile, documentTypeName, cancellationToken);
 
                     if (aiResponse.IsSuccess && !string.IsNullOrEmpty(aiResponse.Data.SelectedDate))
                     {
                         startDate = DateTime.Parse(aiResponse.Data.SelectedDate);
                         endDate = startDate.Value.AddMonths(renewalPeriodInMonths!.Value);
+                    }
+                    else
+                    {
+                        throw new Exception(aiResponse.Message);
                     }
                 }
             }
@@ -145,6 +146,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 Path = relativePath,
                 OriginalName = file.FormFile.FileName,
                 TargetUserId = file.TargetUserId,
+                TargetProjectId = file.TargetUserId,
+                TargetEquipmentId = file.TargetUserId,
                 DocumentTypeId = file.DocumentTypeId!,
                 DepartmentId = file.DepartmentId ?? null,
                 StartDate = startDate,
@@ -159,6 +162,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 DepartmentId = newFile.DepartmentId,
                 DocumentTypeId = newFile.DocumentTypeId,
                 TargetUserId = newFile.TargetUserId,
+                TargetEquipmentId = newFile.TargetEquipmentId,
+                TargetProjectId = newFile.TargetProjectId,
                 StartDate = newFile.StartDate,
                 EndDate = newFile.EndDate,
                 CreatedDate = newFile.CreatedDate
@@ -224,7 +229,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     DepartmentId = file.DepartmentId,
                     DocumentTypeId = file.DocumentTypeId,
                     TargetUserId = file.TargetUserId,
+                    TargetEquipmentId = file.TargetEquipmentId,
+                    TargetProjectId = file.TargetProjectId,
                     TargetUserName = file.TargetUser?.Name + " " + file.TargetUser?.Surname,
+                    TargetEquipmentName = file.TargetEquipment?.Name,
+                    TargetProjectName = file.TargetProject?.Name,
                     DocumentTypeName = file.DocumentType.Name,
                     DepartmentName = file.Department?.Name,
                     EndDate = file.EndDate,
@@ -265,7 +274,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
                 var extension = Path.GetExtension(file.OriginalName).ToLowerInvariant();
-                var contentType = GetContentType(extension);
+                var contentType = FileHelper.GetContentType(extension);
                 return ApiResponse<(FileStream fileStream, string contentType, string originalName)>.Success((fileStream, contentType, file.OriginalName), "Dosya kaydı bulunamadı");
             }
             catch (Exception ex)
@@ -311,7 +320,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         DepartmentId = file.DepartmentId,
                         DocumentTypeId = file.DocumentTypeId,
                         TargetUserId = file.TargetUserId,
+                        TargetEquipmentId = file.TargetEquipmentId,
+                        TargetProjectId = file.TargetProjectId,
                         TargetUserName = file.TargetUser?.Name + " " + file.TargetUser?.Surname,
+                        TargetEquipmentName = file.TargetEquipment?.Name,
+                        TargetProjectName = file.TargetProject?.Name,
                         DocumentTypeName = file.DocumentType.Name,
                         DepartmentName = file.Department?.Name,
                         EndDate = file.EndDate,
@@ -330,20 +343,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     userId, documentType, departmentId);
                 return ApiResponse<List<FileDTO>>.Error("Dosyalar okunamadı");
             }
-        }
-
-        private string GetContentType(string extension)
-        {
-            return extension switch
-            {
-                ".pdf" => "application/pdf",
-                ".jpg" or ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                ".gif" => "image/gif",
-                ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                _ => "application/octet-stream"
-            };
         }
     }
 }

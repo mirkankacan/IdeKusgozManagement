@@ -26,6 +26,14 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
              .IsRequired(false)
              .HasMaxLength(450)
              .HasDefaultValue(null);
+            builder.Property(x => x.TargetProjectId)
+          .IsRequired(false)
+          .HasMaxLength(450)
+          .HasDefaultValue(null);
+            builder.Property(x => x.TargetEquipmentId)
+          .IsRequired(false)
+          .HasMaxLength(450)
+          .HasDefaultValue(null);
             builder.Property(x => x.DepartmentId)
                 .IsRequired(false)
                 .HasMaxLength(450)
@@ -42,6 +50,24 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
              .HasForeignKey(x => x.TargetUserId)
              .OnDelete(DeleteBehavior.Restrict)
              .IsRequired(false);
+
+            builder.HasOne(x => x.TargetProject)
+        .WithMany()
+        .HasForeignKey(x => x.TargetProjectId)
+        .OnDelete(DeleteBehavior.Restrict)
+        .IsRequired(false);
+
+            builder.HasOne(x => x.TargetEquipment)
+           .WithMany()
+           .HasForeignKey(x => x.TargetEquipmentId)
+           .OnDelete(DeleteBehavior.Restrict)
+           .IsRequired(false);
+
+            builder.HasOne(x => x.TargetUser)
+        .WithMany()
+        .HasForeignKey(x => x.TargetUserId)
+        .OnDelete(DeleteBehavior.Restrict)
+        .IsRequired(false);
 
             builder.HasOne(x => x.Department)
                 .WithMany(x => x.Files)

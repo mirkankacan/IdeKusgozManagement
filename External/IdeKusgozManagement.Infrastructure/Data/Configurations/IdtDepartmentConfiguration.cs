@@ -13,11 +13,14 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.Property(x => x.Name)
                 .IsRequired()
                 .HasMaxLength(100);
+            builder.Property(x => x.Scope)
+             .IsRequired()
+             .HasConversion<int>(); // Enum'u int olarak kaydet
 
             builder.HasMany(x => x.Users)
                   .WithOne(x => x.Department)
                   .HasForeignKey(x => x.DepartmentId)
-                  .OnDelete(DeleteBehavior.SetNull);
+                  .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

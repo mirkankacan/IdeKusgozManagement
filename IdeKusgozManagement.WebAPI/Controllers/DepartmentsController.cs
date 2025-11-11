@@ -18,24 +18,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpGet("document-types")]
-        public async Task<IActionResult> GetDocumentTypes(CancellationToken cancellationToken = default)
-        {
-            var result = await departmentService.GetDocumentTypesAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        [HttpGet("document-types-by-department/{departmentId}")]
-        public async Task<IActionResult> GetDocumentTypesByDepartment(string departmentId, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrEmpty(departmentId))
-            {
-                return BadRequest("Departman ID'si gereklidir");
-            }
-            var result = await departmentService.GetDocumentTypesByDepartmentAsync(departmentId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
         [HttpGet("relations-by-department/{departmentId}")]
         public async Task<IActionResult> GetDepartmentDocumentTypeRelationsByDepartment(string departmentId, CancellationToken cancellationToken = default)
         {
@@ -48,12 +30,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpGet("relations")]
-        public async Task<IActionResult> GetDepartmentDocumentTypeRelations(string departmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetDepartmentDocumentTypeRelations(CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrEmpty(departmentId))
-            {
-                return BadRequest("Departman ID'si gereklidir");
-            }
             var result = await departmentService.GetDepartmentDocumentTypeRelationsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }

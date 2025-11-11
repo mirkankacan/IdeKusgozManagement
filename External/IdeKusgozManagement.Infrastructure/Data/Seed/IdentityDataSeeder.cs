@@ -28,6 +28,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
             {
                 adminUser = new ApplicationUser
                 {
+                    Id = "f17def6f-ce42-42f7-b9f5-18865cc35a52",
                     UserName = "1",
                     Email = "mirkankacan@ideaktif.com.tr",
                     IsActive = true,
@@ -35,7 +36,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     Name = "Admin",
                     Surname = "User",
                     IsExpatriate = true,
-                    HireDate = new DateTime(2019, 1, 1)
+                    HireDate = new DateTime(2019, 1, 1),
+                    DepartmentId = "AE0B67DF-9B00-42A4-97DC-B367015128AF"
                 };
                 var result = await userManager.CreateAsync(adminUser, password);
                 if (result.Succeeded)
@@ -60,7 +62,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     Name = "Birim Yönetici",
                     Surname = "User",
                     IsExpatriate = false,
-                    HireDate = new DateTime(2024, 1, 1)
+                    HireDate = new DateTime(2024, 1, 1),
+                    DepartmentId = "9C61B35E-2B0E-4181-ABF4-DE3DC7E89A23"
                 };
                 var result = await userManager.CreateAsync(unitManagerUser, password);
                 if (result.Succeeded)
@@ -85,7 +88,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     Name = "Şef",
                     Surname = "User",
                     IsExpatriate = false,
-                    HireDate = new DateTime(2024, 1, 1)
+                    HireDate = new DateTime(2024, 1, 1),
+                    DepartmentId = "5D6DE7B9-F6E7-4224-A78C-6DA664C641F0"
                 };
                 var result = await userManager.CreateAsync(chiefUser, password);
                 if (result.Succeeded)
@@ -111,7 +115,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Seed
                     Surname = "User",
                     IsExpatriate = false,
                     HireDate = new DateTime(2024, 1, 1),
-                    DepartmentId = "BE6ED7FC-9E42-40A0-86D6-2EC576795F24"
+                    DepartmentId = "1ECB9F40-09B2-4BB9-9539-81D961296128"
                 };
                 var result = await userManager.CreateAsync(personnelUser, password);
                 if (result.Succeeded)

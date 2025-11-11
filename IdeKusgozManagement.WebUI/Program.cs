@@ -1,6 +1,5 @@
+using IdeKusgozManagement.WebUI.Extensions;
 using IdeKusgozManagement.WebUI.Handlers;
-using IdeKusgozManagement.WebUI.Services;
-using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,114 +48,7 @@ builder.Services.AddSignalR(options =>
 builder.Services.AddTransient<JwtTokenHandler>();
 
 // HTTP Client Services
-builder.Services.AddHttpClient<IUserApiService, UserApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddHttpClient<IRoleApiService, RoleApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddHttpClient<IWorkRecordApiService, WorkRecordApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddHttpClient<IEquipmentApiService, EquipmentApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddHttpClient<IExpenseApiService, ExpenseApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-builder.Services.AddHttpClient<IFileApiService, FileApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-builder.Services.AddHttpClient<IDepartmentApiService, DepartmentApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-builder.Services.AddHttpClient<IMessageApiService, MessageApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-builder.Services.AddHttpClient<IHolidayApiService, HolidayApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-builder.Services.AddHttpClient<ILeaveRequestApiService, LeaveRequestApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddHttpClient<ITrafficTicketApiService, TrafficTicketApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddHttpClient<IProjectApiService, ProjectApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddHttpClient<IAdvanceApiService, AdvanceApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddHttpClient<INotificationApiService, NotificationApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddScoped<IAuthApiService, AuthApiService>();
-
-builder.Services.AddHttpClient("AuthApiWithToken", client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<JwtTokenHandler>();
-
-builder.Services.AddHttpClient("AuthApiWithoutToken", client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
+builder.Services.AddApiHttpClients(builder.Configuration);
 
 var app = builder.Build();
 

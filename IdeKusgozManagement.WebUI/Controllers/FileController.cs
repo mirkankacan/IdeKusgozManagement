@@ -53,11 +53,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpGet("yukle")]
-        public IActionResult Upload()
-        {
-            return View();
-        }
+
 
         [HttpGet("liste/p")]
         public async Task<IActionResult> GetFilesByParams([FromQuery] string? userId, [FromQuery] string? documentType, [FromQuery] string? departmentId, CancellationToken cancellationToken = default)
@@ -66,10 +62,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpGet("")]
-        public IActionResult Index()
-        {
-            return View();
-        }
+
     }
 }

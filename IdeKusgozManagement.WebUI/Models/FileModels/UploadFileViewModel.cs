@@ -12,6 +12,8 @@ namespace IdeKusgozManagement.WebUI.Models.FileModels
         public string? DocumentTypeId { get; set; }
 
         public string? TargetUserId { get; set; }
+        public string? TargetEquipmentId { get; set; }
+        public string? TargetProjectId { get; set; }
         public bool? HasRenewalPeriod { get; set; }
 
         public DateTime? StartDate { get; set; }

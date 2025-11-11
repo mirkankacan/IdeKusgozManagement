@@ -16,10 +16,6 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
 
             builder.Property(x => x.RenewalPeriodInMonths)
               .HasDefaultValue(null);
-
-            builder.Property(x => x.IsActive)
-              .IsRequired()
-              .HasDefaultValue(true);
         }
     }
 }

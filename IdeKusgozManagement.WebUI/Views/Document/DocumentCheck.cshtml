@@ -1,0 +1,419 @@
+﻿@{
+    ViewData["Title"] = "Doküman Kontrol";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+}
+
+@Html.AntiForgeryToken()
+
+<!-- Files List -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-file-shield me-2"></i>
+                    Yüklenen Evraklar
+                </h5>
+                <div class="file-type-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="department-select" class="form-label">Departman</label>  <span class="text-danger">*</span>
+                            <select id="department-select" class="form-select">
+                                <option value="">Departman seçin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="target-select" class="form-label">Hedef</label>
+                            <select id="target-select" class="form-select">
+                            </select>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div id="tableContainer" class="table-responsive mt-5">
+                    <table id="filesTable" class="table table-striped table-hover display" style="width:100%">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>DÖKÜMAN<br />TİPİ</th>
+                                <th>YENİLEME<br />SÜRESİ (AY)</th>
+                                <th>YÜKLENDİ<br />Mİ?</th>
+                                <th>SÜRESİ<br />GEÇTİ<br />Mİ?</th>
+                                <th>BAŞLANGIÇ<br />TARİHİ</th>
+                                <th>BİTİŞ<br />TARİİH</th>
+                                <th>YÜKLEME<br />TARİHİ</th>
+                                <th>İŞLEMLER</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        let filesTable;
+        let currentDepartmentScope = null;
+
+        $(document).ready(async function () {
+            await initializeDepartmentSelect();
+            await initializeTargetSelect(null, null);
+            bindSelectEvents();
+        });
+
+        async function initializeDepartmentSelect() {
+            try {
+                const response = await $.ajax({
+                    url: '/departman/liste',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response?.isSuccess && response.data) {
+                    $('#department-select').empty().append('<option value="">Departman seçin</option>');
+                    response.data.forEach(department => {
+                        $('#department-select').append(`<option data-scope="${department.scope}" value="${department.id}">${department.name}</option>`);
+                    });
+                }
+
+                $('#department-select').select2({
+                    placeholder: 'Departman seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
+            } catch (error) {
+                console.error('Departman listesi yüklenirken hata:', error);
+                toastr.error('Departman listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        async function initializeTargetSelect(departmentId, scope) {
+            try {
+                $('#target-select').off('change.autofilter');
+
+                if (!departmentId || !scope) {
+                    resetTargetSelect();
+                    return;
+                }
+
+                // İşyeri bazlı - hedef seçimi gerekmez
+                if (scope === 3) {
+                    setupWorkplaceTarget();
+                    setTimeout(checkAndCreateTable, 100);
+                    return;
+                }
+
+                const apiUrl = getApiUrl(scope, departmentId);
+                const response = await $.ajax({ url: apiUrl, type: 'GET', dataType: 'json' });
+
+                if (response?.isSuccess && response.data) {
+                    setupTargetOptions(scope, response.data);
+                    bindTargetEvent();
+                }
+            } catch (error) {
+                console.error('Target listesi yüklenirken hata:', error);
+                toastr.error('Liste yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        function getApiUrl(scope, departmentId) {
+            const urls = {
+                1: `/kullanici/departman/${departmentId}`, // Kullanıcı
+                2: `/ekipman/aktif-liste`,                 // Ekipman
+                4: `/proje/aktif-liste`                   // Proje
+            };
+            return urls[scope];
+        }
+
+        function resetTargetSelect() {
+            // Önce destroy et eğer varsa
+            if ($('#target-select').hasClass('select2-hidden-accessible')) {
+                $('#target-select').select2('destroy');
+            }
+
+            $('#target-select').empty().append('<option value="">Önce departman seçin</option>');
+            $('#target-select-label').text('Hedef');
+            $('#target-select').select2({
+                placeholder: 'Önce departman seçin',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        function setupWorkplaceTarget() {
+            // Önce destroy et eğer varsa
+            if ($('#target-select').hasClass('select2-hidden-accessible')) {
+                $('#target-select').select2('destroy');
+            }
+
+            $('#target-select').empty().append('<option value="">Seçim gerekmez</option>');
+            $('#target-select-label').text('Hedef');
+            $('#target-select').select2({
+                placeholder: 'İşyeri bazlı - seçim gerekmez',
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%',
+                disabled: true
+            });
+        }
+
+        function setupTargetOptions(scope, data) {
+            const config = {
+                1: { label: 'Kullanıcı', placeholder: 'Kullanıcı seçin', field: 'fullName' },
+                2: { label: 'Ekipman', placeholder: 'Ekipman seçin', field: 'name' },
+                4: { label: 'Proje', placeholder: 'Proje seçin', field: 'name' }
+            };
+
+            const { label, placeholder, field } = config[scope];
+
+            // Önce destroy et eğer varsa
+            if ($('#target-select').hasClass('select2-hidden-accessible')) {
+                $('#target-select').select2('destroy');
+            }
+
+            $('#target-select').empty().append(`<option value="">${placeholder}</option>`);
+            $('#target-select-label').text(label);
+
+            data.forEach(item => {
+                $('#target-select').append(`<option value="${item.id}">${item[field]}</option>`);
+            });
+
+            $('#target-select').select2({
+                placeholder,
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%',
+                disabled: false
+            });
+        }
+
+        function bindTargetEvent() {
+            $('#target-select').on('change.autofilter', () => setTimeout(checkAndCreateTable, 100));
+        }
+
+        function bindSelectEvents() {
+            $('#department-select, #target-select').off('change.autofilter');
+
+            $('#department-select').on('change.autofilter', async function () {
+                const departmentId = $(this).val();
+                const scope = departmentId ? parseInt($(this).find('option:selected').data('scope')) : null;
+                currentDepartmentScope = scope;
+
+                $('#target-select').prop('disabled', true);
+
+                try {
+                    $('#target-select').off('change.autofilter').val(null).trigger('change');
+                    destroyTable();
+
+                    if (departmentId && scope) {
+                        await initializeTargetSelect(departmentId, scope);
+                    } else {
+                        await initializeTargetSelect(null, null);
+                        currentDepartmentScope = null;
+                    }
+                } finally {
+                    // İşyeri bazlı değilse target select'i enable et
+                    if (currentDepartmentScope !== 3) {
+                        $('#target-select').prop('disabled', false);
+                    }
+                }
+            });
+        }
+
+        function destroyTable() {
+            if (filesTable) {
+                filesTable.destroy();
+                filesTable = null;
+                $('#filesTable tbody').empty();
+            }
+        }
+
+        async function checkAndCreateTable() {
+            if (canCreateTable()) {
+                if (!filesTable) {
+                    await initializeDataTable();
+                } else {
+                    updateTable();
+                }
+            } else {
+                destroyTable();
+            }
+        }
+
+        function canCreateTable() {
+            const departmentId = $('#department-select').val();
+            const targetId = $('#target-select').val();
+
+            if (!departmentId || !currentDepartmentScope) return false;
+
+            // Scope 3 (İşyeri) sadece departman yeterli
+            if (currentDepartmentScope === 3) return true;
+
+            // Diğer scope'lar için hedef seçimi zorunlu
+            return !!targetId;
+        }
+
+        function updateTable() {
+            if (filesTable) {
+                filesTable.ajax.url(buildApiUrl()).load();
+            }
+        }
+
+        function buildApiUrl() {
+            const params = new URLSearchParams();
+            const departmentId = $('#department-select').val();
+            const targetId = $('#target-select').val();
+
+            if (departmentId) params.append('departmentId', departmentId);
+            if (targetId) params.append('targetId', targetId);
+
+            return `/dokuman/gerekli-dokumanlar/p?${params.toString()}`;
+        }
+
+        async function initializeDataTable() {
+            if (!canCreateTable()) return;
+
+            destroyTable();
+
+            filesTable = $('#filesTable').DataTable({
+                processing: true,
+                ajax: {
+                    url: buildApiUrl(),
+                    type: "GET",
+                    dataSrc: (json) => json?.isSuccess && json.data ? json.data : [],
+                    error: (xhr, error) => {
+                        console.error('DataTables AJAX error:', error);
+                        let errorMessage = 'Veriler yüklenirken hata oluştu';
+                        if (xhr.responseJSON?.message) {
+                            errorMessage += ': ' + xhr.responseJSON.message;
+                        }
+                        toastr.error(errorMessage);
+                    }
+                },
+                columns: [
+                    { data: null, width: "5%", orderable: false, className: "text-center", render: () => '' },
+                    { data: "documentTypeName", render: (data) => data || '' },
+                    { data: "renewalPeriodInMonths", render: (data) => data || '' },
+                    {
+                        data: "isUploaded",
+                        render: (data) => data ?
+                            '<span class="badge bg-success">Evet</span>' :
+                            '<span class="badge bg-danger">Hayır</span>'
+                    },
+                    {
+                        data: "isExpired",
+                        render: (data, type, row) => {
+                            if (row.isNeverUploaded) {
+                                return '<span class="badge bg-danger">Hiç Doküman Yüklenmedi</span>';
+                            }
+                            return data ?
+                                '<span class="badge bg-warning">Evet</span>' :
+                                '<span class="badge bg-success">Hayır</span>';
+                        }
+                    },
+                    { data: "currentFileStartDate", render: (data) => data ? new Date(data).toLocaleDateString('tr-TR') : '' },
+                    { data: "currentFileEndDate", render: (data) => data ? new Date(data).toLocaleDateString('tr-TR') : '' },
+                    { data: "currentFileCreatedDate", render: (data) => data ? new Date(data).toLocaleDateString('tr-TR') : '' },
+                    {
+                        data: null,
+                        width: "10%",
+                        orderable: false,
+                        className: "text-center",
+                        render: (data, type, row) => {
+                            if (!row.currentFileId) return "";
+                            return `
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a class="btn btn-outline-primary btn-sm" href="/dosya/indir/${row.currentFileId}" title="İndir" download>
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteFile('${row.currentFileId}')" title="Sil">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>`;
+                        }
+                    }
+                ],
+                language: { url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json' },
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                pageLength: 10,
+                responsive: true,
+                searchDelay: 300,
+                order: [[6, "asc"]],
+                drawCallback: function () {
+                    const api = this.api();
+                    const pageInfo = api.page.info();
+                    api.column(0, { page: 'current' }).nodes().each((cell, i) => {
+                        cell.innerHTML = pageInfo.start + i + 1;
+                    });
+                    $('[title]').tooltip();
+                }
+            });
+        }
+
+        async function deleteFile(fileId) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Evrağı Sil',
+                    text: 'Bu evrağı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-trash"></i> Evet, Sil',
+                    cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            return await $.ajax({
+                                url: `/dosya/${fileId}`,
+                                type: 'DELETE',
+                                contentType: 'application/json'
+                            });
+                        } catch (error) {
+                            let errorMessage = 'Silme başarısız';
+                            if (error.responseJSON?.message) {
+                                errorMessage = error.responseJSON.message;
+                            } else if (error.responseJSON?.errors?.length > 0) {
+                                errorMessage = error.responseJSON.errors.join(', ');
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            return false;
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Evrak başarıyla silindi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    filesTable.ajax.reload(null, false);
+                }
+            } catch (error) {
+                console.error('Silme hatası:', error);
+            }
+        }
+    </script>
+}

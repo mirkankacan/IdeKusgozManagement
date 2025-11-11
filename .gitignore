@@ -13,7 +13,10 @@
 /.vscode
 appsettings.json
 appsettings.*.json
-
+IdeKusgozManagement.WebAPI/wwwroot/Uploads/
+**/Uploads/
+*.log
+*.tmp
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

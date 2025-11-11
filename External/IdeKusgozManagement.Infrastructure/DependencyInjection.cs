@@ -1,4 +1,5 @@
 ﻿using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using IdeKusgozManagement.Application.Interfaces.Providers;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
@@ -11,6 +12,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
+using OpenAI;
+using OpenAI.Chat;
 
 namespace IdeKusgozManagement.Infrastructure
 {
@@ -45,13 +49,28 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IHolidayService, HolidayService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IDepartmentService, DepartmentService>();
-            services.AddScoped<IAIService, GeminiAIService>();
+            services.AddScoped<IDocumentService, DocumentService>();
+            services.AddScoped<IAIService, OpenAIService>();
+            services.AddSingleton<ChatClient>(serviceProvider =>
+            {
+                var options = serviceProvider.GetRequiredService<IOptions<OpenAiOptionsDTO>>().Value;
 
+                var clientOptions = new OpenAIClientOptions
+                {
+                    OrganizationId = options.OrganizationId,
+                    ProjectId = options.ProjectId
+                };
+
+                var apiKeyCredential = new System.ClientModel.ApiKeyCredential(options.ApiKey);
+                var openAIClient = new OpenAIClient(apiKeyCredential, clientOptions);
+
+                return openAIClient.GetChatClient(options.Model);
+            });
             services.ConfigureOptions<JwtOptionsSetup>();
             services.ConfigureOptions<JwtBearerOptionsSetup>();
             services.ConfigureOptions<HolidayApiOptionsSetup>();
             services.ConfigureOptions<EmailOptionsSetup>();
-            services.ConfigureOptions<GeminiAiOptionsSetup>();
+            services.ConfigureOptions<OpenAiOptionsSetup>();
 
             services.AddMemoryCache();
 
