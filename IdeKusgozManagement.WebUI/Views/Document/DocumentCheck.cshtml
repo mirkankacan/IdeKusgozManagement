@@ -25,7 +25,7 @@
                 <div class="file-type-section">
                     <div class="row">
                         <div class="col-md-6">
-                            <label for="department-select" class="form-label">Departman</label>  <span class="text-danger">*</span>
+                            <label for="department-select" class="form-label">Departman</label>
                             <select id="department-select" class="form-select">
                                 <option value="">Departman seçin</option>
                             </select>
@@ -68,10 +68,13 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
+        const DEBOUNCE_DELAY = 300;
         let filesTable;
         let currentDepartmentScope = null;
+        let debouncedCheckAndCreateTable;
 
         $(document).ready(async function () {
+            debouncedCheckAndCreateTable = debounce(checkAndCreateTable, DEBOUNCE_DELAY);
             await initializeDepartmentSelect();
             await initializeTargetSelect(null, null);
             bindSelectEvents();
@@ -116,7 +119,7 @@
                 // İşyeri bazlı - hedef seçimi gerekmez
                 if (scope === 3) {
                     setupWorkplaceTarget();
-                    setTimeout(checkAndCreateTable, 100);
+                    debouncedCheckAndCreateTable();
                     return;
                 }
 
@@ -206,7 +209,7 @@
         }
 
         function bindTargetEvent() {
-            $('#target-select').on('change.autofilter', () => setTimeout(checkAndCreateTable, 100));
+            $('#target-select').on('change.autofilter', debouncedCheckAndCreateTable);
         }
 
         function bindSelectEvents() {
@@ -340,14 +343,14 @@
                         render: (data, type, row) => {
                             if (!row.currentFileId) return "";
                             return `
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a class="btn btn-outline-primary btn-sm" href="/dosya/indir/${row.currentFileId}" title="İndir" download>
-                                        <i class="fas fa-download"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteFile('${row.currentFileId}')" title="Sil">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>`;
+                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                <a class="btn btn-outline-primary btn-sm" href="/dosya/indir/${row.currentFileId}" title="İndir" download>
+                                                                    <i class="fas fa-download"></i>
+                                                                </a>
+                                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteFile('${row.currentFileId}')" title="Sil">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </div>`;
                         }
                     }
                 ],
@@ -414,6 +417,14 @@
             } catch (error) {
                 console.error('Silme hatası:', error);
             }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
         }
     </script>
 }

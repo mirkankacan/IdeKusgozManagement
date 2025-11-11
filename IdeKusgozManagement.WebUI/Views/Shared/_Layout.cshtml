@@ -13,7 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="İdeaktif Danışmanlık ve Yazılım Ltd.">
 
-      <!-- Favicon dosyaları -->
+    <!-- Favicon dosyaları -->
     <link rel="icon" type="image/png" sizes="16x16" href="~/theme/assets/images/favicons/favicon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="~/theme/assets/images/favicons/favicon-32.png">
     <link rel="icon" type="image/png" sizes="72x72" href="~/theme/assets/images/favicons/favicon-72.png">
@@ -39,11 +39,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/themes/light.min.css">
     @await RenderSectionAsync("Styles", required: false)
     <style>
-       .modal-dialog-scrollable form {
-      max-height: calc(100vh - 200px);
-      /* header + footer yüksekliğini çıkar */
-      overflow-y: auto;
-  }
+        .modal-dialog-scrollable form {
+            max-height: calc(100vh - 200px);
+            /* header + footer yüksekliğini çıkar */
+            overflow-y: auto;
+        }
 
         .bold-notif-text {
             font-weight: bold !important;
@@ -217,7 +217,7 @@
                     <li class="@(Context.Request.Path == "/kullanici" ? "active-page" : "")">
                         <a href="/kullanici"><i data-feather="users"></i>Kullanıcılar</a>
                     </li>
-                     <li class="@(Context.Request.Path == "/trafik-ceza" ? "active-page" : "")">
+                    <li class="@(Context.Request.Path == "/trafik-ceza" ? "active-page" : "")">
                         <a href="/trafik-ceza"><i data-feather="alert-octagon"></i>Trafik Cezaları</a>
                     </li>
 
@@ -249,10 +249,10 @@
                 }
                 @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || User.IsInRole("Şef"))
                 {
-                     <li class="sidebar-title">
+                    <li class="sidebar-title">
                         Doküman İşlemleri
                     </li>
-                    <li class="@(Context.Request.Path == "/dosya/yukle" ? "active-page" : "")">
+                    <li class="@(Context.Request.Path == "/dokuman/yukle" ? "active-page" : "")">
                         <a href="/dokuman/yukle"><i data-feather="upload"></i>Doküman Yükle</a>
                     </li>
                     <li class="@(Context.Request.Path == "/dokuman/yuklenenler" ? "active-page" : "")">
@@ -320,44 +320,44 @@
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/realtime-manager.js"></script>
     <script>
-          var turkishLocale = {
-                "format": 'DD/MM/YYYY',
-                "separator": ' - ',
-                "applyLabel": 'Uygula',
-                "cancelLabel": 'İptal',
-                "fromLabel": 'Başlangıç',
-                "toLabel": 'Bitiş',
-                "customRangeLabel": 'Özel',
-                "weekLabel": 'Hf',
-                "daysOfWeek": [
-                    "Pz",
-                    "Pt",
-                    "Sl",
-                    "Çr",
-                    "Pr",
-                    "Cm",
-                    "Ct"
-                ], "monthNames": ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
-                "firstDay": 1
+              var turkishLocale = {
+                    "format": 'DD/MM/YYYY',
+                    "separator": ' - ',
+                    "applyLabel": 'Uygula',
+                    "cancelLabel": 'İptal',
+                    "fromLabel": 'Başlangıç',
+                    "toLabel": 'Bitiş',
+                    "customRangeLabel": 'Özel',
+                    "weekLabel": 'Hf',
+                    "daysOfWeek": [
+                        "Pz",
+                        "Pt",
+                        "Sl",
+                        "Çr",
+                        "Pr",
+                        "Cm",
+                        "Ct"
+                    ], "monthNames": ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
+                    "firstDay": 1
 
-            };
-    window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
-            window.signalRUrl = '@Configuration.GetSection("ApiSettings")["SignalRUrl"]';
+                };
+        window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
+                window.signalRUrl = '@Configuration.GetSection("ApiSettings")["SignalRUrl"]';
 
-        $(document).ready(async function () {
+            $(document).ready(async function () {
 
-            $.ajaxSetup({
-                beforeSend: function (xhr, settings) {
-                    if (settings.type !== 'GET') {
-                        const token = $('input[name="__RequestVerificationToken"]').val();
-                        if (token) {
-                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                $.ajaxSetup({
+                    beforeSend: function (xhr, settings) {
+                        if (settings.type !== 'GET') {
+                            const token = $('input[name="__RequestVerificationToken"]').val();
+                            if (token) {
+                                xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                            }
                         }
                     }
-                }
+                });
             });
-        });
-</script>
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>

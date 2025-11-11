@@ -7,7 +7,7 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
@@ -21,38 +21,38 @@
             padding: 20px;
         }
 
-            .dropzone .dz-preview .dz-progress {
-                border: unset;
-                background: unset;
-            }
+        .dropzone .dz-preview .dz-progress {
+            border: unset;
+            background: unset;
+        }
 
-            .dropzone:hover {
-                border-color: #0056b3;
-                background: #e3f2fd;
-            }
+        .dropzone:hover {
+            border-color: #0056b3;
+            background: #e3f2fd;
+        }
 
-            .dropzone.dz-drag-hover {
-                border-color: #28a745;
-                background: #d4edda;
-            }
+        .dropzone.dz-drag-hover {
+            border-color: #28a745;
+            background: #d4edda;
+        }
 
-            .dropzone .dz-preview {
-                margin: 10px;
-                min-height: 0;
-            }
+        .dropzone .dz-preview {
+            margin: 10px;
+            min-height: 0;
+        }
 
-                .dropzone .dz-preview .dz-image {
-                    border-radius: 8px;
-                    overflow: hidden;
-                }
+        .dropzone .dz-preview .dz-image {
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-                .dropzone .dz-preview .dz-error-message {
-                    background: #dc3545;
-                    color: white;
-                    border-radius: 4px;
-                    padding: 5px 10px;
-                    font-size: 12px;
-                }
+        .dropzone .dz-preview .dz-error-message {
+            background: #dc3545;
+            color: white;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
 
         .file-type-section {
             background: #f8f9fa;
@@ -68,9 +68,9 @@
             background: #e9ecef;
         }
 
-            .dropzone.dz-disabled .dz-message {
-                opacity: 0.5;
-            }
+        .dropzone.dz-disabled .dz-message {
+            opacity: 0.5;
+        }
     </style>
 }
 
@@ -82,21 +82,21 @@
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="fas fa-file me-2"></i>
-                    Evrak Yükleme
+                    Doküman Yükleme
                 </h5>
                 <!-- File Type Selection -->
                 <div class="file-type-section">
                     <div class="row">
                         <div class="col-md-6">
-                            <label for="department-select" class="form-label">Departman</label> <span class="text-danger">*</span>
+                            <label for="department-select" class="form-label">Departman</label>
                             <select id="department-select" class="form-select">
                                 <option value="">Departman seçin</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="document-type-select" class="form-label">Evrak Tipi</label>  <span class="text-danger">*</span>
+                            <label for="document-type-select" class="form-label">Doküman Tipi</label>
                             <select id="document-type-select" class="form-select">
-                                <option value="">Evrak tipini seçin</option>
+                                <option value="">Doküman tipini seçin</option>
                             </select>
                         </div>
 
@@ -125,7 +125,8 @@
                             </div>
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                'Süreli mi' seçeneği seçilip tarih aralığı seçilmeden evrak yüklenirse başlangıç tarihini yapay zeka tespit eder. Bitiş tarihi sistemdeki yenileme süresi ile hesaplanır
+                                'Süreli mi' seçeneği seçilip tarih aralığı seçilmeden doküman yüklenirse başlangıç
+                                tarihini yapay zeka tespit eder. Bitiş tarihi sistemdeki yenileme süresi ile hesaplanır
                             </small>
                         </div>
                     </div>
@@ -134,22 +135,22 @@
 
                 <!-- Dropzone Area -->
                 <form id="fileUploadForm" class="dropzone mt-3" action="/dosya/yukle" method="post"
-                      enctype="multipart/form-data">
+                    enctype="multipart/form-data">
                     <div class="dz-message" data-dz-message>
                         <div class="text-center">
                             <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted" id="dropzone-message">Lütfen önce departman ve evrak tipi seçin</h5>
+                            <h5 class="text-muted" id="dropzone-message">Lütfen önce departman ve doküman tipi seçin
+                            </h5>
                             <p class="text-muted mb-0" id="dropzone-submessage"></p>
                             <small class="text-muted">Maksimum dosya boyutu: 50MB</small>
                         </div>
                     </div>
                 </form>
 
-                <div id="uploadButtonsContainer" class="d-flex justify-content-between align-items-center mt-3"
-                     style="display: none !important;">
+                <div id="uploadButtonsContainer" class="d-flex justify-content-between align-items-center mt-3">
                     <div>
                         <button type="button" id="uploadBtn" class="btn btn-primary me-2">
-                            <i class="fas fa-upload me-1"></i> Dosyaları Yükle
+                            <i class="fas fa-upload me-1"></i> Dokümanları Yükle
                         </button>
                         <button type="button" id="clearBtn" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-1"></i> Temizle
@@ -157,7 +158,7 @@
                     </div>
                     <small class="text-muted">
                         <i class="fas fa-info-circle me-1"></i>
-                        Dosyaları seçtikten sonra "Dosyaları Yükle" butonuna basın
+                        Dokümanları seçtikten sonra "Dokümanları Yükle" butonuna basın
                     </small>
                 </div>
 
@@ -169,8 +170,9 @@
                     </div>
                     <div class="progress">
                         <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
-                             role="progressbar" style="width: 0%"></div>
+                            role="progressbar" style="width: 0%"></div>
                     </div>
+                    <div id="progressStatus" class="text-muted small mt-2"></div>
                 </div>
             </div>
         </div>
@@ -187,15 +189,85 @@
         let filesTable;
         let myDropzone;
         let currentDepartmentScope = null;
+        const MAX_UPLOAD_PROGRESS = 95;
 
         $(document).ready(async function () {
             initializeDropzone();
             await initializeDepartmentSelect();
-            await initializeDocumentTypeSelect(null);
-            await initializeTargetSelect(null, null);
+
+            // URL parametrelerini kontrol et ve otomatik seçim yap
+            const urlParams = getUrlParameters();
+            if (urlParams.departmentId || urlParams.documentTypeId || urlParams.targetId || urlParams.hasRenewal) {
+                await autoSelectFromUrlParams(urlParams);
+            } else {
+                await initializeDocumentTypeSelect(null);
+                await initializeTargetSelect(null, null);
+            }
+
             checkDropzoneStatus();
             initializeTemporaryCheckbox();
         });
+
+        // URL parametrelerini parse eden fonksiyon
+        function getUrlParameters() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                departmentId: params.get('departmentId'),
+                documentTypeId: params.get('documentTypeId'),
+                targetId: params.get('targetId'),
+                hasRenewal: params.get('hasRenewal')
+            };
+        }
+
+        // URL parametrelerinden otomatik seçim yapan fonksiyon
+        async function autoSelectFromUrlParams(urlParams) {
+            try {
+                // Departman seçimi
+                if (urlParams.departmentId) {
+                    $('#department-select').val(urlParams.departmentId);
+
+                    // Scope'u al
+                    const selectedOption = $('#department-select option:selected');
+                    currentDepartmentScope = selectedOption.data('scope') ? parseInt(selectedOption.data('scope')) : null;
+
+                    // Select2'yi güncelle
+                    $('#department-select').trigger('change.select2');
+
+                    // Doküman tipini yükle
+                    await initializeDocumentTypeSelect(urlParams.departmentId);
+
+                    // Doküman tipi seçimi
+                    if (urlParams.documentTypeId) {
+                            setTimeout(() => {
+                                $('#document-type-select').val(urlParams.documentTypeId).trigger('change.select2');
+                        }, 100);
+                    }
+
+                    // Target'ı yükle
+                    await initializeTargetSelect(urlParams.departmentId, currentDepartmentScope);
+
+                    // Target seçimi
+                    if (urlParams.targetId && currentDepartmentScope !== 3) {
+                        // Kısa bir gecikme ekle ki select2 tam yüklensin
+                        setTimeout(() => {
+                            $('#target-select').val(urlParams.targetId).trigger('change.select2');
+                                                checkDropzoneStatus();
+
+                        }, 150);
+                    }
+                    if (urlParams.hasRenewal === 'true') {
+                         setTimeout(() => {
+                              $('#hasRenewalPeriodCheckbox').prop('checked', true).trigger('change');
+                         }, 200);
+                    }
+                } else {
+                    await initializeDocumentTypeSelect(null);
+                    await initializeTargetSelect(null, null);
+                }
+            } catch (error) {
+                console.error('URL parametrelerinden seçim yapılırken hata:', error);
+            }
+        }
 
         async function initializeDepartmentSelect() {
             try {
@@ -248,7 +320,7 @@
         async function initializeDocumentTypeSelect(departmentId) {
             try {
                 if (!departmentId) {
-                    resetSelect('#document-type-select', 'Evrak tipini seçin');
+                    resetSelect('#document-type-select', 'Doküman tipini seçin');
                     return;
                 }
 
@@ -259,17 +331,17 @@
                 });
 
                 if (response?.isSuccess && response.data) {
-                    $('#document-type-select').empty().append('<option value="">Evrak tipini seçin</option>');
+                    $('#document-type-select').empty().append('<option value="">Doküman tipini seçin</option>');
                     response.data.forEach(docType => {
                         $('#document-type-select').append(`<option value="${docType.id}">${docType.name}</option>`);
                     });
                 }
 
-                initSelect('#document-type-select', 'Evrak tipini seçin');
+                initSelect('#document-type-select', 'Doküman tipini seçin');
                 $('#document-type-select').on('change select2:select select2:clear', checkDropzoneStatus);
             } catch (error) {
-                console.error('Evrak tipi listesi yüklenirken hata:', error);
-                toastr.error('Evrak tipi listesi yüklenirken hata oluştu', 'Hata!');
+                console.error('Doküman tipi listesi yüklenirken hata:', error);
+                toastr.error('Doküman tipi listesi yüklenirken hata oluştu', 'Hata!');
             }
         }
 
@@ -361,12 +433,12 @@
                 if (isEnabled) {
                     myDropzone.enable();
                     $("#fileUploadForm").removeClass("dz-disabled");
-                    $("#dropzone-message").text("Dosyalarınızı buraya sürükleyip bırakın");
+                    $("#dropzone-message").text("Dokümanlarınızı buraya sürükleyip bırakın");
                     $("#dropzone-submessage").html("veya <strong>tıklayarak</strong> dosya seçin");
                 } else {
                     myDropzone.disable();
                     $("#fileUploadForm").addClass("dz-disabled");
-                    $("#dropzone-message").text("Lütfen önce departman ve evrak tipi seçin");
+                    $("#dropzone-message").text("Lütfen önce departman ve doküman tipi seçin");
                     $("#dropzone-submessage").text("");
                 }
             }
@@ -405,7 +477,7 @@
                         const documentTypeId = $("#document-type-select").val();
 
                         if (!departmentId || !documentTypeId) {
-                            toastr.warning("Lütfen önce departman ve evrak tipi seçin!", 'Uyarı!');
+                            toastr.warning("Lütfen önce departman ve doküman tipi seçin!", 'Uyarı!');
                             dropzone.removeFile(file);
                             return;
                         }
@@ -427,6 +499,8 @@
                             toastr.error(response?.message || "Yükleme başarısız", 'Hata!');
                         }
 
+                        updateProgress(100);
+                        setProgressStatus('İşlem tamamlandı.');
                         hideProgress();
 
                         if (typeof filesTable !== 'undefined' && filesTable.ajax) {
@@ -438,13 +512,18 @@
 
                     this.on("error", function (file, errorMessage) {
                         const message = typeof errorMessage === 'string' ? errorMessage :
-                                       errorMessage?.message || "Yükleme sırasında hata oluştu";
+                            errorMessage?.message || "Yükleme sırasında hata oluştu";
                         toastr.error(message, 'Hata!');
                         hideProgress();
+                        setProgressStatus('Hata oluştu.');
                     });
 
                     this.on("totaluploadprogress", function (uploadProgress) {
-                        updateProgress(uploadProgress);
+                        const clampedProgress = Math.min(uploadProgress, MAX_UPLOAD_PROGRESS);
+                        updateProgress(clampedProgress);
+                        setProgressStatus(clampedProgress >= MAX_UPLOAD_PROGRESS
+                            ? 'Sunucu yanıtı bekleniyor...'
+                            : 'Dosyalar yükleniyor...');
                     });
 
                     $("#uploadBtn").on("click", processAllFiles);
@@ -465,15 +544,15 @@
                         }
 
                         if (!documentTypeId) {
-                            toastr.warning("Lütfen evrak tipini seçin!", 'Uyarı!');
+                            toastr.warning("Lütfen doküman tipini seçin!", 'Uyarı!');
                             return;
                         }
 
                         // Scope kontrolü - kullanıcı/ekipman/proje bazlı ise target ID zorunlu
                         if (currentDepartmentScope !== 3 && !targetId) {
                             const targetName = currentDepartmentScope === 1 ? 'kullanıcı' :
-                                             currentDepartmentScope === 2 ? 'ekipman' :
-                                             currentDepartmentScope === 4 ? 'proje' : '';
+                                currentDepartmentScope === 2 ? 'ekipman' :
+                                    currentDepartmentScope === 4 ? 'proje' : '';
                             toastr.warning(`Lütfen ${targetName} seçin!`, 'Uyarı!');
                             return;
                         }
@@ -520,7 +599,7 @@
                                     formData.append(`[${index}].TargetProjectId`, targetId);
                                 }
                             }
-                        
+
                             if (hasRenewalPeriod && startDate && endDate) {
                                 formData.append(`[${index}].StartDate`, startDate);
                                 formData.append(`[${index}].EndDate`, endDate);
@@ -541,9 +620,17 @@
                                 xhr.upload.addEventListener("progress", function (evt) {
                                     if (evt.lengthComputable) {
                                         const percentComplete = (evt.loaded / evt.total) * 100;
-                                        updateProgress(percentComplete);
+                                        const clampedProgress = Math.min(percentComplete, MAX_UPLOAD_PROGRESS);
+                                        updateProgress(clampedProgress);
+                                        setProgressStatus(clampedProgress >= MAX_UPLOAD_PROGRESS
+                                            ? 'Sunucu yanıtı bekleniyor...'
+                                            : 'Dosyalar yükleniyor...');
                                     }
                                 }, false);
+                                xhr.upload.addEventListener("load", function () {
+                                    updateProgress(MAX_UPLOAD_PROGRESS);
+                                    setProgressStatus('Sunucu yanıtı bekleniyor...');
+                                });
                                 return xhr;
                             },
                             success: function (response) {
@@ -552,6 +639,8 @@
                                     response?.message || 'Dosyalar başarıyla yüklendi!';
 
                                 toastr.success(message, 'Başarılı!');
+                                updateProgress(100);
+                                setProgressStatus('İşlem tamamlandı.');
 
                                 if (typeof filesTable !== 'undefined' && filesTable.ajax) {
                                     filesTable.ajax.reload(null, false);
@@ -577,10 +666,11 @@
                                 }
 
                                 toastr.error(errorMessage, 'Hata!');
+                                setProgressStatus('Hata oluştu.');
                             },
                             complete: function () {
                                 hideProgress();
-                                $("#uploadBtn").prop('disabled', false).text('Dosyaları Yükle');
+                                $("#uploadBtn").prop('disabled', false).text('Dokümanları Yükle');
                             }
                         });
                     }
@@ -631,16 +721,23 @@
         function showProgress() {
             $("#uploadProgress").show();
             updateProgress(0);
+            setProgressStatus('Dosyalar yüklenmeye hazırlanıyor...');
         }
 
         function hideProgress() {
             $("#uploadProgress").hide();
+            updateProgress(0);
+            setProgressStatus('');
         }
 
         function updateProgress(progress) {
             const percentage = Math.round(progress);
             $("#progressBar").css("width", percentage + "%");
             $("#progressText").text(percentage + "%");
+        }
+
+        function setProgressStatus(message) {
+            $("#progressStatus").text(message || '');
         }
 
         async function deleteFile(fileId) {
@@ -679,7 +776,7 @@
                 if (result.isConfirmed) {
                     await Swal.fire({
                         title: 'Başarılı!',
-                        text: 'Evrak başarıyla silindi.',
+                        text: 'Doküman başarıyla silindi.',
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
