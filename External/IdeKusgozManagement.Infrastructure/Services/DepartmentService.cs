@@ -4,15 +4,74 @@ using IdeKusgozManagement.Application.DTOs.DepartmentDTOs;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class DepartmentService(IUnitOfWork unitOfWork, ILogger<DepartmentService> logger, UserManager<ApplicationUser> userManager) : IDepartmentService
+    public class DepartmentService(IUnitOfWork unitOfWork, ILogger<DepartmentService> logger) : IDepartmentService
     {
-        public async Task<ApiResponse<IEnumerable<DepartmentDTO>>> GetDepartmentsAsync(CancellationToken cancellationToken = default)
+        //public async Task<ServiceResponse<IEnumerable<DepartmentDutyDocumentRelationDTO>>> GetDepartmentDutyDocumentRelationsAsync(string? departmentId, string? departmentDutyId, string? companyId, CancellationToken cancellationToken = default)
+        //{
+        //    try
+        //    {
+        //        IQueryable<IdtDepartmentDocumentRequirment> baseQuery;
+        //        baseQuery = unitOfWork.GetRepository<IdtDepartmentDocumentRequirment>().WhereAsNoTracking(x => x.Id != null);
+        //        if (!string.IsNullOrEmpty(departmentId))
+        //            baseQuery = unitOfWork.GetRepository<IdtDepartmentDocumentRequirment>().WhereAsNoTracking(x => x.DepartmentId != departmentId);
+
+        //        if (!string.IsNullOrEmpty(departmentDutyId))
+        //            baseQuery = unitOfWork.GetRepository<IdtDepartmentDocumentRequirment>().WhereAsNoTracking(x => x.DepartmentDutyId != departmentDutyId);
+
+        //        if (!string.IsNullOrEmpty(companyId))
+        //            baseQuery = unitOfWork.GetRepository<IdtDepartmentDocumentRequirment>().WhereAsNoTracking(x => x.CompanyId != companyId);
+
+        //        var reqs = await baseQuery
+        //           .OrderBy(x => x.CompanyId)
+        //           .ToListAsync(cancellationToken);
+
+        //        if (reqs == null)
+        //        {
+        //            return ServiceResponse<IEnumerable<DepartmentDutyDocumentRelationDTO>>.Success(null, "Departman belge gereklilikleri bulunamadı");
+        //        }
+
+        //        var mappedReqs = reqs.Adapt<IEnumerable<DepartmentDutyDocumentRelationDTO>>();
+
+        //        return ServiceResponse<IEnumerable<DepartmentDutyDocumentRelationDTO>>.Success(mappedReqs, "Departman belge gereklilikleri başarıyla getirildi");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError(ex, "GetDepartmentDutyDocumentRelationsAsync işleminde hata oluştu");
+        //        return ServiceResponse<IEnumerable<DepartmentDutyDocumentRelationDTO>>.Error("Departman belge gereklilikleri getirilirken hata oluştu");
+        //    }
+        //}
+
+        public async Task<ServiceResponse<IEnumerable<DepartmentDutyDTO>>> GetDepartmentDutiesByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var duties = await unitOfWork.GetRepository<IdtDepartmentDuty>()
+                    .WhereAsNoTracking(x => x.DepartmentId == departmentId)
+                    .OrderBy(x => x.Name)
+                    .ToListAsync(cancellationToken);
+
+                if (duties == null)
+                {
+                    return ServiceResponse<IEnumerable<DepartmentDutyDTO>>.Success(null, "Departman görevleri bulunamadı");
+                }
+
+                var mappedDuties = duties.Adapt<IEnumerable<DepartmentDutyDTO>>();
+
+                return ServiceResponse<IEnumerable<DepartmentDutyDTO>>.Success(mappedDuties, "Departman görevleri başarıyla getirildi");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetDepartmentDutiesByDepartment işleminde hata oluştu");
+                return ServiceResponse<IEnumerable<DepartmentDutyDTO>>.Error("Departman görevleri getirilirken hata oluştu");
+            }
+        }
+
+        public async Task<ServiceResponse<IEnumerable<DepartmentDTO>>> GetDepartmentsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -23,67 +82,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (departments == null)
                 {
-                    return ApiResponse<IEnumerable<DepartmentDTO>>.Success(null, "Departmanlar bulunamadı");
+                    return ServiceResponse<IEnumerable<DepartmentDTO>>.Success(null, "Departmanlar bulunamadı");
                 }
 
                 var mappedDepartments = departments.Adapt<IEnumerable<DepartmentDTO>>();
 
-                return ApiResponse<IEnumerable<DepartmentDTO>>.Success(mappedDepartments, "Departmanlar başarıyla getirildi");
+                return ServiceResponse<IEnumerable<DepartmentDTO>>.Success(mappedDepartments, "Departmanlar başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetDepartmentsAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<DepartmentDTO>>.Error("Departmanlar getirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>> GetDepartmentDocumentTypeRelationsAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var ddt = await unitOfWork.GetRepository<IdtDepartmentDocumentType>()
-                    .WhereAsNoTracking(x => x.Id != null)
-                    .OrderBy(x => x.CreatedDate)
-                    .ToListAsync(cancellationToken);
-
-                if (ddt == null)
-                {
-                    return ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>.Success(null, "Departman döküman bağlantıları bulunamadı");
-                }
-
-                var mappedDdt = ddt.Adapt<IEnumerable<DepartmentDocumentTypeDTO>>();
-
-                return ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>.Success(mappedDdt, "Departman döküman bağlantıları başarıyla getirildi");
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "GetDepartmentDocumentTypesAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>.Error("Departman döküman bağlantıları getirilirken hata oluştu");
-            }
-        }
-
-        public async Task<ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>> GetDepartmentDocumentTypeRelationsByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var ddt = await unitOfWork.GetRepository<IdtDepartmentDocumentType>()
-                    .WhereAsNoTracking(x => x.DepartmentId == departmentId)
-                    .OrderBy(x => x.CreatedDate)
-                    .ToListAsync(cancellationToken);
-
-                if (ddt == null)
-                {
-                    return ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>.Success(null, "Departman döküman bağlantıları bulunamadı");
-                }
-
-                var mappedDdt = ddt.Adapt<IEnumerable<DepartmentDocumentTypeDTO>>();
-
-                return ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>.Success(mappedDdt, "Departman döküman bağlantıları başarıyla getirildi");
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "GetDepartmentDocumentTypeRelationsByDepartmentAsync işleminde hata oluştu");
-                return ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>.Error("Departman döküman bağlantıları getirilirken hata oluştu");
+                return ServiceResponse<IEnumerable<DepartmentDTO>>.Error("Departmanlar getirilirken hata oluştu");
             }
         }
     }

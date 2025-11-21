@@ -14,7 +14,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpGet("{year:int}/yili")]
-        public async Task<IActionResult> GetHolidaysByYear(int year, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetHolidaysByYear(int year, CancellationToken cancellationToken)
         {
             if (year < 1900 || year > 2100)
             {
@@ -25,7 +25,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpGet("baslangic/{startDate:datetime}/bitis/{endDate:datetime}")]
-        public async Task<IActionResult> GetHolidaysByYear(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetHolidaysByYear(DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
         {
             if (endDate < startDate)
             {

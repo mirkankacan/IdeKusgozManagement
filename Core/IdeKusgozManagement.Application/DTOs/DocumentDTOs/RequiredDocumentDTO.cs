@@ -1,10 +1,13 @@
-﻿namespace IdeKusgozManagement.Application.DTOs.DocumentDTOs
+﻿using IdeKusgozManagement.Domain.Enums;
+
+namespace IdeKusgozManagement.Application.DTOs.DocumentDTOs
 {
-    public class UserRequiredDocumentDTO
+    public class RequiredDocumentDTO
     {
         public string DocumentTypeId { get; set; }
         public string DocumentTypeName { get; set; }
         public int? RenewalPeriodInMonths { get; set; }
+        public DutyScope Scope { get; set; }
         public bool IsUploaded { get; set; }
         public bool IsExpired { get; set; }
         public bool IsNeverUploaded { get; set; }

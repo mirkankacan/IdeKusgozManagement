@@ -23,14 +23,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpGet("liste")]
-        public async Task<IActionResult> GetTrafficTickets(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetTrafficTickets(CancellationToken cancellationToken)
         {
             var response = await _trafficTicketApiService.GetTrafficTicketsAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
         [HttpGet("{ticketId}")]
-        public async Task<IActionResult> GetTrafficTicketById(string ticketId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetTrafficTicketById(string ticketId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(ticketId))
             {
@@ -43,7 +43,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [ValidateAntiForgeryToken]
         [HttpPost("")]
-        public async Task<IActionResult> CreateTrafficTicket([FromForm] CreateTrafficTicketViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateTrafficTicket([FromForm] CreateTrafficTicketViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -56,7 +56,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [ValidateAntiForgeryToken]
         [HttpPut("{ticketId}")]
-        public async Task<IActionResult> UpdateTrafficTicket(string ticketId, [FromForm] UpdateTrafficTicketViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateTrafficTicket(string ticketId, [FromForm] UpdateTrafficTicketViewModel model, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(ticketId))
             {
@@ -74,7 +74,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [ValidateAntiForgeryToken]
         [HttpDelete("{ticketId}")]
-        public async Task<IActionResult> DeleteTrafficTicket(string ticketId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteTrafficTicket(string ticketId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(ticketId))
             {

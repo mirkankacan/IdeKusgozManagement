@@ -45,9 +45,9 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         [HttpPost]
         [RoleFilter("Admin", "Yönetici")]
-        public async Task<IActionResult> CreateMessage([FromBody] CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateMessage([FromBody] CreateMessageDTO createMessageDTO, CancellationToken cancellationToken)
         {
-            ApiResponse<MessageDTO> messageResponse = new();
+            ServiceResponse<MessageDTO> messageResponse = new();
             if (createMessageDTO.TargetRoles.Any())
                 messageResponse = await messageService.SendMessageToRolesAsync(createMessageDTO, cancellationToken);
 
@@ -85,7 +85,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
         [HttpDelete("{messageId}")]
         [RoleFilter("Admin", "Yönetici")]
-        public async Task<IActionResult> DeleteMessage(string messageId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteMessage(string messageId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(messageId))
             {

@@ -11,7 +11,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IJwtProvider jwtProvider, IIdentityService identityService, ILogger<AuthService> logger, IEmailService emailService) : IAuthService
     {
-        public async Task<ApiResponse<TokenDTO>> LoginAsync(LoginDTO loginDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<TokenDTO>> LoginAsync(LoginDTO loginDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -20,14 +20,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (user == null)
                 {
                     logger.LogWarning("Giriş denemesi başarısız. Kullanıcı bulunamadı. TCNo: {TCNo}", loginDTO.TCNo);
-                    return ApiResponse<TokenDTO>.Error("TC No veya şifre hatalı");
+                    return ServiceResponse<TokenDTO>.Error("TC No veya şifre hatalı");
                 }
 
                 // Kullanıcı aktif mi kontrol et
                 if (!user.IsActive)
                 {
                     logger.LogWarning("Giriş denemesi başarısız. Kullanıcı pasif durumda. TCNo: {TCNo}", loginDTO.TCNo);
-                    return ApiResponse<TokenDTO>.Error("Hesabınız pasif durumda");
+                    return ServiceResponse<TokenDTO>.Error("Hesabınız pasif durumda");
                 }
 
                 // Şifre kontrolü
@@ -35,7 +35,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!result.Succeeded)
                 {
                     logger.LogWarning("Giriş denemesi başarısız. Geçersiz şifre. TCNo: {TCNo}", loginDTO.TCNo);
-                    return ApiResponse<TokenDTO>.Error("Şifre hatalı");
+                    return ServiceResponse<TokenDTO>.Error("Şifre hatalı");
                 }
 
                 // Token oluştur
@@ -43,16 +43,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 logger.LogInformation("Kullanıcı başarıyla giriş yaptı. TCNo: {TCNo}", loginDTO.TCNo);
 
-                return ApiResponse<TokenDTO>.Success(token, "Giriş başarılı");
+                return ServiceResponse<TokenDTO>.Success(token, "Giriş başarılı");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "LoginAsync işleminde hata oluştu. TCNo: {TCNo}", loginDTO.TCNo);
-                return ApiResponse<TokenDTO>.Error("Giriş işlemi sırasında bir hata oluştu");
+                return ServiceResponse<TokenDTO>.Error("Giriş işlemi sırasında bir hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> LogoutAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> LogoutAsync(CancellationToken cancellationToken = default)
         {
             var userId = identityService.GetUserId();
 
@@ -73,16 +73,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 }
 
                 await signInManager.SignOutAsync();
-                return ApiResponse<bool>.Success(true, "Çıkış başarılı");
+                return ServiceResponse<bool>.Success(true, "Çıkış başarılı");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "LogoutAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ApiResponse<bool>.Error("Çıkış işlemi sırasında bir hata oluştu");
+                return ServiceResponse<bool>.Error("Çıkış işlemi sırasında bir hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<TokenDTO>> RefreshTokenAsync(CreateTokenByRefreshTokenDTO createTokenByRefreshTokenDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<TokenDTO>> RefreshTokenAsync(CreateTokenByRefreshTokenDTO createTokenByRefreshTokenDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -90,28 +90,28 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (user == null)
                 {
                     logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı bulunamadı. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
-                    return ApiResponse<TokenDTO>.Error("Kullanıcı bulunamadı");
+                    return ServiceResponse<TokenDTO>.Error("Kullanıcı bulunamadı");
                 }
 
                 // Kullanıcı aktif mi kontrol et
                 if (!user.IsActive)
                 {
                     logger.LogWarning("Refresh token denemesi başarısız. Kullanıcı pasif durumda. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
-                    return ApiResponse<TokenDTO>.Error("Hesabınız pasif durumda");
+                    return ServiceResponse<TokenDTO>.Error("Hesabınız pasif durumda");
                 }
 
                 // Refresh token kontrolü
                 if (user.RefreshToken != createTokenByRefreshTokenDTO.RefreshToken)
                 {
                     logger.LogWarning("Refresh token denemesi başarısız. Geçersiz refresh token. UserId: {UserId} | DatabaseRefreshToken: {DbRefreshToken} | FromUIRefreshToken: {UiRefreshToken}", createTokenByRefreshTokenDTO.UserId, user.RefreshToken, createTokenByRefreshTokenDTO.RefreshToken);
-                    return ApiResponse<TokenDTO>.Error("Geçersiz refresh token");
+                    return ServiceResponse<TokenDTO>.Error("Geçersiz refresh token");
                 }
 
                 // Refresh token süresi dolmuş mu kontrol et
                 if (user.RefreshTokenExpires == null || user.RefreshTokenExpires <= DateTime.UtcNow)
                 {
                     logger.LogWarning("Refresh token denemesi başarısız. Refresh token süresi dolmuş. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
-                    return ApiResponse<TokenDTO>.Error("Refresh token süresi dolmuş");
+                    return ServiceResponse<TokenDTO>.Error("Refresh token süresi dolmuş");
                 }
 
                 // Yeni token oluştur
@@ -119,16 +119,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 logger.LogInformation("Token başarıyla yenilendi. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
 
-                return ApiResponse<TokenDTO>.Success(newToken, "Token başarıyla yenilendi");
+                return ServiceResponse<TokenDTO>.Success(newToken, "Token başarıyla yenilendi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "RefreshTokenAsync işleminde hata oluştu. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
-                return ApiResponse<TokenDTO>.Error("Token yenileme işlemi sırasında bir hata oluştu");
+                return ServiceResponse<TokenDTO>.Error("Token yenileme işlemi sırasında bir hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordDTO dto, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> ResetPasswordAsync(ResetPasswordDTO dto, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -136,28 +136,28 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (user == null)
                 {
                     logger.LogWarning("Şifre sıfırlama denemesi. Kullanıcı bulunamadı. TCNo: {TCNo}", dto.TCNo);
-                    return ApiResponse<bool>.Error("Bu TC numarasına kayıtlı kullanıcı bulunamadı");
+                    return ServiceResponse<bool>.Error("Bu TC numarasına kayıtlı kullanıcı bulunamadı");
                 }
 
                 // Kullanıcı aktif mi kontrol et
                 if (!user.IsActive)
                 {
-                    return ApiResponse<bool>.Error("Hesabınız pasif durumda");
+                    return ServiceResponse<bool>.Error("Hesabınız pasif durumda");
                 }
                 if (string.IsNullOrEmpty(user.PasswordResetCode) || user.PasswordResetCode != dto.VerificationCode)
                 {
                     logger.LogWarning("Şifre sıfırlama denemesi. Geçersiz doğrulama kodu. TCNo: {TCNo}, Girilen Kod: {Code}", dto.TCNo, dto.VerificationCode);
-                    return ApiResponse<bool>.Error("Geçersiz doğrulama kodu");
+                    return ServiceResponse<bool>.Error("Geçersiz doğrulama kodu");
                 }
                 if (user.PasswordResetCodeExpires == null || user.PasswordResetCodeExpires <= DateTime.UtcNow)
                 {
                     logger.LogWarning("Şifre sıfırlama denemesi. Doğrulama kodu süresi dolmuş. TCNo: {TCNo}", dto.TCNo);
-                    return ApiResponse<bool>.Error("Doğrulama kodunun süresi dolmuş. Lütfen yeni kod talep edin.");
+                    return ServiceResponse<bool>.Error("Doğrulama kodunun süresi dolmuş. Lütfen yeni kod talep edin.");
                 }
                 if (dto.NewPassword != dto.ConfirmPassword)
                 {
                     logger.LogWarning("Şifre sıfırlama denemesi. Şifre ve onay şifresi uyuşmuyor. TCNo: {TCNo}", dto.TCNo);
-                    return ApiResponse<bool>.Error("Şifre ve onay şifresi uyuşmuyor");
+                    return ServiceResponse<bool>.Error("Şifre ve onay şifresi uyuşmuyor");
                 }
                 // Şifre güncelleme kontrolü
                 var token = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -173,16 +173,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await userManager.UpdateAsync(user);
 
                 logger.LogInformation("Şifre başarıyla sıfırlandı. TCNo: {TCNo}", dto.TCNo);
-                return ApiResponse<bool>.Success(true, "Şifreniz başarıyla güncellendi");
+                return ServiceResponse<bool>.Success(true, "Şifreniz başarıyla güncellendi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "ResetPasswordAsync işleminde hata oluştu. TCNo: {TCNo}", dto.TCNo);
-                return ApiResponse<bool>.Error("Şifre sıfırlama işlemi sırasında bir hata oluştu");
+                return ServiceResponse<bool>.Error("Şifre sıfırlama işlemi sırasında bir hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> SendResetPasswordEmailAsync(ForgotPasswordDTO dto, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> SendResetPasswordEmailAsync(ForgotPasswordDTO dto, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -190,19 +190,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (user == null)
                 {
                     logger.LogWarning("Şifre sıfırlama talebi. Kullanıcı bulunamadı. TCNo: {TCNo}", dto.TCNo);
-                    return ApiResponse<bool>.Error("Gönderilen TC numarasına kayıtlı kullanıcı bulunamadı");
+                    return ServiceResponse<bool>.Error("Gönderilen TC numarasına kayıtlı kullanıcı bulunamadı");
                 }
 
                 if (string.IsNullOrEmpty(user.Email))
                 {
                     logger.LogWarning("Şifre sıfırlama talebi. Kullanıcının email adresi yok. Email: {Email}", user.Email);
-                    return ApiResponse<bool>.Error("Bu TC numarasına kayıtlı e-posta adresi bulunamadı");
+                    return ServiceResponse<bool>.Error("Bu TC numarasına kayıtlı e-posta adresi bulunamadı");
                 }
                 // Kullanıcı aktif mi kontrol et
                 if (!user.IsActive)
                 {
                     logger.LogWarning("Şifre sıfırlama talebi. Kullanıcı pasif durumda. Email: {Email}", user.Email);
-                    return ApiResponse<bool>.Error("Bu TC numarasına ait kayıtlı hesap pasif durumda");
+                    return ServiceResponse<bool>.Error("Bu TC numarasına ait kayıtlı hesap pasif durumda");
                 }
 
                 // 6 haneli doğrulama kodu oluştur
@@ -219,16 +219,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!emailServiceResponse.IsSuccess)
                 {
                     logger.LogError("Doğrulama kodu emaili gönderilemedi. Email: {Email}", user.Email);
-                    return ApiResponse<bool>.Error("Email gönderilirken bir hata oluştu");
+                    return ServiceResponse<bool>.Error("Email gönderilirken bir hata oluştu");
                 }
 
                 logger.LogInformation("Doğrulama kodu emaili başarıyla gönderildi. Email: {Email}", user.Email);
-                return ApiResponse<bool>.Success(true, "Doğrulama kodu email adresinize gönderilmiştir. Kod 5 dakika geçerlidir.");
+                return ServiceResponse<bool>.Success(true, "Doğrulama kodu email adresinize gönderilmiştir. Kod 5 dakika geçerlidir.");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "SendResetPasswordEmailAsync işleminde hata oluştu. TCNo: {TCNo}", dto.TCNo);
-                return ApiResponse<bool>.Error("Doğrulama kodu gönderilirken bir hata oluştu");
+                return ServiceResponse<bool>.Error("Doğrulama kodu gönderilirken bir hata oluştu");
             }
         }
 

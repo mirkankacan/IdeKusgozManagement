@@ -11,13 +11,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class HolidayService(IMemoryCache memoryCache, IOptions<HolidayApiOptionsDTO> holidayApiOptions, ILogger<HolidayService> logger) : IHolidayService
     {
-        public async Task<ApiResponse<List<HolidayDTO>>> GetHolidaysByYearAsync(int year, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<List<HolidayDTO>>> GetHolidaysByYearAsync(int year, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (memoryCache.TryGetValue($"holidays_{year}", out List<HolidayDTO> cachedHolidays))
                 {
-                    return ApiResponse<List<HolidayDTO>>.Success(cachedHolidays, "Tatiller listesi cacheden başarıyla getirildi");
+                    return ServiceResponse<List<HolidayDTO>>.Success(cachedHolidays, "Tatiller listesi cacheden başarıyla getirildi");
                 }
 
                 using var httpClient = new HttpClient();
@@ -27,11 +27,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogWarning($"Holiday API çağrısı başarısız. Status: {response.StatusCode}, Year: {year}");
-                    return ApiResponse<List<HolidayDTO>>.Error("Tatiller listesi getirilirken hata oluştu");
+                    return ServiceResponse<List<HolidayDTO>>.Error("Tatiller listesi getirilirken hata oluştu");
                 }
 
                 var json = await response.Content.ReadAsStringAsync(cancellationToken);
-                var holidayResponse = JsonSerializer.Deserialize<HolidayApiResponseDTO>(json, new JsonSerializerOptions
+                var holidayResponse = JsonSerializer.Deserialize<HolidayServiceResponseDTO>(json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -47,16 +47,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
                 memoryCache.Set($"holidays_{year}", officialHolidays, yearEnd);
 
-                return ApiResponse<List<HolidayDTO>>.Success(officialHolidays, "Tatiller listesi başarıyla getirildi");
+                return ServiceResponse<List<HolidayDTO>>.Success(officialHolidays, "Tatiller listesi başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, $"GetHolidaysByYearAsync işleminde hata oluştu");
-                return ApiResponse<List<HolidayDTO>>.Error("Tatiller listesi getirilirken hata oluştu");
+                return ServiceResponse<List<HolidayDTO>>.Error("Tatiller listesi getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<double>> CalculateWorkingDaysAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<double>> CalculateWorkingDaysAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -64,7 +64,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var resp = await GetHolidaysByYearAsync(startDate.Year, cancellationToken);
                 if (!resp.IsSuccess)
                 {
-                    return ApiResponse<double>.Error("Tatil verileri alınırken hata oluştu");
+                    return ServiceResponse<double>.Error("Tatil verileri alınırken hata oluştu");
                 }
 
                 var holidays = resp.Data ?? new List<HolidayDTO>();
@@ -116,12 +116,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     currentDate = currentDate.AddDays(1);
                 }
 
-                return ApiResponse<double>.Success(workingDays, "Net çalışma günü başarıyla hesaplandı");
+                return ServiceResponse<double>.Success(workingDays, "Net çalışma günü başarıyla hesaplandı");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "CalculateWorkingDaysAsync işleminde hata oluştu");
-                return ApiResponse<double>.Error("Net çalışma günü hesaplanırken hata oluştu");
+                return ServiceResponse<double>.Error("Net çalışma günü hesaplanırken hata oluştu");
             }
         }
     }

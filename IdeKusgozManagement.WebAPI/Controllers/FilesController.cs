@@ -10,9 +10,9 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [ApiController]
     public class FilesController(IFileService fileService) : ControllerBase
     {
-        [RequestSizeLimit(50 * 1024 * 1024)]
+        [RequestSizeLimit(100 * 1024 * 1024)]
         [HttpPost("upload")]
-        public async Task<IActionResult> UploadFile([FromForm] List<UploadFileDTO> files, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UploadFile([FromForm] List<UploadFileDTO> files, CancellationToken cancellationToken)
         {
             if (!files.Any())
             {
@@ -24,7 +24,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetFileById(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetFileById(string id, CancellationToken cancellationToken)
         {
             var result = await fileService.GetFileByIdAsync(id, cancellationToken);
             if (!result.IsSuccess || result.Data == null)
@@ -34,8 +34,9 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
             return Ok(result);
         }
+
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFile(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteFile(string id, CancellationToken cancellationToken)
         {
             var result = await fileService.DeleteFileAsync(id, cancellationToken);
             if (!result.IsSuccess)
@@ -45,8 +46,9 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
             return Ok(result);
         }
+
         [HttpGet("by-params")]
-        public async Task<IActionResult> GetFilesByParams([FromQuery] string? userId, [FromQuery] string? documentType, [FromQuery] string? departmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetFilesByParams([FromQuery] string? userId, [FromQuery] string? documentType, [FromQuery] string? departmentId, CancellationToken cancellationToken)
         {
             var result = await fileService.GetFilesByParamsAsync(userId, documentType, departmentId, cancellationToken);
             if (!result.IsSuccess || result.Data == null)
@@ -58,7 +60,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpGet("download/{id}")]
-        public async Task<IActionResult> DownloadFile(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DownloadFile(string id, CancellationToken cancellationToken)
         {
             var result = await fileService.GetFileStreamByIdAsync(id, cancellationToken);
             return result.IsSuccess ? File(result.Data.fileStream, result.Data.contentType, result.Data.originalName) : BadRequest(result);

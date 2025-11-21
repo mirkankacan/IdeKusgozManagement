@@ -11,32 +11,29 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     [ApiController]
     public class DocumentsController(IDocumentService documentService) : ControllerBase
     {
-        [HttpGet("document-types")]
-        public async Task<IActionResult> GetDocumentTypes(CancellationToken cancellationToken = default)
+        [HttpGet("types")]
+        public async Task<IActionResult> GetDocumentTypes(CancellationToken cancellationToken)
         {
             var result = await documentService.GetDocumentTypesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpGet("document-types-by-department/{departmentId}")]
-        public async Task<IActionResult> GetDocumentTypesByDepartment(string departmentId, CancellationToken cancellationToken = default)
+        [HttpGet("{departmentDutyId}/types")]
+        public async Task<IActionResult> GetDocumentTypesByDuty(string departmentDutyId, [FromQuery] string? companyId, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(departmentId))
-            {
-                return BadRequest("Departman ID'si gereklidir");
-            }
-            var result = await documentService.GetDocumentTypesByDepartmentAsync(departmentId, cancellationToken);
+            var result = await documentService.GetDocumentTypesByDutyAsync(departmentDutyId, companyId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpGet("check/by-params")]
-        public async Task<IActionResult> GetUserRequiredDocuments([FromQuery] string departmentId, [FromQuery] string? targetId, CancellationToken cancellationToken = default)
+        [HttpGet("check")]
+        public async Task<IActionResult> GetRequiredDocuments([FromQuery] string departmentId, [FromQuery] string departmentDutyId, [FromQuery] string? companyId, [FromQuery] string? targetId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(departmentId))
-            {
                 return BadRequest("Departman ID'si gereklidir");
-            }
-            var result = await documentService.GetRequiredDocumentsAsync(departmentId, targetId, cancellationToken);
+            if (string.IsNullOrEmpty(departmentDutyId))
+                return BadRequest("Departman görev ID'si gereklidir");
+
+            var result = await documentService.GetRequiredDocumentsAsync(departmentId, departmentDutyId, companyId, targetId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

@@ -102,15 +102,15 @@
                                 <tr>
                                     <th>TARİH</th>
                                     <th>GÜN</th>
-                                    <th style="width: 100px;max-width:100px;">BAŞLAMA<br /> SAATİ</th>
-                                    <th style="width: 100px;max-width:100px;">BIRAKMA<br /> SAATİ</th>
+                                    <th style="width:100px;max-width:100px;">BAŞLAMA<br /> SAATİ</th>
+                                    <th style="width:100px;max-width:100px;">BIRAKMA<br /> SAATİ</th>
                                     <th>PROJE</th>
                                     <th>ÇALIŞILAN<br /> EKİPMAN</th>
                                     <th>ÇALIŞILAN<br /> İL</th>
                                     <th>ÇALIŞILAN<br /> İLÇE</th>
+                                    <th style="width:80px;max-width:80px;">YOL(₺)</th>
                                     <th style="width:120px;max-width:120px;">MASRAF</th>
                                     <th>YEMEK</th>
-                                    <th>YOL</th>
                                     <th>DURUM</th>
                                     <th>İŞLEM</th>
                                 </tr>
@@ -471,16 +471,7 @@
         // ===== PAGE INITIALIZATION =====
         $(document).ready(async function () {
             await initializePage();
-                $.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (settings.type !== 'GET') {
-                        const token = $('input[name="__RequestVerificationToken"]').val();
-                        if (token) {
-                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
-                        }
-                    }
-                }
-            });
+
         });
 
         async function initializePage() {
@@ -889,7 +880,10 @@
                                                                                                                                                                                                             <option value="">İlçe seçin</option>
                                                                                                                                                                                                         </select>
                                                                                                                                                                                                     </td>
-                                                                                                                                                                                    <td>
+                                                                                                                                       <td>
+<input type="number" step="0.01" class="form-control form-control-sm travel-expense-amount"
+data-day="${day}" placeholder="Yol masrafı" value="${record.travelExpenseAmount || ''}" ${disabledAttr}>
+                                                                                                                                                                                                        </td>                                                <td>
                                                                                                                                                                                         <button type="button" class="btn ${isApproved ? 'btn-dark' : 'btn-primary'} expense-modal-btn w-100"
                                                                                                                                                                                                 data-day="${day}" data-bs-toggle="modal" data-bs-target="#expenseModal">
                                                                                                                                                                                             <i class="fas fa-receipt me-1"></i>
@@ -924,12 +918,7 @@
                                                                                                                                                                                                             </div>
                                                                                                                                                                                                         </div>
                                                                                                                                                                                                     </td>
-                                                                                                                                                                                                    <td>
-                                                                                                                                                                                                        <div class="form-check">
-                                                                                                                                                                                                            <input class="form-check-input travel-checkbox" type="checkbox" id="t_${day}" data-day="${day}" ${record.hasTravel ? 'checked' : ''} ${disabledAttr}>
-                                                                                                                                                                                                            <label class="form-check-label" for="t_${day}">Y</label>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                    </td>
+
                                                                                                                                                                                                                     <td>
                                                                                                                                                                                                                         ${statusBadge}
                                                                                                                                                                                                                     </td>
@@ -1085,7 +1074,7 @@
                 const equipmentId = $(this).find('.equipment-select').val();
                 const province = $(this).find('.province-select').val();
                 const district = $(this).find('.district-select').val();
-
+                        const travelExpenseAmount = $(this).find('.travel-expense-amount').val();
                 const dayExpenses = expenseData[day] || [];
                 const expenses = dayExpenses.map(exp => ({
                     id: exp.id,
@@ -1099,7 +1088,7 @@
                 const hasLunch = $(this).find('.meal-checkbox[data-meal="O"]').is(':checked');
                 const hasDinner = $(this).find('.meal-checkbox[data-meal="A"]').is(':checked');
                 const hasNightMeal = $(this).find('.meal-checkbox[data-meal="G"]').is(':checked');
-                const hasTravel = $(this).find('.travel-checkbox').is(':checked');
+
                 const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
                 workRecords.push({
@@ -1117,7 +1106,7 @@
                     HasLunch: hasLunch,
                     HasDinner: hasDinner,
                     HasNightMeal: hasNightMeal,
-                    HasTravel: hasTravel,
+                             TravelExpenseAmount: travelExpenseAmount || "",
                     WorkRecordExpenses: expenses,
                     UserId: selectedUserId
                 });
@@ -1146,9 +1135,7 @@
                     formData.append(`[${index}].HasLunch`, record.HasLunch);
                     formData.append(`[${index}].HasDinner`, record.HasDinner);
                     formData.append(`[${index}].HasNightMeal`, record.HasNightMeal);
-                    formData.append(`[${index}].HasTravel`, record.HasTravel);
-                    formData.append(`[${index}].UserId`, record.UserId);
-
+                    formData.append(`[${index}].TravelExpenseAmount`, record.TravelExpenseAmount);
                     // Expenses için
                     if (record.WorkRecordExpenses && record.WorkRecordExpenses.length > 0) {
                         record.WorkRecordExpenses.forEach((expense, expIndex) => {

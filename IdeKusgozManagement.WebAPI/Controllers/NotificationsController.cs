@@ -23,7 +23,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Kullanıcının okunmamış bildirim sayısını getirir
         /// </summary>
         [HttpGet("unread-count")]
-        public async Task<IActionResult> GetUnreadNotificationCount(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUnreadNotificationCount(CancellationToken cancellationToken)
         {
             var result = await notificationService.GetUnreadNotificationCountAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -33,7 +33,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Bildirimi okundu olarak işaretler
         /// </summary>
         [HttpPut("{notificationId}/mark-as-read")]
-        public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken)
         {
             var result = await notificationService.MarkAsReadAsync(notificationId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -43,7 +43,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Tüm bildirimleri okundu olarak işaretler
         /// </summary>
         [HttpPut("mark-all-as-read")]
-        public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
         {
             var result = await notificationService.MarkAllAsReadAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);

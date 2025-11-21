@@ -15,7 +15,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpGet("indir/{id}")]
-        public async Task<IActionResult> DownloadFile(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DownloadFile(string id, CancellationToken cancellationToken)
         {
             var result = await _fileApiService.DownloadFileAsync(id, cancellationToken);
             if (!result.IsSuccess)
@@ -28,7 +28,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpDelete("{fileId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteFile(string fileId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteFile(string fileId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(fileId))
             {
@@ -40,8 +40,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPost("yukle")]
         [ValidateAntiForgeryToken]
-        [RequestSizeLimit(50 * 1024 * 1024)]
-        public async Task<IActionResult> UploadFile([FromForm] List<UploadFileViewModel> files, CancellationToken cancellationToken = default)
+        [RequestSizeLimit(100 * 1024 * 1024)]
+        public async Task<IActionResult> UploadFile([FromForm] List<UploadFileViewModel> files, CancellationToken cancellationToken)
         {
             if (!files.Any())
             {
@@ -53,15 +53,11 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-
-
         [HttpGet("liste/p")]
-        public async Task<IActionResult> GetFilesByParams([FromQuery] string? userId, [FromQuery] string? documentType, [FromQuery] string? departmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetFilesByParams([FromQuery] string? userId, [FromQuery] string? documentType, [FromQuery] string? departmentId, CancellationToken cancellationToken)
         {
             var result = await _fileApiService.GetFilesByParamsAsync(userId, documentType, departmentId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
-
-
     }
 }

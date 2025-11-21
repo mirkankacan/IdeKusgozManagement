@@ -14,7 +14,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class MessageService(IUnitOfWork unitOfWork, ILogger<MessageService> logger, IHubContext<CommunicationHub> hubContext, IIdentityService identityService, UserManager<ApplicationUser> userManager) : IMessageService
     {
-        private async Task<ApiResponse<MessageDTO>> CreateMessageAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
+        private async Task<ServiceResponse<MessageDTO>> CreateMessageAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -63,16 +63,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 };
 
 
-                return ApiResponse<MessageDTO>.Success(messageDTO, "Mesaj başarıyla gönderildi");
+                return ServiceResponse<MessageDTO>.Success(messageDTO, "Mesaj başarıyla gönderildi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "CreateMessageAsync işleminde hata oluştu");
-                return ApiResponse<MessageDTO>.Error("Mesaj gönderilirken hata oluştu");
+                return ServiceResponse<MessageDTO>.Error("Mesaj gönderilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> DeleteMessageAsync(string messageId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> DeleteMessageAsync(string messageId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -80,22 +80,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (message == null)
                 {
-                    return ApiResponse<bool>.Error("Mesaj bulunamadı");
+                    return ServiceResponse<bool>.Error("Mesaj bulunamadı");
                 }
 
                 unitOfWork.GetRepository<IdtMessage>().Remove(message);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ApiResponse<bool>.Success(true, "Mesaj başarıyla silindi");
+                return ServiceResponse<bool>.Success(true, "Mesaj başarıyla silindi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "DeleteMessageAsync işleminde hata oluştu");
-                return ApiResponse<bool>.Error("Mesaj silinirken hata oluştu");
+                return ServiceResponse<bool>.Error("Mesaj silinirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<PagedResult<MessageDTO>>> GetMessagesAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<PagedResult<MessageDTO>>> GetMessagesAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -173,16 +173,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     TotalCount = messagesCount
                 };
 
-                return ApiResponse<PagedResult<MessageDTO>>.Success(pagedResult, "Mesajlar başarıyla getirildi");
+                return ServiceResponse<PagedResult<MessageDTO>>.Success(pagedResult, "Mesajlar başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetMessagesAsync işleminde hata oluştu");
-                return ApiResponse<PagedResult<MessageDTO>>.Error("Mesajlar getirilirken hata oluştu");
+                return ServiceResponse<PagedResult<MessageDTO>>.Error("Mesajlar getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<MessageDTO>> SendMessageToAllAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<MessageDTO>> SendMessageToAllAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -191,29 +191,29 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     await hubContext.Clients.Group("Messages").SendAsync("NewMessage", response.Data);
                     logger.LogInformation("Mesaj herkese gönderildi. MessageDTO: {MessageDTO}", response.Data);
-                    return ApiResponse<MessageDTO>.Success(response.Data, "Mesaj herkese gönderildi");
+                    return ServiceResponse<MessageDTO>.Success(response.Data, "Mesaj herkese gönderildi");
                 }
                 else
                 {
                     logger.LogWarning("Mesaj oluşturulamadı. Content: {Content}", createMessageDTO.Content);
-                    return ApiResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
+                    return ServiceResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Mesaj herkese gönderilemedi. Content: {Content}", createMessageDTO.Content);
-                return ApiResponse<MessageDTO>.Error("Mesaj herkese gönderilemedi");
+                return ServiceResponse<MessageDTO>.Error("Mesaj herkese gönderilemedi");
             }
         }
 
-        public async Task<ApiResponse<MessageDTO>> SendMessageToRolesAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<MessageDTO>> SendMessageToRolesAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (createMessageDTO.TargetRoles == null || !createMessageDTO.TargetRoles.Any())
                 {
                     logger.LogWarning("TargetRoles boş, mesaj gönderilemedi");
-                    return ApiResponse<MessageDTO>.Error("Roller bulunamadı, mesaj gönderilemedi");
+                    return ServiceResponse<MessageDTO>.Error("Roller bulunamadı, mesaj gönderilemedi");
                 }
 
                 var response = await CreateMessageAsync(createMessageDTO, cancellationToken);
@@ -227,13 +227,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     logger.LogInformation("Mesaj rollere gönderildi. Roles: {RoleNames}, Content: {Content}",
                         string.Join(", ", createMessageDTO.TargetRoles), createMessageDTO.Content);
-                    return ApiResponse<MessageDTO>.Success(response.Data, "Mesaj rollere gönderildi");
+                    return ServiceResponse<MessageDTO>.Success(response.Data, "Mesaj rollere gönderildi");
                 }
                 else
                 {
                     logger.LogWarning("Mesaj oluşturulamadı. Roles: {RoleNames}",
                         string.Join(", ", createMessageDTO.TargetRoles));
-                    return ApiResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
+                    return ServiceResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
                 }
             }
             catch (Exception ex)
@@ -241,11 +241,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "Mesaj rollere gönderilemedi. Roles: {RoleNames}, Content: {Content}",
                     createMessageDTO.TargetRoles != null ? string.Join(", ", createMessageDTO.TargetRoles) : "null",
                     createMessageDTO.Content);
-                return ApiResponse<MessageDTO>.Error("Mesaj rollere gönderilemedi");
+                return ServiceResponse<MessageDTO>.Error("Mesaj rollere gönderilemedi");
             }
         }
 
-        public async Task<ApiResponse<MessageDTO>> SendMessageToSubordinatesAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<MessageDTO>> SendMessageToSubordinatesAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -253,7 +253,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (subordinateIds == null || !subordinateIds.Any())
                 {
                     logger.LogWarning("Kullanıcının altları bulunamadı, mesaj gönderilemedi");
-                    return ApiResponse<MessageDTO>.Error("Kullanıcının altları bulunamadı, mesaj gönderilemedi");
+                    return ServiceResponse<MessageDTO>.Error("Kullanıcının altları bulunamadı, mesaj gönderilemedi");
                 }
 
                 var response = await CreateMessageAsync(createMessageDTO, cancellationToken);
@@ -264,21 +264,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         var groupName = $"User_{userId}";
                         await hubContext.Clients.Group(groupName).SendAsync("NewMessage", response.Data, cancellationToken);
                     }
-                    return ApiResponse<MessageDTO>.Success(response.Data, "Mesaj altlara gönderildi");
+                    return ServiceResponse<MessageDTO>.Success(response.Data, "Mesaj altlara gönderildi");
                 }
                 else
                 {
-                    return ApiResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
+                    return ServiceResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Mesaj altlara gönderilemedi");
-                return ApiResponse<MessageDTO>.Error("Mesaj altlara gönderilemedi");
+                return ServiceResponse<MessageDTO>.Error("Mesaj altlara gönderilemedi");
             }
         }
 
-        public async Task<ApiResponse<MessageDTO>> SendMessageToSuperiorsAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<MessageDTO>> SendMessageToSuperiorsAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -286,7 +286,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (superiorIds == null || !superiorIds.Any())
                 {
                     logger.LogWarning("Kullanıcının üstleri bulunamadı, mesaj gönderilemedi");
-                    return ApiResponse<MessageDTO>.Error("Kullanıcının üstleri bulunamadı, mesaj gönderilemedi");
+                    return ServiceResponse<MessageDTO>.Error("Kullanıcının üstleri bulunamadı, mesaj gönderilemedi");
                 }
 
                 var response = await CreateMessageAsync(createMessageDTO, cancellationToken);
@@ -297,28 +297,28 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         var groupName = $"User_{userId}";
                         await hubContext.Clients.Group(groupName).SendAsync("NewMessage", response.Data, cancellationToken);
                     }
-                    return ApiResponse<MessageDTO>.Success(response.Data, "Mesaj üstlere gönderildi");
+                    return ServiceResponse<MessageDTO>.Success(response.Data, "Mesaj üstlere gönderildi");
                 }
                 else
                 {
-                    return ApiResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
+                    return ServiceResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Mesaj üstlere gönderilemedi");
-                return ApiResponse<MessageDTO>.Error("Mesaj üstlere gönderilemedi");
+                return ServiceResponse<MessageDTO>.Error("Mesaj üstlere gönderilemedi");
             }
         }
 
-        public async Task<ApiResponse<MessageDTO>> SendMessageToUsersAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<MessageDTO>> SendMessageToUsersAsync(CreateMessageDTO createMessageDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (createMessageDTO.TargetUsers == null || !createMessageDTO.TargetUsers.Any())
                 {
                     logger.LogWarning("Gönderilecek kullanıcılar bulunamadı, mesaj gönderilemedi");
-                    return ApiResponse<MessageDTO>.Error("Gönderilecek kullanıcılar bulunamadı, mesaj gönderilemedi");
+                    return ServiceResponse<MessageDTO>.Error("Gönderilecek kullanıcılar bulunamadı, mesaj gönderilemedi");
                 }
 
                 var response = await CreateMessageAsync(createMessageDTO, cancellationToken);
@@ -332,13 +332,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     logger.LogInformation("Mesaj kullanıcılara gönderildi. TargetUsers: {UserIds}, Content: {Content}",
                         string.Join(", ", createMessageDTO.TargetUsers), createMessageDTO.Content);
-                    return ApiResponse<MessageDTO>.Success(response.Data, "Mesaj kullanıcılara gönderildi");
+                    return ServiceResponse<MessageDTO>.Success(response.Data, "Mesaj kullanıcılara gönderildi");
                 }
                 else
                 {
                     logger.LogWarning("Mesaj oluşturulamadı. TargetUsers: {message: UserIds}",
                         string.Join(", ", createMessageDTO.TargetUsers));
-                    return ApiResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
+                    return ServiceResponse<MessageDTO>.Error("Mesaj oluşturulamadı");
                 }
             }
             catch (Exception ex)
@@ -346,7 +346,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "Mesaj kullanıcılara gönderilemedi. TargetUsers: {UserIds}, Content: {Content}",
                     createMessageDTO.TargetUsers != null ? string.Join(", ", createMessageDTO.TargetUsers) : "null",
                     createMessageDTO.Content);
-                return ApiResponse<MessageDTO>.Error("Mesaj kullanıcılara gönderilemedi");
+                return ServiceResponse<MessageDTO>.Error("Mesaj kullanıcılara gönderilemedi");
             }
         }
     }

@@ -24,7 +24,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("liste")]
-        public async Task<IActionResult> GetProjects(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetProjects(CancellationToken cancellationToken)
         {
             var response = await _projectApiService.GetProjectsAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -32,7 +32,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("aktif-liste")]
-        public async Task<IActionResult> GetActiveProjects(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveProjects(CancellationToken cancellationToken)
         {
             var response = await _projectApiService.GetActiveProjectsAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -40,7 +40,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("{projectId}")]
-        public async Task<IActionResult> GetProjectById(string projectId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetProjectById(string projectId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(projectId))
             {
@@ -54,7 +54,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPost("")]
-        public async Task<IActionResult> CreateProject([FromBody] CreateProjectViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateProject([FromBody] CreateProjectViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -68,7 +68,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{projectId}")]
-        public async Task<IActionResult> UpdateProject(string projectId, [FromBody] UpdateProjectViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateProject(string projectId, [FromBody] UpdateProjectViewModel model, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(projectId))
             {
@@ -87,7 +87,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpDelete("{projectId}")]
-        public async Task<IActionResult> DeleteProject(string projectId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteProject(string projectId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(projectId))
             {
@@ -101,7 +101,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{projectId}/aktif-et")]
-        public async Task<IActionResult> EnableProject(string projectId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> EnableProject(string projectId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(projectId))
             {
@@ -115,7 +115,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{projectId}/pasif-et")]
-        public async Task<IActionResult> DisableProject(string projectId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DisableProject(string projectId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(projectId))
             {

@@ -6,6 +6,6 @@ namespace IdeKusgozManagement.Application.Contracts.Services
 {
     public interface IAIService
     {
-        Task<ApiResponse<AIDateResponse>> AnalyzeDocumentDateAsync(IFormFile file, string documentTypeName, CancellationToken cancellationToken = default);
+        Task<ServiceResponse<AIDateResponse>> AnalyzeDocumentDateAsync(IFormFile file, string documentTypeName, CancellationToken cancellationToken = default);
     }
 }

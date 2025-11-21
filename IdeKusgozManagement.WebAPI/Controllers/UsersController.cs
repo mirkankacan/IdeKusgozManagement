@@ -16,7 +16,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         [RoleFilter("Admin", "Yönetici")]
         [HttpGet]
-        public async Task<IActionResult> GetUsers(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
         {
             var result = await userService.GetUsersAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -27,7 +27,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         [RoleFilter("Admin", "Yönetici", "Şef")]
         [HttpGet("by-department/{departmentId}")]
-        public async Task<IActionResult> GetUsersByDepartment(string departmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUsersByDepartment(string departmentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(departmentId))
             {
@@ -54,7 +54,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="userId">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici", "Şef")]
         [HttpGet("subordiantes")]
-        public async Task<IActionResult> GetSubordinatesByUserId([FromQuery] string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetSubordinatesByUserId([FromQuery] string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -70,7 +70,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="userId">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici")]
         [HttpGet("{userId}")]
-        public async Task<IActionResult> GetUserById(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUserById(string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -84,7 +84,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Oturumda olan kullanıcının kendi bilgilerini getirir
         /// </summary>
         [HttpGet("my-user")]
-        public async Task<IActionResult> GetMyUser(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetMyUser(CancellationToken cancellationToken)
         {
             var currentUserId = identityService.GetUserId();
             if (string.IsNullOrEmpty(currentUserId))
@@ -101,7 +101,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="createUserDTO">Kullanıcı bilgileri</param>
         [RoleFilter("Admin", "Yönetici")]
         [HttpPost]
-        public async Task<IActionResult> CreateUser([FromBody] CreateUserDTO createUserDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDTO createUserDTO, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -124,7 +124,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="userId">Kullanıcı ID'si</param>
         /// <param name="updateUserDTO">Güncellenecek bilgiler</param>
         [HttpPut("{userId}")]
-        public async Task<IActionResult> UpdateUser(string userId, [FromBody] UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateUser(string userId, [FromBody] UpdateUserDTO updateUserDTO, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -233,7 +233,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="userId">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici", "Şef")]
         [HttpGet("{userId}/annual-leave")]
-        public async Task<IActionResult> GetAnnualLeaveByUser(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAnnualLeaveByUser(string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -248,7 +248,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Oturumdaki kullanıcının kalan izin günleri ile ilgili bilgileri getirir
         /// </summary>
         [HttpGet("my-annual-leave")]
-        public async Task<IActionResult> GetMyAnnualLeave(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetMyAnnualLeave(CancellationToken cancellationToken)
         {
             var userId = identityService.GetUserId();
             if (string.IsNullOrEmpty(userId))

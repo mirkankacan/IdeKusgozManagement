@@ -18,7 +18,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         [HttpGet]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetLeaveRequests(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetLeaveRequests(CancellationToken cancellationToken)
         {
             var result = await leaveRequestService.GetLeaveRequestsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -30,7 +30,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="userId">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici", "Şef")]
         [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetLeaveRequestsByUserId(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetLeaveRequestsByUserId(string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -44,7 +44,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Oturumda olan kullanıcının kendi izin isteklerini getirir
         /// </summary>
         [HttpGet("my-leave-requests")]
-        public async Task<IActionResult> GetMyLeaveRequests(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetMyLeaveRequests(CancellationToken cancellationToken)
         {
             var userId = identityService.GetUserId();
             if (string.IsNullOrEmpty(userId))
@@ -63,7 +63,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
         [HttpGet("status/{status}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetLeaveRequestsByStatus(LeaveRequestStatus status, [FromQuery] string? userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetLeaveRequestsByStatus(LeaveRequestStatus status, [FromQuery] string? userId, CancellationToken cancellationToken)
         {
             var result = await leaveRequestService.GetLeaveRequestsByStatusAsync(status, userId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -75,7 +75,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="leaveRequestId">İzin talebi ID'si</param>
         [HttpGet("{leaveRequestId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetLeaveRequestById(string leaveRequestId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetLeaveRequestById(string leaveRequestId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(leaveRequestId))
             {
@@ -91,7 +91,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="createLeaveRequestDTO">İzin talebi bilgileri</param>
         [HttpPost]
-        public async Task<IActionResult> CreateLeaveRequest([FromForm] CreateLeaveRequestDTO createLeaveRequestDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateLeaveRequest([FromForm] CreateLeaveRequestDTO createLeaveRequestDTO, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -109,7 +109,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="leaveRequestId">İzin talebi ID'si</param>
         /// <param name="updateLeaveRequestDTO">İzin talebi bilgileri</param>
         [HttpPut("{leaveRequestId}")]
-        public async Task<IActionResult> UpdateLeaveRequest(string leaveRequestId, [FromForm] UpdateLeaveRequestDTO updateLeaveRequestDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateLeaveRequest(string leaveRequestId, [FromForm] UpdateLeaveRequestDTO updateLeaveRequestDTO, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(leaveRequestId))
             {
@@ -130,7 +130,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="leaveRequestId">İzin talebi ID'si</param>
         [HttpDelete("{leaveRequestId}")]
-        public async Task<IActionResult> DeleteLeaveRequest(string leaveRequestId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteLeaveRequest(string leaveRequestId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(leaveRequestId))
             {
@@ -147,7 +147,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="leaveRequestId">İzin talebi ID'si</param>
         [HttpPut("{leaveRequestId}/approve")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> ApproveLeaveRequest(string leaveRequestId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> ApproveLeaveRequest(string leaveRequestId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(leaveRequestId))
             {
@@ -163,7 +163,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="leaveRequestId">İzin talebi ID'si</param>
         [HttpPut("{leaveRequestId}/reject")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> RejectLeaveRequest(string leaveRequestId, [FromQuery] string rejectReason, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RejectLeaveRequest(string leaveRequestId, [FromQuery] string rejectReason, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(leaveRequestId))
             {

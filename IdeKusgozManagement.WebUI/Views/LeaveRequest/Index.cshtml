@@ -171,16 +171,7 @@
 
         $(document).ready(async function () {
             await initializeDataTable();
-               $.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (settings.type !== 'GET') {
-                        const token = $('input[name="__RequestVerificationToken"]').val();
-                        if (token) {
-                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
-                        }
-                    }
-                }
-            });
+
             $(document).on('click', '#btnRejectLeaveRequest', async function () {
                 await rejectLeaveRequest();
             });

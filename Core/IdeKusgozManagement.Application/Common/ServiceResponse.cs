@@ -1,15 +1,15 @@
 ﻿namespace IdeKusgozManagement.Application.Common
 {
-    public class ApiResponse<T>
+    public class ServiceResponse<T>
     {
         public bool IsSuccess { get; set; }
         public string Message { get; set; }
         public T Data { get; set; }
         public List<string> Errors { get; set; } = new();
 
-        public static ApiResponse<T> Success(T data, string message = "İşlem başarılı")
+        public static ServiceResponse<T> Success(T data, string message = "İşlem başarılı")
         {
-            return new ApiResponse<T>
+            return new ServiceResponse<T>
             {
                 IsSuccess = true,
                 Message = message,
@@ -17,9 +17,9 @@
             };
         }
 
-        public static ApiResponse<T> Error(string message, List<string> errors = null)
+        public static ServiceResponse<T> Error(string message, List<string> errors = null)
         {
-            return new ApiResponse<T>
+            return new ServiceResponse<T>
             {
                 IsSuccess = false,
                 Message = message,
@@ -27,9 +27,9 @@
             };
         }
 
-        public static ApiResponse<T> Error(List<string> errors)
+        public static ServiceResponse<T> Error(List<string> errors)
         {
-            return new ApiResponse<T>
+            return new ServiceResponse<T>
             {
                 IsSuccess = false,
                 Message = "İşlem başarısız",

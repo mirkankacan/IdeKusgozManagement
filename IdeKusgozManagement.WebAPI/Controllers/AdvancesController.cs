@@ -14,7 +14,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     {
         [RoleFilter("Admin", "Yönetici", "Şef")]
         [HttpGet]
-        public async Task<IActionResult> GetAdvances(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdvances(CancellationToken cancellationToken)
         {
             var result = await advanceService.GetAdvancesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -22,14 +22,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
         [RoleFilter("Admin", "Yönetici")]
         [HttpGet("chief-processed")]
-        public async Task<IActionResult> GetChiefProcessedAdvances(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetChiefProcessedAdvances(CancellationToken cancellationToken)
         {
             var result = await advanceService.GetChiefProcessedAdvancesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         [HttpGet("my-advances")]
-        public async Task<IActionResult> GetAdvancesByUser(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdvancesByUser(CancellationToken cancellationToken)
         {
             var userId = identityService.GetUserId();
             if (string.IsNullOrEmpty(userId))
@@ -41,7 +41,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetAdvancesByUser(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdvancesByUser(string userId, CancellationToken cancellationToken)
         {
             var result = await advanceService.GetAdvancesByUserIdAsync(userId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -73,7 +73,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpGet("{advanceId}")]
-        public async Task<IActionResult> GetAdvanceById(string advanceId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdvanceById(string advanceId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {
@@ -85,7 +85,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAdvance([FromBody] CreateAdvanceDTO createAdvanceDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateAdvance([FromBody] CreateAdvanceDTO createAdvanceDTO, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -98,7 +98,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
         [HttpPut("{advanceId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> UpdateAdvance(string advanceId, [FromBody] UpdateAdvanceDTO updateAdvanceDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateAdvance(string advanceId, [FromBody] UpdateAdvanceDTO updateAdvanceDTO, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {
@@ -116,7 +116,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
         [HttpDelete("{advanceId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> DeleteAdvance(string advanceId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteAdvance(string advanceId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {

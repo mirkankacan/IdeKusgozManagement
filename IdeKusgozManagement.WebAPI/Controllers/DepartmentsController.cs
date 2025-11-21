@@ -12,28 +12,24 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class DepartmentsController(IDepartmentService departmentService) : ControllerBase
     {
         [HttpGet]
-        public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken)
         {
             var result = await departmentService.GetDepartmentsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpGet("relations-by-department/{departmentId}")]
-        public async Task<IActionResult> GetDepartmentDocumentTypeRelationsByDepartment(string departmentId, CancellationToken cancellationToken = default)
+        [HttpGet("{departmentId}/duties")]
+        public async Task<IActionResult> GetDepartmentDutiesByDepartment(string departmentId, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(departmentId))
-            {
-                return BadRequest("Departman ID'si gereklidir");
-            }
-            var result = await departmentService.GetDepartmentDocumentTypeRelationsByDepartmentAsync(departmentId, cancellationToken);
+            var result = await departmentService.GetDepartmentDutiesByDepartmentAsync(departmentId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpGet("relations")]
-        public async Task<IActionResult> GetDepartmentDocumentTypeRelations(CancellationToken cancellationToken = default)
-        {
-            var result = await departmentService.GetDepartmentDocumentTypeRelationsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
+        //[HttpGet("duty/document/relations")]
+        //public async Task<IActionResult> GetDepartmentDutyDocumentRelations([FromQuery] string? departmentId, [FromQuery] string? departmentDutyId, [FromQuery] string? companyId, CancellationToken cancellationToken )
+        //{
+        //    var result = await departmentService.GetDepartmentDutyDocumentRelationsAsync(departmentId, departmentDutyId, companyId, cancellationToken);
+        //    return result.IsSuccess ? Ok(result) : BadRequest(result);
+        //}
     }
 }

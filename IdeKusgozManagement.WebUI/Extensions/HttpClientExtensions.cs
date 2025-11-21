@@ -35,6 +35,9 @@ namespace IdeKusgozManagement.WebUI.Extensions
             services.AddHttpClient<IDocumentApiService, DocumentApiService>(client => ConfigureClient(client, baseUrl))
                     .AddHttpMessageHandler<JwtTokenHandler>();
 
+            services.AddHttpClient<ICompanyApiService, CompanyApiService>(client => ConfigureClient(client, baseUrl))
+                  .AddHttpMessageHandler<JwtTokenHandler>();
+
             services.AddHttpClient<IMessageApiService, MessageApiService>(client => ConfigureClient(client, baseUrl))
                     .AddHttpMessageHandler<JwtTokenHandler>();
 

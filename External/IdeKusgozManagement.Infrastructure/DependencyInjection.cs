@@ -50,6 +50,7 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IDepartmentService, DepartmentService>();
             services.AddScoped<IDocumentService, DocumentService>();
+            services.AddScoped<ICompanyService, CompanyService>();
             services.AddScoped<IAIService, OpenAIService>();
             services.AddSingleton<ChatClient>(serviceProvider =>
             {

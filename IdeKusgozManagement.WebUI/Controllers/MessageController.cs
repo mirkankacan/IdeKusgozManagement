@@ -26,7 +26,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost]
-        public async Task<IActionResult> CreateMessage([FromBody] CreateMessageViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateMessage([FromBody] CreateMessageViewModel model, CancellationToken cancellationToken)
         {
             var response = await _messageApiService.CreateMessageAsync(model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -35,7 +35,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpDelete("{messageId}")]
-        public async Task<IActionResult> DeleteMessage(string messageId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteMessage(string messageId, CancellationToken cancellationToken)
         {
             var response = await _messageApiService.DeleteMessageAsync(messageId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);

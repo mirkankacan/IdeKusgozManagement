@@ -17,7 +17,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="date">Tarih</param>
 
         [HttpGet("my-records/date/{date:datetime}")]
-        public async Task<IActionResult> GetMyWorkRecordsByDate(DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetMyWorkRecordsByDate(DateTime date, CancellationToken cancellationToken)
         {
             var currentUserId = identityService.GetUserId();
             if (string.IsNullOrEmpty(currentUserId))
@@ -36,7 +36,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="userId">Kullanıcı ID'si</param>
         [HttpGet("user/{userId}/date/{date:datetime}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetWorkRecordsByDateAndUser(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetWorkRecordsByDateAndUser(string userId, DateTime date, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -51,7 +51,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="createWorkRecordDTOs">Puantaj kaydı listesi</param>
         [HttpPost("batch-create-modify")]
-        public async Task<IActionResult> BatchCreateOrModifyWorkRecords([FromForm] List<CreateOrModifyWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchCreateOrModifyWorkRecords([FromForm] List<CreateOrModifyWorkRecordDTO> createWorkRecordDTOs, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -64,7 +64,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
             var result = await workRecordService.BatchCreateOrModifyWorkRecordsAsync(createWorkRecordDTOs, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
-
         }
 
         /// <summary>
@@ -74,7 +73,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="updateWorkRecordDTO">Güncellenecek bilgiler</param>
         [HttpPut("batch-update/user/{userId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> BatchUpdateWorkRecordByUser(string userId, [FromForm] List<CreateOrModifyWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchUpdateWorkRecordByUser(string userId, [FromForm] List<CreateOrModifyWorkRecordDTO> updateWorkRecordDTO, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -87,7 +86,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
             var result = await workRecordService.BatchUpdateWorkRecordsByUserIdAsync(userId, updateWorkRecordDTO, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
-
         }
 
         /// <summary>
@@ -97,7 +95,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="date">Tarih</param>
         [HttpPut("batch-approve/user/{userId}/date/{date:datetime}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> BatchApproveWorkRecordByUserAndDate(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchApproveWorkRecordByUserAndDate(string userId, DateTime date, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -105,7 +103,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
             var result = await workRecordService.BatchApproveWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
-
         }
 
         /// <summary>
@@ -115,7 +112,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="date">Tarih</param>
         [HttpPut("batch-reject/user/{userId}/date/{date:datetime}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> BatchRejectWorkRecordByUserAndDate(string userId, DateTime date, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchRejectWorkRecordByUserAndDate(string userId, DateTime date, [FromQuery] string? rejectReason, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -123,7 +120,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
             var result = await workRecordService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, rejectReason, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
-
         }
 
         /// <summary>
@@ -132,7 +128,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="id">Puantaj ID'si</param>
         [HttpPut("{id}/reject")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> RejectWorkRecordById(string id, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RejectWorkRecordById(string id, [FromQuery] string? rejectReason, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -140,7 +136,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
             var result = await workRecordService.RejectWorkRecordByIdAsync(id, rejectReason, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
-
         }
 
         /// <summary>
@@ -149,7 +144,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="id">Puantaj ID'si</param>
         [HttpPut("{id}/approve")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> ApproveWorkRecordById(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> ApproveWorkRecordById(string id, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -157,7 +152,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
             var result = await workRecordService.ApproveWorkRecordByIdAsync(id, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
-
         }
     }
 }

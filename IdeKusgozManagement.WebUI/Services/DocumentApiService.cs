@@ -18,7 +18,7 @@ namespace IdeKusgozManagement.WebUI.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/documents/document-types", cancellationToken);
+                var response = await _httpClient.GetAsync("api/documents/types", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -36,11 +36,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<DocumentTypeViewModel>>> GetDocumentTypesByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<DocumentTypeViewModel>>> GetDocumentTypesByDutyAsync(string departmentDutyId, string? companyId, CancellationToken cancellationToken = default)
         {
             try
             {
-                HttpResponseMessage? response = await _httpClient.GetAsync($"api/documents/document-types-by-department/{departmentId}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/documents/{departmentDutyId}/types?companyId={companyId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -58,24 +58,25 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<List<UserRequiredDocumentViewModel>>> GetRequiredDocumentsAsync(string departmentId, string? targetId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<RequiredDocumentViewModel>>> GetRequiredDocumentsAsync(string departmentId, string departmentDutyId, string? companyId, string? targetId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/documents/check/by-params?departmentId={departmentId}&targetId={targetId}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/documents/check?departmentId={departmentId}&departmentDutyId={departmentDutyId}&companyId={companyId}&targetId={targetId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<List<UserRequiredDocumentViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<List<UserRequiredDocumentViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<RequiredDocumentViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<RequiredDocumentViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
                 }
 
-                return new ApiResponse<List<UserRequiredDocumentViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<RequiredDocumentViewModel>>>(content);
+                return errorResponse ?? new ApiResponse<IEnumerable<RequiredDocumentViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<List<UserRequiredDocumentViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+                return new ApiResponse<IEnumerable<RequiredDocumentViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
     }

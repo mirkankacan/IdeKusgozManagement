@@ -5,12 +5,10 @@ namespace IdeKusgozManagement.Application.Contracts.Services
 {
     public interface IDepartmentService
     {
-        Task<ApiResponse<IEnumerable<DepartmentDTO>>> GetDepartmentsAsync(CancellationToken cancellationToken = default);
+        Task<ServiceResponse<IEnumerable<DepartmentDTO>>> GetDepartmentsAsync(CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>> GetDepartmentDocumentTypeRelationsAsync(CancellationToken cancellationToken = default);
+        Task<ServiceResponse<IEnumerable<DepartmentDutyDTO>>> GetDepartmentDutiesByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default);
 
-        // Koşullular
-
-        Task<ApiResponse<IEnumerable<DepartmentDocumentTypeDTO>>> GetDepartmentDocumentTypeRelationsByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default);
+        //Task<ServiceResponse<IEnumerable<DepartmentDutyDocumentRelationDTO>>> GetDepartmentDutyDocumentRelationsAsync(string? departmentId, string? departmentDutyId, string? companyId, CancellationToken cancellationToken = default);
     }
 }

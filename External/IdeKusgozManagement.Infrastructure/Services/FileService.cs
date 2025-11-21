@@ -16,14 +16,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
     {
         private readonly PhysicalFileProvider _physicalFileProvider = (PhysicalFileProvider)fileProvider;
 
-        public async Task<ApiResponse<List<FileDTO>>> UploadFileAsync(List<UploadFileDTO> files, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<List<FileDTO>>> UploadFileAsync(List<UploadFileDTO> files, CancellationToken cancellationToken = default)
         {
             try
             {
                 var wwwrootPath = _physicalFileProvider.Root;
                 if (string.IsNullOrEmpty(wwwrootPath))
                 {
-                    return ApiResponse<List<FileDTO>>.Error("wwwroot klasörü bulunamadı");
+                    return ServiceResponse<List<FileDTO>>.Error("wwwroot klasörü bulunamadı");
                 }
 
                 var dateFolder = DateTime.Now.ToString("dd-MM-yyyy");
@@ -51,7 +51,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtFile>().AddRangeAsync(newFiles, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ApiResponse<List<FileDTO>>.Success(uploadedFiles);
+                return ServiceResponse<List<FileDTO>>.Success(uploadedFiles);
             }
             catch (Exception ex)
             {
@@ -145,11 +145,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 Name = newFileName,
                 Path = relativePath,
                 OriginalName = file.FormFile.FileName,
-                TargetUserId = file.TargetUserId,
+                DocumentTypeId = file.DocumentTypeId!,
+                TargetDepartmentId = file.TargetDepartmentId,
                 TargetProjectId = file.TargetProjectId,
                 TargetEquipmentId = file.TargetEquipmentId,
-                DocumentTypeId = file.DocumentTypeId!,
-                DepartmentId = file.DepartmentId ?? null,
+                TargetUserId = file.TargetUserId,
+                TargetCompanyId = file.TargetCompanyId,
+                TargetDepartmentDutyId = file.TargetDepartmentDutyId,
                 StartDate = startDate,
                 EndDate = endDate,
             };
@@ -159,11 +161,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 Id = newFile.Id,
                 Name = newFile.Name,
                 OriginalName = newFile.OriginalName,
-                DepartmentId = newFile.DepartmentId,
-                DocumentTypeId = newFile.DocumentTypeId,
-                TargetUserId = newFile.TargetUserId,
-                TargetEquipmentId = newFile.TargetEquipmentId,
-                TargetProjectId = newFile.TargetProjectId,
+                DocumentTypeId = file.DocumentTypeId,
+                TargetDepartmentId = file.TargetDepartmentId,
+                TargetProjectId = file.TargetProjectId,
+                TargetEquipmentId = file.TargetEquipmentId,
+                TargetUserId = file.TargetUserId,
+                TargetCompanyId = file.TargetCompanyId,
+                TargetDepartmentDutyId = file.TargetDepartmentDutyId,
                 StartDate = newFile.StartDate,
                 EndDate = newFile.EndDate,
                 CreatedDate = newFile.CreatedDate
@@ -172,7 +176,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return (newFile, fileDTO);
         }
 
-        public async Task<ApiResponse<bool>> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -180,7 +184,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (file == null)
                 {
                     logger.LogWarning("Dosya kaydı bulunamadı: {FileId}", fileId);
-                    return ApiResponse<bool>.Error("Dosya kaydı bulunamadı");
+                    return ServiceResponse<bool>.Error("Dosya kaydı bulunamadı");
                 }
                 var fullPath = Path.Combine(_physicalFileProvider.Root, file.Path.TrimStart('/'));
 
@@ -191,26 +195,26 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     await unitOfWork.SaveChangesAsync(cancellationToken);
 
                     logger.LogInformation("Dosya silindi: {FileId}", fileId);
-                    return ApiResponse<bool>.Success(true, "Dosya silindi");
+                    return ServiceResponse<bool>.Success(true, "Dosya silindi");
                 }
 
                 logger.LogWarning("Silinecek dosya bulunamadı: {FileId}", fileId);
-                return ApiResponse<bool>.Error("Dosya bulunamadı");
+                return ServiceResponse<bool>.Error("Dosya bulunamadı");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Dosya silinemedi: {FileId}", fileId);
-                return ApiResponse<bool>.Error("Dosya silinemedi");
+                return ServiceResponse<bool>.Error("Dosya silinemedi");
             }
         }
 
-        public async Task<ApiResponse<FileDTO>> GetFileByIdAsync(string fileId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<FileDTO>> GetFileByIdAsync(string fileId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var file = await unitOfWork.GetRepository<IdtFile>()
                     .WhereAsNoTracking(x => x.Id == fileId)
-                    .Include(x => x.Department)
+                    .Include(x => x.TargetDepartment)
                     .Include(x => x.DocumentType)
                     .Include(x => x.TargetUser)
                     .FirstOrDefaultAsync(cancellationToken);
@@ -218,7 +222,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (file == null)
                 {
                     logger.LogWarning("Dosya kaydı bulunamadı: {FileId}", fileId);
-                    return ApiResponse<FileDTO>.Success(new FileDTO(), "Dosya kaydı bulunamadı");
+                    return ServiceResponse<FileDTO>.Success(new FileDTO(), "Dosya kaydı bulunamadı");
                 }
 
                 var fileDTO = new FileDTO
@@ -226,31 +230,35 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     Id = file.Id,
                     Name = file.Name,
                     OriginalName = file.OriginalName,
-                    DepartmentId = file.DepartmentId,
                     DocumentTypeId = file.DocumentTypeId,
-                    TargetUserId = file.TargetUserId,
-                    TargetEquipmentId = file.TargetEquipmentId,
+                    TargetDepartmentId = file.TargetDepartmentId,
                     TargetProjectId = file.TargetProjectId,
-                    TargetUserName = file.TargetUser?.Name + " " + file.TargetUser?.Surname,
-                    TargetEquipmentName = file.TargetEquipment?.Name,
+                    TargetEquipmentId = file.TargetEquipmentId,
+                    TargetUserId = file.TargetUserId,
+                    TargetCompanyId = file.TargetCompanyId,
+                    TargetDepartmentDutyId = file.TargetDepartmentDutyId,
+                    TargetUserFullName = file.TargetUser?.Name + " " + file.TargetUser?.Surname,
                     TargetProjectName = file.TargetProject?.Name,
-                    DocumentTypeName = file.DocumentType.Name,
-                    DepartmentName = file.Department?.Name,
+                    TargetEquipmentName = file.TargetEquipment?.Name,
+                    DocumentTypeName = file.DocumentType?.Name,
+                    TargetDepartmentName = file.TargetDepartment?.Name,
+                    TargetCompanyName = file.TargetCompany?.Name,
+                    TargetDepartmentDutyName = file.TargetDepartmentDuty?.Name,
                     EndDate = file.EndDate,
                     StartDate = file.StartDate,
                     CreatedDate = file.CreatedDate
                 };
 
-                return ApiResponse<FileDTO>.Success(fileDTO);
+                return ServiceResponse<FileDTO>.Success(fileDTO);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Dosya okunamadı: {FileId}", fileId);
-                return ApiResponse<FileDTO>.Error("Dosya okunamadı");
+                return ServiceResponse<FileDTO>.Error("Dosya okunamadı");
             }
         }
 
-        public async Task<ApiResponse<(FileStream fileStream, string contentType, string originalName)>> GetFileStreamByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<(FileStream fileStream, string contentType, string originalName)>> GetFileStreamByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -261,7 +269,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (file == null)
                 {
                     logger.LogWarning("Dosya bulunamadı. FileId: {FileId}", id);
-                    return ApiResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya bulunamadı");
+                    return ServiceResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya bulunamadı");
                 }
 
                 var fullPath = Path.Combine(_physicalFileProvider.Root, file.Path.TrimStart('/'));
@@ -269,29 +277,29 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!File.Exists(fullPath))
                 {
                     logger.LogWarning("Fiziksel dosya bulunamadı. FileId: {FileId}, Path: {Path}", id, fullPath);
-                    return ApiResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya yolu bulunamadı");
+                    return ServiceResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya yolu bulunamadı");
                 }
 
                 var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
                 var extension = Path.GetExtension(file.OriginalName).ToLowerInvariant();
                 var contentType = FileHelper.GetContentType(extension);
-                return ApiResponse<(FileStream fileStream, string contentType, string originalName)>.Success((fileStream, contentType, file.OriginalName), "Dosya kaydı bulunamadı");
+                return ServiceResponse<(FileStream fileStream, string contentType, string originalName)>.Success((fileStream, contentType, file.OriginalName), "Dosya kaydı bulunamadı");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Dosya stream'i okunamadı. FileId: {FileId}", id);
-                return ApiResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya stream'i okunamadı");
+                return ServiceResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya stream'i okunamadı");
             }
         }
 
-        public async Task<ApiResponse<List<FileDTO>>> GetFilesByParamsAsync(string? userId, string? documentType, string? departmentId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<List<FileDTO>>> GetFilesByParamsAsync(string? userId, string? documentType, string? departmentId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var query = unitOfWork.GetRepository<IdtFile>().WhereAsNoTracking(x => x.Id != null);
                 query = query.Include(x => x.TargetUser)
                                    .Include(x => x.DocumentType)
-                                   .Include(x => x.Department);
+                                   .Include(x => x.TargetDepartment);
                 if (!string.IsNullOrWhiteSpace(userId))
                     query = query.Where(x => x.TargetUserId == userId);
 
@@ -299,13 +307,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     query = query.Where(x => x.DocumentTypeId == documentType);
 
                 if (!string.IsNullOrWhiteSpace(departmentId))
-                    query = query.Where(x => x.DepartmentId == departmentId);
+                    query = query.Where(x => x.TargetDepartmentId == departmentId);
 
                 var files = await query.ToListAsync(cancellationToken);
 
                 if (!files.Any())
                 {
-                    return ApiResponse<List<FileDTO>>.Success(new List<FileDTO>(), "Dosya kaydı bulunamadı");
+                    return ServiceResponse<List<FileDTO>>.Success(new List<FileDTO>(), "Dosya kaydı bulunamadı");
                 }
 
                 var fileDTOs = new List<FileDTO>();
@@ -317,16 +325,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         Id = file.Id,
                         Name = file.Name,
                         OriginalName = file.OriginalName,
-                        DepartmentId = file.DepartmentId,
-                        DocumentTypeId = file.DocumentTypeId,
-                        TargetUserId = file.TargetUserId,
-                        TargetEquipmentId = file.TargetEquipmentId,
+                        DocumentTypeId = file.DocumentTypeId!,
+                        TargetDepartmentId = file.TargetDepartmentId,
                         TargetProjectId = file.TargetProjectId,
-                        TargetUserName = file.TargetUser?.Name + " " + file.TargetUser?.Surname,
-                        TargetEquipmentName = file.TargetEquipment?.Name,
+                        TargetEquipmentId = file.TargetEquipmentId,
+                        TargetUserId = file.TargetUserId,
+                        TargetCompanyId = file.TargetCompanyId,
+                        TargetDepartmentDutyId = file.TargetDepartmentDutyId,
+                        TargetUserFullName = file.TargetUser?.Name + " " + file.TargetUser?.Surname,
                         TargetProjectName = file.TargetProject?.Name,
-                        DocumentTypeName = file.DocumentType.Name,
-                        DepartmentName = file.Department?.Name,
+                        TargetEquipmentName = file.TargetEquipment?.Name,
+                        DocumentTypeName = file.DocumentType?.Name,
+                        TargetDepartmentName = file.TargetDepartment?.Name,
+                        TargetCompanyName = file.TargetCompany?.Name,
+                        TargetDepartmentDutyName = file.TargetDepartmentDuty?.Name,
                         EndDate = file.EndDate,
                         StartDate = file.StartDate,
                         CreatedDate = file.CreatedDate
@@ -335,13 +347,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     fileDTOs.Add(fileDTO);
                 }
 
-                return ApiResponse<List<FileDTO>>.Success(fileDTOs);
+                return ServiceResponse<List<FileDTO>>.Success(fileDTOs);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Dosyalar okunamadı. UserId: {UserId}, DocumentType: {DocumentType}, DepartmentId: {DepartmentId}",
                     userId, documentType, departmentId);
-                return ApiResponse<List<FileDTO>>.Error("Dosyalar okunamadı");
+                return ServiceResponse<List<FileDTO>>.Error("Dosyalar okunamadı");
             }
         }
     }

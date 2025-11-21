@@ -6,9 +6,9 @@
 @section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
 
     <link href="~/css/puantaj-common.css" rel="stylesheet" />
 
@@ -101,7 +101,7 @@
                                     <th>ÇALIŞILAN<br /> EKİPMAN</th>
                                     <th>ÇALIŞILAN<br /> İL</th>
                                     <th>ÇALIŞILAN<br /> İLÇE</th>
-                                    <th style="width:70px;max-width:70px;">YOL(₺)</th>
+                                    <th style="width:80px;max-width:80px;">YOL(₺)</th>
                                     <th style="width:120px;max-width:120px;">MASRAF</th>
                                     <th>YEMEK</th>
                                     <th>DURUM</th>
@@ -125,7 +125,7 @@
 
 <!-- Modal -->
 <div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true"
-    data-bs-backdrop="static" data-bs-keyboard="false">
+     data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -167,7 +167,7 @@
                         <div class="col-md-12">
                             <label for="fileReceipt" class="form-label">Fatura</label>
                             <input type="file" class="form-control" id="fileReceipt" required
-                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
                             <div class="form-text">
                                 Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX
                             </div>
@@ -438,16 +438,7 @@
         // ===== PAGE INITIALIZATION =====
         $(document).ready(async function () {
             await initializePage();
-                $.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (settings.type !== 'GET') {
-                        const token = $('input[name="__RequestVerificationToken"]').val();
-                        if (token) {
-                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
-                        }
-                    }
-                }
-            });
+
         });
 
         async function initializePage() {
@@ -764,7 +755,7 @@
                                                                                                                                                                                                             </select>
                                                                                                                                                                                                         </td>
                                                                                                                                                                                                            <td>
-                                                                                                                                                                                                            <input type="text" class="form-control form-control-sm travel-expense-amount"
+                                                                                                                                                                                                            <input type="number" step="0.01" class="form-control form-control-sm travel-expense-amount"
                                                                                                                                                                                                                    data-day="${day}" placeholder="Yol masrafı"
                                                                                                                                                                                                                    value="${defaultValues.travelExpenseAmount || ''}" ${disabledAttr}>
                                                                                                                                                                                                         </td>
@@ -917,7 +908,6 @@
                     formData.append(`[${index}].HasDinner`, record.HasDinner);
                     formData.append(`[${index}].HasNightMeal`, record.HasNightMeal);
                     formData.append(`[${index}].TravelExpenseAmount`, record.TravelExpenseAmount);
-
                     // Expenses için
                     if (record.WorkRecordExpenses && record.WorkRecordExpenses.length > 0) {
                         record.WorkRecordExpenses.forEach((expense, expIndex) => {

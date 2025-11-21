@@ -15,7 +15,7 @@ namespace IdeKusgozManagement.Domain.Entities.Base
 
         protected BaseEntity()
         {
-            Id = NewId.NextSequentialGuid().ToString();
+            Id = NewId.NextSequentialGuid().ToString("D").ToUpper();
         }
     }
 }

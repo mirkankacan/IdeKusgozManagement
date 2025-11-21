@@ -22,19 +22,27 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.Property(x => x.DocumentTypeId)
                 .IsRequired()
                 .HasMaxLength(450);
+            builder.Property(x => x.TargetDepartmentId)
+           .IsRequired(false)
+           .HasMaxLength(450)
+           .HasDefaultValue(null);
+            builder.Property(x => x.TargetDepartmentDutyId)
+           .IsRequired(false)
+           .HasMaxLength(450)
+           .HasDefaultValue(null);
+            builder.Property(x => x.TargetCompanyId)
+         .IsRequired(false)
+         .HasMaxLength(450)
+         .HasDefaultValue(null);
+            builder.Property(x => x.TargetEquipmentId)
+           .IsRequired(false)
+           .HasMaxLength(450)
+           .HasDefaultValue(null);
             builder.Property(x => x.TargetUserId)
              .IsRequired(false)
              .HasMaxLength(450)
              .HasDefaultValue(null);
             builder.Property(x => x.TargetProjectId)
-          .IsRequired(false)
-          .HasMaxLength(450)
-          .HasDefaultValue(null);
-            builder.Property(x => x.TargetEquipmentId)
-          .IsRequired(false)
-          .HasMaxLength(450)
-          .HasDefaultValue(null);
-            builder.Property(x => x.DepartmentId)
                 .IsRequired(false)
                 .HasMaxLength(450)
                 .HasDefaultValue(null);
@@ -45,40 +53,40 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .IsRequired(false)
                 .HasDefaultValue(null);
 
+            builder.HasOne(x => x.DocumentType)
+            .WithMany(x => x.Files)
+            .HasForeignKey(x => x.DocumentTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(x => x.TargetDepartment)
+          .WithMany(x => x.Files)
+          .HasForeignKey(x => x.TargetDepartmentId)
+          .OnDelete(DeleteBehavior.Restrict)
+          .IsRequired(false);
+            builder.HasOne(x => x.TargetDepartmentDuty)
+            .WithMany(x => x.Files)
+            .HasForeignKey(x => x.TargetDepartmentDutyId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+            builder.HasOne(x => x.TargetCompany)
+        .WithMany(x => x.Files)
+        .HasForeignKey(x => x.TargetCompanyId)
+        .OnDelete(DeleteBehavior.Restrict)
+        .IsRequired(false);
+            builder.HasOne(x => x.TargetEquipment)
+          .WithMany(x => x.Files)
+          .HasForeignKey(x => x.TargetEquipmentId)
+          .OnDelete(DeleteBehavior.Restrict)
+          .IsRequired(false);
             builder.HasOne(x => x.TargetUser)
              .WithMany()
              .HasForeignKey(x => x.TargetUserId)
              .OnDelete(DeleteBehavior.Restrict)
              .IsRequired(false);
-
             builder.HasOne(x => x.TargetProject)
-        .WithMany()
-        .HasForeignKey(x => x.TargetProjectId)
-        .OnDelete(DeleteBehavior.Restrict)
-        .IsRequired(false);
-
-            builder.HasOne(x => x.TargetEquipment)
-           .WithMany()
-           .HasForeignKey(x => x.TargetEquipmentId)
-           .OnDelete(DeleteBehavior.Restrict)
-           .IsRequired(false);
-
-            builder.HasOne(x => x.TargetUser)
-        .WithMany()
-        .HasForeignKey(x => x.TargetUserId)
-        .OnDelete(DeleteBehavior.Restrict)
-        .IsRequired(false);
-
-            builder.HasOne(x => x.Department)
-                .WithMany(x => x.Files)
-                .HasForeignKey(x => x.DepartmentId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .IsRequired(false);
-
-            builder.HasOne(x => x.DocumentType)
-                .WithMany(x => x.Files)
-                .HasForeignKey(x => x.DocumentTypeId)
-                .OnDelete(DeleteBehavior.Restrict);
+             .WithMany(x => x.Files)
+             .HasForeignKey(x => x.TargetProjectId)
+             .OnDelete(DeleteBehavior.Restrict)
+             .IsRequired(false);
         }
     }
 }

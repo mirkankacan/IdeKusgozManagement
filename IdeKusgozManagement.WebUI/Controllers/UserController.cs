@@ -28,7 +28,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("liste")]
-        public async Task<IActionResult> GetUsers(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
         {
             // Role claim'ini güvenli bir şekilde al
             var roleClaim = User.FindFirst(ClaimTypes.Role);
@@ -64,15 +64,16 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("aktif-ust-kullanicilar")]
-        public async Task<IActionResult> GetActiveSuperiors(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveSuperiors(CancellationToken cancellationToken)
         {
             var response = await _userApiService.GetActiveSuperiorsAsync(cancellationToken);
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici,Şef")]
         [HttpGet("departman/{departmentId}")]
-        public async Task<IActionResult> GetUsersByDepartment(string departmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUsersByDepartment(string departmentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(departmentId))
             {
@@ -82,9 +83,10 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("aktif-roller")]
-        public async Task<IActionResult> GetActiveRoles(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveRoles(CancellationToken cancellationToken)
         {
             var response = await _roleApiService.GetActiveRolesAsync(cancellationToken);
 
@@ -94,7 +96,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost("olustur")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateUser([FromBody] CreateUserViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -108,7 +110,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize]
         [HttpPut("guncelle/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateUser(string userId, [FromBody] UpdateUserViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateUser(string userId, [FromBody] UpdateUserViewModel model, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -126,7 +128,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpDelete("sil/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteUser(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteUser(string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -139,7 +141,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPut("aktif-et/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EnableUser(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> EnableUser(string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -152,7 +154,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPut("pasif-et/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DisableUser(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DisableUser(string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -165,7 +167,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpPost("rol-ata")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AssignRoleToUser([FromBody] AssignRoleViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> AssignRoleToUser([FromBody] AssignRoleViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -178,7 +180,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("{userId}")]
-        public async Task<IActionResult> GetUserById(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUserById(string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -190,7 +192,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("{userId}/kalan-izinler")]
-        public async Task<IActionResult> GetAnnualLeaveByUser(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAnnualLeaveByUser(string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -203,7 +205,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
         [Authorize]
         [HttpGet("kalan-izinlerim")]
-        public async Task<IActionResult> GetMyAnnualLeave(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetMyAnnualLeave(CancellationToken cancellationToken)
         {
             var result = await _userApiService.GetMyAnnualLeaveDaysAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);

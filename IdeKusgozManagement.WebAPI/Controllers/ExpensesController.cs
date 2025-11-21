@@ -15,7 +15,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Tüm masraf türlerini getirir
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetExpenses(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetExpenses(CancellationToken cancellationToken)
         {
             var result = await expenseService.GetExpensesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -25,7 +25,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Aktif tüm masraf türlerini getirir
         /// </summary>
         [HttpGet("active-expenses")]
-        public async Task<IActionResult> GetActiveExpenses(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveExpenses(CancellationToken cancellationToken)
         {
             var result = await expenseService.GetActiveExpensesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -68,7 +68,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="expenseId">Masraf türü ID'si</param>
         [HttpGet("{expenseId}")]
-        public async Task<IActionResult> GetExpenseById(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetExpenseById(string expenseId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(expenseId))
             {
@@ -85,7 +85,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="createExpenseDTO">Masraf türü bilgileri</param>
         [HttpPost]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> CreateExpense([FromBody] CreateExpenseDTO createExpenseDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateExpense([FromBody] CreateExpenseDTO createExpenseDTO, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -103,7 +103,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="updateExpenseDTO">Güncellenecek masraf türü bilgileri</param>
         [HttpPut("{expenseId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> UpdateExpense(string expenseId, [FromBody] UpdateExpenseDTO updateExpenseDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateExpense(string expenseId, [FromBody] UpdateExpenseDTO updateExpenseDTO, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(expenseId))
             {
@@ -125,7 +125,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="expenseId">Masraf türü ID'si</param>
         [HttpDelete("{expenseId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> DeleteExpense(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteExpense(string expenseId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(expenseId))
             {

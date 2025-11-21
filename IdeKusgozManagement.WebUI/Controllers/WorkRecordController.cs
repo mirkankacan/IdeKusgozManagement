@@ -26,7 +26,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize(Roles = "Admin,Yönetici,Şef")]
         [HttpGet("liste/kullanici/{userId}/tarih/{date:datetime}")]
-        public async Task<IActionResult> GetWorkRecordsByUserIdAndDate(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetWorkRecordsByUserIdAndDate(string userId, DateTime date, CancellationToken cancellationToken)
         {
             var response = await _workRecordApiService.GetWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -34,7 +34,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("listem/tarih/{date:datetime}")]
-        public async Task<IActionResult> GetMyWorkRecords(DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetMyWorkRecords(DateTime date, CancellationToken cancellationToken)
         {
             var response = await _workRecordApiService.GetMyWorkRecordsByDateAsync(date, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -55,7 +55,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize]
         [HttpPost("toplu-ekle-duzenle")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateOrModifyWorkRecord([FromForm] List<CreateOrModifyWorkRecordViewModel> model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateOrModifyWorkRecord([FromForm] List<CreateOrModifyWorkRecordViewModel> model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -68,7 +68,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPut("toplu-reddet/kullanici/{userId}/tarih/{date}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BatchRejectWorkRecordsByUserId(string userId, DateTime date, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchRejectWorkRecordsByUserId(string userId, DateTime date, [FromQuery] string? rejectReason, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -81,7 +81,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPut("toplu-onayla/kullanici/{userId}/tarih/{date}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BatchApproveWorkRecordsByUserId(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchApproveWorkRecordsByUserId(string userId, DateTime date, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -94,7 +94,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPut("toplu-guncelle/kullanici/{userId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BatchUpdateWorkRecordsByUserId(string userId, [FromForm] List<CreateOrModifyWorkRecordViewModel> model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> BatchUpdateWorkRecordsByUserId(string userId, [FromForm] List<CreateOrModifyWorkRecordViewModel> model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -108,7 +108,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPut("onayla/{workRecordId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ApproveById(string workRecordId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> ApproveById(string workRecordId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(workRecordId))
             {
@@ -121,7 +121,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Şef, Yönetici")]
         [HttpPut("reddet/{workRecordId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RejectById(string workRecordId, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RejectById(string workRecordId, [FromQuery] string? rejectReason, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(workRecordId))
             {

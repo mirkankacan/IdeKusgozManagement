@@ -25,9 +25,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("liste")]
-        public async Task<IActionResult> GetAdvances(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdvances(CancellationToken cancellationToken)
         {
-
             ApiResponse<IEnumerable<AdvanceViewModel>> response;
             if (User.IsInRole("Admin"))
             {
@@ -50,7 +49,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("listem")]
-        public async Task<IActionResult> GetMyAdvances(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetMyAdvances(CancellationToken cancellationToken)
         {
             var response = await _advanceApiService.GetMyAdvancesAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -58,7 +57,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("kullanici/{userId}")]
-        public async Task<IActionResult> GetAdvancesByUser(string userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdvancesByUser(string userId, CancellationToken cancellationToken)
         {
             var response = await _advanceApiService.GetAdvancesByUserIdAsync(userId, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -66,7 +65,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("{advanceId}")]
-        public async Task<IActionResult> GetAdvanceById(string advanceId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdvanceById(string advanceId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {
@@ -87,7 +86,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize]
         [ValidateAntiForgeryToken]
         [HttpPost("istek-olustur")]
-        public async Task<IActionResult> Create([FromBody] CreateAdvanceViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Create([FromBody] CreateAdvanceViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -101,7 +100,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize]
         [ValidateAntiForgeryToken]
         [HttpPut("{advanceId}")]
-        public async Task<IActionResult> UpdateAdvance(string advanceId, [FromBody] UpdateAdvanceViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateAdvance(string advanceId, [FromBody] UpdateAdvanceViewModel model, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {
@@ -120,7 +119,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize]
         [ValidateAntiForgeryToken]
         [HttpDelete("{advanceId}")]
-        public async Task<IActionResult> DeleteAdvance(string advanceId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteAdvance(string advanceId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {
@@ -134,7 +133,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{advanceId}/onayla")]
-        public async Task<IActionResult> ApproveAdvance(string advanceId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> ApproveAdvance(string advanceId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {
@@ -148,7 +147,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{advanceId}/reddet")]
-        public async Task<IActionResult> RejectAdvance(string advanceId, [FromQuery] string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RejectAdvance(string advanceId, [FromQuery] string? rejectReason, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {

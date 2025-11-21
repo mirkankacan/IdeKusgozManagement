@@ -12,7 +12,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
 
             builder.Property(x => x.Name)
                 .IsRequired()
-                .HasMaxLength(100);
+                .HasMaxLength(200);
 
             builder.Property(x => x.RenewalPeriodInMonths)
               .HasDefaultValue(null);

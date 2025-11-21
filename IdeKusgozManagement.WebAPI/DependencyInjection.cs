@@ -150,12 +150,14 @@ namespace IdeKusgozManagement.WebAPI
                 options.AddDefaultPolicy(policy =>
                 {
                     policy.WithOrigins(
-               "http://localhost:5290",
-               "http://192.168.2.253:5290",
-               "http://92.45.19.226:80",
-               "http://92.45.19.226",
-               "http://portal.izmircrane.com",
-               "https://portal.izmircrane.com"
+                      "http://localhost:5290",
+                      "http://192.168.2.253:5290",
+                      "http://192.168.2.253:80",
+                      "http://192.168.2.253",
+                      "http://92.45.19.226:80",
+                      "http://92.45.19.226",
+                      "http://portal.izmircrane.com",
+                      "https://portal.izmircrane.com"
            )
                         .WithMethods("GET", "POST", "PUT", "DELETE")
                         .WithHeaders(
@@ -165,6 +167,7 @@ namespace IdeKusgozManagement.WebAPI
                         "Accept",
                         "Origin",
                         "X-SignalR-User-Agent",
+                        "X-CSRF-TOKEN",
                         "Cache-Control"
                         )
                         .WithExposedHeaders("X-Pagination")

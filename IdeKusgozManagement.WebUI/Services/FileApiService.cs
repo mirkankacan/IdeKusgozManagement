@@ -115,14 +115,26 @@ namespace IdeKusgozManagement.WebUI.Services
                     fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.FormFile.ContentType);
                     formData.Add(fileContent, $"files[{i}].FormFile", file.FormFile.FileName);
 
-                    if (!string.IsNullOrEmpty(file.TargetUserId))
-                        formData.Add(new StringContent(file.TargetUserId), $"files[{i}].TargetUserId");
-
                     if (!string.IsNullOrEmpty(file.DocumentTypeId))
                         formData.Add(new StringContent(file.DocumentTypeId.ToString()), $"files[{i}].DocumentTypeId");
 
-                    if (!string.IsNullOrEmpty(file.DepartmentId))
-                        formData.Add(new StringContent(file.DepartmentId.ToString()), $"files[{i}].DepartmentId");
+                    if (!string.IsNullOrEmpty(file.TargetUserId))
+                        formData.Add(new StringContent(file.TargetUserId), $"files[{i}].TargetUserId");
+
+                    if (!string.IsNullOrEmpty(file.TargetProjectId))
+                        formData.Add(new StringContent(file.TargetProjectId.ToString()), $"files[{i}].TargetProjectId");
+
+                    if (!string.IsNullOrEmpty(file.TargetEquipmentId))
+                        formData.Add(new StringContent(file.TargetEquipmentId.ToString()), $"files[{i}].TargetEquipmentId");
+
+                    if (!string.IsNullOrEmpty(file.TargetDepartmentId))
+                        formData.Add(new StringContent(file.TargetDepartmentId.ToString()), $"files[{i}].TargetDepartmentId");
+
+                    if (!string.IsNullOrEmpty(file.TargetCompanyId))
+                        formData.Add(new StringContent(file.TargetCompanyId.ToString()), $"files[{i}].TargetCompanyId");
+
+                    if (!string.IsNullOrEmpty(file.TargetDepartmentDutyId))
+                        formData.Add(new StringContent(file.TargetDepartmentDutyId.ToString()), $"files[{i}].TargetDepartmentDutyId");
 
                     if (file.StartDate.HasValue)
                         formData.Add(new StringContent(file.StartDate.Value.ToString("yyyy-MM-dd")), $"files[{i}].StartDate");

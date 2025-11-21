@@ -82,7 +82,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPost("giris-yap")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] LoginViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Login([FromBody] LoginViewModel model, CancellationToken cancellationToken)
         {
             try
             {
@@ -108,7 +108,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPost("sifremi-unuttum")]
         [AllowAnonymous]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordViewModel model, CancellationToken cancellationToken)
         {
             try
             {
@@ -130,7 +130,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPost("sifre-sifirla")]
         [AllowAnonymous]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordViewModel model, CancellationToken cancellationToken)
         {
             try
             {
@@ -161,7 +161,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpGet("cikis-yap")]
         [Authorize]
-        public async Task<IActionResult> Logout(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Logout(CancellationToken cancellationToken)
         {
             try
             {
@@ -184,7 +184,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpGet("profil")]
         [Authorize]
-        public async Task<IActionResult> Profile(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Profile(CancellationToken cancellationToken)
         {
             var response = await _userApiService.GetMyUserAsync(cancellationToken);
             return View(response);
@@ -193,7 +193,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [HttpPut("profil-guncelle")]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Profile([FromBody] UpdateUserViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Profile([FromBody] UpdateUserViewModel model, CancellationToken cancellationToken)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             model.RoleName = null;
@@ -263,7 +263,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             };
         }
 
-        private async Task<IActionResult> LoginProcessAsync(LoginViewModel model, CancellationToken cancellationToken = default)
+        private async Task<IActionResult> LoginProcessAsync(LoginViewModel model, CancellationToken cancellationToken)
         {
             var response = await _authApiService.LoginAsync(model, cancellationToken);
 

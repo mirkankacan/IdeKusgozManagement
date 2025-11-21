@@ -8,17 +8,21 @@ namespace IdeKusgozManagement.Domain.Entities
         public string Path { get; set; }
         public string OriginalName { get; set; }
         public string DocumentTypeId { get; set; }
+        public string? TargetDepartmentId { get; set; }
+        public string? TargetDepartmentDutyId { get; set; }
+        public string? TargetCompanyId { get; set; }
+        public string? TargetEquipmentId { get; set; }
         public string? TargetUserId { get; set; }
         public string? TargetProjectId { get; set; }
-        public string? TargetEquipmentId { get; set; }
-        public string? DepartmentId { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public virtual IdtDocumentType DocumentType { get; set; }
-        public virtual IdtDepartment? Department { get; set; }
+        public virtual IdtDepartment? TargetDepartment { get; set; }
+        public virtual IdtDepartmentDuty? TargetDepartmentDuty { get; set; }
+        public virtual IdtCompany? TargetCompany { get; set; }
+        public virtual IdtEquipment? TargetEquipment { get; set; }
         public virtual ApplicationUser? TargetUser { get; set; }
         public virtual IdtProject? TargetProject { get; set; }
-        public virtual IdtEquipment? TargetEquipment { get; set; }
         public virtual ICollection<IdtWorkRecordExpense> WorkRecordExpenses { get; set; } = new List<IdtWorkRecordExpense>();
         public virtual ICollection<IdtLeaveRequest> LeaveRequests { get; set; } = new List<IdtLeaveRequest>();
         public virtual ICollection<IdtTrafficTicket> TrafficTickets { get; set; } = new List<IdtTrafficTicket>();

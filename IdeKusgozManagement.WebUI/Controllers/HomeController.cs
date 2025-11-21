@@ -49,7 +49,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("takvim/izinler")]
-        public async Task<IActionResult> CalendarLeaves(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CalendarLeaves(CancellationToken cancellationToken)
         {
             var roleName = _httpContextAccessor.HttpContext.Session.GetString("RoleName");
             if (string.IsNullOrEmpty(roleName))
@@ -84,7 +84,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("takvim/projeler")]
-        public async Task<IActionResult> CalendarProjects(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CalendarProjects(CancellationToken cancellationToken)
         {
             var roleName = _httpContextAccessor.HttpContext.Session.GetString("RoleName");
             if (string.IsNullOrEmpty(roleName))

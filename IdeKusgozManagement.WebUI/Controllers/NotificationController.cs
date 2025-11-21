@@ -23,7 +23,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpGet("okunmayan-sayisi")]
-        public async Task<IActionResult> GetUnreadNotificationCount(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUnreadNotificationCount(CancellationToken cancellationToken)
         {
             var response = await _notificationApiService.GetUnreadNotificationCountAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -31,7 +31,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPut("{notificationId}/okundu")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(notificationId))
             {
@@ -43,7 +43,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpPut("hepsini-okundu")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
         {
             var response = await _notificationApiService.MarkAllAsReadAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -51,7 +51,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [HttpDelete("{notificationId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteNotification(string notificationId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteNotification(string notificationId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(notificationId))
             {

@@ -13,7 +13,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class NotificationService(IUnitOfWork unitOfWork, ILogger<NotificationService> logger, IIdentityService identityService, IHubContext<CommunicationHub> hubContext) : INotificationService
     {
-        public async Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -56,16 +56,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     PageSize = pageSize,
                 };
 
-                return ApiResponse<PagedResult<NotificationDTO>>.Success(pagedResult, "Bildirimler başarıyla getirildi");
+                return ServiceResponse<PagedResult<NotificationDTO>>.Success(pagedResult, "Bildirimler başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetNotificationsAsync işleminde hata oluştu");
-                return ApiResponse<PagedResult<NotificationDTO>>.Error("Bildirimler getirilirken hata oluştu");
+                return ServiceResponse<PagedResult<NotificationDTO>>.Error("Bildirimler getirilirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<int>> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<int>> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -81,16 +81,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .Where(n => !n.NotificationReads.Any(nr => nr.CreatedBy == userId))
                     .CountAsync(cancellationToken); // Include kaldırıldı
 
-                return ApiResponse<int>.Success(unreadCount, "Okunmamış bildirim sayısı başarıyla getirildi");
+                return ServiceResponse<int>.Success(unreadCount, "Okunmamış bildirim sayısı başarıyla getirildi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetUnreadNotificationCountAsync işleminde hata oluştu");
-                return ApiResponse<int>.Error("Okunmamış bildirim sayısı getirilirken hata oluştu");
+                return ServiceResponse<int>.Error("Okunmamış bildirim sayısı getirilirken hata oluştu");
             }
         }
 
-        private async Task<ApiResponse<NotificationDTO>> CreateNotificationAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
+        private async Task<ServiceResponse<NotificationDTO>> CreateNotificationAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -107,16 +107,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var notificationDTO = createdNotification.Adapt<NotificationDTO>();
 
-                return ApiResponse<NotificationDTO>.Success(notificationDTO, "Bildirim başarıyla oluşturuldu");
+                return ServiceResponse<NotificationDTO>.Success(notificationDTO, "Bildirim başarıyla oluşturuldu");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "CreateNotificationAsync işleminde hata oluştu");
-                return ApiResponse<NotificationDTO>.Error("Bildirim oluşturulurken hata oluştu");
+                return ServiceResponse<NotificationDTO>.Error("Bildirim oluşturulurken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> MarkAsReadAsync(string notificationId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> MarkAsReadAsync(string notificationId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -125,7 +125,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var isNotificationRead = await unitOfWork.GetRepository<IdtNotificationRead>().AnyAsync(x => x.CreatedBy == userId && x.NotificationId == notificationId, cancellationToken);
                 if (isNotificationRead)
                 {
-                    return ApiResponse<bool>.Error("Bildirim daha önceden okundu olarak işaretlenmiş");
+                    return ServiceResponse<bool>.Error("Bildirim daha önceden okundu olarak işaretlenmiş");
                 }
                 var notification = await unitOfWork.GetRepository<IdtNotification>()
                 .Where(x => x.Id == notificationId)
@@ -133,7 +133,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (notification == null)
                 {
-                    return ApiResponse<bool>.Error("Bildirim bulunamadı");
+                    return ServiceResponse<bool>.Error("Bildirim bulunamadı");
                 }
 
                 var notificationRead = new IdtNotificationRead
@@ -144,16 +144,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtNotificationRead>().AddAsync(notificationRead, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ApiResponse<bool>.Success(true, "Bildirim okundu olarak işaretlendi");
+                return ServiceResponse<bool>.Success(true, "Bildirim okundu olarak işaretlendi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "MarkAsReadAsync işleminde hata oluştu");
-                return ApiResponse<bool>.Error("Bildirim okundu olarak işaretlenirken hata oluştu");
+                return ServiceResponse<bool>.Error("Bildirim okundu olarak işaretlenirken hata oluştu");
             }
         }
 
-        public async Task<ApiResponse<bool>> MarkAllAsReadAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> MarkAllAsReadAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -174,12 +174,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtNotificationRead>().AddRangeAsync(notificationReads, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ApiResponse<bool>.Success(true, "Tüm bildirimler okundu olarak işaretlendi");
+                return ServiceResponse<bool>.Success(true, "Tüm bildirimler okundu olarak işaretlendi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "MarkAllAsReadAsync işleminde hata oluştu");
-                return ApiResponse<bool>.Error("Tüm bildirimler okundu olarak işaretlenirken hata oluştu");
+                return ServiceResponse<bool>.Error("Tüm bildirimler okundu olarak işaretlenirken hata oluştu");
             }
         }
 
@@ -242,7 +242,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return;
                 }
 
-                ApiResponse<NotificationDTO>? response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
+                ServiceResponse<NotificationDTO>? response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
                 if (response.IsSuccess)
                 {
                     foreach (var userId in subordinateIds)
@@ -269,7 +269,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return;
                 }
 
-                ApiResponse<NotificationDTO>? response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
+                ServiceResponse<NotificationDTO>? response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
                 if (response.IsSuccess)
                 {
                     foreach (var userId in superiorIds)

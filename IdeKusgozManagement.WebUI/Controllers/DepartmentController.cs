@@ -22,27 +22,16 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpGet("liste")]
-        public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken)
         {
             var result = await _departmentApiService.GetDepartmentsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpGet("iliskiler-liste/{departmentId}")]
-        public async Task<IActionResult> GetDepartmentDocumentTypeRelationsByDepartment(string departmentId, CancellationToken cancellationToken = default)
+        [HttpGet("{departmentId}/gorev-liste")]
+        public async Task<IActionResult> GetDepartmentDutiesByDepartment(string departmentId, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(departmentId))
-            {
-                return BadRequest("Departman ID'si gereklidir");
-            }
-            var result = await _departmentApiService.GetDepartmentDocumentTypeRelationsByDepartmentAsync(departmentId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
-
-        [HttpGet("iliskiler-liste")]
-        public async Task<IActionResult> GetDepartmentDocumentTypeRelations(CancellationToken cancellationToken = default)
-        {
-            var result = await _departmentApiService.GetDepartmentDocumentTypeRelationsAsync(cancellationToken);
+            var result = await _departmentApiService.GetDepartmentDutiesByDepartmentAsync(departmentId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

@@ -13,7 +13,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class WorkRecordExpenseService(IUnitOfWork unitOfWork, IFileService fileService, ILogger<WorkRecordExpenseService> logger, IIdentityService identityService) : IWorkRecordExpenseService
     {
-        public async Task<ApiResponse<IEnumerable<WorkRecordExpenseDTO>>> BatchCreateOrModifyWorkRecordExpensesAsync(IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<IEnumerable<WorkRecordExpenseDTO>>> BatchCreateOrModifyWorkRecordExpensesAsync(IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -27,7 +27,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<WorkRecordExpenseDTO>>> BatchUpdateWorkRecordByUserIdExpensesAsync(string userId, IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<IEnumerable<WorkRecordExpenseDTO>>> BatchUpdateWorkRecordByUserIdExpensesAsync(string userId, IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -40,7 +40,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        private async Task<ApiResponse<IEnumerable<WorkRecordExpenseDTO>>> ProcessWorkRecordExpensesAsync(string userId, IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken)
+        private async Task<ServiceResponse<IEnumerable<WorkRecordExpenseDTO>>> ProcessWorkRecordExpensesAsync(string userId, IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken)
         {
             var realExpenses = expenseDTOs.Where(e => e.Id != Guid.Empty.ToString()).ToList();
             var workRecordIds = expenseDTOs.Select(e => e.WorkRecordId).Distinct().ToList();
@@ -193,11 +193,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
             logger.LogInformation("Puantaj masraf kayıtları işlendi. CreatedCount: {CreatedCount}, UpdatedCount: {UpdatedCount}, DeletedCount: {DeletedCount}, UserId: {UserId}",
                 createdCount, updatedCount, deletedCount, userId);
 
-            return ApiResponse<IEnumerable<WorkRecordExpenseDTO>>.Success(mappedExpenses,
+            return ServiceResponse<IEnumerable<WorkRecordExpenseDTO>>.Success(mappedExpenses,
                 $"Puantaj masraf kayıtları işlendi. {createdCount} eklendi, {updatedCount} güncellendi, {deletedCount} silindi.");
         }
 
-        public async Task<ApiResponse<bool>> BatchDeleteWorkRecordExpensesAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> BatchDeleteWorkRecordExpensesAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -226,7 +226,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 logger.LogInformation("Masraf kayıtları silindi. DeletedCount: {DeletedCount}", expensesToDelete.Count);
 
-                return ApiResponse<bool>.Success(true, $"{expensesToDelete.Count} adet harcama kaydı başarıyla silindi.");
+                return ServiceResponse<bool>.Success(true, $"{expensesToDelete.Count} adet harcama kaydı başarıyla silindi.");
             }
             catch (Exception ex)
             {

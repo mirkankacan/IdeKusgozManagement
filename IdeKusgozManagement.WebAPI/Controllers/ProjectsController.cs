@@ -12,14 +12,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class ProjectsController(IProjectService projectService) : ControllerBase
     {
         [HttpGet]
-        public async Task<IActionResult> GetProjects(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetProjects(CancellationToken cancellationToken)
         {
             var result = await projectService.GetProjectsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
         [HttpGet("active-projects")]
-        public async Task<IActionResult> GetActiveProjects(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveProjects(CancellationToken cancellationToken)
         {
             var result = await projectService.GetActiveProjectsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -50,7 +50,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpGet("{projectId}")]
-        public async Task<IActionResult> GetProjectById(string projectId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetProjectById(string projectId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(projectId))
             {
@@ -63,7 +63,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
         [HttpPost]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> CreateProject([FromBody] CreateProjectDTO createProjectDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateProject([FromBody] CreateProjectDTO createProjectDTO, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -76,7 +76,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
         [HttpPut("{projectId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> UpdateProject(string projectId, [FromBody] UpdateProjectDTO updateProjectDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateProject(string projectId, [FromBody] UpdateProjectDTO updateProjectDTO, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(projectId))
             {
@@ -94,7 +94,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
         [HttpDelete("{projectId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> DeleteProject(string projectId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteProject(string projectId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(projectId))
             {

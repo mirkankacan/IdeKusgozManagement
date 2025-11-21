@@ -65,7 +65,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="txtCTCNo" class="form-label">TC Kimlik No</label>
-                            <input type="text" class="form-control" id="txtCTCNo" value="" required>
+                            <input type="text" class="form-control tc" id="txtCTCNo" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
                             </div>
@@ -86,7 +86,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="txtCName" class="form-label">Adı</label>
-                            <input type="text" class="form-control" id="txtCName" value="" required>
+                            <input type="text" class="form-control name" id="txtCName" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
                             </div>
@@ -96,7 +96,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="txtCSurname" class="form-label">Soyadı</label>
-                            <input type="text" class="form-control" id="txtCSurname" value="" required>
+                            <input type="text" class="form-control surname" id="txtCSurname" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
                             </div>
@@ -183,7 +183,7 @@
                         <input type="text" id="txtUUserId" value="" readonly hidden disabled />
                         <div class="col-md-6">
                             <label for="txtUTCNo" class="form-label">TC Kimlik No</label>
-                            <input type="text" class="form-control" id="txtUTCNo" value="" required>
+                            <input type="text" class="form-control tc" id="txtUTCNo" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
                             </div>
@@ -208,7 +208,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="txtUName" class="form-label">Adı</label>
-                            <input type="text" class="form-control" id="txtUName" value="" required>
+                            <input type="text" class="form-control name" id="txtUName" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
                             </div>
@@ -218,7 +218,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="txtUSurname" class="form-label">Soyadı</label>
-                            <input type="text" class="form-control" id="txtUSurname" value="" required>
+                            <input type="text" class="form-control surname" id="txtUSurname" value="" required>
                             <div class="valid-feedback">
                                 İyi görünüyor!
                             </div>
@@ -322,20 +322,17 @@
         let usersTable;
 
         $(document).ready(async function () {
+                   $('.tc').on('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        $('.name, .surname').on('input', function() {
+            this.value = this.value.replace(/[^a-zA-ZğĞıİöÖüÜşŞçÇ\s]/g, '');
+        });
             await initializeDataTable();
             await getRoles();
             initializeSelect2();
             await getSuperiorUsers();
-                $.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (settings.type !== 'GET') {
-                        const token = $('input[name="__RequestVerificationToken"]').val();
-                        if (token) {
-                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
-                        }
-                    }
-                }
-            });
+
             $('#createUserModal').on('hidden.bs.modal', function () {
                 clearCreateUserForm();
             });

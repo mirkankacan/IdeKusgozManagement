@@ -10,7 +10,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class EmailService(ILogger<EmailService> logger, IOptions<EmailOptionsDTO> options) : IEmailService
     {
-        public async Task<ApiResponse<bool>> SendVerificationCodeEmailAsync(string email, string verificationCode, string fullName, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> SendVerificationCodeEmailAsync(string email, string verificationCode, string fullName, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -18,7 +18,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!ValidateSmtpSettings(smtpSettings))
                 {
                     logger.LogError("SMTP ayarları eksik veya hatalı");
-                    return ApiResponse<bool>.Error(message: "SMTP ayarları eksik veya hatalı");
+                    return ServiceResponse<bool>.Error(message: "SMTP ayarları eksik veya hatalı");
                 }
 
                 using var smtpClient = CreateSmtpClient(smtpSettings);
@@ -28,17 +28,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await smtpClient.SendMailAsync(mailMessage, cancellationToken);
 
                 logger.LogInformation("Doğrulama kodu emaili başarıyla gönderildi. Email: {Email}", email);
-                return ApiResponse<bool>.Success(true, "Doğrulama kodu emaili başarıyla gönderildi");
+                return ServiceResponse<bool>.Success(true, "Doğrulama kodu emaili başarıyla gönderildi");
             }
             catch (SmtpException ex)
             {
                 logger.LogError(ex, "SMTP hatası oluştu. Email: {Email}, SMTP Kodu: {StatusCode}", email, ex.StatusCode);
-                return ApiResponse<bool>.Error("SMTP hatası");
+                return ServiceResponse<bool>.Error("SMTP hatası");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Email gönderilirken beklenmeyen hata oluştu. Email: {Email}", email);
-                return ApiResponse<bool>.Error("Bir hata oluştu lütfen tekrar deneyin");
+                return ServiceResponse<bool>.Error("Bir hata oluştu lütfen tekrar deneyin");
             }
         }
 

@@ -24,7 +24,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("liste")]
-        public async Task<IActionResult> GetExpenses(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetExpenses(CancellationToken cancellationToken)
         {
             var response = await _expenseApiService.GetExpensesAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -32,7 +32,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("aktif-liste")]
-        public async Task<IActionResult> GetActiveExpenses(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveExpenses(CancellationToken cancellationToken)
         {
             var response = await _expenseApiService.GetActiveExpensesAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -40,7 +40,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("{expenseId}")]
-        public async Task<IActionResult> GetExpenseById(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetExpenseById(string expenseId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(expenseId))
             {
@@ -54,7 +54,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPost("")]
-        public async Task<IActionResult> CreateExpense([FromBody] CreateExpenseViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateExpense([FromBody] CreateExpenseViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -68,7 +68,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{expenseId}")]
-        public async Task<IActionResult> UpdateExpense(string expenseId, [FromBody] UpdateExpenseViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateExpense(string expenseId, [FromBody] UpdateExpenseViewModel model, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(expenseId))
             {
@@ -87,7 +87,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpDelete("{expenseId}")]
-        public async Task<IActionResult> DeleteExpense(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteExpense(string expenseId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(expenseId))
             {
@@ -101,7 +101,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{expenseId}/aktif-et")]
-        public async Task<IActionResult> EnableExpense(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> EnableExpense(string expenseId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(expenseId))
             {
@@ -115,7 +115,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{expenseId}/pasif-et")]
-        public async Task<IActionResult> DisableExpense(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DisableExpense(string expenseId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(expenseId))
             {

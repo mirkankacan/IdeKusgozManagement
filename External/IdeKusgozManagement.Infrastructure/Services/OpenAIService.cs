@@ -14,16 +14,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
     public class OpenAIService(ChatClient chatClient, ILogger<OpenAIService> logger) : IAIService
     {
-        public async Task<ApiResponse<AIDateResponse>> AnalyzeDocumentDateAsync(IFormFile file, string documentTypeName, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<AIDateResponse>> AnalyzeDocumentDateAsync(IFormFile file, string documentTypeName, CancellationToken cancellationToken = default)
         {
             try
             {
                 // Input validation
                 if (file == null || file.Length == 0)
-                    return ApiResponse<AIDateResponse>.Error("Geçerli dosya bulunamadı");
+                    return ServiceResponse<AIDateResponse>.Error("Geçerli dosya bulunamadı");
 
                 if (string.IsNullOrWhiteSpace(documentTypeName))
-                    return ApiResponse<AIDateResponse>.Error("Doküman türü belirtilmeli");
+                    return ServiceResponse<AIDateResponse>.Error("Doküman türü belirtilmeli");
 
                 var binaryData = await FileHelper.ConvertToBinaryDataAsync(file);
                 var contentType = FileHelper.GetContentType(Path.GetExtension(file.FileName).ToLowerInvariant());
@@ -59,7 +59,7 @@ Return ONLY this JSON:
                 if (string.IsNullOrWhiteSpace(text))
                 {
                     logger.LogError("OpenAI'dan boş response alındı");
-                    return ApiResponse<AIDateResponse>.Error("OpenAI'dan geçerli yanıt alınamadı");
+                    return ServiceResponse<AIDateResponse>.Error("OpenAI'dan geçerli yanıt alınamadı");
                 }
 
                 // JSON'u bul ve çıkart
@@ -67,7 +67,7 @@ Return ONLY this JSON:
                 if (!jsonMatch.Success)
                 {
                     logger.LogError("OpenAI response'unda JSON bulunamadı. Response: {Response}", text);
-                    return ApiResponse<AIDateResponse>.Error("Geçerli JSON response alınamadı");
+                    return ServiceResponse<AIDateResponse>.Error("Geçerli JSON response alınamadı");
                 }
 
                 var result = JsonSerializer.Deserialize<AIDateResponse>(jsonMatch.Value,
@@ -76,24 +76,24 @@ Return ONLY this JSON:
                 if (result == null)
                 {
                     logger.LogError("JSON deserialize edilemedi: {Json}", jsonMatch.Value);
-                    return ApiResponse<AIDateResponse>.Error("JSON parse edilemedi");
+                    return ServiceResponse<AIDateResponse>.Error("JSON parse edilemedi");
                 }
 
                 if (result.Confidence < 0.6)
                 {
                     logger.LogWarning("OpenAI güven skoru düşük: {Confidence}", result.Confidence);
-                    return ApiResponse<AIDateResponse>.Error($"Güven skoru çok düşük: {result.Confidence:P0}");
+                    return ServiceResponse<AIDateResponse>.Error($"Güven skoru çok düşük: {result.Confidence:P0}");
                 }
 
                 logger.LogInformation("Başarılı analiz - Dosya: {FileName}, Tarih: {Date}, Güven: {Confidence}",
                     file.FileName, result.SelectedDate, result.Confidence);
 
-                return ApiResponse<AIDateResponse>.Success(result, "Evrak tarihi başarıyla analiz edildi");
+                return ServiceResponse<AIDateResponse>.Success(result, "Evrak tarihi başarıyla analiz edildi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "AnalyzeDocumentDateAsync işleminde hata - Dosya: {FileName}", file?.FileName);
-                return ApiResponse<AIDateResponse>.Error("Tarih analizi sırasında hata oluştu");
+                return ServiceResponse<AIDateResponse>.Error("Tarih analizi sırasında hata oluştu");
             }
         }
     }

@@ -10,7 +10,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
     public class HolidaysController(IHolidayService holidayService) : ControllerBase
     {
         [HttpGet("{year:int}")]
-        public async Task<IActionResult> GetHolidaysByYear(int year, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetHolidaysByYear(int year, CancellationToken cancellationToken)
         {
             if (year < 1900 || year > 2100)
             {
@@ -21,7 +21,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpGet("start/{startDate:datetime}/end/{endDate:datetime}")]
-        public async Task<IActionResult> CalculateWorkingDays(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CalculateWorkingDays(DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
         {
             if (endDate < startDate)
             {

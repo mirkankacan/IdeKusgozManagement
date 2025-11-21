@@ -16,7 +16,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         [HttpGet]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> GetEquipments(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetEquipments(CancellationToken cancellationToken)
         {
             var result = await equipmentService.GetEquipmentsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -26,7 +26,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// Aktif tüm ekipmanları getirir
         /// </summary>
         [HttpGet("active-equipments")]
-        public async Task<IActionResult> GetActiveEquipments(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveEquipments(CancellationToken cancellationToken)
         {
             var result = await equipmentService.GetActiveEquipmentsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -69,7 +69,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="equipmentId">Ekipman ID'si</param>
         [HttpGet("{equipmentId}")]
-        public async Task<IActionResult> GetEquipmentById(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetEquipmentById(string equipmentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(equipmentId))
             {
@@ -86,7 +86,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="createEquipmentDTO">Ekipman bilgileri</param>
         [HttpPost]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> CreateEquipment([FromBody] CreateEquipmentDTO createEquipmentDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateEquipment([FromBody] CreateEquipmentDTO createEquipmentDTO, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -104,7 +104,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="updateEquipmentDTO">Güncellenecek ekipman bilgileri</param>
         [HttpPut("{equipmentId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> UpdateEquipment(string equipmentId, [FromBody] UpdateEquipmentDTO updateEquipmentDTO, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateEquipment(string equipmentId, [FromBody] UpdateEquipmentDTO updateEquipmentDTO, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(equipmentId))
             {
@@ -126,7 +126,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="equipmentId">Ekipman ID'si</param>
         [HttpDelete("{equipmentId}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
-        public async Task<IActionResult> DeleteEquipment(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteEquipment(string equipmentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(equipmentId))
             {

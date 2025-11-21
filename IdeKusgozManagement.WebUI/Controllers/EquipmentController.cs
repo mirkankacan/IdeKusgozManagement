@@ -24,7 +24,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("liste")]
-        public async Task<IActionResult> GetEquipments(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetEquipments(CancellationToken cancellationToken)
         {
             var response = await _equipmentApiService.GetEquipmentsAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -32,7 +32,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("aktif-liste")]
-        public async Task<IActionResult> GetActiveEquipments(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetActiveEquipments(CancellationToken cancellationToken)
         {
             var response = await _equipmentApiService.GetActiveEquipmentsAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
@@ -40,7 +40,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpGet("{equipmentId}")]
-        public async Task<IActionResult> GetEquipmentById(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetEquipmentById(string equipmentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(equipmentId))
             {
@@ -54,7 +54,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPost("")]
-        public async Task<IActionResult> CreateEquipment([FromBody] CreateEquipmentViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateEquipment([FromBody] CreateEquipmentViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -68,7 +68,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{equipmentId}")]
-        public async Task<IActionResult> UpdateEquipment(string equipmentId, [FromBody] UpdateEquipmentViewModel model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateEquipment(string equipmentId, [FromBody] UpdateEquipmentViewModel model, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(equipmentId))
             {
@@ -87,7 +87,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpDelete("{equipmentId}")]
-        public async Task<IActionResult> DeleteEquipment(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteEquipment(string equipmentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(equipmentId))
             {
@@ -101,7 +101,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{equipmentId}/aktif-et")]
-        public async Task<IActionResult> EnableEquipment(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> EnableEquipment(string equipmentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(equipmentId))
             {
@@ -115,7 +115,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{equipmentId}/pasif-et")]
-        public async Task<IActionResult> DisableEquipment(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DisableEquipment(string equipmentId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(equipmentId))
             {

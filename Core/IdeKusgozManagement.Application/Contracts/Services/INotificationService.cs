@@ -5,13 +5,13 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
 {
     public interface INotificationService
     {
-        Task<ApiResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default);
+        Task<ServiceResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<int>> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default);
+        Task<ServiceResponse<int>> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<bool>> MarkAsReadAsync(string notificationId, CancellationToken cancellationToken = default);
+        Task<ServiceResponse<bool>> MarkAsReadAsync(string notificationId, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<bool>> MarkAllAsReadAsync(CancellationToken cancellationToken = default);
+        Task<ServiceResponse<bool>> MarkAllAsReadAsync(CancellationToken cancellationToken = default);
 
         Task SendNotificationToAllAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default);
 
