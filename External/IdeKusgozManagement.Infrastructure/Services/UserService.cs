@@ -212,6 +212,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 user.Name = updateUserDTO.Name;
                 user.Surname = updateUserDTO.Surname;
                 user.IsActive = updateUserDTO.IsActive;
+                user.DepartmentId = updateUserDTO.DepartmentId;
+                user.DepartmentDutyId = updateUserDTO.DepartmentDutyId;
 
                 var result = await userManager.UpdateAsync(user);
                 if (!result.Succeeded)

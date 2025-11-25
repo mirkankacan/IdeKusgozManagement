@@ -7,7 +7,7 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <style>
         a {
@@ -18,9 +18,9 @@
             cursor: pointer;
         }
 
-        .fa-calendar:hover {
-            color: #007bff;
-        }
+            .fa-calendar:hover {
+                color: #007bff;
+            }
     </style>
 }
 
@@ -63,7 +63,7 @@
 
 <!-- Update Modal -->
 <div class="modal fade" id="updateLeaveRequestModal" tabindex="-1" aria-labelledby="updateLeaveRequestModalLabel"
-    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -78,7 +78,7 @@
                             <label for="date-update-leave" class="form-label">İzin Tarih Aralığı</label>
                             <div class="input-group">
                                 <input type="text" class="form-control date-update-leave" id="date-update-leave"
-                                    required placeholder="Başlangıç - Bitiş">
+                                       required placeholder="Başlangıç - Bitiş">
                                 <span class="input-group-text">
                                     <i class="fas fa-calendar"></i>
                                 </span>
@@ -89,12 +89,12 @@
                         <div class="col-md-4">
                             <label for="net-update-leave-day" class="form-label">Net İzin Günü</label>
                             <input type="text" class="form-control" id="net-update-leave-day" disabled readonly
-                                placeholder="Net izin günü">
+                                   placeholder="Net izin günü">
                         </div>
                         <div class="col-md-12">
                             <label for="select-update-leave-reason" class="form-label">İzin Sebebi</label>
                             <select class="form-select select-update-leave-reason" id="select-update-leave-reason"
-                                required>
+                                    required>
                                 <option value="" selected disabled>İzin sebebi seçiniz...</option>
                                 <option value="Rapor">Rapor</option>
                                 <option value="Ücretsiz İzin">Ücretsiz İzin</option>
@@ -113,12 +113,12 @@
                         <div class="col-md-12">
                             <label for="txt-update-description" class="form-label">Açıklama (İsteğe Bağlı)</label>
                             <textarea class="form-control" id="txt-update-description" rows="3"
-                                placeholder="Açıklama..."></textarea>
+                                      placeholder="Açıklama..."></textarea>
                         </div>
                         <div class="col-md-12">
                             <label for="file-update-document" class="form-label">Döküman (İsteğe Bağlı)</label>
                             <input class="form-control" type="file" id="file-update-document"
-                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
                             <div class="form-text">
                                 Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX (Sadece yeni dosya seçtiğinizde
                                 güncellenir)
@@ -148,7 +148,7 @@
                 <div class="mb-3">
                     <label for="txt-rejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
                     <textarea class="form-control" id="txtRejectReason" rows="3"
-                        placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
+                              placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -225,7 +225,7 @@
             leaveRequestsTable = $('#leaveRequestsTable').DataTable({
                 "processing": true,
                 "ajax": {
-                    "url": "/izin/liste",
+                    "url": `/izin/ast-liste`,
                     "type": "GET",
                     "dataSrc": function (json) {
                         if (json && json.isSuccess && json.data) {

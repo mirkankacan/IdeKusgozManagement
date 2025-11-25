@@ -104,6 +104,7 @@
                                 Geçerli bir soyisim giriniz.
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <label for="selectCRole" class="form-label">Rol</label>
                             <select class="form-select selectRole" id="selectCRole" required="">
@@ -115,6 +116,7 @@
                                 Geçerli bir rol seçiniz.
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <label for="selectCExpatriate" class="form-label">Gurbetçi mi?</label>
                             <select class="form-select" id="selectCExpatriate" required="">
@@ -126,6 +128,29 @@
                             </div>
                             <div class="invalid-feedback">
                                 Geçerli bir seçenek seçiniz.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="c-department-select" class="form-label">Departman</label>
+                            <select id="c-department-select" class="form-select department-select" required>
+                                <option value="">Departman seçin</option>
+                            </select>
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir departman seçiniz.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="c-department-duty-select" class="form-label">Departman Görev</label>
+                            <select id="c-department-duty-select" class="form-select department-duty-select" required>
+                            </select>
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir departman görevi seçiniz.
                             </div>
                         </div>
                          <div class="col-md-6">
@@ -142,7 +167,6 @@
                             <label for="selectCSuperior" class="form-label">Üstleri</label>
                             <select class="form-select superior-select" id="selectCSuperior">
                             </select>
-
                         </div>
                         <div class="col-md-12">
                             <label for="txtCEmail" class="form-label">E-posta</label>
@@ -226,6 +250,7 @@
                                 Geçerli bir soyisim giriniz.
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <label for="selectURole" class="form-label">Rol</label>
                             <select class="form-select selectRole" id="selectURole" required="">
@@ -235,6 +260,29 @@
                             </div>
                             <div class="invalid-feedback">
                                 Geçerli bir rol seçiniz.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="u-department-select" class="form-label">Departman</label>
+                            <select id="u-department-select" class="form-select department-select" required>
+                                <option value="">Departman seçin</option>
+                            </select>
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir departman seçiniz.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="u-department-duty-select" class="form-label">Departman Görev</label>
+                            <select id="u-department-duty-select" class="form-select department-duty-select" required>
+                            </select>
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir departman görevi seçiniz.
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -332,6 +380,7 @@
             await getRoles();
             initializeSelect2();
             await getSuperiorUsers();
+                        await initializeDepartmentSelect();
 
             $('#createUserModal').on('hidden.bs.modal', function () {
                 clearCreateUserForm();
@@ -385,6 +434,8 @@
             // Select2 alanlarını temizle
             $('#selectCRole').val('').trigger('change');
             $('#selectCSuperior').val('').trigger('change');
+            $('#c-department-select').val('').trigger('change');
+            $('#c-department-duty-select').val('').trigger('change');
         }
         function clearUpdateUserForm() {
             $('#txtUTCNo').val('');
@@ -397,6 +448,8 @@
             $('#selectURole').val('').trigger('change');
             $('#selectUSuperior').val('').trigger('change');
             $('#selectUStatus').val('').trigger('change');
+                     $('#u-department-select').val('').trigger('change');
+            $('#u-department-duty-select').val('').trigger('change');
         }
         async function initializeDataTable() {
             usersTable = $('#usersTable').DataTable({
@@ -549,6 +602,8 @@
                     Surname: $('#txtCSurname').val().trim(),
                     Password: $('#txtCPassword').val(),
                     Email: $('#txtCEmail').val().trim() || null,
+                    DepartmentId : $("#c-department-select").val(),
+                    DepartmentDutyId : $("#c-department-duty-select").val(),
                     RoleName: $('#selectCRole').val(),
                     HireDate: hireDate,
                     IsExpatriate: $('#selectCExpatriate').val() == "true",
@@ -592,7 +647,84 @@
                 submitBtn.prop('disabled', false).html('Oluştur');
             }
         }
+           async function initializeDepartmentSelect() {
+            try {
+                const response = await $.ajax({
+                    url: '/departman/liste',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+                if (response?.isSuccess && response.data) {
+                    $('.department-select').empty().append('<option value="">Departman seçin</option>');
+                    response.data.forEach(department => {
+                        $('.department-select').append(`<option value="${department.id}">${department.name}</option>`);
+                    });
+                }
+                $('.department-select').select2({
+                    placeholder: 'Departman seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: false,
+                    width: '100%'
+                });
+                $('#c-department-select').on('change', async function () {
+                    const departmentId = $(this).val();
+                    $('#c-department-duty-select').val(null).trigger('change');
 
+                    if (departmentId) {
+                        await initializeDepartmentDutySelect(departmentId);
+                    } else {
+                        await initializeDepartmentDutySelect(null);
+                    }
+
+                });
+                  $('#u-department-select').on('change', async function () {
+                    const departmentId = $(this).val();
+                    $('#u-department-duty-select').val(null).trigger('change');
+
+                    if (departmentId) {
+                        await initializeDepartmentDutySelect(departmentId);
+                    } else {
+                        await initializeDepartmentDutySelect(null);
+                    }
+
+                });
+
+            } catch (error) {
+                console.error('Departman listesi yüklenirken hata:', error);
+                toastr.error('Departman listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+            async function initializeDepartmentDutySelect(departmentId) {
+            try {
+                  if (!departmentId) {
+                    return;
+                }
+                const response = await $.ajax({
+                    url: `/departman/${departmentId}/gorev-liste`,
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response?.isSuccess && response.data) {
+                    $('.department-duty-select').empty().append('<option value="">Departman görevi seçin</option>');
+                    response.data.forEach(duty => {
+                        $('.department-duty-select').append(`<option data-scope=${duty.scope} value="${duty.id}">${duty.name}</option>`);
+                    });
+                }
+
+                $('.department-duty-select').select2({
+                    placeholder: 'Departman görevi seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: false,
+                    width: '100%'
+                });
+
+            
+            } catch (error) {
+                console.error('Departman görevi listesi yüklenirken hata:', error);
+                toastr.error('Departman görevi listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
         async function updateUser() {
             try {
                 const form = document.querySelector('#updateUserModal form');
@@ -612,6 +744,8 @@
                     Surname: $('#txtUSurname').val().trim(),
                     Email: $('#txtUEmail').val().trim(),
                     RoleName: $('#selectURole').val(),
+                       DepartmentId : $("#u-department-select").val(),
+                    DepartmentDutyId : $("#u-department-duty-select").val(),
                     HireDate: hireDate,
                     TerminationDate: terminationDate || null,
                     IsExpatriate: $('#selectUExpatriate').val() == "true",
@@ -865,7 +999,10 @@
                     $('#txtUEmail').val(userData.email || '');
                     $('#selectUExpatriate').val(userData.isExpatriate ? "true" : "false");
                     $('#selectURole').val(userData.roleName);
-                    if (userData.hireDate && $('#u-hireDate').data('daterangepicker')) {
+                    $('#u-department-select').val(userData.departmentId).trigger('change');
+        setTimeout(function() {
+            $('#u-department-duty-select').val(userData.departmentDutyId).trigger('change');
+        }, 100);                    if (userData.hireDate && $('#u-hireDate').data('daterangepicker')) {
                         const hireDate = moment(userData.hireDate);
                         $('#u-hireDate').val(hireDate.format('DD/MM/YYYY'));
                         $('#u-hireDate').data('daterangepicker').setStartDate(hireDate);

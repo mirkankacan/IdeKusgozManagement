@@ -283,6 +283,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 httpContext.Session.SetString("FullNameWithExp", response.Data.FullNameWithExp);
                 httpContext.Session.SetString("FullName", response.Data.FullName);
                 httpContext.Session.SetString("RoleName", response.Data.RoleName);
+                httpContext.Session.SetString("DepartmentName", response.Data.DepartmentName);
+                httpContext.Session.SetString("DepartmentDutyName", response.Data.DepartmentDutyName);
 
                 // Cookie authentication için claims oluştur
                 var claims = new List<Claim>
@@ -291,6 +293,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
                         new Claim("TCNo", response.Data.TCNo),
                         new Claim("FullNameWithExp", response.Data.FullNameWithExp),
                         new Claim("FullName", response.Data.FullName),
+                        new Claim("DepartmentName", response.Data.DepartmentName),
+                        new Claim("DepartmentDutyName", response.Data.DepartmentDutyName),
                         new Claim(ClaimTypes.GivenName, response.Data.Name),
                         new Claim(ClaimTypes.Surname, response.Data.Surname),
                         new Claim(ClaimTypes.Role, response.Data.RoleName)

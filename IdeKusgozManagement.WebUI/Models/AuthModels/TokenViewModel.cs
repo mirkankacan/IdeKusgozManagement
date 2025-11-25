@@ -14,5 +14,7 @@
         public string FullName { get; set; }
         public string FullNameWithExp { get; set; }
         public string RoleName { get; set; }
+        public string DepartmentName { get; set; }
+        public string DepartmentDutyName { get; set; }
     }
 }

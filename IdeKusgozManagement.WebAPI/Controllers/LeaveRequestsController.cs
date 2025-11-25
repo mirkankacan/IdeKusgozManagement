@@ -60,12 +60,20 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="status">Durum int cinsinden</param>
         /// <param name="userId">Nullable kullanıcı ID'si</param>
-
         [HttpGet("status/{status}")]
-        [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> GetLeaveRequestsByStatus(LeaveRequestStatus status, [FromQuery] string? userId, CancellationToken cancellationToken)
         {
             var result = await leaveRequestService.GetLeaveRequestsByStatusAsync(status, userId, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Kullanıcın astlarının izin taleplerini getirir
+        /// </summary>
+        [HttpGet("subordinates")]
+        public async Task<IActionResult> GetSubLeaveRequestsBySuperior(CancellationToken cancellationToken)
+        {
+            var result = await leaveRequestService.GetSubordinateLeaveRequestsAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

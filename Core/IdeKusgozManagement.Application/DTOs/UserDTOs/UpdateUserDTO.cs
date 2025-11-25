@@ -5,6 +5,8 @@
         public string TCNo { get; set; }
         public string Name { get; set; }
         public string Surname { get; set; }
+        public string DepartmentId { get; set; }
+        public string DepartmentDutyId { get; set; }
         public bool IsActive { get; set; }
         public string? RoleName { get; set; }
         public string? Password { get; set; }

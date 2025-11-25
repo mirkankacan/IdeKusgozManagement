@@ -11,6 +11,10 @@
         public bool IsActive { get; set; }
         public bool IsExpatriate { get; set; }
         public string RoleName { get; set; }
+        public string DepartmentId { get; set; }
+        public string DepartmentName { get; set; }
+        public string DepartmentDutyId { get; set; }
+        public string DepartmentDutyName { get; set; }
         public string? Email { get; set; }
         public DateTime HireDate { get; set; }
         public DateTime? TerminationDate { get; set; }

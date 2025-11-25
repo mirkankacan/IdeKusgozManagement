@@ -136,7 +136,7 @@ async function initializeDailyStatusSelect() {
     try {
         const reasons = [
             { value: 'Çalışıyor', text: 'Çalışıyor' },
-            { value: 'Hafta Tatili', text: 'Hafta Tatili' },
+            { value: 'Hafta Tatili (DAY OFF)', text: 'Hafta Tatili (DAY OFF)' },
             { value: 'Rapor', text: 'Rapor' },
             { value: 'Ücretsiz İzin', text: 'Ücretsiz İzin' },
             { value: 'Yıllık İzin', text: 'Yıllık İzin' },
@@ -199,6 +199,90 @@ function initializeLocationSelects() {
         width: '100%'
     });
 }
+
+const MEAL_ENABLED_STATUSES = [
+    'Çalışıyor',
+    'Resmi Tatil',
+    'Hafta Tatili',
+    'Hafta Tatili (DAY OFF)'
+];
+
+function shouldDisableMealsForStatus(status) {
+    if (!status) {
+        return false;
+    }
+    const normalizedStatus = status.toString().trim().toLowerCase();
+    return !MEAL_ENABLED_STATUSES.some(item => item.toLowerCase() === normalizedStatus);
+}
+
+function setMealCheckboxState(row, shouldDisable) {
+    if (!row || !row.length) {
+        return;
+    }
+
+    const day = row.data('day');
+
+    row.find('.meal-checkbox').each(function () {
+        const checkbox = $(this);
+        const mealType = checkbox.data('meal');
+        if (mealType === 'G') {
+            checkbox.prop('disabled', true);
+            if (shouldDisable) {
+                checkbox.prop('checked', false);
+            }
+        } else {
+            if (shouldDisable) {
+                checkbox.prop('checked', false).prop('disabled', true);
+            } else {
+                checkbox.prop('disabled', false);
+            }
+        }
+    });
+
+    if (!shouldDisable) {
+        checkNightMealEligibility(day);
+    } else {
+        row.find(`#g_${day}`).prop('checked', false).prop('disabled', true);
+    }
+}
+
+function updateRowFieldsForStatus(day, status) {
+    if (!day) {
+        return;
+    }
+
+    const row = $(`tr[data-day="${day}"]`);
+    if (!row.length) {
+        return;
+    }
+
+    const isLocked = String(row.attr('data-is-locked')) === 'true';
+    if (isLocked) {
+        return;
+    }
+
+    const disableMeals = shouldDisableMealsForStatus(status);
+    setMealCheckboxState(row, disableMeals);
+}
+
+function applyDailyStatusRulesForAllRows() {
+    $('#workRecordsTableBody tr').each(function () {
+        const row = $(this);
+        const day = row.data('day');
+        if (!day) {
+            return;
+        }
+        const statusSelect = row.find('.daily-status-select');
+        const status = statusSelect.val() || statusSelect.data('current-value') || '';
+        updateRowFieldsForStatus(day, status);
+    });
+}
+
+$(document).on('change', '.daily-status-select', function () {
+    const day = $(this).data('day');
+    const status = $(this).val();
+    updateRowFieldsForStatus(day, status);
+});
 
 // ===== EXPENSE MANAGEMENT =====
 function clearExpenseForm() {
@@ -412,10 +496,33 @@ function checkNightMealEligibility(day) {
         timeRanges.push({ start: additionalStartTime, end: additionalEndTime });
     }
 
-    // 01:00-05:00 aralığını kapsayan herhangi bir saat aralığı var mı kontrol et
-    const hasNightTime = timeRanges.some(range => {
-        return isTimeRangeOverlappingNight(range.start, range.end);
-    });
+    // Şoför-Yük Taşıma için özel kontrol: 19:00'dan sonra gece yemeği
+    const isDriverDuty = typeof window.departmentDutyName !== 'undefined' && 
+                         window.departmentDutyName === 'Şoför-Yük Taşıma';
+    let hasNightTime = false;
+    
+    if (isDriverDuty) {
+        // Şoför-Yük Taşıma için: 19:00'dan sonra başlayan veya biten saat aralıkları
+        hasNightTime = timeRanges.some(range => {
+            const start = parseTimeToMinutes(range.start);
+            const end = parseTimeToMinutes(range.end);
+            const eveningStart = 19 * 60; // 19:00 = 1140 dakika
+            
+            // Eğer başlangıç ve bitiş aynı gün içindeyse
+            if (start < end) {
+                return start >= eveningStart || end >= eveningStart;
+            }
+            // Eğer gece yarısını geçiyorsa (örneğin 23:00-07:00)
+            else {
+                return start >= eveningStart || end >= eveningStart;
+            }
+        });
+    } else {
+        // Normal kontrol: 01:00-05:00 aralığını kapsayan herhangi bir saat aralığı var mı kontrol et
+        hasNightTime = timeRanges.some(range => {
+            return isTimeRangeOverlappingNight(range.start, range.end);
+        });
+    }
 
     if (hasNightTime) {
         gCheckbox.prop('disabled', false);

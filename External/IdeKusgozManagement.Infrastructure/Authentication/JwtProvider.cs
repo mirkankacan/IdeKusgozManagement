@@ -4,6 +4,7 @@ using IdeKusgozManagement.Application.Interfaces.Providers;
 using IdeKusgozManagement.Domain.Entities;
 using MassTransit;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -28,14 +29,16 @@ namespace IdeKusgozManagement.Infrastructure.Authentication
         {
             // Kullanıcının rollerini al
             var userRoles = await _userManager.GetRolesAsync(applicationUser);
-
+            var user = await _userManager.Users.Include(u => u.Department).Include(u => u.DepartmentDuty).FirstOrDefaultAsync(u => u.Id == applicationUser.Id);
             var claims = new List<Claim>
     {
         new Claim(JwtRegisteredClaimNames.Jti, NewId.NextGuid().ToString()),
         new Claim("TCNo", applicationUser.TCNo!),
         new Claim("FullName", $"{applicationUser.Name} {applicationUser.Surname}"),
         new Claim(ClaimTypes.NameIdentifier, applicationUser.Id),
-        new Claim(ClaimTypes.Role, userRoles.FirstOrDefault()!)
+        new Claim(ClaimTypes.Role, userRoles.FirstOrDefault()!),
+        new Claim("DepartmentName", applicationUser.Department.Name),
+        new Claim("DepartmentDutyName", applicationUser.DepartmentDuty.Name),
     };
 
             DateTime expires = DateTime.Now.AddHours(1);
@@ -68,7 +71,9 @@ namespace IdeKusgozManagement.Infrastructure.Authentication
                 Name = applicationUser.Name,
                 Surname = applicationUser.Surname,
                 RoleName = userRoles.FirstOrDefault(),
-                IsExpatriate = applicationUser.IsExpatriate
+                IsExpatriate = applicationUser.IsExpatriate,
+                DepartmentName = applicationUser.Department.Name,
+                DepartmentDutyName = applicationUser.DepartmentDuty.Name
             };
             Console.WriteLine($"TOKEN OLUŞTURULDU - Expire: {expires:yyyy-MM-dd HH:mm:ss}");
 

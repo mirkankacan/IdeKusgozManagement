@@ -442,5 +442,36 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
             return changedFields;
         }
+
+        public async Task<ServiceResponse<IEnumerable<LeaveRequestDTO>>> GetSubordinateLeaveRequestsAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var superiorId = identityService.GetUserId();
+                if (superiorId == null)
+                    return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Error("Kullanıcı bilgisi alınamadı");
+
+                var subordinateIds = await unitOfWork.GetRepository<IdtUserHierarchy>()
+                    .Where(x => x.SuperiorId == superiorId)
+                    .Select(x => x.SubordinateId)
+                    .ToListAsync(cancellationToken);
+
+                var leaveRequests = await unitOfWork.GetRepository<IdtLeaveRequest>().WhereAsNoTracking(x => subordinateIds.Contains(x.CreatedBy))
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.File)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .ToListAsync(cancellationToken);
+
+                var leaveRequestDTOs = leaveRequests.Adapt<IEnumerable<LeaveRequestDTO>>();
+
+                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, "Kullanıcının astlarının izin talepleri başarıyla getirildi");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetLeaveRequestsBySuperiorIdAsync işleminde hata oluştu");
+                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Error("Kullanıcının astlarının izin talepleri getirilirken hata oluştu");
+            }
+        }
     }
 }

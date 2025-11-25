@@ -2,6 +2,8 @@
 @{
     var fullName = User.FindFirstValue("FullName")!;
     var fullNameWithExp = User.FindFirstValue("FullNameWithExp")!;
+    var departmentName = User.FindFirstValue("DepartmentName")!;
+    var departmentDutyName = User.FindFirstValue("DepartmentDutyName")!;
 }
 
 <!DOCTYPE html>
@@ -37,8 +39,30 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css">
     <link href="https://cdn.jsdelivr.net/npm/tippy.js/dist/tippy.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/themes/light.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" />
     @await RenderSectionAsync("Styles", required: false)
     <style>
+        .profile-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+        }
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        .profile-department {
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
         .modal-dialog-scrollable form {
             max-height: calc(100vh - 200px);
             /* header + footer yüksekliğini çıkar */
@@ -179,10 +203,10 @@
                             <a class="nav-link profile-dropdown" href="#" id="profileDropDown" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
                                 <img src="/theme/assets/images/avatars/profile-image.png" alt="">
-                                <span class="mt-5 text-black">
-                                    @fullName
-                                </span>
-
+                                <div class="profile-info">
+                                    <span class="profile-name">@fullName</span>
+                                    <span class="profile-department">@departmentDutyName</span>
+                                </div>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end profile-drop-menu"
                                  aria-labelledby="profileDropDown">
@@ -318,6 +342,13 @@
     <script src="~/theme/assets/js/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/realtime-manager.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    <script src="~/theme/assets/plugins/pdfjs/build/pdf.mjs" type="module"></script>
+    <script type="module">
+        var { pdfjsLib } = globalThis;
+         pdfjsLib.GlobalWorkerOptions.workerSrc ='~/theme/assets/plugins/pdfjs/build/pdf.worker.mjs';
+    </script>
     <script>
               var turkishLocale = {
                     "format": 'DD/MM/YYYY',
@@ -342,6 +373,8 @@
                 };
         window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
                 window.signalRUrl = '@Configuration.GetSection("ApiSettings")["SignalRUrl"]';
+                window.departmentName = @Html.Raw(Json.Serialize(departmentName))
+                window.departmentDutyName = @Html.Raw(Json.Serialize(departmentDutyName))
 
             $(document).ready(async function () {
 
@@ -356,6 +389,169 @@
                     }
                 });
             });
+                function previewFile(file) {
+            var fileName = file.name.toLowerCase();
+            var fileType = file.type;
+
+            // PDF önizleme
+            if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+                previewPDF(file);
+            }
+            // Excel önizleme
+            else if (fileType.includes('sheet') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                previewExcel(file);
+            }
+            // Resim önizleme
+            else if (fileType.startsWith('image/')) {
+                previewImage(file);
+            }
+            // Word dosyaları için
+            else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+                toastr.warning('Word dosyaları için önizleme desteklenmiyor. Lütfen dosyayı indirin.', 'Bilgi');
+            }
+            // Diğer dosyalar
+            else {
+                toastr.warning('Bu dosya türü için önizleme desteklenmiyor.', 'Bilgi');
+            }
+        }
+
+        function previewPDF(file) {
+            var blobUrl = URL.createObjectURL(file);
+            var viewerPath = '/theme/assets/plugins/pdfjs/web/viewer.html';
+            var iframe = $('#filePreviewIframe');
+            var excelDiv = $('#excelPreviewContainer');
+            var imageDiv = $('#imagePreviewContainer');
+
+            if (iframe.length === 0) {
+                console.error('Hata: filePreviewIframe idli element bulunamadı.');
+                return;
+            }
+
+            // Diğer containerları gizle, PDF iframe'i göster
+            excelDiv.hide().empty();
+            imageDiv.hide().empty();
+            iframe.show();
+
+            $('#filePreviewModalTitle').text(file.name);
+            iframe.attr('src', viewerPath + '?file=' + encodeURIComponent(blobUrl));
+            $('#filePreviewModal').modal('show');
+
+            $('#filePreviewModal').one('hidden.bs.modal', function () {
+                URL.revokeObjectURL(blobUrl);
+                iframe.attr('src', '').hide();
+                excelDiv.empty();
+                imageDiv.empty();
+                $('#filePreviewModalTitle').text('Dosya Önizleme');
+            });
+        }
+
+              function previewExcel(file) {
+            var iframe = $('#filePreviewIframe');
+            var excelDiv = $('#excelPreviewContainer');
+            var imageDiv = $('#imagePreviewContainer');
+            var modalTitle = $('#filePreviewModalTitle');
+
+            iframe.hide();
+            imageDiv.hide().empty();
+            excelDiv.show().html('<div class="text-center p-4"><i class="fas fa-spinner fa-spin"></i> Excel dosyası işleniyor...</div>');
+
+            modalTitle.text(file.name);
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var data = new Uint8Array(e.target.result);
+                try {
+                    var workbook = XLSX.read(data, { type: 'array' });
+                    var firstSheetName = workbook.SheetNames[0];
+                    var worksheet = workbook.Sheets[firstSheetName];
+
+                    // Excel verisini JSON array'e çevir
+                    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+                    // Container'ı hazırla
+                    excelDiv.html('<div id="handsontableContainer" style="overflow:hidden"></div>');
+
+                    // Handsontable ile görselleştir
+                    var container = document.getElementById('handsontableContainer');
+                          var hot = new Handsontable(container, {
+            data: jsonData,
+            rowHeaders: true,
+            colHeaders: true,
+            readOnly: true,
+            width: '100%',
+            height: 'auto',
+            renderAllRows: true,
+            licenseKey: 'non-commercial-and-evaluation',
+            stretchH: 'all',
+            manualColumnResize: true,
+            manualRowResize: true,
+            contextMenu: true,
+            columnSorting: true,
+            filters: true
+        });
+
+                } catch (error) {
+                    console.error(error);
+                    excelDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Dosya okunamadı.</div>');
+                }
+            };
+
+            reader.onerror = function (ex) {
+                console.log(ex);
+                excelDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Dosya okuma hatası.</div>');
+            };
+
+            reader.readAsArrayBuffer(file);
+            $('#filePreviewModal').modal('show');
+
+            $('#filePreviewModal').one('hidden.bs.modal', function () {
+                excelDiv.empty().hide();
+                iframe.hide();
+                imageDiv.empty();
+            });
+        }
+
+        function previewImage(file) {
+            var iframe = $('#filePreviewIframe');
+            var excelDiv = $('#excelPreviewContainer');
+            var imageDiv = $('#imagePreviewContainer');
+            var modalTitle = $('#filePreviewModalTitle');
+
+            // PDF iframe ve Excel containerını gizle, resim div'i göster
+            iframe.hide();
+            excelDiv.hide().empty();
+            imageDiv.show().html('<div class="text-center p-4"><i class="fas fa-spinner fa-spin"></i> Resim yükleniyor...</div>');
+
+            modalTitle.text(file.name);
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var img = $('<img>')
+                    .attr('src', e.target.result)
+                    .addClass('img-fluid')
+                    .css({
+                        'max-width': '100%',
+                        'max-height': '70vh',
+                        'display': 'block',
+                        'margin': '0 auto'
+                    });
+                imageDiv.html(img);
+            };
+
+            reader.onerror = function (ex) {
+                console.log(ex);
+                imageDiv.html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Resim yükleme hatası.</div>');
+            };
+
+            reader.readAsDataURL(file);
+            $('#filePreviewModal').modal('show');
+
+            $('#filePreviewModal').one('hidden.bs.modal', function () {
+                imageDiv.empty().hide();
+                iframe.hide();
+                excelDiv.empty();
+            });
+        }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 

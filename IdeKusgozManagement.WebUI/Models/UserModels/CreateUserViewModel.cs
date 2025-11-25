@@ -18,6 +18,10 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
 
         [Required]
         public string RoleName { get; set; }
+        [Required]
+        public string DepartmentId { get; set; }
+        [Required]
+        public string DepartmentDutyId { get; set; }
 
         [Required]
         public bool IsExpatriate { get; set; }

@@ -33,6 +33,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
+        [HttpGet("ast-liste")]
+        public async Task<IActionResult> GetSubordinateLeaveRequests(CancellationToken cancellationToken)
+        {
+            var response = await _leaveRequestApiService.GetSubordinateLeaveRequestsAsync(cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetLeaveRequestById(string id, CancellationToken cancellationToken)
         {

@@ -14,5 +14,7 @@
         public string FullName => $"{Name} {Surname}";
         public string FullNameWithExp => IsExpatriate ? $"{Name} {Surname} (Gurbetçi)" : FullName;
         public string RoleName { get; set; }
+        public string DepartmentName { get; set; }
+        public string DepartmentDutyName { get; set; }
     }
 }

@@ -12,7 +12,10 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
 
         [Required]
         public string Surname { get; set; }
-
+        [Required]
+        public string DepartmentId { get; set; }
+        [Required]
+        public string DepartmentDutyId { get; set; }
         public string? Password { get; set; }
 
         public bool IsActive { get; set; }

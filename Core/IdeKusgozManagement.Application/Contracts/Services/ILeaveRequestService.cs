@@ -20,6 +20,8 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
 
         Task<ServiceResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
+        Task<ServiceResponse<IEnumerable<LeaveRequestDTO>>> GetSubordinateLeaveRequestsAsync(CancellationToken cancellationToken = default);
+
         Task<ServiceResponse<bool>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default);
 
         Task<ServiceResponse<bool>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default);

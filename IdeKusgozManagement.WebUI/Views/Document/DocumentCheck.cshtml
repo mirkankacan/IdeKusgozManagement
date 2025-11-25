@@ -316,13 +316,14 @@
          }, DEBOUNCE_DELAY);
 
          // Tablo yükleme kontrolü fonksiyonu
-              // Tablo yükleme kontrolü fonksiyonu
         function checkAndLoadTable() {
             const departmentId = $('#department-select').val();
             const departmentDutyId = $('#department-duty-select').val();
+             const targetId = $('#target-select').val();
 
+            const scope = currentDepartmentScope;
             // Department ve departmentDuty seçili olmalı
-            const canLoadTable = departmentId && departmentDutyId;
+             const canLoadTable = departmentId && departmentDutyId && (scope === 1 || scope === 3 ? targetId : true);
 
             if (canLoadTable) {
                 loadDataTable();
