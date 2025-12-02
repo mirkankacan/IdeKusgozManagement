@@ -37,7 +37,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. Date: {Date}, UserId: {UserId}", date, userId);
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Tarih ve kullanıcıya göre puantaj kayıtları getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -92,7 +92,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "BatchApproveWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. UserId: {UserId}, Month: {Month}, Year: {Year}", userId, date.Date.Month, date.Date.Year);
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu puantaj kaydı onaylanırken hata oluştu");
+                throw;
             }
         }
 
@@ -145,7 +145,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "BatchApproveWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. UserId: {UserId},  Month: {Month}, Year: {Year}", userId, date.Date.Month, date.Date.Year);
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Toplu puantaj kaydı reddedilirken hata oluştu");
+                throw;
             }
         }
 
@@ -202,7 +202,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "ApproveWorkRecordByIdAsync işleminde hata oluştu. WorkRecordId: {WorkRecordId}", id);
-                return ServiceResponse<WorkRecordDTO>.Error("Puantaj kaydı onaylanırken hata oluştu");
+                throw;
             }
         }
 
@@ -257,7 +257,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "RejectWorkRecordByIdAsync işleminde hata oluştu. WorkRecordId: {WorkRecordId}", id);
-                return ServiceResponse<WorkRecordDTO>.Error("Puantaj kaydı reddedilirken hata oluştu");
+                throw;
             }
         }
 
@@ -366,7 +366,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "BatchUpdateWorkRecordsByUserIdAsync işleminde hata oluştu.");
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Puantaj kayıtları işlenirken hata oluştu");
+                throw;
             }
         }
 
@@ -490,7 +490,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "BatchCreateOrModifyWorkRecordsAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Puantaj kayıtları işlenirken hata oluştu");
+                throw;
             }
         }
 

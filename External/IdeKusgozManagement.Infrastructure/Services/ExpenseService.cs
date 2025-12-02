@@ -24,7 +24,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetExpensesAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<ExpenseDTO>>.Error("Masraf türü listesi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -46,7 +46,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetExpenseByIdAsync işleminde hata oluştu");
-                return ServiceResponse<ExpenseDTO>.Error("Masraf türü getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -71,7 +71,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "CreateExpenseAsync işleminde hata oluştu");
-                return ServiceResponse<string>.Error("Masraf türü oluşturulurken hata oluştu");
+                throw;
             }
         }
 
@@ -102,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "UpdateExpenseAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Masraf türü güncellenirken hata oluştu");
+                throw;
             }
         }
 
@@ -132,7 +132,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DeleteExpenseAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Masraf türü silinirken hata oluştu");
+                throw;
             }
         }
 
@@ -150,7 +150,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetActiveExpensesAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<ExpenseDTO>>.Error("Aktif masraf türü listesi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -175,7 +175,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "EnableExpenseAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Masraf türü aktif duruma getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -200,7 +200,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DisableExpenseAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Masraf türü pasif duruma getirilirken hata oluştu");
+                throw;
             }
         }
     }

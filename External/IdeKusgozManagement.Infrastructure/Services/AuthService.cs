@@ -48,7 +48,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "LoginAsync işleminde hata oluştu. TCNo: {TCNo}", loginDTO.TCNo);
-                return ServiceResponse<TokenDTO>.Error("Giriş işlemi sırasında bir hata oluştu");
+                throw;
             }
         }
 
@@ -78,7 +78,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "LogoutAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<bool>.Error("Çıkış işlemi sırasında bir hata oluştu");
+                throw;
             }
         }
 
@@ -124,7 +124,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "RefreshTokenAsync işleminde hata oluştu. UserId: {UserId}", createTokenByRefreshTokenDTO.UserId);
-                return ServiceResponse<TokenDTO>.Error("Token yenileme işlemi sırasında bir hata oluştu");
+                throw;
             }
         }
 
@@ -178,7 +178,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "ResetPasswordAsync işleminde hata oluştu. TCNo: {TCNo}", dto.TCNo);
-                return ServiceResponse<bool>.Error("Şifre sıfırlama işlemi sırasında bir hata oluştu");
+                throw;
             }
         }
 
@@ -228,7 +228,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "SendResetPasswordEmailAsync işleminde hata oluştu. TCNo: {TCNo}", dto.TCNo);
-                return ServiceResponse<bool>.Error("Doğrulama kodu gönderilirken bir hata oluştu");
+                throw;
             }
         }
 

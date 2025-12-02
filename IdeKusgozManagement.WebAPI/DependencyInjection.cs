@@ -1,11 +1,12 @@
 ﻿using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Data.Context;
+using IdeKusgozManagement.WebAPI.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -23,79 +24,56 @@ namespace IdeKusgozManagement.WebAPI
     {
         public static IServiceCollection AddWebAPIServices(this IServiceCollection services, IConfiguration configuration, IHostBuilder host)
         {
+            services.AddScoped<GlobalExceptionMiddleware>();
+
+            services.AddAuthorization();
             var connectionString = configuration.GetConnectionString("SqlConnection");
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             using var tempServiceProvider = services.BuildServiceProvider();
             var emailOptions = tempServiceProvider.GetRequiredService<IOptions<EmailOptionsDTO>>();
 
-            bool databaseExists = CheckDatabaseExists(connectionString);
-
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                .MinimumLevel.Override("System", LogEventLevel.Warning)
-                .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
-                .Enrich.FromLogContext()
-                .Enrich.WithProperty("Application", "IdeKusgoz.WebAPI")
-                .Enrich.WithProperty("Environment", environment)
-                .Enrich.WithClientIp()
-                .Enrich.WithMachineName()
-                .Enrich.WithThreadId()
-                .WriteTo.Logger(lc =>
-                {
-                    if (environment == "Development")
-                    {
-                        lc.WriteTo.Console(
-                            restrictedToMinimumLevel: LogEventLevel.Information,
-                            outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}");
-                    }
-                })
-                .WriteTo.File("logs/api-application-.log",
-                    restrictedToMinimumLevel: LogEventLevel.Information,
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 30,
-                    fileSizeLimitBytes: 10_000_000,
-                    rollOnFileSizeLimit: true,
-                    shared: true,
-                    outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-                // Veritabanı varsa SQL Server sink'leri ekle
-                .WriteTo.Logger(lc =>
-                {
-                    if (databaseExists)
-                    {
-                        lc.Filter.ByIncludingOnly(evt => evt.Level == LogEventLevel.Information || evt.Level == LogEventLevel.Debug)
-                          .WriteTo.MSSqlServer(
-                              connectionString: connectionString,
-                              sinkOptions: new MSSqlServerSinkOptions
-                              {
-                                  TableName = "InformationLogs",
-                                  SchemaName = "dbo",
-                                  AutoCreateSqlTable = true,
-                                  BatchPostingLimit = 1000,
-                                  BatchPeriod = TimeSpan.FromSeconds(30)
-                              },
-                              columnOptions: GetInformationColumnOptions());
-                    }
-                })
-                .WriteTo.Logger(lc =>
-                {
-                    if (databaseExists)
-                    {
-                        lc.Filter.ByIncludingOnly(evt => evt.Level >= LogEventLevel.Warning)
-                          .WriteTo.MSSqlServer(
-                              connectionString: connectionString,
-                              sinkOptions: new MSSqlServerSinkOptions
-                              {
-                                  TableName = "ErrorLogs",
-                                  SchemaName = "dbo",
-                                  AutoCreateSqlTable = true,
-                                  BatchPostingLimit = 100,
-                                  BatchPeriod = TimeSpan.FromSeconds(10)
-                              },
-                              columnOptions: GetErrorColumnOptions());
-                    }
-                })
-                .WriteTo.Email(
+               .MinimumLevel.Debug()
+               .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+               .MinimumLevel.Override("System", LogEventLevel.Warning)
+               .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+               .Enrich.WithProperty("Application", "IdeKusgozManagement.WebAPI")
+               .Enrich.WithProperty("Environment", environment)
+               .Enrich.WithClientIp()
+               .Enrich.WithMachineName()
+               .Enrich.WithThreadId()
+               .Enrich.WithCorrelationId()
+               .WriteTo.Logger(lc =>
+               {
+                   if (environment == "Development")
+                   {
+                       lc.WriteTo.Console(
+                           restrictedToMinimumLevel: LogEventLevel.Debug,
+                           outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}");
+                   }
+               })
+               .WriteTo.File("logs/api-.log",
+                   restrictedToMinimumLevel: LogEventLevel.Information,
+                   rollingInterval: RollingInterval.Day,
+                   retainedFileCountLimit: 30,
+                   fileSizeLimitBytes: 10_000_000,
+                   rollOnFileSizeLimit: true,
+                   shared: true,
+                   outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
+               .WriteTo.MSSqlServer(
+                   connectionString: connectionString,
+                   sinkOptions: new MSSqlServerSinkOptions
+                   {
+                       TableName = "IdtLogs",
+                       SchemaName = "dbo",
+                       AutoCreateSqlTable = true,
+                       BatchPostingLimit = 500,
+                       BatchPeriod = TimeSpan.FromSeconds(15)
+                   },
+                   restrictedToMinimumLevel: LogEventLevel.Information,
+                   columnOptions: GetColumnOptions())
+               .WriteTo.Email(
                     from: configuration["EmailConfiguration:FromEmail"],
                     to: GetEmailRecipients(emailOptions),
                     host: configuration["EmailConfiguration:Host"],
@@ -105,7 +83,7 @@ namespace IdeKusgozManagement.WebAPI
                         configuration["EmailConfiguration:FromEmail"],
                         configuration["EmailConfiguration:Password"]
                     ),
-                    subject: "🚨 Kuşgöz API Hata Bildirimi - {Level} - {Timestamp:yyyy-MM-dd HH:mm}",
+                    subject: "🚨 IdeKusgozManagement.WebAPI - {Level} - {Timestamp:dd-MM-yyyy HH:mm}",
                     restrictedToMinimumLevel: LogEventLevel.Error
                 )
                 .CreateLogger();
@@ -125,7 +103,24 @@ namespace IdeKusgozManagement.WebAPI
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
-
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                        {
+                            context.Response.Headers.Append("Token-Expired", "true");
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
             services.AddHttpClient();
             services.AddHttpContextAccessor();
 
@@ -187,14 +182,6 @@ namespace IdeKusgozManagement.WebAPI
                 NullValueHandling = NullValueHandling.Ignore
             };
 
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer();
-
-            services.AddAuthorization();
-
             services.AddSignalR(options =>
             {
                 options.EnableDetailedErrors = true;
@@ -210,71 +197,53 @@ namespace IdeKusgozManagement.WebAPI
                });
 
             services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen(setup =>
+            services.AddSwaggerGen(options =>
             {
-                var jwtSecuritySheme = new OpenApiSecurityScheme
+                options.SwaggerDoc("v1", new OpenApiInfo
                 {
-                    BearerFormat = "JWT",
-                    Name = "JWT Authentication",
-                    In = ParameterLocation.Header,
+                    Title = "IdeKusgozManagement.WebAPI",
+                    Version = "v1",
+                    Description = "Kuşgöz İzmir Vinç Yönetim Sistemi API"
+                });
+
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
                     Type = SecuritySchemeType.Http,
-                    Scheme = JwtBearerDefaults.AuthenticationScheme,
-                    Description = "Put **_ONLY_** your JWT Bearer token on textbox below!",
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "JWT token giriniz. Sadece token yazın, 'Bearer' eklemeyin.\n\nÖrnek: eyJhbGciOiJIUzI1NiIs..."
+                });
 
-                    Reference = new OpenApiReference
-                    {
-                        Id = JwtBearerDefaults.AuthenticationScheme,
-                        Type = ReferenceType.SecurityScheme
-                    }
-                };
-
-                setup.AddSecurityDefinition(jwtSecuritySheme.Reference.Id, jwtSecuritySheme);
-
-                setup.AddSecurityRequirement(new OpenApiSecurityRequirement
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
-                    { jwtSecuritySheme, Array.Empty<string>() }
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
                 });
             });
-
             return services;
         }
 
-        private static bool CheckDatabaseExists(string connectionString)
-        {
-            try
-            {
-                using var connection = new SqlConnection(connectionString);
-                connection.Open();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private static ColumnOptions GetInformationColumnOptions()
+        private static ColumnOptions GetColumnOptions()
         {
             var columnOptions = new ColumnOptions();
+
             columnOptions.Store.Remove(StandardColumn.MessageTemplate);
-            columnOptions.Store.Remove(StandardColumn.Properties);
-            columnOptions.Store.Add(StandardColumn.LogEvent);
-            columnOptions.DisableTriggers = true;
-            columnOptions.AdditionalColumns = new Collection<SqlColumn>
-            {
-                new SqlColumn { ColumnName = "UserId", DataType = SqlDbType.NVarChar, DataLength = 50, AllowNull = true },
-                new SqlColumn { ColumnName = "Action", DataType = SqlDbType.NVarChar, DataLength = 100, AllowNull = true },
-                new SqlColumn { ColumnName = "Module", DataType = SqlDbType.NVarChar, DataLength = 100, AllowNull = true },
-                new SqlColumn { ColumnName = "ClientIP", DataType = SqlDbType.NVarChar, DataLength = 45, AllowNull = true }
-            };
-            return columnOptions;
-        }
 
-        private static ColumnOptions GetErrorColumnOptions()
-        {
-            var columnOptions = new ColumnOptions();
             columnOptions.Store.Add(StandardColumn.LogEvent);
+
             columnOptions.DisableTriggers = true;
+
             columnOptions.AdditionalColumns = new Collection<SqlColumn>
             {
                 new SqlColumn { ColumnName = "UserId", DataType = SqlDbType.NVarChar, DataLength = 50, AllowNull = true },
@@ -284,6 +253,7 @@ namespace IdeKusgozManagement.WebAPI
                 new SqlColumn { ColumnName = "UserAgent", DataType = SqlDbType.NVarChar, DataLength = 500, AllowNull = true },
                 new SqlColumn { ColumnName = "RequestId", DataType = SqlDbType.NVarChar, DataLength = 50, AllowNull = true }
             };
+
             return columnOptions;
         }
 

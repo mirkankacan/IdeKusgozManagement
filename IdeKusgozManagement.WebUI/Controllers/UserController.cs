@@ -83,7 +83,18 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+        [Authorize(Roles = "Admin, Yönetici,Şef")]
+        [HttpGet("departman-gorev/{departmentDutyId}")]
+        public async Task<IActionResult> GetUsersByDepartmentDuty(string departmentDutyId, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(departmentDutyId))
+            {
+                return BadRequest("Departman görev ID'si gereklidir");
+            }
+            var response = await _userApiService.GetUsersByDepartmentDutyAsync(departmentDutyId, cancellationToken);
 
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("aktif-roller")]
         public async Task<IActionResult> GetActiveRoles(CancellationToken cancellationToken)

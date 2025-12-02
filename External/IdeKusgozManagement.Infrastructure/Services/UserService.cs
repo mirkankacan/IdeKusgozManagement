@@ -56,7 +56,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetUsersAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<UserDTO>>.Error("Kullanıcılar getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -83,7 +83,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetUserByIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<UserDTO>.Error("Kullanıcı getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -155,7 +155,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "CreateUserAsync işleminde hata oluştu");
-                return ServiceResponse<UserDTO>.Error("Kullanıcı oluşturulurken hata oluştu");
+                throw;
             }
         }
 
@@ -267,7 +267,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "UpdateUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<UserDTO>.Error("Kullanıcı güncellenirken hata oluştu");
+                throw;
             }
         }
 
@@ -293,7 +293,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DeleteUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<bool>.Error("Kullanıcı silinirken hata oluştu");
+                throw;
             }
         }
 
@@ -332,7 +332,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "AssignRoleToUserAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Rol atanırken hata oluştu");
+                throw;
             }
         }
 
@@ -360,7 +360,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "EnableUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<bool>.Error("Kullanıcı aktifleştirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -388,7 +388,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DisableUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<bool>.Error("Kullanıcı pasifleştirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -414,7 +414,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "ChangePasswordAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<bool>.Error("Şifre değiştirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -445,7 +445,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetActiveSuperiorsAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<UserDTO>>.Error("Aktif yöneticiler getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -476,7 +476,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetSubordinatesByUserIdAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<IEnumerable<UserDTO>>.Error("Atanmış kullanıcılar getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -503,10 +503,30 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetAnnualLeaveDaysByUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
-                return ServiceResponse<AnnualLeaveBalanceDTO>.Error("Kullanıcının yıllık izin verileri alınırken hata oluştu");
+                throw;
             }
         }
+        public async Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentDutyAsync(string departmentDutyId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(departmentDutyId))
+                {
+                    return ServiceResponse<IEnumerable<UserDTO>>.Error("Departman görev ID'si boş geçilemez");
+                }
 
+                var users = await userManager.Users.Where(x => x.DepartmentDutyId == departmentDutyId && x.IsActive == true).ToListAsync(cancellationToken);
+
+                var mappedUsers = users.Adapt<IEnumerable<UserDTO>>();
+
+                return ServiceResponse<IEnumerable<UserDTO>>.Success(mappedUsers);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetUsersByDepartmentDutyAsync işleminde hata oluştu. DepartmentDutyId: {DepartmentDutyId}", departmentDutyId);
+                throw;
+            }
+        }
         public async Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default)
         {
             try
@@ -525,7 +545,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetUsersByDepartmentAsync işleminde hata oluştu. DepartmentId: {DepartmentId}", departmentId);
-                return ServiceResponse<IEnumerable<UserDTO>>.Error("Departmana göre kullanıcılar getirilirken hata oluştu");
+                throw;
             }
         }
     }

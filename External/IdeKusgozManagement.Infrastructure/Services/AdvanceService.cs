@@ -83,7 +83,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "ApproveAdvanceAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Avans isteği onaylanırken hata oluştu");
+                throw;
             }
         }
 
@@ -115,7 +115,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "CreateAdvanceAsync işleminde hata oluştu");
-                return ServiceResponse<string>.Error("Avans isteği oluşturulurken hata oluştu");
+                throw;
             }
         }
 
@@ -145,7 +145,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DeleteAdvanceAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Avans isteği silinirken hata oluştu");
+                throw;
             }
         }
 
@@ -170,7 +170,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetAdvanceByIdAsync işleminde hata oluştu");
-                return ServiceResponse<AdvanceDTO>.Error("Avans isteği getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -197,7 +197,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetAdvancesByUserIdAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<AdvanceDTO>>.Error("Avans istekleri getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -224,7 +224,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetAdvancesByUserIdAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<AdvanceDTO>>.Error("Kullanıcının avans istekleri getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -253,7 +253,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetChiefProcessedAdvancesAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<AdvanceDTO>>.Error("Şef onaylı avans istekleri getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -328,7 +328,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "RejectAdvanceAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Avans isteği reddedilirken hata oluştu");
+                throw;
             }
         }
 
@@ -350,7 +350,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "RejectAdvanceAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Avans isteği reddedilirken hata oluştu");
+                throw;
             }
         }
     }

@@ -41,9 +41,9 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpGet("{departmentDutyId}/tip-liste")]
-        public async Task<IActionResult> GetDocumentTypesByDuty(string departmentDutyId, [FromQuery] string? companyId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetDocumentTypesByDuty(string departmentDutyId, /*[FromQuery] string? companyId,*/ CancellationToken cancellationToken)
         {
-            var result = await _documentApiService.GetDocumentTypesByDutyAsync(departmentDutyId, companyId, cancellationToken);
+            var result = await _documentApiService.GetDocumentTypesByDutyAsync(departmentDutyId, /*companyId,*/ cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

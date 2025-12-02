@@ -93,7 +93,7 @@ Return ONLY this JSON:
             catch (Exception ex)
             {
                 logger.LogError(ex, "AnalyzeDocumentDateAsync işleminde hata - Dosya: {FileName}", file?.FileName);
-                return ServiceResponse<AIDateResponse>.Error("Tarih analizi sırasında hata oluştu");
+                throw;
             }
         }
     }

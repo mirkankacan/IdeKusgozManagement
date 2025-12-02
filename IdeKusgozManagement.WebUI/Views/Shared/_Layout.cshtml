@@ -48,11 +48,13 @@
             gap: 10px;
             padding: 8px 15px;
         }
+
         .profile-info {
             display: flex;
             flex-direction: column;
             text-align: left;
         }
+
         .profile-department {
             font-size: 12px;
             color: #6c757d;
@@ -305,6 +307,28 @@
         <div class="page-content">
             <div class="main-wrapper">
                 @RenderBody()
+                <div class="modal fade" id="filePreviewModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-xl" role="document" style="max-width: 90%; height: 90vh;">
+                        <div class="modal-content" style="height: 100%;">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="filePreviewModalTitle">Dosya Önizleme</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+                            </div>
+                            <div class="modal-body p-0" style="height: 100%; overflow: hidden;">
+                                <!-- PDF için iframe -->
+                                <iframe id="filePreviewIframe" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
+
+                                <!-- Excel için container -->
+                                <div id="excelPreviewContainer" style="display: none; overflow: auto; height: 100%;"></div>
+
+                                <!-- Resim için container -->
+                                <div id="imagePreviewContainer" style="display: none; overflow: auto; height: 100%;"></div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -371,8 +395,17 @@
                     "firstDay": 1
 
                 };
-        window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
-                window.signalRUrl = '@Configuration.GetSection("ApiSettings")["SignalRUrl"]';
+                window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
+                       window.signalRUrl = (function() {
+            const currentUrl = window.location.href;
+            if (currentUrl.includes('portal.izmircrane.com')) {
+                return 'http://92.45.19.226:5291/';
+            } else if (currentUrl.startsWith('http://192.168.2.253:5290')) {
+                return 'http://192.168.2.253:5291/';
+            } else if(currentUrl.startsWith('http://localhost:5290')) {
+                return 'http://localhost:5291/';
+            }
+        })();
                 window.departmentName = @Html.Raw(Json.Serialize(departmentName))
                 window.departmentDutyName = @Html.Raw(Json.Serialize(departmentDutyName))
 

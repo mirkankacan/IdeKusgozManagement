@@ -62,13 +62,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         : null
                 };
 
-
                 return ServiceResponse<MessageDTO>.Success(messageDTO, "Mesaj başarıyla gönderildi");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "CreateMessageAsync işleminde hata oluştu");
-                return ServiceResponse<MessageDTO>.Error("Mesaj gönderilirken hata oluştu");
+                throw;
             }
         }
 
@@ -91,7 +90,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DeleteMessageAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Mesaj silinirken hata oluştu");
+                throw;
             }
         }
 
@@ -178,7 +177,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetMessagesAsync işleminde hata oluştu");
-                return ServiceResponse<PagedResult<MessageDTO>>.Error("Mesajlar getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -202,7 +201,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Mesaj herkese gönderilemedi. Content: {Content}", createMessageDTO.Content);
-                return ServiceResponse<MessageDTO>.Error("Mesaj herkese gönderilemedi");
+                throw;
             }
         }
 
@@ -241,7 +240,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "Mesaj rollere gönderilemedi. Roles: {RoleNames}, Content: {Content}",
                     createMessageDTO.TargetRoles != null ? string.Join(", ", createMessageDTO.TargetRoles) : "null",
                     createMessageDTO.Content);
-                return ServiceResponse<MessageDTO>.Error("Mesaj rollere gönderilemedi");
+                throw;
             }
         }
 
@@ -274,7 +273,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Mesaj altlara gönderilemedi");
-                return ServiceResponse<MessageDTO>.Error("Mesaj altlara gönderilemedi");
+                throw;
             }
         }
 
@@ -307,7 +306,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Mesaj üstlere gönderilemedi");
-                return ServiceResponse<MessageDTO>.Error("Mesaj üstlere gönderilemedi");
+                throw;
             }
         }
 
@@ -346,7 +345,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "Mesaj kullanıcılara gönderilemedi. TargetUsers: {UserIds}, Content: {Content}",
                     createMessageDTO.TargetUsers != null ? string.Join(", ", createMessageDTO.TargetUsers) : "null",
                     createMessageDTO.Content);
-                return ServiceResponse<MessageDTO>.Error("Mesaj kullanıcılara gönderilemedi");
+                throw;
             }
         }
     }

@@ -126,10 +126,89 @@ async function initializeProjectSelect() {
             theme: 'bootstrap-5',
             width: '100%'
         });
+
+        // Setup project change handler for Garaj/Ofis logic
+        setupProjectChangeHandler();
     } catch (error) {
         console.error('Proje listesi yüklenirken hata:', error);
         toastr.error('Proje listesi yüklenirken hata oluştu', 'Hata!');
     }
+}
+
+function setupProjectChangeHandler() {
+    $(document).off('change', '.project-select').on('change', '.project-select', function () {
+        const projectSelect = $(this);
+        const day = projectSelect.data('day');
+        const selectedProjectName = projectSelect.find('option:selected').text();
+        
+        if (!day) return;
+
+        const row = $(`tr[data-day="${day}"]`);
+        if (!row.length) return;
+
+        const isLocked = String(row.attr('data-is-locked')) === 'true';
+        if (isLocked) return;
+
+        const isGarajOrOfis = selectedProjectName && 
+            (selectedProjectName.toLowerCase() === 'garaj' || selectedProjectName.toLowerCase() === 'ofis');
+
+        const equipmentSelect = row.find('.equipment-select');
+        const provinceSelect = row.find('.province-select');
+        const districtSelect = row.find('.district-select');
+
+        if (isGarajOrOfis) {
+            // Disable equipment
+            equipmentSelect.prop('disabled', true);
+            if (equipmentSelect.hasClass('select2-hidden-accessible')) {
+                equipmentSelect.val(null).trigger('change.select2');
+            }
+
+            // Disable location selects
+            provinceSelect.prop('disabled', true);
+            districtSelect.prop('disabled', true);
+
+            // Set İzmir and Bornova
+            if (!provinceSelect.hasClass('select2-hidden-accessible')) {
+                populateProvinces(provinceSelect);
+            }
+            
+            setTimeout(() => {
+                provinceSelect.val('İzmir').trigger('change');
+                setTimeout(() => {
+                    if (provinceSelect.val() === 'İzmir') {
+                        populateDistricts(provinceSelect, districtSelect);
+                        setTimeout(() => {
+                            districtSelect.val('Bornova').trigger('change');
+                        }, 100);
+                    }
+                }, 100);
+            }, 50);
+
+            if (provinceSelect.hasClass('select2-hidden-accessible')) {
+                provinceSelect.trigger('change.select2');
+            }
+            if (districtSelect.hasClass('select2-hidden-accessible')) {
+                districtSelect.trigger('change.select2');
+            }
+        } else {
+            // Enable equipment
+            equipmentSelect.prop('disabled', false);
+            if (equipmentSelect.hasClass('select2-hidden-accessible')) {
+                equipmentSelect.trigger('change.select2');
+            }
+
+            // Enable location selects
+            provinceSelect.prop('disabled', false);
+            districtSelect.prop('disabled', false);
+
+            if (provinceSelect.hasClass('select2-hidden-accessible')) {
+                provinceSelect.trigger('change.select2');
+            }
+            if (districtSelect.hasClass('select2-hidden-accessible')) {
+                districtSelect.trigger('change.select2');
+            }
+        }
+    });
 }
 
 async function initializeDailyStatusSelect() {
@@ -275,6 +354,90 @@ function applyDailyStatusRulesForAllRows() {
         const statusSelect = row.find('.daily-status-select');
         const status = statusSelect.val() || statusSelect.data('current-value') || '';
         updateRowFieldsForStatus(day, status);
+    });
+}
+
+function applyProjectRulesForAllRows() {
+    $('#workRecordsTableBody tr').each(function () {
+        const row = $(this);
+        const day = row.data('day');
+        if (!day) {
+            return;
+        }
+        const projectSelect = row.find('.project-select');
+        const selectedProjectName = projectSelect.find('option:selected').text();
+        
+        const isLocked = String(row.attr('data-is-locked')) === 'true';
+        if (isLocked) return;
+
+        const isGarajOrOfis = selectedProjectName && 
+            (selectedProjectName.toLowerCase() === 'garaj' || selectedProjectName.toLowerCase() === 'ofis');
+
+        const equipmentSelect = row.find('.equipment-select');
+        const provinceSelect = row.find('.province-select');
+        const districtSelect = row.find('.district-select');
+
+        if (isGarajOrOfis) {
+            // Disable equipment
+            equipmentSelect.prop('disabled', true);
+            if (equipmentSelect.hasClass('select2-hidden-accessible')) {
+                equipmentSelect.trigger('change.select2');
+            }
+
+            // Disable location selects
+            provinceSelect.prop('disabled', true);
+            districtSelect.prop('disabled', true);
+
+            // Set İzmir and Bornova if not already set
+            if (provinceSelect.val() !== 'İzmir') {
+                if (!provinceSelect.hasClass('select2-hidden-accessible')) {
+                    populateProvinces(provinceSelect);
+                }
+                
+                setTimeout(() => {
+                    provinceSelect.val('İzmir').trigger('change');
+                    setTimeout(() => {
+                        if (provinceSelect.val() === 'İzmir') {
+                            populateDistricts(provinceSelect, districtSelect);
+                            setTimeout(() => {
+                                if (districtSelect.val() !== 'Bornova') {
+                                    districtSelect.val('Bornova').trigger('change');
+                                }
+                            }, 100);
+                        }
+                    }, 100);
+                }, 50);
+            } else if (districtSelect.val() !== 'Bornova') {
+                populateDistricts(provinceSelect, districtSelect);
+                setTimeout(() => {
+                    districtSelect.val('Bornova').trigger('change');
+                }, 100);
+            }
+
+            if (provinceSelect.hasClass('select2-hidden-accessible')) {
+                provinceSelect.trigger('change.select2');
+            }
+            if (districtSelect.hasClass('select2-hidden-accessible')) {
+                districtSelect.trigger('change.select2');
+            }
+        } else {
+            // Enable equipment
+            equipmentSelect.prop('disabled', false);
+            if (equipmentSelect.hasClass('select2-hidden-accessible')) {
+                equipmentSelect.trigger('change.select2');
+            }
+
+            // Enable location selects
+            provinceSelect.prop('disabled', false);
+            districtSelect.prop('disabled', false);
+
+            if (provinceSelect.hasClass('select2-hidden-accessible')) {
+                provinceSelect.trigger('change.select2');
+            }
+            if (districtSelect.hasClass('select2-hidden-accessible')) {
+                districtSelect.trigger('change.select2');
+            }
+        }
     });
 }
 

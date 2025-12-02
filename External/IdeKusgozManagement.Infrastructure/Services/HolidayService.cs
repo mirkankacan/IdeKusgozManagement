@@ -52,7 +52,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, $"GetHolidaysByYearAsync işleminde hata oluştu");
-                return ServiceResponse<List<HolidayDTO>>.Error("Tatiller listesi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -121,7 +121,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "CalculateWorkingDaysAsync işleminde hata oluştu");
-                return ServiceResponse<double>.Error("Net çalışma günü hesaplanırken hata oluştu");
+                throw;
             }
         }
     }

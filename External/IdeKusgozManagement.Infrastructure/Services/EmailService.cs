@@ -33,12 +33,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (SmtpException ex)
             {
                 logger.LogError(ex, "SMTP hatası oluştu. Email: {Email}, SMTP Kodu: {StatusCode}", email, ex.StatusCode);
-                return ServiceResponse<bool>.Error("SMTP hatası");
+                throw;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Email gönderilirken beklenmeyen hata oluştu. Email: {Email}", email);
-                return ServiceResponse<bool>.Error("Bir hata oluştu lütfen tekrar deneyin");
+                throw;
             }
         }
 

@@ -7,7 +7,7 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
     {
         Task<ApiResponse<IEnumerable<DocumentTypeViewModel>>> GetDocumentTypesAsync(CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<DocumentTypeViewModel>>> GetDocumentTypesByDutyAsync(string departmentDutyId, string? companyId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<DocumentTypeViewModel>>> GetDocumentTypesByDutyAsync(string departmentDutyId, /*string? companyId, */CancellationToken cancellationToken = default);
 
         Task<ApiResponse<IEnumerable<RequiredDocumentViewModel>>> GetRequiredDocumentsAsync(string departmentId, string departmentDutyId, string? companyId, string? targetId, CancellationToken cancellationToken = default);
     }

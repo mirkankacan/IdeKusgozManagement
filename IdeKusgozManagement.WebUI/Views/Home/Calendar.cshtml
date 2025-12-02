@@ -17,11 +17,11 @@
             position: relative;
         }
 
-            /* Yerine Tüm Gün yaz */
-            .fc-list-event-time::after {
-                content: "Tüm Gün";
-                color: #6c757d !important;
-            }
+        /* Yerine Tüm Gün yaz */
+        .fc-list-event-time::after {
+            content: "Tüm Gün";
+            color: #6c757d !important;
+        }
     </style>
 }
 
@@ -74,14 +74,14 @@
                     year: 'numeric',
                     month: 'long'
                 },
-                moreLinkText: function(n) {
+                moreLinkText: function (n) {
                     return '+ ' + n + ' tane daha';
                 },
                 noEventsText: 'Görüntülenecek etkinlik yok',
-                didMount: function() {
+                didMount: function () {
                     initializeTooltips();
                 },
-                eventDidMount: function(info) {
+                eventDidMount: function (info) {
                     // Debug için konsola yazdır
                     console.log('Event mounted:', {
                         title: info.event.title,
@@ -95,45 +95,45 @@
 
                     if (info.event.extendedProps.type === 'leave') {
                         tooltipContent = `
-                            <div>
-                                <strong>🏖️ ${info.event.extendedProps.createdByName}</strong><br>
-                                <small><b>Sebep:</b> ${info.event.extendedProps.reason}</small><br>
-                                <small><b>Başlangıç:</b> ${new Date(info.event.start).toLocaleDateString('tr-TR')}</small><br>
-                                <small><b>Bitiş:</b> ${new Date(info.event.extendedProps.originalEndDate).toLocaleDateString('tr-TR')}</small><br>
-                                <small><b>Net İzin Süresi:</b> ${info.event.extendedProps.duration}</small><br>
-                                <small><b>İzin Oluşturulma Tarihi:</b> ${new Date(info.event.extendedProps.createdDate).toLocaleString('tr-TR', {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}</small><br>
-                                <small><b>İzin Onaylanma Tarihi:</b> ${new Date(info.event.extendedProps.updatedDate).toLocaleString('tr-TR', {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}</small><br>
-                                <small><b>Onaylayan:</b> ${info.event.extendedProps.updatedByName}</small>
-                            </div>
-                        `;
+                                <div>
+                                    <strong>🏖️ ${info.event.extendedProps.createdByName}</strong><br>
+                                    <small><b>Sebep:</b> ${info.event.extendedProps.reason}</small><br>
+                                    <small><b>Başlangıç:</b> ${new Date(info.event.start).toLocaleDateString('tr-TR')}</small><br>
+                                    <small><b>Bitiş:</b> ${new Date(info.event.extendedProps.originalEndDate).toLocaleDateString('tr-TR')}</small><br>
+                                    <small><b>Net İzin Süresi:</b> ${info.event.extendedProps.duration}</small><br>
+                                    <small><b>İzin Oluşturulma Tarihi:</b> ${new Date(info.event.extendedProps.createdDate).toLocaleString('tr-TR', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</small><br>
+                                    <small><b>İzin Onaylanma Tarihi:</b> ${new Date(info.event.extendedProps.updatedDate).toLocaleString('tr-TR', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</small><br>
+                                    <small><b>Onaylayan:</b> ${info.event.extendedProps.updatedByName}</small>
+                                </div>
+                            `;
                     } else if (info.event.extendedProps.type === 'project') {
                         tooltipContent = `
-                            <div>
-                                <strong>📋 ${info.event.extendedProps.projectName}</strong><br>
-                                <small><b>Başlangıç:</b> ${new Date(info.event.start).toLocaleDateString('tr-TR')}</small><br>
-                                <small><b>Bitiş:</b> ${new Date(info.event.extendedProps.originalEndDate).toLocaleDateString('tr-TR')}</small><br>
-                                <small><b>Durum:</b> ${info.event.extendedProps.isActive ? '✅ Aktif' : '❌ Pasif'}</small><br>
-                                <small><b>Oluşturulma:</b> ${new Date(info.event.extendedProps.createdDate).toLocaleString('tr-TR', {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}</small>
-                            </div>
-                        `;
+                                <div>
+                                    <strong>📋 ${info.event.extendedProps.projectName}</strong><br>
+                                    <small><b>Başlangıç:</b> ${new Date(info.event.start).toLocaleDateString('tr-TR')}</small><br>
+                                    <small><b>Bitiş:</b> ${new Date(info.event.extendedProps.originalEndDate).toLocaleDateString('tr-TR')}</small><br>
+                                    <small><b>Durum:</b> ${info.event.extendedProps.isActive ? '✅ Aktif' : '❌ Pasif'}</small><br>
+                                    <small><b>Oluşturulma:</b> ${new Date(info.event.extendedProps.createdDate).toLocaleString('tr-TR', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</small>
+                                </div>
+                            `;
                     }
 
                     tippy(info.el, {
@@ -148,7 +148,7 @@
                         trigger: 'mouseenter focus'
                     });
                 },
-                events: async function(fetchInfo, successCallback, failureCallback) {
+                events: async function (fetchInfo, successCallback, failureCallback) {
                     try {
                         // Debug için tarih aralığını konsola yazdır
                         console.log('Fetching events for:', {
@@ -178,7 +178,7 @@
 
                                 return {
                                     id: 'leave-' + leave.id,
-                                    title: '🏖️ '+ leave.createdByFullName + ' - ' + leave.reason,
+                                    title: '🏖️ ' + leave.createdByFullName + ' - ' + leave.reason,
                                     start: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
                                     end: endDate.toISOString().split('T')[0],     // YYYY-MM-DD format
                                     allDay: true,
@@ -204,34 +204,34 @@
                         // Projeleri event'lere çevir
                         if (projectData.isSuccess && projectData.data) {
                             const projectEvents = projectData.data
-                            .filter(project => project.name !== 'Merkez')
-                            .map(project => {
-                                const startDate = new Date(project.startDate);
-                                const endDate = new Date(project.endDate);
-                                endDate.setDate(endDate.getDate() + 1);
+                                .filter(project => project.name !== 'Ofis' && project.name !== 'Garaj')
+                                .map(project => {
+                                    const startDate = new Date(project.startDate);
+                                    const endDate = new Date(project.endDate);
+                                    endDate.setDate(endDate.getDate() + 1);
 
-                                return {
-                                    id: 'project-' + project.id,
-                                    title: '📋 ' + project.name,
-                                    start: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
-                                    end: endDate.toISOString().split('T')[0],     // YYYY-MM-DD format
-                                    allDay: true,
-                                    backgroundColor: 'rgba(13, 110, 253, 0.2)',
-                                    borderColor: 'rgba(13, 110, 253, 0.8)',
-                                    classNames: ['event-project'],
-                                    extendedProps: {
-                                        type: 'project',
-                                        projectName: project.name,
-                                        isActive: project.isActive,
-                                        createdDate: project.createdDate,
-                                        originalEndDate: project.endDate
-                                    }
-                                };
-                            });
+                                    return {
+                                        id: 'project-' + project.id,
+                                        title: '📋 ' + project.name,
+                                        start: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
+                                        end: endDate.toISOString().split('T')[0],     // YYYY-MM-DD format
+                                        allDay: true,
+                                        backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                                        borderColor: 'rgba(13, 110, 253, 0.8)',
+                                        classNames: ['event-project'],
+                                        extendedProps: {
+                                            type: 'project',
+                                            projectName: project.name,
+                                            isActive: project.isActive,
+                                            createdDate: project.createdDate,
+                                            originalEndDate: project.endDate
+                                        }
+                                    };
+                                });
                             events = events.concat(projectEvents);
                         }
 
-        
+
                         successCallback(events);
 
                     } catch (error) {

@@ -19,9 +19,9 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpGet("{departmentDutyId}/types")]
-        public async Task<IActionResult> GetDocumentTypesByDuty(string departmentDutyId, [FromQuery] string? companyId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetDocumentTypesByDuty(string departmentDutyId,/* [FromQuery] string? companyId, */CancellationToken cancellationToken)
         {
-            var result = await documentService.GetDocumentTypesByDutyAsync(departmentDutyId, companyId, cancellationToken);
+            var result = await documentService.GetDocumentTypesByDutyAsync(departmentDutyId, /*companyId,*/ cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

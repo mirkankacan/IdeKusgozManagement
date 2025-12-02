@@ -24,7 +24,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetEquipmentsAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<EquipmentDTO>>.Error("Ekipman listesi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -46,7 +46,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetEquipmentByIdAsync işleminde hata oluştu");
-                return ServiceResponse<EquipmentDTO>.Error("Ekipman getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -70,7 +70,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "CreateEquipmentAsync işleminde hata oluştu");
-                return ServiceResponse<string>.Error("Ekipman oluşturulurken hata oluştu");
+                throw;
             }
         }
 
@@ -102,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "UpdateEquipmentAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Ekipman güncellenirken hata oluştu");
+                throw;
             }
         }
 
@@ -132,7 +132,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DeleteEquipmentAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Ekipman silinirken hata oluştu");
+                throw;
             }
         }
 
@@ -149,7 +149,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetActiveEquipmentsAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<EquipmentDTO>>.Error("Aktif ekipman listesi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -174,7 +174,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DisableEquipmentAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Ekipman pasif duruma getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -199,7 +199,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "EnableEquipmentAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Ekipman aktif duruma getirilirken hata oluştu");
+                throw;
             }
         }
     }

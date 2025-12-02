@@ -1,5 +1,4 @@
-﻿using IdeKusgozManagement.Application.Contracts.Services;
-using IdeKusgozManagement.Application.DTOs.AuthDTOs;
+﻿using IdeKusgozManagement.Application.DTOs.AuthDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +7,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(IAuthService authService, IAIService geminiAIService) : ControllerBase
+    public class AuthController(IAuthService authService) : ControllerBase
     {
         /// <summary>
         /// Kullanıcı girişi yapar ve JWT token döner

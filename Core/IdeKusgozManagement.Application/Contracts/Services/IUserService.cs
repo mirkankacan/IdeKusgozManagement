@@ -7,6 +7,7 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
     {
         Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersAsync(CancellationToken cancellationToken = default);
         Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default);
+        Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentDutyAsync(string departmentDutyId, CancellationToken cancellationToken = default);
 
         Task<ServiceResponse<IEnumerable<UserDTO>>> GetSubordinatesByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 

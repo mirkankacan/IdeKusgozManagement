@@ -5,6 +5,7 @@ using IdeKusgozManagement.Infrastructure.Data.Context;
 using IdeKusgozManagement.Infrastructure.Data.Seed;
 using IdeKusgozManagement.Infrastructure.Hubs;
 using IdeKusgozManagement.WebAPI;
+using IdeKusgozManagement.WebAPI.Middlewares;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -23,6 +24,8 @@ builder.Services.AddSignalR(options =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Database initialization
 using var scope = app.Services.CreateScope();
@@ -74,13 +77,15 @@ catch (Exception ex)
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "IdeKusgozManagement.WebAPI v1");
+        options.RoutePrefix = "swagger";
+    });
 }
 else
 {
-    app.UseExceptionHandler("/Error");
     app.UseHsts();
     app.UseHttpsRedirection();
 }

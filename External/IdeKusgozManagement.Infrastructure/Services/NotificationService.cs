@@ -61,7 +61,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetNotificationsAsync işleminde hata oluştu");
-                return ServiceResponse<PagedResult<NotificationDTO>>.Error("Bildirimler getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -86,7 +86,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetUnreadNotificationCountAsync işleminde hata oluştu");
-                return ServiceResponse<int>.Error("Okunmamış bildirim sayısı getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -112,7 +112,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "CreateNotificationAsync işleminde hata oluştu");
-                return ServiceResponse<NotificationDTO>.Error("Bildirim oluşturulurken hata oluştu");
+                throw;
             }
         }
 
@@ -149,7 +149,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "MarkAsReadAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Bildirim okundu olarak işaretlenirken hata oluştu");
+                throw;
             }
         }
 
@@ -179,7 +179,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "MarkAllAsReadAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Tüm bildirimler okundu olarak işaretlenirken hata oluştu");
+                throw;
             }
         }
 
@@ -198,6 +198,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Bildirim herkese gönderilemedi. Message: {Message}", createNotificationDTO.Message);
+                throw;
             }
         }
 
@@ -228,6 +229,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "Bildirim rollere gönderilemedi. Roles: {RoleNames}, Message: {Message}",
                     createNotificationDTO.TargetRoles != null ? string.Join(", ", createNotificationDTO.TargetRoles) : "null",
                     createNotificationDTO.Message);
+                throw;
             }
         }
 
@@ -255,6 +257,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Bildirim altlara gönderilemedi");
+                throw;
             }
         }
 
@@ -282,6 +285,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Bildirim üstlere gönderilemedi");
+                throw;
             }
         }
 
@@ -313,6 +317,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 logger.LogError(ex, "Bildirim kullanıcılara gönderilemedi. TargetUsers: {UserIds}, Message: {Message}",
                     createNotificationDTO.TargetUsers != null ? string.Join(", ", createNotificationDTO.TargetUsers) : "null",
                     createNotificationDTO.Message);
+                throw;
             }
         }
     }

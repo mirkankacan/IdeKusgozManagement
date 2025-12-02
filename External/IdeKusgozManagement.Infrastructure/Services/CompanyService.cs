@@ -32,7 +32,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetCompaniesAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<CompanyDTO>>.Error("Firmalar getirilirken hata oluştu");
+                throw;
             }
         }
     }

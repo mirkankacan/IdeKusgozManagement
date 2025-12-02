@@ -26,7 +26,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ServiceResponse<List<FileDTO>>.Error("wwwroot klasörü bulunamadı");
                 }
 
-                var dateFolder = DateTime.Now.ToString("dd-MM-yyyy");
+                var dateFolder = DateTime.Now.ToString("yyyy-MM");
                 var newFiles = new List<IdtFile>();
                 var uploadedFiles = new List<FileDTO>();
 
@@ -38,13 +38,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     // Folder bilgilerini al
                     var (userFolder, documentTypeName, renewalPeriodInMonths) = await GetFolderInfoAsync(file, cancellationToken);
 
-                    // Dosya yükleme işlemi
-                    var (newFile, fileDTO) = await ProcessFileUploadAsync(file, wwwrootPath, documentTypeName, renewalPeriodInMonths, userFolder, dateFolder, cancellationToken);
-
-                    newFiles.Add(newFile);
-                    uploadedFiles.Add(fileDTO);
-
-                    logger.LogInformation("Dosya yüklendi: {FileName}, CreatedBy: {CreatedBy}", newFile.Name, newFile.CreatedBy);
+                    // Dosya işleme
+                    var results = await ProcessFileUploadAsync(file, wwwrootPath, documentTypeName, renewalPeriodInMonths, userFolder, dateFolder, cancellationToken);
+                    foreach (var (newFile, fileDTO) in results)
+                    {
+                        newFiles.Add(newFile);
+                        uploadedFiles.Add(fileDTO);
+                        logger.LogInformation("Dosya yüklendi: {FileName}, CreatedBy: {CreatedBy}", newFile.Name, newFile.CreatedBy);
+                    }
                 }
 
                 // Tüm dosyaları tek seferde veritabanına ekle
@@ -100,11 +101,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return (userFolder, documentTypeName, renewalPeriodInMonths);
         }
 
-        private async Task<(IdtFile newFile, FileDTO fileDTO)> ProcessFileUploadAsync(UploadFileDTO file, string wwwrootPath, string documentTypeName, int? renewalPeriodInMonths, string userFolder, string dateFolder, CancellationToken cancellationToken)
+        private async Task<List<(IdtFile newFile, FileDTO fileDTO)>> ProcessFileUploadAsync(UploadFileDTO file, string wwwrootPath, string documentTypeName, int? renewalPeriodInMonths, string userFolder, string dateFolder, CancellationToken cancellationToken)
         {
             var fileExtension = Path.GetExtension(file.FormFile.FileName).ToLowerInvariant();
             var newFileName = $"{NewId.NextGuid()}{fileExtension}";
-            var fullFolderPath = Path.Combine(wwwrootPath, "Uploads", documentTypeName, userFolder, dateFolder);
+            var fullFolderPath = Path.Combine(wwwrootPath, "Uploads", userFolder, documentTypeName, dateFolder);
             var contentType = FileHelper.GetContentType(fileExtension);
             if (!Directory.Exists(fullFolderPath))
             {
@@ -138,42 +139,85 @@ namespace IdeKusgozManagement.Infrastructure.Services
             await using var fileStream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write, FileShare.None);
             await sourceStream.CopyToAsync(fileStream, cancellationToken);
 
-            var relativePath = $"/Uploads/{documentTypeName}/{userFolder}/{dateFolder}/{newFileName}";
+            var relativePath = $"/Uploads/{userFolder}/{documentTypeName}/{dateFolder}/{newFileName}";
+            var results = new List<(IdtFile, FileDTO)>();
 
-            var newFile = new IdtFile
+            if (file.TargetCompanyIds != null && file.TargetCompanyIds.Any())
             {
-                Name = newFileName,
-                Path = relativePath,
-                OriginalName = file.FormFile.FileName,
-                DocumentTypeId = file.DocumentTypeId!,
-                TargetDepartmentId = file.TargetDepartmentId,
-                TargetProjectId = file.TargetProjectId,
-                TargetEquipmentId = file.TargetEquipmentId,
-                TargetUserId = file.TargetUserId,
-                TargetCompanyId = file.TargetCompanyId,
-                TargetDepartmentDutyId = file.TargetDepartmentDutyId,
-                StartDate = startDate,
-                EndDate = endDate,
-            };
+                foreach (var companyId in file.TargetCompanyIds!)
+                {
+                    var newFile = new IdtFile
+                    {
+                        Name = newFileName,
+                        Path = relativePath,
+                        OriginalName = file.FormFile.FileName,
+                        DocumentTypeId = file.DocumentTypeId!,
+                        TargetDepartmentId = file.TargetDepartmentId,
+                        TargetProjectId = file.TargetProjectId,
+                        TargetEquipmentId = file.TargetEquipmentId,
+                        TargetUserId = file.TargetUserId,
+                        TargetCompanyId = companyId,
+                        TargetDepartmentDutyId = file.TargetDepartmentDutyId,
+                        StartDate = startDate,
+                        EndDate = endDate,
+                    };
 
-            var fileDTO = new FileDTO
+                    var fileDTO = new FileDTO
+                    {
+                        Id = newFile.Id,
+                        Name = newFile.Name,
+                        OriginalName = newFile.OriginalName,
+                        DocumentTypeId = file.DocumentTypeId,
+                        TargetDepartmentId = file.TargetDepartmentId,
+                        TargetProjectId = file.TargetProjectId,
+                        TargetEquipmentId = file.TargetEquipmentId,
+                        TargetUserId = file.TargetUserId,
+                        TargetCompanyId = companyId,
+                        TargetDepartmentDutyId = file.TargetDepartmentDutyId,
+                        StartDate = newFile.StartDate,
+                        EndDate = newFile.EndDate,
+                        CreatedDate = newFile.CreatedDate
+                    };
+                    results.Add((newFile, fileDTO));
+                }
+            }
+            else
             {
-                Id = newFile.Id,
-                Name = newFile.Name,
-                OriginalName = newFile.OriginalName,
-                DocumentTypeId = file.DocumentTypeId,
-                TargetDepartmentId = file.TargetDepartmentId,
-                TargetProjectId = file.TargetProjectId,
-                TargetEquipmentId = file.TargetEquipmentId,
-                TargetUserId = file.TargetUserId,
-                TargetCompanyId = file.TargetCompanyId,
-                TargetDepartmentDutyId = file.TargetDepartmentDutyId,
-                StartDate = newFile.StartDate,
-                EndDate = newFile.EndDate,
-                CreatedDate = newFile.CreatedDate
-            };
+                var newFile = new IdtFile
+                {
+                    Name = newFileName,
+                    Path = relativePath,
+                    OriginalName = file.FormFile.FileName,
+                    DocumentTypeId = file.DocumentTypeId!,
+                    TargetDepartmentId = file.TargetDepartmentId,
+                    TargetProjectId = file.TargetProjectId,
+                    TargetEquipmentId = file.TargetEquipmentId,
+                    TargetUserId = file.TargetUserId,
+                    TargetCompanyId = null,
+                    TargetDepartmentDutyId = file.TargetDepartmentDutyId,
+                    StartDate = startDate,
+                    EndDate = endDate,
+                };
 
-            return (newFile, fileDTO);
+                var fileDTO = new FileDTO
+                {
+                    Id = newFile.Id,
+                    Name = newFile.Name,
+                    OriginalName = newFile.OriginalName,
+                    DocumentTypeId = file.DocumentTypeId,
+                    TargetDepartmentId = file.TargetDepartmentId,
+                    TargetProjectId = file.TargetProjectId,
+                    TargetEquipmentId = file.TargetEquipmentId,
+                    TargetUserId = file.TargetUserId,
+                    TargetCompanyId = null,
+                    TargetDepartmentDutyId = file.TargetDepartmentDutyId,
+                    StartDate = newFile.StartDate,
+                    EndDate = newFile.EndDate,
+                    CreatedDate = newFile.CreatedDate
+                };
+                results.Add((newFile, fileDTO));
+            }
+            return results;
         }
 
         public async Task<ServiceResponse<bool>> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default)
@@ -204,7 +248,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Dosya silinemedi: {FileId}", fileId);
-                return ServiceResponse<bool>.Error("Dosya silinemedi");
+                throw;
             }
         }
 
@@ -254,7 +298,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Dosya okunamadı: {FileId}", fileId);
-                return ServiceResponse<FileDTO>.Error("Dosya okunamadı");
+                throw;
             }
         }
 
@@ -288,7 +332,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Dosya stream'i okunamadı. FileId: {FileId}", id);
-                return ServiceResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya stream'i okunamadı");
+                throw;
             }
         }
 
@@ -353,7 +397,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 logger.LogError(ex, "Dosyalar okunamadı. UserId: {UserId}, DocumentType: {DocumentType}, DepartmentId: {DepartmentId}",
                     userId, documentType, departmentId);
-                return ServiceResponse<List<FileDTO>>.Error("Dosyalar okunamadı");
+                throw;
             }
         }
     }

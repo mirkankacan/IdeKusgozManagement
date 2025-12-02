@@ -45,7 +45,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "CreateTrafficTicketAsync işleminde hata oluştu");
-                return ServiceResponse<string>.Error("Trafik cezası oluşturulurken hata oluştu");
+                throw;
             }
         }
 
@@ -73,7 +73,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "DeleteTrafficTicketAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Trafik cezası silinirken hata oluştu");
+                throw;
             }
         }
 
@@ -102,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetTrafficTicketByIdAsync işleminde hata oluştu");
-                return ServiceResponse<TrafficTicketDTO>.Error("Trafik cezası getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -126,7 +126,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetTrafficTicketsAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<TrafficTicketDTO>>.Error("Trafik cezası listesi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -171,7 +171,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "UpdateTrafficTicketAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Trafik cezası güncellenirken hata oluştu");
+                throw;
             }
         }
     }

@@ -11,7 +11,6 @@
     <link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
-
     <style>
         .dropzone {
             border: 2px dashed #007bff;
@@ -40,7 +39,7 @@
             .dropzone .dz-preview {
                 margin: 10px;
                 min-height: 0;
-                cursor: pointer; 
+                cursor: pointer;
                 position: relative;
                 transition: all 0.2s ease;
             }
@@ -53,7 +52,7 @@
                 .dropzone .dz-preview .dz-image {
                     border-radius: 8px;
                     overflow: hidden;
-                    cursor: pointer; 
+                    cursor: pointer;
                 }
 
                 .dropzone .dz-preview .dz-error-message {
@@ -167,7 +166,6 @@
                 background-color: #e3f2fd;
             }
 
-      
     </style>
 }
 
@@ -197,16 +195,17 @@
                         </div>
                     </div>
                     <div class="row mt-2">
+                         <div class="col-md-6">
+                            <label for="document-type-select" class="form-label">Doküman Tipi</label>
+                            <select id="document-type-select" class="form-select">
+                            </select>
+                        </div>
                         <div class="col-md-6">
                             <label for="company-select" class="form-label">Firma</label>
                             <select id="company-select" class="form-select">
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label for="document-type-select" class="form-label">Doküman Tipi</label>
-                            <select id="document-type-select" class="form-select">
-                            </select>
-                        </div>
+                       
 
                     </div>
 
@@ -299,37 +298,15 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="filePreviewModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl" role="document" style="max-width: 90%; height: 90vh;">
-        <div class="modal-content" style="height: 100%;">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filePreviewModalTitle">Dosya Önizleme</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-
-            </div>
-            <div class="modal-body p-0" style="height: 100%; overflow: hidden;">
-                <!-- PDF için iframe -->
-                <iframe id="filePreviewIframe" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
-
-                <!-- Excel için container -->
-                <div id="excelPreviewContainer" style="display: none; overflow: auto; height: 100%;"></div>
-
-                <!-- Resim için container -->
-                <div id="imagePreviewContainer" style="display: none; overflow: auto; height: 100%;"></div>
-            </div>
-           
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
- 
+
     <script>
-        
+
         let myDropzone;
         let currentDepartmentScope = null;
         const MAX_UPLOAD_PROGRESS = 95;
@@ -337,6 +314,7 @@
         $(document).ready(async function () {
             initializeDropzone();
             await initializeDepartmentSelect();
+            await initializeCompanySelect();
             checkDropzoneStatus();
             initializeTemporaryCheckbox();
         });
@@ -373,8 +351,7 @@
                         await initializeDepartmentDutySelect(departmentId);
                     } else {
                         await initializeDepartmentDutySelect(null);
-                        await initializeCompanySelect(null);
-                        await initializeDocumentTypeSelect(null,null);
+                        await initializeDocumentTypeSelect(null);
                         await initializeTargetSelect(null);
                     }
 
@@ -421,13 +398,12 @@
                     $('#target-select').val(null).trigger('change');
 
                     if (departmentDutyId) {
-                        await initializeCompanySelect(departmentDutyId);
+                        await initializeDocumentTypeSelect(departmentDutyId);
                         await initializeTargetSelect(scope);
                         currentDepartmentScope = scope;
 
                     } else {
-                        await initializeCompanySelect(null);
-                        await initializeDocumentTypeSelect(null,null);
+                        await initializeDocumentTypeSelect(null);
                         await initializeTargetSelect(null);
                     }
 
@@ -438,12 +414,9 @@
                 toastr.error('Departman görevi listesi yüklenirken hata oluştu', 'Hata!');
             }
         }
-            async function initializeCompanySelect(departmentDutyId) {
+            async function initializeCompanySelect() {
             try {
-                  if (!departmentDutyId) {
-                    resetSelect('#company-select', 'Firma seçin');
-                    return;
-                }
+                
                 const response = await $.ajax({
                     url: `/firma/liste`,
                     type: 'GET',
@@ -451,46 +424,35 @@
                 });
 
                 if (response?.isSuccess && response.data) {
-                    $('#company-select').empty().append('<option value="">Firma seçin</option>');
                     response.data.forEach(company => {
                         $('#company-select').append(`<option value="${company.id}">${company.name}</option>`);
                     });
                 }
 
                 $('#company-select').select2({
-                    placeholder: 'Firma seçin',
+                    placeholder: 'Firma seçin (birden fazla seçilebilir)',
                     theme: 'bootstrap-5',
                     allowClear: true,
-                    width: '100%'
+                    width: '100%',
+                    multiple: true,
+                    closeOnSelect: false
                 });
 
-                $('#company-select').on('change', async function () {
-                    const companyId = $(this).val();
-                     const departmentDutyId = $("#department-duty-select").val();
-                    // Reset other selects
-                    $('#document-type-select').val(null).trigger('change');
-                    $('#target-select').val(null).trigger('change');
+                    $('#company-select').val(null).trigger('change');
 
-                    if (companyId && departmentDutyId) {
-                        await initializeDocumentTypeSelect(departmentDutyId,companyId);
-                    } else {
-                        await initializeDocumentTypeSelect(null,null);
-                    }
-
-                });
             } catch (error) {
                 console.error('Firma listesi yüklenirken hata:', error);
                 toastr.error('Firma listesi yüklenirken hata oluştu', 'Hata!');
             }
         }
-         async function initializeDocumentTypeSelect(departmentDutyId,companyId) {
+         async function initializeDocumentTypeSelect(departmentDutyId) {
             try {
                   if (!departmentDutyId) {
                     resetSelect('#document-type-select', 'Doküman tipi seçin');
                     return;
                 }
                 const response = await $.ajax({
-                     url: `/dokuman/${departmentDutyId}/tip-liste?companyId=${companyId}`,
+                     url: `/dokuman/${departmentDutyId}/tip-liste`,
                         type: 'GET',
                     dataType: 'json'
                 });
@@ -535,14 +497,12 @@
                     resetSelect('#target-select', 'Hedef seçin');
                     return;
                 }
-
                 const departmentDutyId = $("#department-duty-select").val();
-                const departmentId = $("#department-select").val();
                 let url = '';
                 let placeholder = 'Hedef seçin';
                 // Scope'a göre URL ve placeholder belirleme
                 if (scope === 1) {
-                    url = `/kullanici/departman/${departmentId}`;
+                    url = `/kullanici/departman-gorev/${departmentDutyId}`;
                 } else if (scope === 2) {
                     url = `/ekipman/aktif-liste`;
                 } else if (scope === 3) {
@@ -734,7 +694,7 @@
                         const documentTypeId = $("#document-type-select").val();
                         const targetDepartmentId = $("#department-select").val();
                         const targetDepartmentDutyId = $("#department-duty-select").val();
-                        const targetCompanyId = $("#company-select").val();
+                        const targetCompanyIds = $("#company-select").val();
                         const targetId = $("#target-select").val();
 
                         if (!targetDepartmentId) {
@@ -765,10 +725,10 @@
                             return;
                         }
 
-                        uploadFilesManually(files, targetDepartmentId,targetDepartmentDutyId,targetCompanyId, documentTypeId, targetId);
+                        uploadFilesManually(files, targetDepartmentId,targetDepartmentDutyId,targetCompanyIds, documentTypeId, targetId);
                     }
 
-                    function uploadFilesManually(files, targetDepartmentId,targetDepartmentDutyId,targetCompanyId, documentTypeId, targetId) {
+                    function uploadFilesManually(files, targetDepartmentId,targetDepartmentDutyId,targetCompanyIds, documentTypeId, targetId) {
                         const formData = new FormData();
                         const token = $('input[name="__RequestVerificationToken"]').val();
                         formData.append("__RequestVerificationToken", token);
@@ -793,9 +753,13 @@
                             formData.append(`[${index}].TargetDepartmentId`, targetDepartmentId);
                             formData.append(`[${index}].TargetDepartmentDutyId`, targetDepartmentDutyId);
                             formData.append(`[${index}].HasRenewalPeriod`, hasRenewalPeriod);
-                              if (targetCompanyId) {
-                                 formData.append(`[${index}].TargetCompanyId`, targetCompanyId);
-                              }
+                             if (targetCompanyIds && Array.isArray(targetCompanyIds)) {
+                                targetCompanyIds.forEach((companyId, companyIndex) => {
+                                    formData.append(`[${index}].TargetCompanyIds[${companyIndex}]`, companyId);
+                                });
+                            } else if (targetCompanyIds) {
+                                formData.append(`[${index}].TargetCompanyIds[0]`, targetCompanyIds);
+                            }
                             if (targetId) {
                                 if (currentDepartmentScope === 1) {
                                     formData.append(`[${index}].TargetUserId`, targetId);
@@ -881,8 +845,7 @@
                 }
             });
         }
-            
-        
+
         function updateUploadButtonsVisibility() {
             const hasFiles = myDropzone?.files.length > 0;
             $("#uploadButtonsContainer").toggle(hasFiles);

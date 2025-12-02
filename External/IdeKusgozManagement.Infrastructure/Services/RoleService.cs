@@ -25,7 +25,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "IsUserInRoleAsync işleminde hata oluştu. UserId:{userId} RoleName: {RoleName}", userId, roleName);
-                return ServiceResponse<bool>.Error("Kullanıcı rol kontolü yapılırken hata oluştu");
+                throw;
             }
         }
 
@@ -46,7 +46,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetAllRolesAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<RoleDTO>>.Error("Roller getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -67,7 +67,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetRoleByIdAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
-                return ServiceResponse<RoleDTO>.Error("Rol getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -88,7 +88,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetRoleByNameAsync işleminde hata oluştu. RoleName: {RoleName}", roleName);
-                return ServiceResponse<RoleDTO>.Error("Rol getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -119,7 +119,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "CreateRoleAsync işleminde hata oluştu");
-                return ServiceResponse<RoleDTO>.Error("Rol oluşturulurken hata oluştu");
+                throw;
             }
         }
 
@@ -160,7 +160,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "UpdateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
-                return ServiceResponse<RoleDTO>.Error("Rol güncellenirken hata oluştu");
+                throw;
             }
         }
 
@@ -196,7 +196,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DeleteRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
-                return ServiceResponse<bool>.Error("Rol silinirken hata oluştu");
+                throw;
             }
         }
 
@@ -224,7 +224,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "ActivateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
-                return ServiceResponse<bool>.Error("Rol aktifleştirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -259,7 +259,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DeactivateRoleAsync işleminde hata oluştu. RoleId: {RoleId}", roleId);
-                return ServiceResponse<bool>.Error("Rol pasifleştirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -280,7 +280,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetActiveRolesAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<RoleDTO>>.Error("Roller getirilirken hata oluştu");
+                throw;
             }
         }
     }

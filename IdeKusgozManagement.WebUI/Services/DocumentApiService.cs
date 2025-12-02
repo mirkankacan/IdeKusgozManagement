@@ -36,11 +36,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<DocumentTypeViewModel>>> GetDocumentTypesByDutyAsync(string departmentDutyId, string? companyId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<DocumentTypeViewModel>>> GetDocumentTypesByDutyAsync(string departmentDutyId, /*string? companyId, */CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/documents/{departmentDutyId}/types?companyId={companyId}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/documents/{departmentDutyId}/types", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

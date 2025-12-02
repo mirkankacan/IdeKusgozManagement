@@ -12,7 +12,7 @@ namespace IdeKusgozManagement.WebUI.Models.FileModels
         public string? TargetProjectId { get; set; }
         public string? TargetEquipmentId { get; set; }
         public string? TargetDepartmentId { get; set; }
-        public string? TargetCompanyId { get; set; }
+        public List<string>? TargetCompanyIds { get; set; }
         public string? TargetDepartmentDutyId { get; set; }
         public bool? HasRenewalPeriod { get; set; }
         public DateTime? StartDate { get; set; }

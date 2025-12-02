@@ -8,6 +8,7 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
         Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersAsync(CancellationToken cancellationToken = default);
 
         Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersByDepartmentDutyAsync(string departmentDutyId, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<IEnumerable<UserViewModel>>> GetSubordinatesByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 

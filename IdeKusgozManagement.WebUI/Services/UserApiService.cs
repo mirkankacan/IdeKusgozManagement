@@ -345,5 +345,25 @@ namespace IdeKusgozManagement.WebUI.Services
                 return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
+        public async Task<ApiResponse<IEnumerable<UserViewModel>>> GetUsersByDepartmentDutyAsync(string departmentDutyId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/users/by-department-duty/{departmentDutyId}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<UserViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Kullanıcı bulunamadı" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<UserViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
     }
 }

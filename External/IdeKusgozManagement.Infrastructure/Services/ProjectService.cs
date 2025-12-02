@@ -32,7 +32,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "CreateProjectAsync işleminde hata oluştu");
-                return ServiceResponse<string>.Error("Proje oluşturulurken hata oluştu");
+                throw;
             }
         }
 
@@ -62,7 +62,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DeleteProjectAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Proje silinirken hata oluştu");
+                throw;
             }
         }
 
@@ -87,7 +87,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "DisableProjectAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Proje pasif duruma getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -112,7 +112,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "EnableProjectAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Proje aktif duruma getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -129,7 +129,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetActiveProjectsAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<ProjectDTO>>.Error("Aktif proje listesi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -151,7 +151,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetProjectByIdAsync işleminde hata oluştu");
-                return ServiceResponse<ProjectDTO>.Error("Proje getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -168,7 +168,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetProjectsAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<ProjectDTO>>.Error("Proje listesi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -199,7 +199,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "UpdateProjectAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("Proje güncellenirken hata oluştu");
+                throw;
             }
         }
     }

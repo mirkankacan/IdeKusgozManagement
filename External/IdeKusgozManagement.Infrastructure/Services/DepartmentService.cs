@@ -67,7 +67,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetDepartmentDutiesByDepartment işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<DepartmentDutyDTO>>.Error("Departman görevleri getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -92,7 +92,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetDepartmentsAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<DepartmentDTO>>.Error("Departmanlar getirilirken hata oluştu");
+                throw;
             }
         }
     }

@@ -105,7 +105,6 @@ namespace IdeKusgozManagement.WebUI.Services
             try
             {
                 using var formData = new MultipartFormDataContent();
-
                 for (int i = 0; i < files.Count; i++)
                 {
                     var file = files[i];
@@ -130,8 +129,14 @@ namespace IdeKusgozManagement.WebUI.Services
                     if (!string.IsNullOrEmpty(file.TargetDepartmentId))
                         formData.Add(new StringContent(file.TargetDepartmentId.ToString()), $"files[{i}].TargetDepartmentId");
 
-                    if (!string.IsNullOrEmpty(file.TargetCompanyId))
-                        formData.Add(new StringContent(file.TargetCompanyId.ToString()), $"files[{i}].TargetCompanyId");
+                    if (file.TargetCompanyIds != null && file.TargetCompanyIds.Any())
+                    {
+                        for (int j = 0; j < file.TargetCompanyIds.Count; j++)
+                        {
+                            formData.Add(new StringContent(file.TargetCompanyIds[j].ToString()),
+                                $"files[{i}].TargetCompanyIds[{j}]");
+                        }
+                    }
 
                     if (!string.IsNullOrEmpty(file.TargetDepartmentDutyId))
                         formData.Add(new StringContent(file.TargetDepartmentDutyId.ToString()), $"files[{i}].TargetDepartmentDutyId");

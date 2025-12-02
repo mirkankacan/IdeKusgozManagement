@@ -34,7 +34,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetLeaveRequestsAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Error("İzin talepleri getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -62,7 +62,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetLeaveRequestByIdAsync işleminde hata oluştu");
-                return ServiceResponse<LeaveRequestDTO>.Error("İzin talebi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -137,7 +137,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
 
                 logger.LogError(ex, "CreateLeaveRequestAsync işleminde hata oluştu");
-                return ServiceResponse<LeaveRequestDTO>.Error("İzin talebi oluşturulurken hata oluştu");
+                throw;
             }
         }
 
@@ -171,7 +171,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "DeleteLeaveRequestAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("İzin talebi silinirken hata oluştu");
+                throw;
             }
         }
 
@@ -216,7 +216,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "ApproveLeaveRequestAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("İzin talebi onaylanırken hata oluştu");
+                throw;
             }
         }
 
@@ -260,7 +260,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "RejectLeaveRequestAsync işleminde hata oluştu. LeaveRequestId: {LeaveRequestId}", leaveRequestId);
-                return ServiceResponse<bool>.Error("İzin talebi reddedilirken hata oluştu");
+                throw;
             }
         }
 
@@ -283,7 +283,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetLeaveRequestsByUserIdAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Error($"Kullanıcının izin talepleri getirilirken hata oluştu. UserId: {userId}");
+                throw;
             }
         }
 
@@ -312,7 +312,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetLeaveRequestByStatus işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Error("Duruma göre izin talepleri getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -417,7 +417,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "UpdateLeaveRequestAsync işleminde hata oluştu");
-                return ServiceResponse<bool>.Error("İzin talebi güncellenirken hata oluştu");
+                throw;
             }
         }
 
@@ -470,7 +470,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetLeaveRequestsBySuperiorIdAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Error("Kullanıcının astlarının izin talepleri getirilirken hata oluştu");
+                throw;
             }
         }
     }

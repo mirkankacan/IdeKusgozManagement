@@ -33,7 +33,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetRequiredDocumentsAsync işleminde hata oluştu. DepartmentId: {DepartmentId}, DepartmentDutyId: {DepartmentDutyId}, CompanyId: {CompanyId} TargetId: {TargetId}", departmentId, departmentDutyId, companyId, targetId);
-                return ServiceResponse<IEnumerable<RequiredDocumentDTO>>.Error("Yüklemesi gereken evraklar listesi getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -58,7 +58,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetDocumentTypesAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<DocumentTypeDTO>>.Error("Döküman tipleri getirilirken hata oluştu");
+                throw;
             }
         }
 
@@ -80,23 +80,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetDocumentTypeByIdAsync işleminde hata oluştu");
-                return ServiceResponse<DocumentTypeDTO>.Error("Döküman tipi getirilirken hata oluştu");
+                throw;
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<DocumentTypeDTO>>> GetDocumentTypesByDutyAsync(string departmentDutyId, string? companyId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<IEnumerable<DocumentTypeDTO>>> GetDocumentTypesByDutyAsync(string departmentDutyId, /*string? companyId,*/ CancellationToken cancellationToken = default)
         {
             try
             {
                 IQueryable<IdtDepartmentDocumentRequirment> relatedIdsQuery;
-                relatedIdsQuery = unitOfWork.GetRepository<IdtDepartmentDocumentRequirment>().WhereAsNoTracking(x => x.Id != null);
-                if (!string.IsNullOrEmpty(companyId))
-                    relatedIdsQuery = unitOfWork.GetRepository<IdtDepartmentDocumentRequirment>().WhereAsNoTracking(x => x.CompanyId == companyId);
-
-                relatedIdsQuery = relatedIdsQuery.Where(x => x.DepartmentDutyId == departmentDutyId);
+                relatedIdsQuery = unitOfWork.GetRepository<IdtDepartmentDocumentRequirment>().WhereAsNoTracking(x => x.DepartmentDutyId == departmentDutyId);
+                //if (!string.IsNullOrEmpty(companyId))
+                //    relatedIdsQuery = unitOfWork.GetRepository<IdtDepartmentDocumentRequirment>().WhereAsNoTracking(x => x.CompanyId == companyId);
 
                 var relatedIds = await relatedIdsQuery
-                .OrderBy(x => x.CompanyId)
+                .OrderBy(x => x.DocumentTypeId)
                 .Select(x => x.DocumentTypeId)
                 .ToListAsync(cancellationToken);
 
@@ -122,7 +120,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "GetDocumentTypesByDutyAsync işleminde hata oluştu");
-                return ServiceResponse<IEnumerable<DocumentTypeDTO>>.Error("Departman göreviyle ilgili döküman tipleri getirilirken hata oluştu");
+                throw;
             }
         }
     }
