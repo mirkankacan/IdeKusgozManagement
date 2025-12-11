@@ -20,7 +20,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var userId = identityService.GetUserId();
                 var userRole = identityService.GetUserRole();
 
-                // Ortak Where koşulu - DÜZELTİLMİŞ
+                // Ortak Where koşulu
                 var baseQuery = unitOfWork.GetRepository<IdtNotification>()
                     .WhereAsNoTracking(x =>
                         (x.TargetUsers.Contains(userId) ||

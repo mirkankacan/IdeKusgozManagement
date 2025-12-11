@@ -12,6 +12,7 @@ namespace IdeKusgozManagement.Application.Mappings
                  .Map(dest => dest.CreatedByFullName, src => $"{src.CreatedByUser.Name} {src.CreatedByUser.Surname}")
                  .Map(dest => dest.ChiefByFullName, src => src.ChiefUser != null ? $"{src.ChiefUser.Name} {src.ChiefUser.Surname}" : null)
                  .Map(dest => dest.UnitManagerFullName, src => src.UnitManagerUser != null ? $"{src.UnitManagerUser.Name} {src.UnitManagerUser.Surname}" : null)
+                 .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.Name} {src.User.Surname}" : null)
                  .Map(dest => dest.UpdatedByFullName, src => src.UpdatedByUser != null ? $"{src.UpdatedByUser.Name} {src.UpdatedByUser.Surname}" : null);
         }
     }

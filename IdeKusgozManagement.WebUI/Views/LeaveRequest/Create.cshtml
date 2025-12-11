@@ -154,8 +154,9 @@
         let myLeaveRequestsTable;
 
         $(document).ready(async function () {
+                        await getMyRemainingLeaveDays();
+
             await initializeDataTable();
-            await getMyRemainingLeaveDays();
 
             $('#date-leave').daterangepicker({
                 locale: turkishLocale,

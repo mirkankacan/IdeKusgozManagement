@@ -13,9 +13,9 @@ namespace IdeKusgozManagement.Application.DTOs.AdvanceDTOs
         public string StatusText => Status switch
         {
             AdvanceStatus.Pending => "Beklemede",
-            AdvanceStatus.ApprovedByUnitManager => "Birim Yöneticisi Onayladı",
+            AdvanceStatus.ApprovedByUnitManager => "Yönetici Onayladı",
             AdvanceStatus.ApprovedByChief => "Şef Onayladı",
-            AdvanceStatus.RejectedByUnitManager => "Birim Yöneticisi Reddetti",
+            AdvanceStatus.RejectedByUnitManager => "Yönetici Reddetti",
             AdvanceStatus.RejectedByChief => "Şef Reddetti",
             _ => "Bilinmiyor"
         };
@@ -29,6 +29,8 @@ namespace IdeKusgozManagement.Application.DTOs.AdvanceDTOs
         public DateTime CreatedDate { get; set; }
         public string CreatedBy { get; set; }
         public string CreatedByFullName { get; set; }
+        public string UserId { get; set; }
+        public string UserFullName { get; set; }
         public string? UpdatedBy { get; set; }
         public string? UpdatedByFullName { get; set; }
         public DateTime? UpdatedDate { get; set; }

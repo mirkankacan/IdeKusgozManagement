@@ -52,6 +52,8 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IDocumentService, DocumentService>();
             services.AddScoped<ICompanyService, CompanyService>();
             services.AddScoped<IAIService, OpenAIService>();
+            services.AddScoped<IUserBalanceService, UserBalanceService>();
+            services.AddScoped<IMachineWorkRecordService, MachineWorkRecordService>();
             services.AddSingleton<ChatClient>(serviceProvider =>
             {
                 var options = serviceProvider.GetRequiredService<IOptions<OpenAiOptionsDTO>>().Value;

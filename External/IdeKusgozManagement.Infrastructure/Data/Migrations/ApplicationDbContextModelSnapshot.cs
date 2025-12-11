@@ -17,7 +17,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -222,6 +222,11 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedBy");
@@ -231,6 +236,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.HasIndex("ProcessedByUnitManagerId");
 
                     b.HasIndex("UpdatedBy");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("IdtAdvances");
                 });
@@ -656,6 +663,87 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.ToTable("IdtLeaveRequests");
                 });
 
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtMachineWorkRecord", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DailyStatus")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(350)
+                        .HasColumnType("nvarchar(350)");
+
+                    b.Property<string>("District")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<TimeSpan?>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("EquipmentId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("HasInternalTransport")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("ProjectId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Province")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(350)
+                        .HasColumnType("nvarchar(350)");
+
+                    b.Property<TimeSpan?>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("Date");
+
+                    b.HasIndex("EquipmentId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("UpdatedBy");
+
+                    b.ToTable("IdtMachineWorkRecords");
+                });
+
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtMessage", b =>
                 {
                     b.Property<string>("Id")
@@ -869,6 +957,42 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.HasIndex("TargetUserId");
 
                     b.ToTable("IdtTrafficTickets");
+                });
+
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtUserBalance", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("IdtUserBalances");
                 });
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtUserHierarchy", b =>
@@ -1203,6 +1327,12 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("ChiefUser");
 
                     b.Navigation("CreatedByUser");
@@ -1210,6 +1340,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.Navigation("UnitManagerUser");
 
                     b.Navigation("UpdatedByUser");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtAnnualLeaveEntitlement", b =>
@@ -1335,6 +1467,38 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.Navigation("UpdatedByUser");
                 });
 
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtMachineWorkRecord", b =>
+                {
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtEquipment", "Equipment")
+                        .WithMany("MachineWorkRecord")
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtProject", "Project")
+                        .WithMany("MachineWorkRecord")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Equipment");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtMessage", b =>
                 {
                     b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "CreatedByUser")
@@ -1415,6 +1579,17 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.Navigation("Project");
 
                     b.Navigation("TargetUser");
+                });
+
+            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtUserBalance", b =>
+                {
+                    b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtWorkRecord", b =>
@@ -1563,6 +1738,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                 {
                     b.Navigation("Files");
 
+                    b.Navigation("MachineWorkRecord");
+
                     b.Navigation("TrafficTickets");
 
                     b.Navigation("WorkRecords");
@@ -1590,6 +1767,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtProject", b =>
                 {
                     b.Navigation("Files");
+
+                    b.Navigation("MachineWorkRecord");
 
                     b.Navigation("TrafficTickets");
 

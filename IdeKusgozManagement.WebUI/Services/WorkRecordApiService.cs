@@ -271,5 +271,47 @@ namespace IdeKusgozManagement.WebUI.Services
                 return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
             }
         }
+
+        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetWorkRecordsByUserIdDateStatusAsync(string userId, DateTime date, int status, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/workrecords/user/{userId}/date/{date:yyyy-MM-dd}/status/{status}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetApprovedWorkRecordsByUserAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/workrecords/approved/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
+                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
+                }
+
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
+            }
+        }
     }
 }

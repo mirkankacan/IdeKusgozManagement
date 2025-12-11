@@ -268,6 +268,9 @@
                     <li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
                         <a href="/puantaj"><i data-feather="list"></i>Puantajlar</a>
                     </li>
+                    <li class="@(Context.Request.Path == "/makine-puantaj" ? "active-page" : "")">
+                        <a href="/makine-puantaj"><i data-feather="table"></i>Makine Puantajları</a>
+                    </li>
                     <li class="@(Context.Request.Path == "/avans" ? "active-page" : "")">
                         <a href="/avans"><i data-feather="book-open"></i>Avanslar</a>
                     </li>
@@ -281,9 +284,7 @@
                     <li class="@(Context.Request.Path == "/dokuman/yukle" ? "active-page" : "")">
                         <a href="/dokuman/yukle"><i data-feather="upload"></i>Doküman Yükle</a>
                     </li>
-                    @*   <li class="@(Context.Request.Path == "/dokuman/yuklenenler" ? "active-page" : "")">
-                        <a href="/dokuman/yuklenenler"><i data-feather="archive"></i>Dokümanlar</a>
-                    </li> *@
+         
                     <li class="@(Context.Request.Path == "/dokuman/kontrol" ? "active-page" : "")">
                         <a href="/dokuman/kontrol"><i data-feather="user-check"></i>Doküman Kontrol</a>
                     </li>
@@ -293,6 +294,9 @@
                 </li>
                 <li class="@(Context.Request.Path == "/puantaj/ekle" ? "active-page" : "")">
                     <a href="/puantaj/ekle"><i data-feather="clock"></i>Puantaj Gir</a>
+                </li>
+                <li class="@(Context.Request.Path == "/makine-puantaj/ekle" ? "active-page" : "")">
+                    <a href="/makine-puantaj/ekle"><i data-feather="command"></i>Makine Puantajı Gir</a>
                 </li>
                 <li class="@(Context.Request.Path == "/izin/istek-olustur" ? "active-page" : "")">
                     <a href="/izin/istek-olustur"><i data-feather="flag"></i>İzinlerim</a>
@@ -396,7 +400,9 @@
 
                 };
                 window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
-                       window.signalRUrl = (function() {
+                window.isUserSef = @Html.Raw(Json.Serialize(User.IsInRole("Şef")));
+                window.isUserUnitManager = @Html.Raw(Json.Serialize(User.IsInRole("Yönetici")));
+                window.signalRUrl = (function() {
             const currentUrl = window.location.href;
             if (currentUrl.includes('portal.izmircrane.com')) {
                 return 'http://92.45.19.226:5291/';

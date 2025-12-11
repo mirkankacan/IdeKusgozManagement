@@ -1,11 +1,16 @@
 ﻿using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
+using IdeKusgozManagement.Domain.Enums;
 
 namespace IdeKusgozManagement.Application.Interfaces.Services
 {
     public interface IWorkRecordService
     {
         Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default);
+
+        Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdDateStatusAsync(string userId, DateTime date, WorkRecordStatus status, CancellationToken cancellationToken = default);
+
+        Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> GetApprovedWorkRecordsByUserAsync(string userId, DateTime date, CancellationToken cancellationToken = default);
 
         Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateOrModifyWorkRecordDTO> workRecordDTOs, CancellationToken cancellationToken = default);
 

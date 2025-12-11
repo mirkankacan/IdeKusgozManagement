@@ -10,6 +10,7 @@ namespace IdeKusgozManagement.Domain.Entities
         public string? Description { get; set; }
         public AdvanceStatus Status { get; set; }
 
+        public string UserId { get; set; }
         public DateTime? UnitManagerProcessedDate { get; set; }
         public string? ProcessedByUnitManagerId { get; set; }
         public string? UnitManagerRejectReason { get; set; }
@@ -17,6 +18,7 @@ namespace IdeKusgozManagement.Domain.Entities
         public string? ProcessedByChiefId { get; set; }
         public string? ChiefRejectReason { get; set; }
 
+        public virtual ApplicationUser User { get; set; }
         public virtual ApplicationUser CreatedByUser { get; set; }
         public virtual ApplicationUser? UpdatedByUser { get; set; }
         public virtual ApplicationUser? ChiefUser { get; set; }

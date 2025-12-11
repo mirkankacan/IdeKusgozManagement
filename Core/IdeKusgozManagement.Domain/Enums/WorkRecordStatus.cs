@@ -3,7 +3,9 @@
     public enum WorkRecordStatus
     {
         Pending = 0,
-        Approved = 1,
-        Rejected = 2
+        ApprovedByChief = 1,
+        ApprovedByUnitManager = 2,
+        RejectedByChief = 3,
+        RejectedByUnitManager = 4
     }
 }

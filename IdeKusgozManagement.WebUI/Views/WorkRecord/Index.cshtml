@@ -6,9 +6,9 @@
 @section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
 
     <link href="~/css/puantaj-common.css" rel="stylesheet" />
 
@@ -181,7 +181,7 @@
                         <div class="col-md-12">
                             <label for="fileReceipt" class="form-label">Fatura</label>
                             <input type="file" class="form-control" id="fileReceipt" required
-                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
                             <div class="form-text">
                                 Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX
                             </div>
@@ -211,7 +211,7 @@
 
 <!-- Reject Work Record Modal -->
 <div class="modal fade" id="rejectWorkRecordModal" tabindex="-1" aria-labelledby="rejectWorkRecordModalLabel"
-    aria-hidden="true">
+     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -224,7 +224,7 @@
                 <div class="mb-3">
                     <label for="txtWorkRecordRejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
                     <textarea class="form-control" id="txtWorkRecordRejectReason" rows="3" maxlength="349"
-                        placeholder="Reddetme sebebini açıklayın..."></textarea>
+                              placeholder="Reddetme sebebini açıklayın..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -371,7 +371,6 @@
             }
         }
 
-        // clearExpenseForm extended for Index page
         // First call the common function, then add Index-specific logic
         const originalClearExpenseForm = clearExpenseForm;
         clearExpenseForm = function () {
@@ -744,9 +743,12 @@
                 showTableLoading();
                 const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
                 resetExpenseDataStore();
-
+                let url = `/puantaj/liste/kullanici/${selectedUserId}/tarih/${formattedDate}`;
+                 if(window.isUserUnitManager){
+                   url = `/puantaj/liste/onaylanmis/kullanici/${selectedUserId}/tarih/${formattedDate}`;
+                }
                 const response = await $.ajax({
-                    url: `/puantaj/liste/kullanici/${selectedUserId}/tarih/${formattedDate}`,
+                    url: url,
                     type: 'GET'
                 });
 
@@ -812,14 +814,14 @@
                 const startTime = formatTimeSpan(record.startTime);
                 const endTime = formatTimeSpan(record.endTime);
                 let statusBadge = generateStatusBadge(record.status, record.statusText);
-                if (record.status === 2) {
+                if (record.status === 3 || record.status === 4) {
                     const reason = record.rejectReason || '';
                     const encoded = encodeURIComponent(reason);
                     const hasReason = !!reason;
                     statusBadge = `
-                                                                                                                                                                                                                                        <span class="badge bg-danger status-rejected" data-reason="${encoded}" title="${hasReason ? 'Reddetme açıklamasını görmek için tıklayın' : 'Reddedildi'}">
-                                                                                                                                                                                                                                            <i class="fas fa-times me-1"></i>Reddedildi${hasReason ? ' <i class=\"fas fa-exclamation-circle ms-1\" title=\"Açıklama var\"></i>' : ''}
-                                                                                                                                                                                                                                        </span>
+<span class="badge bg-danger status-rejected" data-reason="${encoded}" title="${hasReason ? 'Reddetme açıklamasını görmek için tıklayın' : 'Reddedildi'}">
+<i class="fas fa-times me-1"></i>Reddedildi${hasReason ? ' <i class=\"fas fa-exclamation-circle ms-1\" title=\"Açıklama var\"></i>' : ''}
+</span>
                                                                                                                                                                                                                                     `;
                 }
 
@@ -854,7 +856,7 @@
 
         function createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge, isSunday = false) {
             // Onay durumunu kontrol et
-            const isApproved = record.status === 1;
+            const isApproved = record.status === 2;
             const disabledAttr = isApproved ? 'disabled' : '';
 
             // Get holiday row class from common function (pass isSunday parameter)
@@ -1142,10 +1144,10 @@
                     EndTime: endTime,
                     AdditionalStartTime: additionalStartTime || "",
                     AdditionalEndTime: additionalEndTime || "",
-                    ProjectId: projectId,
-                    EquipmentId: equipmentId,
-                    Province: province,
-                    District: district,
+                    ProjectId: projectId || "",
+                    EquipmentId: equipmentId || "",
+                    Province: province || "",
+                    District: district || "",
                     HasBreakfast: hasBreakfast,
                     HasLunch: hasLunch,
                     HasDinner: hasDinner,

@@ -23,6 +23,20 @@ namespace IdeKusgozManagement.WebUI.Controllers
         {
             return View();
         }
+        [Authorize(Roles = "Admin,Yönetici")]
+        [HttpGet("liste/onaylanmis/kullanici/{userId}/tarih/{date:datetime}")]
+        public async Task<IActionResult> GetApprovedWorkRecordsByUser(string userId, DateTime date, int status, CancellationToken cancellationToken)
+        {
+            var response = await _workRecordApiService.GetApprovedWorkRecordsByUserAsync(userId, date, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+        [Authorize(Roles = "Admin,Yönetici")]
+        [HttpGet("liste/kullanici/{userId}/tarih/{date:datetime}/durum/{status:int}")]
+        public async Task<IActionResult> GetWorkRecordsByUserIdAndDate(string userId, DateTime date, int status, CancellationToken cancellationToken)
+        {
+            var response = await _workRecordApiService.GetWorkRecordsByUserIdDateStatusAsync(userId, date, status, cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
 
         [Authorize(Roles = "Admin,Yönetici,Şef")]
         [HttpGet("liste/kullanici/{userId}/tarih/{date:datetime}")]

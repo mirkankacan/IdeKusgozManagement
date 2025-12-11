@@ -58,11 +58,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<RequiredDocumentViewModel>>> GetRequiredDocumentsAsync(string departmentId, string departmentDutyId, string? companyId, string? targetId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<RequiredDocumentViewModel>>> GetRequiredDocumentsAsync(string departmentId, string departmentDutyId, string? companyId, string? targetId, string? documentTypeId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/documents/check?departmentId={departmentId}&departmentDutyId={departmentDutyId}&companyId={companyId}&targetId={targetId}", cancellationToken);
+                var response = await _httpClient.GetAsync($"api/documents/check?departmentId={departmentId}&departmentDutyId={departmentDutyId}&companyId={companyId}&targetId={targetId}&documentTypeId={documentTypeId}", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

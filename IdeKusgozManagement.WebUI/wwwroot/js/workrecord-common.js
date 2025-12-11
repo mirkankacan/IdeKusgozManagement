@@ -577,17 +577,27 @@ function generateStatusBadge(status, statusText) {
         case 0:
             badgeClass = 'bg-warning text-dark';
             icon = 'fas fa-clock';
-            statusText = statusText || 'Bekliyor';
+            statusText = statusText || 'Beklemede';
             break;
         case 1:
             badgeClass = 'bg-success';
             icon = 'fas fa-check';
-            statusText = statusText || 'Onaylandı';
+            statusText = statusText || 'Şef Onayladı';
             break;
         case 2:
+            badgeClass = 'bg-info';
+            icon = 'fas fa-check';
+            statusText = statusText || 'Yönetici Onayladı';
+            break;
+        case 3:
             badgeClass = 'bg-danger';
             icon = 'fas fa-times';
-            statusText = statusText || 'Reddedildi';
+            statusText = statusText || 'Şef Reddetti';
+            break;
+        case 4:
+            badgeClass = 'bg-danger';
+            icon = 'fas fa-times';
+            statusText = statusText || 'Yönetici Reddetti';
             break;
         default:
             statusText = statusText || 'Yeni';

@@ -11,7 +11,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class DocumentService(IUnitOfWork unitOfWork, ILogger<DocumentService> logger) : IDocumentService
     {
-        public async Task<ServiceResponse<IEnumerable<RequiredDocumentDTO>>> GetRequiredDocumentsAsync(string departmentId, string departmentDutyId, string? companyId, string? targetId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<IEnumerable<RequiredDocumentDTO>>> GetRequiredDocumentsAsync(string departmentId, string departmentDutyId, string? companyId, string? targetId, string? documentTypeId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -20,13 +20,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (string.IsNullOrEmpty(departmentDutyId))
                     return ServiceResponse<IEnumerable<RequiredDocumentDTO>>.Error("Departman görev ID'si boş geçilemez");
 
-                var parameters = new object[] { departmentId, departmentDutyId, companyId, targetId };
+                var parameters = new object[] { departmentId, departmentDutyId, companyId, targetId, documentTypeId };
                 var funcResults = await unitOfWork.ExecuteTableValuedFunctionAsync<RequiredDocumentDTO>(
                         "dbo.IDF_GetRequiredDocuments",
                         parameters,
                         cancellationToken);
 
-                var resultList = funcResults.ToList();
+                var resultList = funcResults
+                    .OrderBy(x => x.CompanyName)
+                    .ThenBy(x => x.DocumentTypeName)
+                    .ToList();
 
                 return ServiceResponse<IEnumerable<RequiredDocumentDTO>>.Success(resultList);
             }

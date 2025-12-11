@@ -1,5 +1,6 @@
 ﻿using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
+using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,42 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await workRecordService.GetWorkRecordsByUserIdAndDateAsync(currentUserId, date, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Tarih, kullanıcıya göre onaylanmış puantajları getirir
+        /// </summary>
+        /// <param name="date">Tarih</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
+        /// <param name="status">Puantaj durumu</param>
+        [HttpGet("approved/user/{userId}/date/{date:datetime}")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> GetApprovedWorkRecordsByUser(string userId, DateTime date, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await workRecordService.GetApprovedWorkRecordsByUserAsync(userId, date, cancellationToken);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Tarih,kullanıcıya ve puantaj durumuna göre puantaj kayıtlarını getirir
+        /// </summary>
+        /// <param name="date">Tarih</param>
+        /// <param name="userId">Kullanıcı ID'si</param>
+        /// <param name="status">Puantaj durumu</param>
+        [HttpGet("user/{userId}/date/{date:datetime}/status/{status:int}")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        public async Task<IActionResult> GetWorkRecordsByUserIdDateStatus(string userId, DateTime date, WorkRecordStatus status, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı ID'si gereklidir");
+            }
+            var result = await workRecordService.GetWorkRecordsByUserIdDateStatusAsync(userId, date, status, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

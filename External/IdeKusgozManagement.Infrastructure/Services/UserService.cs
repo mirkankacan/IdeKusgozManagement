@@ -506,6 +506,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 throw;
             }
         }
+
         public async Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentDutyAsync(string departmentDutyId, CancellationToken cancellationToken = default)
         {
             try
@@ -527,6 +528,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 throw;
             }
         }
+
         public async Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default)
         {
             try

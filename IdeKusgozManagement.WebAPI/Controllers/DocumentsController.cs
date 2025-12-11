@@ -26,14 +26,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpGet("check")]
-        public async Task<IActionResult> GetRequiredDocuments([FromQuery] string departmentId, [FromQuery] string departmentDutyId, [FromQuery] string? companyId, [FromQuery] string? targetId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetRequiredDocuments([FromQuery] string departmentId, [FromQuery] string departmentDutyId, [FromQuery] string? companyId, [FromQuery] string? targetId, [FromQuery] string? documentTypeId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(departmentId))
                 return BadRequest("Departman ID'si gereklidir");
             if (string.IsNullOrEmpty(departmentDutyId))
                 return BadRequest("Departman görev ID'si gereklidir");
 
-            var result = await documentService.GetRequiredDocumentsAsync(departmentId, departmentDutyId, companyId, targetId, cancellationToken);
+            var result = await documentService.GetRequiredDocumentsAsync(departmentId, departmentDutyId, companyId, targetId, documentTypeId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }

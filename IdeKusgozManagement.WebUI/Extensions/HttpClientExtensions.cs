@@ -46,6 +46,10 @@ namespace IdeKusgozManagement.WebUI.Extensions
 
             services.AddHttpClient<ILeaveRequestApiService, LeaveRequestApiService>(client => ConfigureClient(client, baseUrl))
                     .AddHttpMessageHandler<JwtTokenHandler>();
+            services.AddHttpClient<IMachineWorkRecordApiService, MachineWorkRecordApiService>(client => ConfigureClient(client, baseUrl))
+                .AddHttpMessageHandler<JwtTokenHandler>();
+            services.AddHttpClient<IUserBalanceApiService, UserBalanceApiService>(client => ConfigureClient(client, baseUrl))
+                    .AddHttpMessageHandler<JwtTokenHandler>();
 
             services.AddHttpClient<ITrafficTicketApiService, TrafficTicketApiService>(client => ConfigureClient(client, baseUrl))
                     .AddHttpMessageHandler<JwtTokenHandler>();

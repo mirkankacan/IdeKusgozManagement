@@ -35,8 +35,10 @@ namespace IdeKusgozManagement.Application.DTOs.WorkRecordDTOs
         public string StatusText => Status switch
         {
             WorkRecordStatus.Pending => "Beklemede",
-            WorkRecordStatus.Approved => "Onaylandı",
-            WorkRecordStatus.Rejected => "Reddedildi",
+            WorkRecordStatus.ApprovedByChief => "Şef Onayladı",
+            WorkRecordStatus.ApprovedByUnitManager => "Yönetici Onayladı",
+            WorkRecordStatus.RejectedByUnitManager => "Yönetici Reddetti",
+            WorkRecordStatus.RejectedByChief => "Şef Reddetti",
             _ => "Bilinmiyor"
         };
 

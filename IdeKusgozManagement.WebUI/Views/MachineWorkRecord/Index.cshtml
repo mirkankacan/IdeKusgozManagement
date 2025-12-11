@@ -1,0 +1,852 @@
+@{
+    ViewData["Title"] = "Kullanıcıya Göre Makine Puantaj Listesi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+
+    <link href="~/css/puantaj-common.css" rel="stylesheet" />
+
+}
+
+@Html.AntiForgeryToken()
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-bars-staggered me-2"></i>
+                    Kullanıcıya Göre Puantaj Listesi
+                </h5>
+                <div class="mb-3">
+                    <span class="badge bg-danger me-2">Tam Gün Resmi Tatil</span>
+                    <span class="badge bg-warning text-dark">Yarım Gün Resmi Tatil</span>
+                </div>
+                <!-- Yıl ve Ay Seçimi -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <label for="year-select" class="form-label">Yıl</label>
+                        <select id="year-select" class="form-select">
+                            @for (int year = DateTime.Now.Year - 2; year <= DateTime.Now.Year; year++)
+                            {
+                                if (year == DateTime.Now.Year)
+                                {
+                                    <option value="@year" selected>@year</option>
+                                }
+                                else
+                                {
+                                    <option value="@year">@year</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="month-select" class="form-label">Ay</label>
+                        <select id="month-select" class="form-select">
+                            <option value="1">Ocak</option>
+                            <option value="2">Şubat</option>
+                            <option value="3">Mart</option>
+                            <option value="4">Nisan</option>
+                            <option value="5">Mayıs</option>
+                            <option value="6">Haziran</option>
+                            <option value="7">Temmuz</option>
+                            <option value="8">Ağustos</option>
+                            <option value="9">Eylül</option>
+                            <option value="10">Ekim</option>
+                            <option value="11">Kasım</option>
+                            <option value="12">Aralık</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="user-select" class="form-label">Kullanıcı</label>
+                        <select id="user-select" class="form-select user-select">
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-warning flex-fill btnUpdateWorkRecords">
+                                <i class="fas fa-edit me-2"></i>Güncelle
+                            </button>
+                            <button type="button" class="btn btn-outline-success flex-fill">
+                                <i class="fas fa-thumbs-up me-2"></i>Toplu Onayla
+                            </button>
+                            <button type="button" class="btn btn-outline-danger flex-fill">
+                                <i class="fas fa-thumbs-down me-2"></i>Toplu Reddet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dinamik Tablo -->
+                <div id="dynamicTableContainer">
+                    <div id="tableLoadingSpinner" class="text-center py-5" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                        <div class="mt-3">
+                            <h6 class="text-muted">Tablo oluşturuluyor...</h6>
+                            <small class="text-muted">Lütfen bekleyiniz</small>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="workRecordsTable" class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>TARİH</th>
+                                    <th>GÜN</th>
+                                    <th style="width:100px;max-width:100px;">BAŞLAMA<br /> SAATİ</th>
+                                    <th style="width:100px;max-width:100px;">BIRAKMA<br /> SAATİ</th>
+                                    <th>PROJE</th>
+                                    <th>ÇALIŞILAN<br /> EKİPMAN</th>
+                                    <th>ÇALIŞILAN<br /> İL</th>
+                                    <th>ÇALIŞILAN<br /> İLÇE</th>
+                                    <th style="width:150px;max-width:150px;">AÇIKLAMA</th>
+                                    <th style="width:100px;max-width:100px;">İÇ<br /> NAKLİYE</th>
+                                    <th>DURUM</th>
+                                    <th>İŞLEM</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workRecordsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-warning flex-fill btnUpdateWorkRecords">
+                            <i class="fas fa-edit me-2"></i>Güncelle
+                        </button>
+                        <button type="button" class="btn btn-outline-success flex-fill">
+                            <i class="fas fa-thumbs-up me-2"></i>Onayla
+                        </button>
+                        <button type="button" class="btn btn-outline-danger flex-fill">
+                            <i class="fas fa-thumbs-down me-2"></i>Reddet
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Reject Work Record Modal -->
+<div class="modal fade" id="rejectWorkRecordModal" tabindex="-1" aria-labelledby="rejectWorkRecordModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectWorkRecordModalLabel">Puantaj Reddetme Penceresi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="txtRejectWorkRecordId" value="" disabled readonly />
+                <input type="hidden" id="txtRejectMode" value="single" disabled readonly />
+                <div class="mb-3">
+                    <label for="txtWorkRecordRejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
+                    <textarea class="form-control" id="txtWorkRecordRejectReason" rows="3" maxlength="349"
+                              placeholder="Reddetme sebebini açıklayın..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger w-100" id="btnRejectWorkRecordConfirm">
+                    <i class="fas fa-times me-1"></i>Reddet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="~/js/turkey-locations.js"></script>
+    <script src="~/js/workrecord-common.js"></script>
+
+    <script>
+                // Page-specific variables
+                let workRecordsTable;
+                let currentYear = new Date().getFullYear();
+                let currentMonth = new Date().getMonth() + 1;
+
+                function initializeUserSelect() {
+                    $('.user-select').select2({
+                        placeholder: 'Kullanıcı seçin',
+                        theme: 'bootstrap-5',
+                        width: '100%'
+                    });
+                }
+
+                // Override initializeAllSelects for Index page
+                async function initializeAllSelects() {
+                    await initializeEquipmentSelect();
+                    initializeLocationSelects();
+                    await initializeProjectSelect();
+                    await initializeDailyStatusSelect();
+                    initializeUserSelect();
+                }
+
+
+                // ===== PAGE INITIALIZATION =====
+                $(document).ready(async function () {
+                    await initializePage();
+
+                });
+
+                async function initializePage() {
+                    $('body').addClass('sidebar-hidden');
+
+                    $('#year-select').val(currentYear);
+                    $('#month-select').val(currentMonth);
+
+                    // Initialize all components
+                    await initializeAllSelects();
+
+                    // Page-specific initialization
+                    await setupIndexPage();
+                }
+
+                async function setupIndexPage() {
+                    // Setup time input handlers
+                    setupTimeInputHandlers();
+
+                    // Setup page-specific event listeners
+                    setupPageEventListeners();
+
+                    // Load users
+                    await getAssignedUsers();
+
+                    // Load holidays for current year
+                    await loadHolidays(currentYear);
+
+                    // Show empty table initially
+                    showEmptyTable();
+                }
+
+                function setupPageEventListeners() {
+                    $('.btnUpdateWorkRecords').on('click', saveWorkRecords);
+                    $('#user-select').on('change', handleUserSelection);
+                    $('#year-select, #month-select').on('change', handleDateChange);
+                    $('.btn-outline-success').on('click', approveWorkRecords);
+                    $('.btn-outline-danger').on('click', rejectWorkRecords);
+                    $(document).on('click', '#btnRejectWorkRecordConfirm', async function () {
+                        await confirmRejectWithReason();
+                    });
+
+                    // Status rejected click handler
+                    $(document).on('click', '.status-rejected', function () {
+                        const encoded = $(this).data('reason');
+                        const reason = encoded ? decodeURIComponent(encoded) : '';
+                        if (reason) {
+                            Swal.fire({
+                                title: 'Reddetme Açıklaması',
+                                text: reason,
+                                icon: 'info'
+                            });
+                        }
+                    });
+
+                }
+
+                // ===== TABLE STATE MANAGEMENT =====
+                function handleUserSelection() {
+                    const selectedUserId = $('#user-select').val();
+                    if (selectedUserId) {
+                        loadWorkRecordsByUser();
+                    } else {
+                        clearTableData();
+                    }
+                }
+
+                async function handleDateChange() {
+                    const selectedYear = parseInt($('#year-select').val());
+                    const selectedUserId = $('#user-select').val();
+
+                    // Load holidays for selected year
+                    if (selectedYear !== currentYear) {
+                        await loadHolidays(selectedYear);
+                        currentYear = selectedYear;
+                    }
+
+                    if (selectedUserId) {
+                        loadWorkRecordsByUser();
+                    } else {
+                        showEmptyTable();
+                    }
+                }
+
+                function showEmptyTable() {
+                    const emptyMessage = `
+                                                                                                                                                                                                                                        <tr>
+                                                                                                                                                                                                                                            <td colspan="12" class="text-center py-5">
+                                                                                                                                                                                                                                                <div class="text-muted">
+                                                                                                                                                                                                                                                    <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                                                                                                                                                                                                                                    <h5>Kullanıcı Seçin</h5>
+                                                                                                                                                                                                                                                    <p>Puantaj verilerini görüntülemek için lütfen bir kullanıcı seçin.</p>
+                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                                                    `;
+                    $('#workRecordsTableBody').html(emptyMessage);
+                }
+
+                function showNoDataMessage(year, month) {
+                    const noDataMessage = `
+                                                                                                                                                                                                                                        <tr>
+                                                                                                                                                                                                                                            <td colspan="12" class="text-center py-5">
+                                                                                                                                                                                                                                                <div class="text-muted">
+                                                                                                                                                                                                                                                    <i class="fas fa-calendar-times fa-2x mb-3 text-warning"></i>
+                                                                                                                                                                                                                                                    <h5>Puantaj Verisi Bulunamadı</h5>
+                                                                                                                                                                                                                                                    <p>Seçili kullanıcının ${month}/${year} ayına ait puantaj kaydı bulunmamaktadır.</p>
+                                                                                                                                                                                                                                                    <small>Personel henüz bu ay için puantaj doldurmamış olabilir.</small>
+                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                                                    `;
+                    $('#workRecordsTableBody').html(noDataMessage);
+                }
+
+                function showErrorMessage() {
+                    const errorMessage = `
+                                                                                                                                                                                                                                        <tr>
+                                                                                                                                                                                                                                            <td colspan="12" class="text-center py-5">
+                                                                                                                                                                                                                                                <div class="text-danger">
+                                                                                                                                                                                                                                                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                                                                                                                                                                                                                                                    <h5>Veri Yükleme Hatası</h5>
+                                                                                                                                                                                                                                                    <p>Puantaj verileri yüklenirken bir hata oluştu.</p>
+                                                                                                                                                                                                                                                    <button class="btn btn-outline-primary btn-sm" onclick="loadWorkRecordsByUser()">
+                                                                                                                                                                                                                                                        <i class="fas fa-redo me-1"></i>Tekrar Dene
+                                                                                                                                                                                                                                                    </button>
+                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                                                    `;
+                    $('#workRecordsTableBody').html(errorMessage);
+                }
+
+                function clearTableData() {
+                    showEmptyTable();
+                }
+
+                // ===== DATA LOADING FUNCTIONS =====
+                async function loadWorkRecordsByUser() {
+                    const selectedUserId = $('#user-select').val();
+                    const year = parseInt($('#year-select').val());
+                    const month = parseInt($('#month-select').val());
+
+                    // Update global month and year for holiday checking
+                    currentYear = year;
+                    currentMonth = month;
+
+                    if (!selectedUserId) {
+                        showEmptyTable();
+                        return;
+                    }
+
+                    try {
+                        showTableLoading();
+                        const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
+                        let url = `/makine-puantaj/liste/kullanici/${selectedUserId}/tarih/${formattedDate}`;
+                         if(window.isUserUnitManager){
+                           url = `/makine-puantaj/liste/onaylanmis/kullanici/${selectedUserId}/tarih/${formattedDate}`;
+                        }
+                        const response = await $.ajax({
+                            url: url,
+                            type: 'GET'
+                        });
+
+                        if (response.isSuccess && response.data && response.data.length > 0) {
+                            await populateTableWithWorkRecords(response.data);
+                        } else {
+                            showNoDataMessage(year, month);
+                        }
+                    } catch (error) {
+                        console.error('Puantaj verileri yüklenirken hata:', error);
+                        showErrorMessage();
+                        handleAjaxError(error, 'Puantaj verileri yüklenirken bir hata oluştu');
+                    } finally {
+                        hideTableLoading();
+                    }
+                }
+
+                function handleAjaxError(error, defaultMessage = 'Bir hata oluştu') {
+                    console.error('Ajax Error:', error);
+
+                    let errorMessage = defaultMessage;
+                    if (error.responseJSON) {
+                        if (error.responseJSON.message) {
+                            errorMessage = error.responseJSON.message;
+                        } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                            errorMessage = error.responseJSON.errors.join(', ');
+                        }
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+
+                    toastr.error(errorMessage, 'Hata!');
+                    return errorMessage;
+                }
+
+                async function populateTableWithWorkRecords(workRecords) {
+                    $('#workRecordsTableBody').empty();
+
+                    // Sort records by date
+                    workRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                    workRecords.forEach(record => {
+                        const date = new Date(record.date);
+                        const day = date.getDate();
+                        const dayOfWeek = getDayOfWeekTurkish(date.getDay());
+                        const isSunday = date.getDay() === 0;
+                        const formattedDate = `${day.toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()} ${dayOfWeek}`;
+
+                        // Auto-set daily status if empty based on holidays and Sundays
+                        if (!record.dailyStatus) {
+                            const isFullHolidayDay = isFullHoliday(day, currentMonth, currentYear);
+                            if (isFullHolidayDay) {
+                                record.dailyStatus = 'Resmi Tatil';
+                            } else if (isSunday) {
+                                record.dailyStatus = 'Hafta Tatili (DAY OFF)';
+                            } else {
+                                // Default to "Çalışıyor" for regular days
+                                record.dailyStatus = 'Çalışıyor';
+                            }
+                        }
+
+                        const startTime = formatTimeSpan(record.startTime);
+                        const endTime = formatTimeSpan(record.endTime);
+                        let statusBadge = generateStatusBadge(record.status, record.statusText);
+                        if (record.status === 3 || record.status === 4) {
+                            const reason = record.rejectReason || '';
+                            const encoded = encodeURIComponent(reason);
+                            const hasReason = !!reason;
+                            statusBadge = `
+        <span class="badge bg-danger status-rejected" data-reason="${encoded}" title="${hasReason ? 'Reddetme açıklamasını görmek için tıklayın' : 'Reddedildi'}">
+        <i class="fas fa-times me-1"></i>Reddedildi${hasReason ? ' <i class=\"fas fa-exclamation-circle ms-1\" title=\"Açıklama var\"></i>' : ''}
+        </span>
+                                                                                                                                                                                                                                            `;
+                        }
+
+                        const row = createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge, isSunday);
+                        $('#workRecordsTableBody').append(row);
+                    });
+
+                    // Initialize location selects and populate values
+                    await populateProvincesAndDistricts(workRecords);
+
+                    // Re-initialize components
+                    await initializeAllSelects();
+                    applyDailyStatusRulesForAllRows();
+                    applyProjectRulesForAllRows();
+                }
+
+                function createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge, isSunday = false) {
+                    // Onay durumunu kontrol et - MachineWorkRecord için status 1 veya 2 onaylanmış demek
+                    const isApproved = record.status === 1 || record.status === 2;
+                    const disabledAttr = isApproved ? 'disabled' : '';
+
+                    // Get holiday row class from common function (pass isSunday parameter)
+                    const rowClass = getHolidayRowClass(day, currentMonth, currentYear, isSunday);
+
+                    // Handle property name differences: DTO uses IsInternalTransport, entity uses HasInternalTransport
+                    const internalTransport = record.isInternalTransport !== undefined 
+                        ? record.isInternalTransport 
+                        : (record.hasInternalTransport || false);
+
+                    return `
+                                                                                                                                                                                                                        <tr data-day="${day}" data-record-id="${record.id}" data-is-locked="${isApproved}" class="${rowClass}">
+                                                                                                                                                                                                                            <td class="date-cell">
+                                                                                                                                                                                                                                <span class="badge bg-info">${formattedDate}</span>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <select class="form-select form-select-sm daily-status-select" data-day="${day}" data-current-value="${record.dailyStatus || ''}" ${disabledAttr}>
+                                                                                                                                                                                                                                    <option value="">Günlük durum seçin</option>
+                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <div class="input-group">
+                                                                                                                                                                                                                                    <input type="text" class="form-control time-input start-time" value="${startTime}" data-day="${day}" placeholder="08:00" ${disabledAttr}>
+                                                                                                                                                                                                                                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <div class="input-group">
+                                                                                                                                                                                                                                    <input type="text" class="form-control time-input end-time" value="${endTime}" data-day="${day}" placeholder="17:00" ${disabledAttr}>
+                                                                                                                                                                                                                                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${record.projectId || ''}" ${disabledAttr}>
+                                                                                                                                                                                                                                    <option value="">Proje seçin</option>
+                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${record.equipmentId || ''}" ${disabledAttr}>
+                                                                                                                                                                                                                                    <option value="">Ekipman seçin</option>
+                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <select class="form-select form-select-sm province-select" data-day="${day}" ${disabledAttr}>
+                                                                                                                                                                                                                                    <option value="">İl seçin</option>
+                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <select class="form-select form-select-sm district-select" data-day="${day}" ${disabledAttr}>
+                                                                                                                                                                                                                                    <option value="">İlçe seçin</option>
+                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <textarea class="form-control form-control-sm description-textarea" 
+                                                                                                                                                                                                                                          data-day="${day}" 
+                                                                                                                                                                                                                                          placeholder="Açıklama" 
+                                                                                                                                                                                                                                          rows="2" 
+                                                                                                                                                                                                                                          ${disabledAttr}>${record.description || ''}</textarea>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <div class="form-check d-flex justify-content-center">
+                                                                                                                                                                                                                                    <input class="form-check-input internal-transport-checkbox" 
+                                                                                                                                                                                                                                           type="checkbox" 
+                                                                                                                                                                                                                                           id="it_${day}"
+                                                                                                                                                                                                                                           data-day="${day}" 
+                                                                                                                                                                                                                                           ${internalTransport ? 'checked' : ''} 
+                                                                                                                                                                                                                                           ${disabledAttr}>
+                                                                                                                                                                                                                                    <label class="form-check-label" for="it_${day}">
+
+                                                                                                                                                                                                                                    </label>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                ${statusBadge}
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <div class="btn-group btn-group-sm" role="group">
+                                                                                                                                                                                                                                    <button type="button" class="btn btn-outline-success" onclick="approveWorkRecord('${record.id}', '${formattedDate}')" ${disabledAttr}>
+                                                                                                                                                                                                                                        <i class="fas fa-thumbs-up"></i>
+                                                                                                                                                                                                                                    </button>
+                                                                                                                                                                                                                                    <button type="button" class="btn btn-outline-danger" onclick="rejectWorkRecord('${record.id}','${formattedDate}')" ${disabledAttr}>
+                                                                                                                                                                                                                                        <i class="fas fa-thumbs-down"></i>
+                                                                                                                                                                                                                                    </button>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                                                    `;
+                }
+
+                // ===== USER MANAGEMENT =====
+                async function getAssignedUsers() {
+                    try {
+                        const userSelects = $('.user-select');
+                        if (!userSelects.length) {
+                            console.warn('User select elements not found');
+                            return;
+                        }
+
+                        userSelects.prop('disabled', true);
+
+                        userSelects.each(function () {
+                            const currentSelect = $(this);
+                            currentSelect.empty();
+                            currentSelect.append('<option value="">Yükleniyor...</option>');
+
+                            if (currentSelect.hasClass('select2-hidden-accessible')) {
+                                currentSelect.trigger('change');
+                            }
+                        });
+
+                        const response = await $.ajax({
+                            url: '/kullanici/liste',
+                            type: 'GET',
+                            dataType: 'json'
+                        });
+
+                        if (response && response.isSuccess && response.data) {
+                            userSelects.each(function () {
+                                const currentSelect = $(this);
+                                currentSelect.empty();
+                                currentSelect.append('<option value="">Kullanıcı seçin</option>');
+
+                                response.data.forEach(user => {
+                                    currentSelect.append(`<option value="${user.id}">${user.fullNameWithExp}</option>`);
+                                });
+
+                                if (currentSelect.hasClass('select2-hidden-accessible')) {
+                                    currentSelect.trigger('change');
+                                }
+                            });
+                        } else {
+                            throw new Error(response?.message || 'Atanmış kullanıcılar yüklenemedi');
+                        }
+                    } catch (error) {
+                        console.error('Atanmış kullanıcılar yüklenirken hata:', error);
+
+                        $('.user-select').each(function () {
+                            const currentSelect = $(this);
+                            currentSelect.html('<option value="">Kullanıcılar yüklenemedi</option>');
+
+                            if (currentSelect.hasClass('select2-hidden-accessible')) {
+                                currentSelect.trigger('change');
+                            }
+                        });
+
+                        handleAjaxError(error, 'Atanmış kullanıcılar yüklenirken hata oluştu');
+                    } finally {
+                        $('.user-select').prop('disabled', false);
+                    }
+                }
+
+                // ===== WORK RECORD ACTIONS =====
+                async function approveWorkRecord(id, date) {
+                    try {
+                        const result = await Swal.fire({
+                            title: 'Puantajı Onayla',
+                            text: `Bu kullanıcının ${date} puantajını onaylamak istediğinizden emin misiniz?`,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#28a745',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: '<i class="fas fa-check"></i> Evet, Onayla',
+                            cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                            showLoaderOnConfirm: true,
+                            preConfirm: async () => {
+                                try {
+                                    await saveWorkRecords();
+                                    const response = await $.ajax({
+                                        url: `/makine-puantaj/onayla/${id}`,
+                                        type: 'PUT'
+                                    });
+                                    if (!response.isSuccess) {
+                                        Swal.showValidationMessage(`Hata: ${response.message}`);
+                                        throw new Error(response.message);
+                                    }
+                                    return response;
+                                } catch (error) {
+                                    handleAjaxError(error, 'Onaylama başarısız');
+
+                                    return false;
+                                }
+                            },
+                            allowOutsideClick: () => !Swal.isLoading()
+                        });
+
+                        if (result.isConfirmed) {
+                            toastr.success('Puantaj başarıyla onaylandı', 'Başarılı!');
+                            await loadWorkRecordsByUser();
+                        }
+                    } catch (error) {
+                        console.error('Onaylama hatası:', error);
+                    }
+                }
+
+                async function rejectWorkRecord(id, date) {
+                    try {
+                        $('#txtRejectWorkRecordId').val(id);
+                        $('#txtRejectMode').val('single');
+                        $('#txtWorkRecordRejectReason').val('');
+                        $('#rejectWorkRecordModal').modal('show');
+                    } catch (error) {
+                        console.error('Reddetme modalı açılırken hata:', error);
+                    }
+                }
+
+                // ===== SAVE AND APPROVAL FUNCTIONS =====
+                async function saveWorkRecords() {
+                    const workRecords = [];
+                    const selectedUserId = $('#user-select').val();
+
+                    if (!selectedUserId) {
+                        toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
+                        return;
+                    }
+
+                    $('#workRecordsTableBody tr').each(function () {
+                        if ($(this).find('td').length === 1) return; // Skip message rows
+
+                        const day = $(this).data('day');
+                        const dailyStatus = $(this).find('.daily-status-select').val();
+                        const startTime = $(this).find('.start-time').val();
+                        const endTime = $(this).find('.end-time').val();
+                        const projectId = $(this).find('.project-select').val();
+                        const equipmentId = $(this).find('.equipment-select').val();
+                        const province = $(this).find('.province-select').val();
+                        const district = $(this).find('.district-select').val();
+                        const description = $(this).find('.description-textarea').val();
+                        const hasInternalTransport = $(this).find('.internal-transport-checkbox').is(':checked');
+
+                        const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                        workRecords.push({
+                            Date: formattedDate,
+                            DailyStatus: dailyStatus,
+                            StartTime: startTime || "",
+                            EndTime: endTime || "",
+                            ProjectId: projectId || "",
+                            EquipmentId: equipmentId || "",
+                            Province: province || "",
+                            District: district || "",
+                            Description: description || "",
+                            HasInternalTransport: hasInternalTransport,
+                            UserId: selectedUserId
+                        });
+                    });
+
+                    try {
+                        $('.btnUpdateWorkRecords').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Güncelleniyor...');
+
+                        // FormData oluştur
+                        const formData = new FormData();
+                        formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+                        // Her work record için form data ekle
+                        workRecords.forEach((record, index) => {
+                            formData.append(`[${index}].Date`, record.Date);
+                            formData.append(`[${index}].DailyStatus`, record.DailyStatus);
+                            formData.append(`[${index}].StartTime`, record.StartTime);
+                            formData.append(`[${index}].EndTime`, record.EndTime);
+                            formData.append(`[${index}].ProjectId`, record.ProjectId);
+                            formData.append(`[${index}].EquipmentId`, record.EquipmentId);
+                            formData.append(`[${index}].Province`, record.Province);
+                            formData.append(`[${index}].District`, record.District);
+                            formData.append(`[${index}].Description`, record.Description);
+                            formData.append(`[${index}].HasInternalTransport`, record.HasInternalTransport);
+                        });
+
+                        const response = await $.ajax({
+                            url: `/makine-puantaj/toplu-guncelle/kullanici/${selectedUserId}`,
+                            type: 'PUT',
+                            data: formData,
+                            processData: false,
+                            contentType: false
+                        });
+
+                        if (response.isSuccess) {
+                            toastr.success(response.message, 'Başarılı!');
+                            await loadWorkRecordsByUser();
+                        } else {
+                            toastr.error(response.message, 'Hata!');
+                        }
+                    } catch (error) {
+                        handleAjaxError(error, 'Puantaj kaydedilirken bir hata oluştu.');
+                    } finally {
+                        $('.btnUpdateWorkRecords').prop('disabled', false)
+                            .html('<i class="fas fa-edit me-2"></i>Güncelle');
+                    }
+                }
+
+                async function approveWorkRecords() {
+                    const selectedUserId = $('#user-select').val();
+                    const year = parseInt($('#year-select').val());
+                    const month = parseInt($('#month-select').val());
+
+                    if (!selectedUserId) {
+                        toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
+                        return;
+                    }
+
+                    try {
+                        const result = await Swal.fire({
+                            title: 'Puantajı Onayla',
+                            text: `Bu kullanıcının ${month}/${year} puantajını onaylamak istediğinizden emin misiniz?`,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#28a745',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: '<i class="fas fa-check"></i> Evet, Onayla',
+                            cancelButtonText: '<i class="fas fa-times"></i> İptal',
+                            showLoaderOnConfirm: true,
+                            preConfirm: async () => {
+                                try {
+                                    await saveWorkRecords();
+                                    const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
+
+                                    const response = await $.ajax({
+                                        url: `/makine-puantaj/toplu-onayla/kullanici/${selectedUserId}/tarih/${formattedDate}`,
+                                        type: 'PUT'
+                                    });
+
+                                    if (!response.isSuccess) {
+                                        Swal.showValidationMessage(`Hata: ${response.message}`);
+                                        throw new Error(response.message);
+                                    }
+
+                                    return response;
+                                } catch (error) {
+                                    handleAjaxError(error, 'Onaylama başarısız');
+                                    return false;
+                                }
+                            },
+                            allowOutsideClick: () => !Swal.isLoading()
+                        });
+
+                        if (result.isConfirmed) {
+                            toastr.success('Puantaj başarıyla onaylandı', 'Başarılı!');
+                            await loadWorkRecordsByUser();
+                        }
+                    } catch (error) {
+                        console.error('Onaylama hatası:', error);
+                    }
+                }
+
+                async function rejectWorkRecords() {
+                    const selectedUserId = $('#user-select').val();
+
+                    if (!selectedUserId) {
+                        toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
+                        return;
+                    }
+
+                    try {
+                        $('#txtRejectWorkRecordId').val('');
+                        $('#txtRejectMode').val('bulk');
+                        $('#txtWorkRecordRejectReason').val('');
+                        $('#rejectWorkRecordModal').modal('show');
+                    } catch (error) {
+                        console.error('Toplu reddetme modalı açılırken hata:', error);
+                    }
+                }
+
+                async function confirmRejectWithReason() {
+                    try {
+                        const mode = $('#txtRejectMode').val();
+                        const reason = ($('#txtWorkRecordRejectReason').val() || '').trim();
+                        if (mode === 'single') {
+                            const id = $('#txtRejectWorkRecordId').val();
+                            const url = `/makine-puantaj/reddet/${id}${reason ? `?rejectReason=${encodeURIComponent(reason)}` : ''}`;
+                            const response = await $.ajax({
+                                url: url,
+                                type: 'PUT'
+                            });
+                            if (response.isSuccess) {
+                                toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');
+                                $('#rejectWorkRecordModal').modal('hide');
+                                await loadWorkRecordsByUser();
+                            }
+                        } else if (mode === 'bulk') {
+                            const selectedUserId = $('#user-select').val();
+                            const year = parseInt($('#year-select').val());
+                            const month = parseInt($('#month-select').val());
+                            const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
+                            const url = `/makine-puantaj/toplu-reddet/kullanici/${selectedUserId}/tarih/${formattedDate}${reason ? `?rejectReason=${encodeURIComponent(reason)}` : ''}`;
+                            const response = await $.ajax({
+                                url: url,
+                                type: 'PUT'
+                            });
+                            if (response.isSuccess) {
+                                toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');
+                                $('#rejectWorkRecordModal').modal('hide');
+                                await loadWorkRecordsByUser();
+                            }
+                        }
+                    } catch (error) {
+                        handleAjaxError(error, 'Reddetme başarısız');
+                    }
+                }
+    </script>
+}

@@ -11,5 +11,7 @@ namespace IdeKusgozManagement.WebUI.Models.AdvanceModels
         public string Reason { get; set; }
 
         public string? Description { get; set; } = null;
+
+        public string? UserId { get; set; } = null;
     }
 }

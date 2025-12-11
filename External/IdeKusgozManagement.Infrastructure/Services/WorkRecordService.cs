@@ -15,12 +15,57 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class WorkRecordService(IUnitOfWork unitOfWork, IIdentityService identityService, ILogger<WorkRecordService> logger, INotificationService notificationService, IWorkRecordExpenseService workRecordExpenseService) : IWorkRecordService
     {
+        private WorkRecordStatus? GetApproveStatusByRole()
+        {
+            var role = identityService.GetUserRole();
+            WorkRecordStatus? status = null;
+            switch (role)
+            {
+                case "Admin":
+                case "Yönetici":
+                    status = WorkRecordStatus.ApprovedByUnitManager;
+                    break;
+
+                case "Şef":
+                    status = WorkRecordStatus.ApprovedByChief;
+                    break;
+
+                default:
+                    throw new UnauthorizedAccessException($"{role} rolü için bu işlemi yapmaya yetkiniz yok");
+                    break;
+            }
+
+            return status.Value;
+        }
+
+        private WorkRecordStatus? GetRejectStatusByRole()
+        {
+            var role = identityService.GetUserRole();
+            WorkRecordStatus? status = null;
+            switch (role)
+            {
+                case "Admin":
+                case "Yönetici":
+                    status = WorkRecordStatus.RejectedByUnitManager;
+                    break;
+
+                case "Şef":
+                    status = WorkRecordStatus.RejectedByChief;
+                    break;
+
+                default:
+                    throw new UnauthorizedAccessException($"{role} rolü için bu işlemi yapmaya yetkiniz yok");
+                    break;
+            }
+
+            return status.Value;
+        }
+
         public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
-                var workRecords = await unitOfWork.GetRepository<IdtWorkRecord>().Where(wr => wr.Date.Year == date.Date.Year && wr.Date.Month == date.Date.Month && wr.CreatedBy == userId)
-                    .AsNoTracking()
+                var workRecords = await unitOfWork.GetRepository<IdtWorkRecord>().WhereAsNoTracking(wr => wr.Date.Year == date.Date.Year && wr.Date.Month == date.Date.Month && wr.CreatedBy == userId)
                     .Include(x => x.Equipment)
                     .Include(x => x.Project)
                     .Include(x => x.CreatedByUser)
@@ -47,51 +92,63 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcı kimliği bulunamadı. Lütfen sisteme tekrar giriş yapın.");
-                }
-
-                var workRecords = await unitOfWork.GetRepository<IdtWorkRecord>().Where(x => x.CreatedBy == userId && x.Date.Year == date.Year && x.Date.Month == date.Month).ToListAsync(cancellationToken);
+                var workRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
+                    .Where(x => x.CreatedBy == userId && x.Date.Year == date.Year && x.Date.Month == date.Month && x.Status != WorkRecordStatus.ApprovedByUnitManager)
+                     .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .ToListAsync(cancellationToken);
 
                 if (!workRecords.Any())
                 {
-                    return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Belirtilen tarih aralığında puantaj kaydı bulunamadı");
+                    return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Belirtilen tarih aralığında puantaj kaydı bulunamadı ya da hepsi yönetici tarafından onaylanmış");
                 }
 
-                // Tüm kayıtları onaylı duruma getir
+                // Kayıtları onaylı duruma getir
+                var status = GetApproveStatusByRole().Value;
                 foreach (var workRecord in workRecords)
                 {
-                    if (workRecord.Status == WorkRecordStatus.Approved)
-                        continue;
-
-                    workRecord.Status = WorkRecordStatus.Approved;
+                    workRecord.Status = status;
                 }
 
+                // Sadece YENİ onaylanan kayıtların masraflarını hesapla
+                var workRecordIdsToApprove = workRecords.Select(x => x.Id).ToList();
+                var totalExpensesAmount = await unitOfWork.GetRepository<IdtWorkRecordExpense>().Where(x => workRecordIdsToApprove.Contains(x.WorkRecordId)).SumAsync(x => x.Amount, cancellationToken);
+                var userJobBalance = await unitOfWork.GetRepository<IdtUserBalance>().Where(x => x.Type == BalanceType.Job && x.UserId == userId).SingleOrDefaultAsync(cancellationToken);
+                if (userJobBalance == null)
+                {
+                    logger.LogError("{UserId} kullanıcısının {BalanceType} bakiyesi bulunamadı", userId, BalanceType.Job);
+                    return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcı iş avansı bakiyesi bulunamadı");
+                }
+                userJobBalance.Balance -= totalExpensesAmount;
+
                 unitOfWork.GetRepository<IdtWorkRecord>().UpdateRange(workRecords);
+                unitOfWork.GetRepository<IdtUserBalance>().Update(userJobBalance);
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                logger.LogInformation("{UserId} kullanıcısı {Year}/{Month} ayı için {ApproverUserId} tarafından toplam {Count} puantaj toplu olarak onayladı", userId, date.Year, date.Month, identityService.GetUserId(), workRecords.Count());
+
                 var mappedWorkRecords = workRecords.Adapt<IEnumerable<WorkRecordDTO>>();
-
-                var approverUserId = identityService.GetUserId;
-                logger.LogInformation("Toplu puantaj kaydı onaylandı. UserId: {UserId}, Month: {Month}, Year: {Year}, Count: {Count}, SuperiorId: {SuperiorId}",
-                    userId, date.Date.Month, date.Date.Year, workRecords.Count, approverUserId);
-
+                var firstRecord = mappedWorkRecords.First();
                 CreateNotificationDTO notificationDTO = new()
                 {
-                    Message = $"{mappedWorkRecords.First().UpdatedByFullName} tarafından, {mappedWorkRecords.First().Date:MM/yyyy} ayı için puantaj kayıtlarınız onaylandı.",
+                    Message = $"{firstRecord.UpdatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için puantaj kayıtlarınız onaylandı.",
                     Type = NotificationType.WorkRecord,
                     RedirectUrl = "/puantaj/ekle",
-                    TargetUsers = new List<string> { mappedWorkRecords.First().CreatedBy }
+                    TargetUsers = new List<string> { firstRecord.CreatedBy }
                 };
+
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(mappedWorkRecords, $"{workRecords.Count} adet puantaj kaydı başarıyla onaylandı");
+
+                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(mappedWorkRecords,
+                    $"{workRecords.Count} adet puantaj kaydı başarıyla onaylandı");
             }
             catch (Exception ex)
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                logger.LogError(ex, "BatchApproveWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. UserId: {UserId}, Month: {Month}, Year: {Year}", userId, date.Date.Month, date.Date.Year);
+                logger.LogError(ex, "BatchApproveWorkRecordsByUserIdAndDateAsync işleminde hata oluştu. UserId: {UserId}, Month: {Month}, Year: {Year}",
+                    userId, date.Month, date.Year);
                 throw;
             }
         }
@@ -102,33 +159,30 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcı kimliği bulunamadı. Lütfen sisteme tekrar giriş yapın.");
-                }
-
-                var workRecords = await unitOfWork.GetRepository<IdtWorkRecord>().Where(x => x.CreatedBy == userId && x.Date.Year == date.Year && x.Date.Month == date.Month).ToListAsync(cancellationToken);
+                var workRecords = await unitOfWork.GetRepository<IdtWorkRecord>().Where(x => x.CreatedBy == userId && x.Date.Year == date.Year && x.Date.Month == date.Month)
+                     .Include(x => x.CreatedByUser)
+                  .Include(x => x.UpdatedByUser)
+                  .ToListAsync(cancellationToken);
 
                 if (!workRecords.Any())
                 {
                     return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Belirtilen tarih aralığında puantaj kaydı bulunamadı");
                 }
-
+                var status = GetRejectStatusByRole().Value;
                 foreach (var workRecord in workRecords)
                 {
-                    workRecord.Status = WorkRecordStatus.Rejected;
-                    workRecord.RejectReason = rejectReason ?? null;
+                    workRecord.Status = status;
+                    workRecord.RejectReason = !string.IsNullOrEmpty(rejectReason) ? rejectReason : workRecord.RejectReason;
                 }
 
                 unitOfWork.GetRepository<IdtWorkRecord>().UpdateRange(workRecords);
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
-                var mappedWorkRecords = workRecords.Adapt<IEnumerable<WorkRecordDTO>>();
 
-                var rejecterUserId = identityService.GetUserId;
-                logger.LogInformation("Toplu puantaj kaydı reddedildi. UserId: {UserId}, Month: {Month}, Year: {Year}, Count: {Count}, SuperiorId: {SuperiorId}",
-                    userId, date.Date.Month, date.Date.Year, workRecords.Count, rejecterUserId);
+                logger.LogInformation("{UserId} kullanıcısı {Year}/{Month} ayı için {ApproverUserId} tarafından toplam {Count} puantaj toplu olarak reddedildi", userId, date.Year, date.Month, identityService.GetUserId(), workRecords.Count());
+
+                var mappedWorkRecords = workRecords.Adapt<IEnumerable<WorkRecordDTO>>();
 
                 CreateNotificationDTO notificationDTO = new()
                 {
@@ -161,18 +215,27 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     return ServiceResponse<WorkRecordDTO>.Error("Belirtilen puantaj kaydı bulunamadı");
                 }
-                if (workRecord.Status == WorkRecordStatus.Approved)
+
+                workRecord.Status = GetApproveStatusByRole().Value;
+
+                // Bakiye işlemleri
+                var totalExpenseAmount = await unitOfWork.GetRepository<IdtWorkRecordExpense>().Where(x => x.WorkRecordId == id).SumAsync(x => x.Amount, cancellationToken);
+                var userJobBalance = await unitOfWork.GetRepository<IdtUserBalance>().Where(x => x.Type == BalanceType.Job && x.UserId == workRecord.CreatedBy).SingleOrDefaultAsync(cancellationToken);
+                if (userJobBalance == null)
                 {
-                    return ServiceResponse<WorkRecordDTO>.Error(message: "Puantaj kaydı zaten daha önceden onaylanmış");
+                    logger.LogError("{UserId} kullanıcısının {BalanceType} bakiyesi bulunamadı", workRecord.CreatedBy, BalanceType.Job);
+                    return ServiceResponse<WorkRecordDTO>.Error("Kullanıcı iş avansı bakiyesi bulunamadı");
                 }
-                workRecord.Status = WorkRecordStatus.Approved;
+                userJobBalance.Balance -= totalExpenseAmount;
 
                 unitOfWork.GetRepository<IdtWorkRecord>().Update(workRecord);
+                unitOfWork.GetRepository<IdtUserBalance>().Update(userJobBalance);
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                var approverUserId = identityService.GetUserId;
+                logger.LogInformation("{UserId} kullanıcısına ait {WorkRecordId} ID'li puantaj kaydı {ApproverUserId} tarafından onaylandı", workRecord.CreatedBy, id, identityService.GetUserId());
+
                 var approvedWorkRecord = await unitOfWork.GetRepository<IdtWorkRecord>()
                   .WhereAsNoTracking(x => x.Id == id)
                   .Include(x => x.CreatedByUser)
@@ -186,7 +249,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                   .FirstOrDefaultAsync(cancellationToken);
                 var mappedWorkRecord = approvedWorkRecord.Adapt<WorkRecordDTO>();
 
-                logger.LogInformation($"{id} ID'li puantaj kaydı {approverUserId} tarafından onaylandı");
                 CreateNotificationDTO notificationDTO = new()
                 {
                     Message = $"{mappedWorkRecord.UpdatedByFullName} tarafından, {mappedWorkRecord.Date:dd/MM/yyyy} tarihi için puantaj kaydınız onaylandı.",
@@ -219,14 +281,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return ServiceResponse<WorkRecordDTO>.Error(message: "Belirtilen puantaj kaydı bulunamadı");
                 }
 
-                workRecord.Status = WorkRecordStatus.Rejected;
-                workRecord.RejectReason = rejectReason ?? null;
+                workRecord.Status = GetRejectStatusByRole().Value;
+                workRecord.RejectReason = !string.IsNullOrEmpty(rejectReason) ? rejectReason : workRecord.RejectReason;
                 unitOfWork.GetRepository<IdtWorkRecord>().Update(workRecord);
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                var rejecterUserId = identityService.GetUserId;
+                logger.LogInformation("{UserId} kullanıcısına ait {WorkRecordId} ID'li puantaj kaydı {ApproverUserId} tarafından reddedildi", workRecord.CreatedBy, id, identityService.GetUserId());
 
                 var rejectedWorkRecord = await unitOfWork.GetRepository<IdtWorkRecord>()
                  .WhereAsNoTracking(x => x.Id == id)
@@ -240,8 +302,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                  //    .ThenInclude(x => x.File)
                  .FirstOrDefaultAsync(cancellationToken);
                 var mappedWorkRecord = rejectedWorkRecord.Adapt<WorkRecordDTO>();
-
-                logger.LogInformation($"{mappedWorkRecord.Id} ID'li puantaj kaydı {rejecterUserId} tarafından reddedildi");
 
                 CreateNotificationDTO notificationDTO = new()
                 {
@@ -268,9 +328,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var dates = workRecordDTOs.Select(x => x.Date.Date).Distinct().ToList();
-                var existingWorkRecords = await unitOfWork.GetRepository<IdtWorkRecord>()
-                    .Where(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId)
-                    .ToListAsync(cancellationToken);
+                var existingWorkRecords = await unitOfWork.GetRepository<IdtWorkRecord>().Where(x => dates.Contains(x.Date.Date) && x.CreatedBy == userId).ToListAsync(cancellationToken);
 
                 var recordsToUpdate = new List<IdtWorkRecord>();
                 var expensesToProcess = new List<CreateOrModifyWorkRecordExpenseDTO>();
@@ -289,7 +347,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     // ========== VAROLAN GÜNCELLEME ==========
                     if (existingWorkRecord is not null)
                     {
-                        if (existingWorkRecord.Status == WorkRecordStatus.Approved)
+                        if (existingWorkRecord.Status == WorkRecordStatus.ApprovedByUnitManager)
                             continue;
 
                         var changedFields = GetChangedFields(existingWorkRecord, element);
@@ -327,12 +385,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
-
                 var updatedCount = recordsToUpdate.Count();
 
                 // Sadece gerçek masrafları say (dummy expense'leri hariç tut)
                 var actualExpenseCount = expensesToProcess.Count(e => e.ExpenseId != Guid.Empty.ToString());
                 var processedExpenseCount = actualExpenseCount;
+
+                logger.LogInformation("{UserId} kullanıcısının {Year}/{Month} ayı için {UpdaterUser} tarafından {UpdatedCount} tane puantaj güncellendi {ExpenseCount} tane masraf oluşturuldu/güncellendi", userId, workRecordDTOs.First().Date.Year, workRecordDTOs.First().Date.Month, identityService.GetUserId(), updatedCount, processedExpenseCount);
 
                 var mappedRecords = await GetFinalWorkRecords(dates, userId, cancellationToken);
 
@@ -372,15 +431,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
         public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateOrModifyWorkRecordDTO> workRecordDTOs, CancellationToken cancellationToken = default)
         {
-            var userId = identityService.GetUserId();
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcı kimliği bulunamadı. Lütfen sisteme tekrar giriş yapın.");
-            }
-
             try
             {
+                var userId = identityService.GetUserId();
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var dates = workRecordDTOs.Select(x => x.Date.Date).Distinct().ToList();
@@ -394,6 +447,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 foreach (var element in workRecordDTOs)
                 {
+                    if (element.Date < DateTime.Today.AddDays(-2))
+                    {
+                        logger.LogWarning("Günümüzden 2 gün öncesinin puantajı kaydedilemez WorkRecordDate: {WorkRecordDate}, TodayDate: {TodayDate}", element.Date, DateTime.Now);
+                        continue;
+                    }
                     // Saat kontrolü
                     var check = CheckHoursIfValid(element);
                     if (!check.Item1)
@@ -405,7 +463,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     // ========== VAROLAN GÜNCELLEME ==========
                     if (existingWorkRecord is not null)
                     {
-                        if (existingWorkRecord.Status == WorkRecordStatus.Approved)
+                        if (existingWorkRecord.Status is WorkRecordStatus.ApprovedByUnitManager or WorkRecordStatus.ApprovedByChief)
                             continue;
 
                         var changedFields = GetChangedFields(existingWorkRecord, element);
@@ -454,10 +512,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var createdCount = recordsToAdd.Count();
                 var updatedCount = recordsToUpdate.Count();
-
                 // Sadece gerçek masrafları say (dummy expense'leri hariç tut)
+
                 var actualExpenseCount = expensesToProcess.Count(e => e.ExpenseId != Guid.Empty.ToString());
                 var processedExpenseCount = actualExpenseCount;
+                logger.LogInformation("{UserId} kullanıcısı {Year}/{Month} ayı için {CreatedCount} tane puantaj oluşturdu {UpdatedCount} tane puantaj güncellendi {ExpenseCount} tane masraf oluşturuldu/güncellendi", userId, workRecordDTOs.First().Date.Year, workRecordDTOs.First().Date.Month, createdCount, updatedCount, processedExpenseCount);
 
                 var mappedRecords = await GetFinalWorkRecords(dates, userId, cancellationToken);
 
@@ -489,7 +548,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                logger.LogError(ex, "BatchCreateOrModifyWorkRecordsAsync işleminde hata oluştu. UserId: {UserId}", userId);
+                logger.LogError(ex, "BatchCreateOrModifyWorkRecordsAsync işleminde hata oluştu.");
                 throw;
             }
         }
@@ -695,6 +754,56 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
 
             return (true, string.Empty);
+        }
+
+        public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdDateStatusAsync(string userId, DateTime date, WorkRecordStatus status, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var workRecords = await unitOfWork.GetRepository<IdtWorkRecord>().WhereAsNoTracking(wr => wr.Date.Year == date.Date.Year && wr.Date.Month == date.Date.Month && wr.CreatedBy == userId && wr.Status == status)
+                    .Include(x => x.Equipment)
+                    .Include(x => x.Project)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.WorkRecordExpenses)
+                        .ThenInclude(x => x.Expense)
+                    .Include(x => x.WorkRecordExpenses)
+                        .ThenInclude(x => x.File)
+                    .ToListAsync(cancellationToken);
+
+                var workRecordDTOs = workRecords.Adapt<IEnumerable<WorkRecordDTO>>();
+                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetWorkRecordsByUserIdDateStatusAsync işleminde hata oluştu. Date: {Date}, UserId: {UserId}, Status: {Status}", date, userId, status);
+                throw;
+            }
+        }
+
+        public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> GetApprovedWorkRecordsByUserAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var workRecords = await unitOfWork.GetRepository<IdtWorkRecord>().WhereAsNoTracking(wr => wr.Date.Year == date.Date.Year && wr.Date.Month == date.Date.Month && wr.CreatedBy == userId && (wr.Status == WorkRecordStatus.ApprovedByUnitManager || wr.Status == WorkRecordStatus.ApprovedByChief))
+                    .Include(x => x.Equipment)
+                    .Include(x => x.Project)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.WorkRecordExpenses)
+                        .ThenInclude(x => x.Expense)
+                    .Include(x => x.WorkRecordExpenses)
+                        .ThenInclude(x => x.File)
+                    .ToListAsync(cancellationToken);
+
+                var workRecordDTOs = workRecords.Adapt<IEnumerable<WorkRecordDTO>>();
+                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetApprovedWorkRecordsByUserAsync işleminde hata oluştu. Date: {Date}, UserId: {UserId}", date, userId);
+                throw;
+            }
         }
     }
 }

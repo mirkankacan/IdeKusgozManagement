@@ -8,6 +8,10 @@ namespace IdeKusgozManagement.Application.DTOs.DocumentDTOs
         public string DocumentTypeName { get; set; }
         public int? RenewalPeriodInMonths { get; set; }
         public DutyScope Scope { get; set; }
+        public string? CompanyId { get; set; }
+        public string? CompanyName { get; set; }
+        public string? TargetId { get; set; }
+        public string? TargetFullName { get; set; }
         public bool IsUploaded { get; set; }
         public bool IsExpired { get; set; }
         public bool IsNeverUploaded { get; set; }

@@ -35,6 +35,8 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         public DbSet<IdtDocumentType> IdtDocumentTypes => Set<IdtDocumentType>();
         public DbSet<IdtCompany> IdtCompanies => Set<IdtCompany>();
         public DbSet<IdtDepartmentDocumentRequirment> IdtDepartmentDocumentRequirments => Set<IdtDepartmentDocumentRequirment>();
+        public DbSet<IdtUserBalance> IdtUserBalances => Set<IdtUserBalance>();
+        public DbSet<IdtMachineWorkRecord> IdtMachineWorkRecords => Set<IdtMachineWorkRecord>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

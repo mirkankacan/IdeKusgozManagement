@@ -1,0 +1,694 @@
+@{
+    ViewData["Title"] = "Makine Puantajı Ekle";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+
+    <link href="~/css/puantaj-common.css" rel="stylesheet" />
+
+}
+
+@Html.AntiForgeryToken()
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-calendar-day me-2"></i>
+                    Puantaj Oluşturma Sayfası
+
+                </h5>
+                <div class="mb-3">
+                    <span class="badge bg-danger me-2">Tam Gün Resmi Tatil</span>
+                    <span class="badge bg-warning text-dark">Yarım Gün Resmi Tatil</span>
+                </div>
+                <!-- Info Alert -->
+                <div id="infoAlert" class="alert alert-info d-none" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span id="infoMessage"></span>
+                </div>
+
+                <!-- Yıl ve Ay Seçimi -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <label for="year-select" class="form-label">Yıl</label>
+                        <select id="year-select" class="form-select">
+                            @for (int year = DateTime.Now.Year - 2; year <= DateTime.Now.Year; year++)
+                            {
+                                if (year == DateTime.Now.Year)
+                                {
+                                    <option value="@year" selected>@year</option>
+                                }
+                                else
+                                {
+                                    <option value="@year">@year</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="month-select" class="form-label">Ay</label>
+                        <select id="month-select" class="form-select">
+                            <option value="1">Ocak</option>
+                            <option value="2">Şubat</option>
+                            <option value="3">Mart</option>
+                            <option value="4">Nisan</option>
+                            <option value="5">Mayıs</option>
+                            <option value="6">Haziran</option>
+                            <option value="7">Temmuz</option>
+                            <option value="8">Ağustos</option>
+                            <option value="9">Eylül</option>
+                            <option value="10">Ekim</option>
+                            <option value="11">Kasım</option>
+                            <option value="12">Aralık</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" class="btn btn-info d-block w-100 btnSaveWorkRecords">
+                            <i class="fas fa-save me-2"></i>Kaydet
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dinamik Tablo -->
+                <div id="dynamicTableContainer">
+                    <div id="tableLoadingSpinner" class="text-center py-5" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                        <div class="mt-3">
+                            <h6 class="text-muted">Tablo oluşturuluyor...</h6>
+                            <small class="text-muted">Lütfen bekleyiniz</small>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="workRecordsTable" class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>TARİH</th>
+                                    <th>GÜN</th>
+                                    <th style="width:100px;max-width:100px;">BAŞLAMA<br /> SAATİ</th>
+                                    <th style="width:100px;max-width:100px;">BIRAKMA<br /> SAATİ</th>
+                                    <th>PROJE</th>
+                                    <th>ÇALIŞILAN<br /> EKİPMAN</th>
+                                    <th>ÇALIŞILAN<br /> İL</th>
+                                    <th>ÇALIŞILAN<br /> İLÇE</th>
+                                    <th style="width:150px;max-width:150px;">AÇIKLAMA</th>
+                                    <th style="width:100px;max-width:100px;">İÇ<br /> NAKLİYE</th>
+                                    <th>DURUM</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workRecordsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-info d-block w-100 btnSaveWorkRecords">
+                        <i class="fas fa-save me-2"></i>Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="~/js/turkey-locations.js"></script>
+    <script src="~/js/workrecord-common.js"></script>
+
+    <script>
+        // Page-specific variables
+        let workRecordsTable;
+        let existingWorkRecords = {};
+        let hasApprovedRecords = false;
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth() + 1;
+
+        // Override initializeAllSelects for Create page
+        async function initializeAllSelects() {
+            await initializeEquipmentSelect();
+            initializeLocationSelects();
+            await initializeProjectSelect();
+            await initializeDailyStatusSelect();
+        }
+
+
+        // ===== LEAVE REQUEST FUNCTIONS =====
+        async function getApprovedLeaveRequests() {
+            try {
+
+                const response = await $.ajax({
+                    url: `/izin/listem/durum/1`,
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    return response.data;
+                } else {
+                    return null;
+                }
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function getLeaveRequestReasonForDay(day, month, year, approvedLeaveRequests) {
+
+            if (!approvedLeaveRequests || !Array.isArray(approvedLeaveRequests)) {
+                return null;
+            }
+
+            const targetDate = new Date(year, month - 1, day);
+            // Normalize time to start of day for comparison
+            targetDate.setHours(0, 0, 0, 0);
+
+            for (const leaveRequest of approvedLeaveRequests) {
+                if (leaveRequest.startDate && leaveRequest.endDate && leaveRequest.reason) {
+                    const startDate = new Date(leaveRequest.startDate);
+                    const endDate = new Date(leaveRequest.endDate);
+
+                    // Normalize times to start of day for comparison
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setHours(0, 0, 0, 0);
+
+                    // Check if the target date falls within the leave request date range
+                    if (targetDate >= startDate && targetDate <= endDate) {
+                        return leaveRequest.reason;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // ===== PAGE INITIALIZATION =====
+        $(document).ready(async function () {
+            await initializePage();
+        });
+
+        async function initializePage() {
+            $('body').addClass('sidebar-hidden');
+
+            $('#year-select').val(currentYear);
+            $('#month-select').val(currentMonth);
+
+            // Initialize all components
+            await initializeAllSelects();
+            setupTimeInputHandlers();
+
+            // Page-specific event listeners
+            setupPageEventListeners();
+
+            // Auto-generate table on page load
+            await generateDynamicTable();
+        }
+
+        function setupPageEventListeners() {
+            $('.btnSaveWorkRecords').on('click', saveWorkRecords);
+            $('#year-select, #month-select').on('change', generateDynamicTable);
+
+            // Click handler to show reject reason
+            $(document).on('click', '.status-rejected', function () {
+                const encoded = $(this).data('reason');
+                const reason = encoded ? decodeURIComponent(encoded) : '';
+                if (reason) {
+                    Swal.fire({
+                        title: 'Reddetme Açıklaması',
+                        text: reason,
+                        icon: 'info'
+                    });
+                }
+            });
+        }
+        async function loadExistingWorkRecords(year, month) {
+            try {
+                const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
+                const response = await $.ajax({
+                    url: `/makine-puantaj/listem/tarih/${formattedDate}`,
+                    type: 'GET'
+                });
+
+                if (response.isSuccess && response.data && response.data.length > 0) {
+                    existingWorkRecords = {};
+                    hasApprovedRecords = false;
+
+                    response.data.forEach(record => {
+                        // Parse date correctly - handle both string and Date objects
+                        let date;
+                        if (typeof record.date === 'string') {
+                            // If date is a string, parse it
+                            date = new Date(record.date);
+                        } else if (record.date instanceof Date) {
+                            date = record.date;
+                        } else {
+                            // If it's already a date-like object, convert it
+                            date = new Date(record.date);
+                        }
+
+                        const day = date.getDate();
+                        existingWorkRecords[day] = record;
+
+                        if (record.status === 1 || record.status === 2) {
+                            hasApprovedRecords = true;
+                        }
+                    });
+
+                    if (hasApprovedRecords) {
+                        showInfoMessage('Bu ay için onaylanmış kayıtlar bulunmaktadır. Onaylanmış kayıtlar düzenlenemez.', 'warning');
+                    } else {
+                        showInfoMessage('Bu ay için daha önce girilen veriler yüklenmiştir. Onaylanmadan önce değişiklik yapabilirsiniz.', 'info');
+                    }
+
+                    return true;
+                } else {
+                    existingWorkRecords = {};
+                    hasApprovedRecords = false;
+                    hideInfoMessage();
+                    return false;
+                }
+            } catch (error) {
+                existingWorkRecords = {};
+                hasApprovedRecords = false;
+                hideInfoMessage();
+                return false;
+            }
+        }
+
+        function showInfoMessage(message, type = 'info') {
+            const alertClass = type === 'warning' ? 'alert-warning' : 'alert-info';
+            const icon = type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+
+            $('#infoAlert')
+                .removeClass('alert-info alert-warning alert-success')
+                .addClass(alertClass)
+                .removeClass('d-none');
+
+            $('#infoAlert i')
+                .removeClass('fas fa-info-circle fas fa-exclamation-triangle fas fa-check-circle')
+                .addClass(icon);
+
+            $('#infoMessage').text(message);
+        }
+
+        function hideInfoMessage() {
+            $('#infoAlert').addClass('d-none');
+        }
+
+        // ===== TABLE GENERATION =====
+        async function generateDynamicTable() {
+            showTableLoading();
+
+            const year = parseInt($('#year-select').val());
+            const month = parseInt($('#month-select').val());
+
+            currentYear = year;
+            currentMonth = month;
+
+            await loadHolidays(year);
+            await loadExistingWorkRecords(year, month);
+
+            // Load approved leave requests for the current user
+            const approvedLeaveRequests = await getApprovedLeaveRequests();
+
+            const daysInMonth = new Date(year, month, 0).getDate();
+            $('#workRecordsTableBody').empty();
+
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month - 1, day);
+                const dayOfWeek = getDayOfWeekTurkish(date.getDay());
+                const isSunday = date.getDay() === 0;
+                const isHolidayDay = checkIfHoliday(day, month, year);
+                const formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year} ${dayOfWeek}`;
+
+                const existingRecord = existingWorkRecords[day];
+                const isApproved = existingRecord && (existingRecord.status === 1 || existingRecord.status === 2);
+                const isPending = existingRecord && existingRecord.status === 0;
+                const isRejected = existingRecord && (existingRecord.status === 3 || existingRecord.status === 4);
+
+                // Check if date is older than 2 days ago (should be disabled)
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const twoDaysAgo = new Date(today);
+                twoDaysAgo.setDate(today.getDate() - 2);
+                const rowDate = new Date(year, month - 1, day);
+                rowDate.setHours(0, 0, 0, 0);
+                const isDateTooOld = rowDate < twoDaysAgo;
+
+                // Check for approved leave request for this day
+                const leaveRequestReason = getLeaveRequestReasonForDay(day, month, year, approvedLeaveRequests);
+
+                // Determine daily status - prioritize existing record, then leave request, then holiday/Sunday, finally default to "Çalışıyor"
+                let dailyStatus = '';
+                if (existingRecord?.dailyStatus) {
+                    dailyStatus = existingRecord.dailyStatus;
+                } else if (leaveRequestReason) {
+                    dailyStatus = leaveRequestReason;
+                } else {
+                    // Auto-select status based on holidays and Sundays
+                    const isFullHolidayDay = isFullHoliday(day, month, year);
+                    if (isFullHolidayDay) {
+                        dailyStatus = 'Resmi Tatil';
+                    } else if (isSunday) {
+                        dailyStatus = 'Hafta Tatili (DAY OFF)';
+                    } else {
+                        // Default to "Çalışıyor" for regular days
+                        dailyStatus = 'Çalışıyor';
+                    }
+                }
+
+                // Get internal transport value
+                const internalTransport = existingRecord?.hasInternalTransport || false;
+
+                const defaultValues = {
+                    dailyStatus: dailyStatus,
+                    startTime: existingRecord ? formatTimeSpan(existingRecord.startTime) : '',
+                    endTime: existingRecord ? formatTimeSpan(existingRecord.endTime) : '',
+                    projectId: existingRecord?.projectId || '',
+                    equipmentId: existingRecord?.equipmentId || '',
+                    province: existingRecord?.province || '',
+                    district: existingRecord?.district || '',
+                    description: existingRecord?.description || '',
+                    hasInternalTransport: internalTransport
+                };
+                let statusBadge = generateStatusBadge(null, 'Yeni');
+                if (isApproved) {
+                    statusBadge = existingRecord.status === 1 ? generateStatusBadge(1) : generateStatusBadge(2);
+                } else if (isPending) {
+                    statusBadge = generateStatusBadge(0);
+                } else if (isRejected) {
+                    const reason = existingRecord?.rejectReason || '';
+                    const encoded = encodeURIComponent(reason || '');
+                    const hasReason = !!reason;
+                    statusBadge = `
+                                                                                                                                                                                                                                                                                                                            <span class="badge bg-danger status-rejected" data-reason="${encoded}" title="${hasReason ? 'Reddetme açıklamasını görmek için tıklayın' : 'Reddedildi'}">
+                                                                                                                                                                                                                                                                                                                                <i class="fas fa-times me-1"></i>Reddedildi${hasReason ? ' <i class=\"fas fa-exclamation-circle ms-1\" title=\"Açıklama var\"></i>' : ''}
+                                                                                                                                                                                                                                                                                                                            </span>
+                                                                                                                                                                                                                                                                                                                        `;
+                }
+
+                // Disable if approved or date is older than 2 days ago
+                const disabledAttr = (isApproved || isDateTooOld) ? 'disabled' : '';
+
+                const row = createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr, isSunday, isDateTooOld);
+                $('#workRecordsTableBody').append(row);
+            }
+
+            await populateProvincesAndDistricts(existingWorkRecords);
+            await initializeAllSelects();
+
+            // Set values for existing records after Select2 initialization
+            // Wait a bit for Select2 to be fully initialized
+            setTimeout(() => {
+                Object.keys(existingWorkRecords).forEach(day => {
+                    const record = existingWorkRecords[day];
+                    if (record) {
+                        // Set daily status
+                        const dailyStatusSelect = $(`.daily-status-select[data-day="${day}"]`);
+                        if (dailyStatusSelect.length && record.dailyStatus) {
+                            dailyStatusSelect.val(record.dailyStatus).trigger('change');
+                        }
+
+                        // Set project
+                        const projectSelect = $(`.project-select[data-day="${day}"]`);
+                        if (projectSelect.length && record.projectId) {
+                            setTimeout(() => {
+                                projectSelect.val(record.projectId).trigger('change');
+                            }, 200);
+                        }
+
+                        // Set equipment
+                        const equipmentSelect = $(`.equipment-select[data-day="${day}"]`);
+                        if (equipmentSelect.length && record.equipmentId) {
+                            setTimeout(() => {
+                                equipmentSelect.val(record.equipmentId).trigger('change');
+                            }, 300);
+                        }
+                    }
+                });
+            }, 500);
+
+            // Disable Select2 dropdowns, checkboxes, inputs and buttons for rows that are too old or approved
+            $('#workRecordsTableBody tr').each(function () {
+                const $row = $(this);
+                const isDateTooOld = $row.data('is-date-too-old') === true;
+                const isLocked = $row.data('is-locked') === true;
+
+                if (isDateTooOld || isLocked) {
+                    // Disable all Select2 selects in this row
+                    $row.find('select').each(function () {
+                        const $select = $(this);
+                        $select.prop('disabled', true);
+                        // Disable Select2 container as well
+                        if ($select.data('select2')) {
+                            const $container = $select.next('.select2-container');
+                            if ($container.length) {
+                                $container.addClass('select2-container-disabled');
+                                $container.find('.select2-selection').css('pointer-events', 'none').css('opacity', '0.6');
+                            }
+                        }
+                    });
+
+                    // Disable all checkboxes in this row
+                    $row.find('input[type="checkbox"]').each(function () {
+                        const $checkbox = $(this);
+                        $checkbox.prop('disabled', true);
+                        $checkbox.attr('disabled', 'disabled');
+                        // Prevent click events
+                        $checkbox.off('click').on('click', function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return false;
+                        });
+                    });
+
+                    // Disable checkbox labels (prevent label clicks from toggling checkbox)
+                    $row.find('.form-check-label').each(function () {
+                        const $label = $(this);
+                        $label.css('pointer-events', 'none').css('opacity', '0.6');
+                        $label.off('click').on('click', function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return false;
+                        });
+                    });
+
+
+                    // Prevent change events on checkboxes
+                    $row.find('input[type="checkbox"]').off('change').on('change', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    });
+
+                    // Disable all text inputs in this row
+                    $row.find('input[type="text"], input[type="number"]').prop('disabled', true);
+
+                    // Disable all buttons in this row
+                    $row.find('button').prop('disabled', true);
+                }
+            });
+
+            applyDailyStatusRulesForAllRows();
+            applyProjectRulesForAllRows();
+            hideTableLoading();
+        }
+
+        function createTableRow(day, formattedDate, defaultValues, statusBadge, disabledAttr, isSunday = false, isDateTooOld = false) {
+            // Get holiday row class from common function (pass isSunday parameter)
+            const holidayClass = getHolidayRowClass(day, currentMonth, currentYear, isSunday);
+
+            const isApproved = existingWorkRecords[day] && (existingWorkRecords[day].status === 1 || existingWorkRecords[day].status === 2);
+
+            return `
+                                                                                                                                                                <tr data-day="${day}" data-record-id="${existingWorkRecords[day]?.id || ''}" data-is-locked="${isApproved}" data-is-date-too-old="${isDateTooOld}" class="${holidayClass}">
+                                                                                                                                                                            <td class="date-cell">
+                                                                                                                                                                            <span class="badge bg-info">${formattedDate}</span>
+                                                                                                                                                                            </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            <select class="form-select form-select-sm daily-status-select" data-day="${day}" data-current-value="${defaultValues.dailyStatus}" ${disabledAttr}>
+                                                                                                                                                                                                                                                                                                                                <option value="">Günlük durumu seçin</option>
+                                                                                                                                                                                                                                                                                                                            </select>
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            <div class="input-group">
+                                                                                                                                                                                                                                                                                                                                <input type="text" class="form-control time-input start-time" value="${defaultValues.startTime || ''}"
+                                                                                                                                                                                                                                                                                                                                       data-day="${day}" placeholder="08:00" ${disabledAttr}>
+                                                                                                                                                                                                                                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            <div class="input-group">
+                                                                                                                                                                                                                                                                                                                                <input type="text" class="form-control time-input end-time" value="${defaultValues.endTime || ''}"
+                                                                                                                                                                                                                                                                                                                                       data-day="${day}" placeholder="17:00" ${disabledAttr}>
+                                                                                                                                                                                                                                                                                                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            <select class="form-select form-select-sm project-select" data-day="${day}" data-current-value="${defaultValues.projectId}" ${disabledAttr}>
+                                                                                                                                                                                                                                                                                                                                <option value="">Proje seçin</option>
+                                                                                                                                                                                                                                                                                                                            </select>
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            <select class="form-select form-select-sm equipment-select" data-day="${day}" data-current-value="${defaultValues.equipmentId}" ${disabledAttr}>
+                                                                                                                                                                                                                                                                                                                                <option value="">Ekipman seçin</option>
+                                                                                                                                                                                                                                                                                                                            </select>
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            <select class="form-select form-select-sm province-select" data-day="${day}" ${disabledAttr}>
+                                                                                                                                                                                                                                                                                                                            </select>
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            <select class="form-select form-select-sm district-select" data-day="${day}" ${disabledAttr}>
+                                                                                                                                                                                                                                                                                                                            </select>
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            <textarea class="form-control form-control-sm description-textarea" 
+                                                                                                                                                                                                                                                                                                                                      data-day="${day}" 
+                                                                                                                                                                                                                                                                                                                                      placeholder="Açıklama" 
+                                                                                                                                                                                                                                                                                                                                      rows="2" 
+                                                                                                                                                                                                                                                                                                                                      ${disabledAttr}>${defaultValues.description || ''}</textarea>
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            <div class="form-check d-flex justify-content-center">
+                                                                                                                                                                                                                                                                                                                                <input class="form-check-input internal-transport-checkbox" 
+                                                                                                                                                                                                                                                                                                                                       type="checkbox" 
+                                                                                                                                                                                                                                                                                                                                       id="it_${day}"
+                                                                                                                                                                                                                                                                                                                                       data-day="${day}" 
+                                                                                                                                                                                                                                                                                                                                       ${defaultValues.hasInternalTransport ? 'checked' : ''} 
+                                                                                                                                                                                                                                                                                                                                       ${disabledAttr}>
+                                        <label class="form-check-label" for="it_${day}">
+                                                                                                                                                                                                                                                                                                                                </label>
+                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                        <td>
+                                                                                                                                                                                                                                                                                                                            ${statusBadge}
+                                                                                                                                                                                                                                                                                                                        </td>
+                                                                                                                                                                                                                                                                                                                    </tr>
+                                                                                                                                                                                                                                                                                                                `;
+        }
+
+        // ===== SAVE FUNCTION =====
+        async function saveWorkRecords() {
+            const workRecords = [];
+
+            $('#workRecordsTableBody tr').each(function () {
+                const day = $(this).data('day');
+                const dailyStatus = $(this).find('.daily-status-select').val();
+                const startTime = $(this).find('.start-time').val();
+                const endTime = $(this).find('.end-time').val();
+                const projectId = $(this).find('.project-select').val();
+                const equipmentId = $(this).find('.equipment-select').val();
+                const province = $(this).find('.province-select').val();
+                const district = $(this).find('.district-select').val();
+                const description = $(this).find('.description-textarea').val();
+                const hasInternalTransport = $(this).find('.internal-transport-checkbox').is(':checked');
+
+                // Day her zaman zorunlu
+                if (!day || day === '') {
+                    toastr.error('Gün bilgisi boş olamaz!', 'Hata!');
+                    throw new Error('Gün bilgisi boş olamaz!');
+                }
+                if (dailyStatus === 'Çalışıyor') {
+                    const hasRequiredData =
+                        (startTime && startTime.trim() !== '') &&
+                        (endTime && endTime.trim() !== '') &&
+                        (projectId && projectId !== '') &&
+                        (province && province !== '') &&
+                        (district && district !== '');
+
+                    if (!hasRequiredData) {
+                        return; // Bu satırı atla, boş satır
+                    }
+                }
+
+                const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                workRecords.push({
+                    Date: formattedDate,
+                    DailyStatus: dailyStatus,
+                    StartTime: startTime || "",
+                    EndTime: endTime || "",
+                    ProjectId: projectId || "",
+                    EquipmentId: equipmentId || "",
+                    Province: province || "",
+                    District: district || "",
+                    Description: description || "",
+                    HasInternalTransport: hasInternalTransport
+                });
+            });
+
+            // Eğer hiç kayıt yoksa uyarı ver
+            if (workRecords.length === 0) {
+                toastr.warning('Kaydedilecek veri bulunamadı!', 'Uyarı!');
+                return;
+            }
+
+            try {
+                $('.btnSaveWorkRecords').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Kaydediliyor...');
+
+                // FormData oluştur
+                const formData = new FormData();
+                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+                // Her work record için form data ekle
+                workRecords.forEach((record, index) => {
+                    formData.append(`[${index}].Date`, record.Date);
+                    formData.append(`[${index}].DailyStatus`, record.DailyStatus);
+                    formData.append(`[${index}].StartTime`, record.StartTime);
+                    formData.append(`[${index}].EndTime`, record.EndTime);
+                    formData.append(`[${index}].ProjectId`, record.ProjectId);
+                    formData.append(`[${index}].EquipmentId`, record.EquipmentId);
+                    formData.append(`[${index}].Province`, record.Province);
+                    formData.append(`[${index}].District`, record.District);
+                    formData.append(`[${index}].Description`, record.Description);
+                    formData.append(`[${index}].HasInternalTransport`, record.HasInternalTransport);
+                });
+
+                const response = await $.ajax({
+                    url: '/makine-puantaj/toplu-ekle-duzenle',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false
+                });
+
+                if (response.isSuccess) {
+                    toastr.success(response.message, 'Başarılı!');
+                    await generateDynamicTable();
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                let errorMessage = 'Makine puantajı kaydedilirken bir hata oluştu.';
+                if (error.responseJSON) {
+                    if (error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
+                        errorMessage = error.responseJSON.errors.join(', ');
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                toastr.error(errorMessage, 'Hata!');
+            } finally {
+                $('.btnSaveWorkRecords').prop('disabled', false)
+                    .html('<i class="fas fa-save me-2"></i>Kaydet');
+            }
+        }
+    </script>
+}

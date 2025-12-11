@@ -38,8 +38,8 @@
                     </div>
                     <div class="row mt-2">
                         <div class="col-md-6">
-                            <label for="company-select" class="form-label">Firma</label>
-                            <select id="company-select" class="form-select">
+                            <label for="document-type-select" class="form-label">Doküman Tipi</label>
+                            <select id="document-type-select" class="form-select">
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -47,7 +47,15 @@
                             <select id="target-select" class="form-select">
                             </select>
                         </div>
+                    </div>
 
+                    <div class="row mt-2">
+
+                        <div class="col-md-6">
+                            <label for="company-select" class="form-label">Firma</label>
+                            <select id="company-select" class="form-select">
+                            </select>
+                        </div>
                     </div>
 
                 </div>
@@ -58,11 +66,13 @@
                             <tr>
                                 <th>#</th>
                                 <th>DÖKÜMAN<br />TİPİ</th>
+                                <th>FİRMA</th>
+                                <th>HEDEF</th>
                                 <th>YENİLEME<br />SÜRESİ (AY)</th>
                                 <th>YÜKLENDİ<br />Mİ?</th>
                                 <th>SÜRESİ<br />GEÇTİ<br />Mİ?</th>
                                 <th>BAŞLANGIÇ<br />TARİHİ</th>
-                                <th>BİTİŞ<br />TARİİH</th>
+                                <th>BİTİŞ<br />TARİHİ</th>
                                 <th>YÜKLEME<br />TARİHİ</th>
                                 <th>İŞLEMLER</th>
                             </tr>
@@ -87,6 +97,7 @@
 
         $(document).ready(async function () {
             await initializeDepartmentSelect();
+            await initializeCompanySelect();
         });
 
         async function initializeDepartmentSelect() {
@@ -120,7 +131,6 @@
                          await initializeDepartmentDutySelect(departmentId);
                      } else {
                          await initializeDepartmentDutySelect(null);
-                         await initializeCompanySelect(null);
                          await initializeTargetSelect(null);
                      }
 
@@ -131,7 +141,42 @@
                  toastr.error('Departman listesi yüklenirken hata oluştu', 'Hata!');
              }
          }
+            async function initializeDocumentTypeSelect(departmentDutyId) {
+            try {
+                  if (!departmentDutyId) {
+                    resetSelect('#document-type-select', 'Doküman tipi seçin');
+                    return;
+                }
+                const response = await $.ajax({
+                     url: `/dokuman/${departmentDutyId}/tip-liste`,
+                        type: 'GET',
+                    dataType: 'json'
+                });
 
+                if (response?.isSuccess && response.data) {
+                    $('#document-type-select').empty().append('<option value="">Doküman tipi seçin</option>');
+                    response.data.forEach(docType => {
+                        $('#document-type-select').append(`<option data-period="${docType.renewalPeriodInMonths}" value="${docType.id}">${docType.name}</option>`);
+                    });
+                }
+
+                $('#document-type-select').select2({
+                    placeholder: 'Doküman tipi seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                $('#document-type-select').on('change', async function () {
+                    const docTypeId = $(this).val();
+                                     debouncedCheckAndLoadTable();
+
+                });
+            } catch (error) {
+                console.error('Doküman tipi listesi yüklenirken hata:', error);
+                toastr.error('Doküman tipi listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
          async function initializeDepartmentDutySelect(departmentId) {
              try {
                    if (!departmentId) {
@@ -163,20 +208,19 @@
                      const scope = $(this).find(':selected').data('scope');
 
                      // Reset other selects
-                     $('#company-select').val(null).trigger('change');
-                     $('#target-select').val(null).trigger('change');
-
+                        $('#company-select').val(null).trigger('change');
+                    $('#document-type-select').val(null).trigger('change');
+                    $('#target-select').val(null).trigger('change');
                      if (departmentDutyId) {
-                         await initializeCompanySelect(departmentDutyId);
-                         await initializeTargetSelect(scope);
-                         currentDepartmentScope = scope;
-                     } else {
-                         await initializeCompanySelect(null);
-                         await initializeTargetSelect(null);
-                         currentDepartmentScope = null;
-                     }
+                        await initializeDocumentTypeSelect(departmentDutyId);
+                        await initializeTargetSelect(scope);
+                        currentDepartmentScope = scope;
 
-                     debouncedCheckAndLoadTable();
+                    } else {
+                        await initializeDocumentTypeSelect(null);
+                        await initializeTargetSelect(null);
+                    }
+
                  });
              } catch (error) {
                  console.error('Departman görevi listesi yüklenirken hata:', error);
@@ -184,12 +228,8 @@
              }
          }
 
-         async function initializeCompanySelect(departmentDutyId) {
+        async function initializeCompanySelect() {
              try {
-                   if (!departmentDutyId) {
-                     resetSelect('#company-select', 'Firma seçin');
-                     return;
-                 }
                  const response = await $.ajax({
                      url: `/firma/liste`,
                      type: 'GET',
@@ -197,7 +237,8 @@
                  });
 
                  if (response?.isSuccess && response.data) {
-                     $('#company-select').empty().append('<option value="">Firma seçin</option>');
+                                          $('#company-select').empty().append('<option value="">Firma seçin</option>');
+
                      response.data.forEach(company => {
                          $('#company-select').append(`<option value="${company.id}">${company.name}</option>`);
                      });
@@ -210,9 +251,10 @@
                      width: '100%'
                  });
 
-                 $('#company-select').on('change', function () {
+                    $('#company-select').on('change', async function () {
                      debouncedCheckAndLoadTable();
                  });
+
              } catch (error) {
                  console.error('Firma listesi yüklenirken hata:', error);
                  toastr.error('Firma listesi yüklenirken hata oluştu', 'Hata!');
@@ -227,13 +269,12 @@
                  }
 
                  const departmentDutyId = $("#department-duty-select").val();
-                 const departmentId = $("#department-select").val();
                  let url = '';
                  let placeholder = 'Hedef seçin';
 
                  // Scope'a göre URL ve placeholder belirleme
                  if (scope === 1) {
-                     url = `/kullanici/departman/${departmentId}`;
+                     url = `/kullanici/departman-gorev/${departmentDutyId}`;
                  } else if (scope === 2) {
                      url = `/ekipman/aktif-liste`;
                  } else if (scope === 3) {
@@ -316,14 +357,20 @@
          }, DEBOUNCE_DELAY);
 
          // Tablo yükleme kontrolü fonksiyonu
-        function checkAndLoadTable() {
+             function checkAndLoadTable() {
             const departmentId = $('#department-select').val();
             const departmentDutyId = $('#department-duty-select').val();
-             const targetId = $('#target-select').val();
-
+            const targetId = $('#target-select').val();
+            const documentTypeId = $("#document-type-select").val();
             const scope = currentDepartmentScope;
-            // Department ve departmentDuty seçili olmalı
-             const canLoadTable = departmentId && departmentDutyId && (scope === 1 || scope === 3 ? targetId : true);
+
+            // İki senaryo:
+            // 1) departmentId + departmentDutyId + documentTypeId varsa -> tüm kayıtlar gelir
+            // 2) departmentId + departmentDutyId + targetId varsa (scope 1 veya 3 için) -> tek kayıt gelir
+            const canLoadTable = departmentId && departmentDutyId &&
+                (documentTypeId || (scope === 1 || scope === 3 ? targetId : true));
+
+            console.log(canLoadTable);
 
             if (canLoadTable) {
                 loadDataTable();
@@ -343,9 +390,10 @@
              const departmentDutyId = $('#department-duty-select').val();
              const companyId = $('#company-select').val() || '';
              const targetId = $('#target-select').val() || '';
+             const documentTypeId = $("#document-type-select").val() || "";
 
              // URL oluştur
-             const url = `/dokuman/kontrol-liste?departmentId=${departmentId}&departmentDutyId=${departmentDutyId}&companyId=${companyId}&targetId=${targetId}`;
+             const url = `/dokuman/kontrol-liste?departmentId=${departmentId}&departmentDutyId=${departmentDutyId}&companyId=${companyId}&targetId=${targetId}&documentTypeId=${documentTypeId}`;
 
              // Eğer tablo varsa, sadece URL'i güncelle ve yeniden yükle
              if (filesTable) {
@@ -379,7 +427,9 @@
                 columns: [
                     { data: null, width: "5%", orderable: false, className: "text-center", render: () => '' },
                     { data: "documentTypeName", render: (data) => data || '' },
-                    { data: "renewalPeriodInMonths", render: (data) => data || '' },
+                    { data: "companyName", render: (data) => data || '' },
+                    { data: "targetFullName", render: (data) => data || '' },
+                    { data: "renewalPeriodInMonths", render: (data) => data || '-' },
                     {
                         data: "isUploaded",
                         render: (data) => data ?
@@ -397,8 +447,8 @@
                                 '<span class="badge bg-success">Hayır</span>';
                         }
                     },
-                    { data: "currentFileStartDate", render: (data) => data ? new Date(data).toLocaleDateString('tr-TR') : '' },
-                    { data: "currentFileEndDate", render: (data) => data ? new Date(data).toLocaleDateString('tr-TR') : '' },
+                    { data: "currentFileStartDate", render: (data) => data ? new Date(data).toLocaleDateString('tr-TR') : '-' },
+                    { data: "currentFileEndDate", render: (data) => data ? new Date(data).toLocaleDateString('tr-TR') : '-' },
                     { data: "currentFileCreatedDate", render: (data) => data ? new Date(data).toLocaleDateString('tr-TR') : '' },
                     {
                         data: null,

@@ -18,5 +18,7 @@
         public DateTime CreatedDate { get; set; }
         public string CreatedBy { get; set; }
         public string CreatedByFullName { get; set; }
+        public string UserId { get; set; }
+        public string UserFullName { get; set; }
     }
 }

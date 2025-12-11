@@ -25,6 +25,10 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.Property(x => x.Description)
             .HasDefaultValue(null);
 
+            builder.Property(x => x.UserId)
+                .IsRequired()
+                .HasMaxLength(450);
+
             builder.Property(x => x.UnitManagerProcessedDate)
                 .IsRequired(false)
                 .HasDefaultValue(null);
@@ -51,6 +55,11 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .IsRequired(false)
              .HasMaxLength(500)
              .HasDefaultValue(null);
+
+            builder.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(x => x.CreatedByUser)
              .WithMany()
