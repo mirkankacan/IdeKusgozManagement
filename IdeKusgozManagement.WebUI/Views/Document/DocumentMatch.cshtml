@@ -1,0 +1,560 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Doküman Tipi Eşleştirme Yönetimi";
+}
+
+@section Styles {
+    <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+}
+
+@Html.AntiForgeryToken()
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-link me-2"></i>
+                    Doküman Tipi Eşleştirme Yönetimi
+                </h5>
+       
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                        data-bs-target="#matchDocumentTypeModal">
+                        <i class="fas fa-link me-2"></i>Yeni Eşleştirme Oluştur
+                    </button>
+                <br />
+                <br />
+                <div class="table-responsive">
+                    <table id="requirementsTable" class="table table-striped table-hover display" style="width:100%">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>DEPARTMAN</th>
+                                <th>GÖREV</th>
+                                <th>DOKÜMAN TİPİ</th>
+                                <th>FİRMA</th>
+                                <th>İŞLEMLER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- DataTables will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Match Document Type Modal -->
+<div class="modal fade" id="matchDocumentTypeModal" tabindex="-1" aria-labelledby="matchDocumentTypeModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Doküman Tipi Eşleştirme Penceresi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form class="needs-validation" novalidate id="matchDocumentTypeForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="selectMatchDepartment" class="form-label">Departman <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="selectMatchDepartment" required>
+                                <option value="">Departman seçin</option>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Lütfen bir departman seçiniz.</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="selectMatchDepartmentDuty" class="form-label">Görev <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="selectMatchDepartmentDuty" required disabled multiple>
+                                <option value="">Önce departman seçiniz</option>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Lütfen en az bir görev seçiniz.</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="selectMatchDocumentType" class="form-label">Doküman Tipi <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="selectMatchDocumentType" required multiple>
+                                <option value="">Doküman tipi seçin</option>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Lütfen en az bir doküman tipi seçiniz.</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="selectMatchCompany" class="form-label">Firma <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="selectMatchCompany" required multiple>
+                                <option value="">Firma seçin</option>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Lütfen en az bir firma seçiniz.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-success w-100"><i
+                            class="fas fa-link me-1"></i>Eşleştir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        let requirementsTable;
+
+        $(document).ready(async function () {
+            setupEventListeners();
+            initializeMatchModalSelects();
+            await initializeDataTable();
+        });
+
+        async function initializeDataTable() {
+            requirementsTable = $('#requirementsTable').DataTable({
+                "processing": true,
+                "ajax": {
+                    "url": "/dokuman/eslestirme-liste",
+                    "type": "GET",
+                    "dataSrc": function (json) {
+                        if (json && json.isSuccess && json.data) {
+                            return json.data;
+                        }
+                        return [];
+                    },
+                    "error": function (xhr, error, code) {
+                        console.error('DataTables AJAX error:', error);
+                        let errorMessage = 'Veriler yüklenirken hata oluştu';
+                        try {
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage += ': ' + xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                errorMessage += ': ' + xhr.responseText;
+                            }
+                        } catch (e) {
+                            errorMessage += ': ' + error;
+                        }
+                        toastr.error(errorMessage);
+                    }
+                },
+                "columns": [
+                    {
+                        "data": null,
+                        "width": "5%",
+                        "orderable": false,
+                        "className": "text-center",
+                        "render": function (data, type, row, meta) {
+                            return '';
+                        }
+                    },
+                    {
+                        "data": "departmentName",
+                        "render": function (data) {
+                            return data ? data : '';
+                        }
+                    },
+                    {
+                        "data": "departmentDutyName",
+                        "render": function (data) {
+                            return data ? data : '';
+                        }
+                    },
+                    {
+                        "data": "documentTypeName",
+                        "render": function (data) {
+                            return data ? data : '';
+                        }
+                    },
+                    {
+                        "data": "companyName",
+                        "render": function (data) {
+                            return data ? data : '<span class="text-muted">-</span>';
+                        }
+                    },
+                    {
+                        "data": null,
+                        "width": "10%",
+                        "orderable": false,
+                        "className": "text-center",
+                        "render": function (data, type, row) {
+                            return `
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteRequirement('${row.id}')" title="Sil">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                "language": {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
+                },
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "responsive": true,
+                "searchDelay": 300,
+                // "order": [[1, "asc"]],
+                "drawCallback": function () {
+                    var api = this.api();
+                    var pageInfo = api.page.info();
+
+                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                        cell.innerHTML = pageInfo.start + i + 1;
+                    });
+                    $('[title]').tooltip();
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Match Document Type form
+            $('#matchDocumentTypeForm').on('submit', function (e) {
+                e.preventDefault();
+
+                // Custom validation for multi-select fields
+                let isValid = true;
+                const departmentId = $('#selectMatchDepartment').val();
+                const departmentDutyIds = $('#selectMatchDepartmentDuty').val() || [];
+                const documentTypeIds = $('#selectMatchDocumentType').val() || [];
+                const companyIds = $('#selectMatchCompany').val() || [];
+
+                // Remove empty string from arrays if present
+                const cleanDutyIds = departmentDutyIds.filter(id => id !== '');
+                const cleanDocTypeIds = documentTypeIds.filter(id => id !== '');
+                const cleanCompanyIds = companyIds.filter(id => id !== '');
+
+                if (!departmentId) {
+                    $('#selectMatchDepartment').addClass('is-invalid').removeClass('is-valid');
+                    isValid = false;
+                } else {
+                    $('#selectMatchDepartment').addClass('is-valid').removeClass('is-invalid');
+                }
+
+                if (!cleanDutyIds.length) {
+                    $('#selectMatchDepartmentDuty').addClass('is-invalid').removeClass('is-valid');
+                    isValid = false;
+                } else {
+                    $('#selectMatchDepartmentDuty').addClass('is-valid').removeClass('is-invalid');
+                }
+
+                if (!cleanDocTypeIds.length) {
+                    $('#selectMatchDocumentType').addClass('is-invalid').removeClass('is-valid');
+                    isValid = false;
+                } else {
+                    $('#selectMatchDocumentType').addClass('is-valid').removeClass('is-invalid');
+                }
+
+                if (!cleanCompanyIds.length) {
+                    $('#selectMatchCompany').addClass('is-invalid').removeClass('is-valid');
+                    isValid = false;
+                } else {
+                    $('#selectMatchCompany').addClass('is-valid').removeClass('is-invalid');
+                }
+
+                if (isValid) {
+                    matchDocumentType();
+                }
+                $(this).addClass('was-validated');
+            });
+
+            // Department change handler for match modal
+            $('#selectMatchDepartment').on('change', function () {
+                const departmentId = $(this).val();
+                if (departmentId) {
+                    loadDepartmentDutiesForMatch(departmentId);
+                } else {
+                    $('#selectMatchDepartmentDuty').empty().prop('disabled', true).val(null).trigger('change');
+                }
+            });
+
+            // Clear form when modal hides
+            $('#matchDocumentTypeModal').on('hidden.bs.modal', function () {
+                $('#matchDocumentTypeForm')[0].reset();
+                $('#matchDocumentTypeForm').removeClass('was-validated');
+                $('#selectMatchDepartment').val('').trigger('change');
+                $('#selectMatchDepartmentDuty').val(null).trigger('change').empty().prop('disabled', true);
+                $('#selectMatchDocumentType').val(null).trigger('change');
+                $('#selectMatchCompany').val(null).trigger('change');
+                // Remove validation classes
+                $('#selectMatchDepartment, #selectMatchDepartmentDuty, #selectMatchDocumentType, #selectMatchCompany')
+                    .removeClass('is-valid is-invalid');
+            });
+
+            // Load data when match modal is shown
+            $('#matchDocumentTypeModal').on('shown.bs.modal', async function () {
+                await loadMatchModalData();
+            });
+        }
+
+        // ===== MATCH DOCUMENT TYPE FUNCTIONS =====
+        function initializeMatchModalSelects() {
+            // Initialize Select2 for all selects in match modal
+            $('#selectMatchDepartment').select2({
+                placeholder: 'Departman seçin',
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            $('#selectMatchDepartmentDuty').select2({
+                placeholder: 'Görev seçin (Çoklu)',
+                theme: 'bootstrap-5',
+                width: '100%',
+                multiple: true,
+                allowClear: true,
+                closeOnSelect: false
+            });
+
+            $('#selectMatchDocumentType').select2({
+                placeholder: 'Doküman tipi seçin (Çoklu)',
+                theme: 'bootstrap-5',
+                width: '100%',
+                multiple: true,
+                allowClear: true,
+                closeOnSelect: false
+            });
+
+            $('#selectMatchCompany').select2({
+                placeholder: 'Firma seçin (Çoklu)',
+                theme: 'bootstrap-5',
+                width: '100%',
+                multiple: true,
+                allowClear: true,
+                closeOnSelect: false
+            });
+        }
+
+        async function loadMatchModalData() {
+            // Load departments
+            await loadDepartmentsForMatch();
+            // Load document types
+            await loadDocumentTypesForMatch();
+            // Load companies
+            await loadCompaniesForMatch();
+        }
+
+        async function loadDepartmentsForMatch() {
+            try {
+                const response = await $.ajax({
+                    url: '/departman/liste',
+                    type: 'GET'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#selectMatchDepartment').empty().append('<option value="">Departman seçin</option>');
+                    response.data.forEach(dept => {
+                        $('#selectMatchDepartment').append(`<option value="${dept.id}">${dept.name}</option>`);
+                    });
+                    $('#selectMatchDepartment').trigger('change');
+                }
+            } catch (error) {
+                console.error('Departmanlar yüklenirken hata:', error);
+                toastr.error('Departmanlar yüklenirken bir hata oluştu', 'Hata!');
+            }
+        }
+
+        async function loadDepartmentDutiesForMatch(departmentId) {
+            try {
+                $('#selectMatchDepartmentDuty').prop('disabled', true).empty().val(null).trigger('change');
+
+                const response = await $.ajax({
+                    url: `/departman/${departmentId}/gorev-liste`,
+                    type: 'GET'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#selectMatchDepartmentDuty').empty();
+                    response.data.forEach(duty => {
+                        $('#selectMatchDepartmentDuty').append(`<option value="${duty.id}">${duty.name}</option>`);
+                    });
+                    $('#selectMatchDepartmentDuty').prop('disabled', false).trigger('change');
+                } else {
+                    $('#selectMatchDepartmentDuty').empty().prop('disabled', true).val(null).trigger('change');
+                }
+            } catch (error) {
+                console.error('Görevler yüklenirken hata:', error);
+                toastr.error('Görevler yüklenirken bir hata oluştu', 'Hata!');
+                $('#selectMatchDepartmentDuty').empty().prop('disabled', true).val(null).trigger('change');
+            }
+        }
+
+        async function loadDocumentTypesForMatch() {
+            try {
+                const response = await $.ajax({
+                    url: '/dokuman/tip-liste',
+                    type: 'GET'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#selectMatchDocumentType').empty();
+                    response.data.forEach(docType => {
+                        $('#selectMatchDocumentType').append(`<option value="${docType.id}">${docType.name}</option>`);
+                    });
+                    $('#selectMatchDocumentType').trigger('change');
+                }
+            } catch (error) {
+                console.error('Doküman tipleri yüklenirken hata:', error);
+                toastr.error('Doküman tipleri yüklenirken bir hata oluştu', 'Hata!');
+            }
+        }
+
+        async function loadCompaniesForMatch() {
+            try {
+                const response = await $.ajax({
+                    url: '/firma/aktif-liste',
+                    type: 'GET'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    $('#selectMatchCompany').empty();
+                    response.data.forEach(company => {
+                        $('#selectMatchCompany').append(`<option value="${company.id}">${company.name}</option>`);
+                    });
+                    $('#selectMatchCompany').trigger('change');
+                }
+            } catch (error) {
+                console.error('Firmalar yüklenirken hata:', error);
+                toastr.error('Firmalar yüklenirken bir hata oluştu', 'Hata!');
+            }
+        }
+
+        async function matchDocumentType() {
+            const departmentId = $('#selectMatchDepartment').val();
+            const departmentDutyIds = ($('#selectMatchDepartmentDuty').val() || []).filter(id => id !== '');
+            const documentTypeIds = ($('#selectMatchDocumentType').val() || []).filter(id => id !== '');
+            const companyIds = ($('#selectMatchCompany').val() || []).filter(id => id !== '');
+
+            // Validate that at least one item is selected in each multi-select
+            if (!departmentDutyIds.length) {
+                toastr.error('Lütfen en az bir görev seçiniz', 'Hata!');
+                return;
+            }
+
+            if (!documentTypeIds.length) {
+                toastr.error('Lütfen en az bir doküman tipi seçiniz', 'Hata!');
+                return;
+            }
+
+            if (!companyIds.length) {
+                toastr.error('Lütfen en az bir firma seçiniz', 'Hata!');
+                return;
+            }
+
+            // Create all combinations
+            const combinations = [];
+            departmentDutyIds.forEach(dutyId => {
+                documentTypeIds.forEach(docTypeId => {
+                    companyIds.forEach(companyId => {
+                        combinations.push({
+                            departmentId: departmentId,
+                            departmentDutyId: dutyId,
+                            documentTypeId: docTypeId,
+                            companyId: companyId
+                        });
+                    });
+                });
+            });
+
+            // Show loading
+            const submitButton = $('#matchDocumentTypeForm button[type="submit"]');
+            const originalText = submitButton.html();
+            submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>İşleniyor...');
+
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+
+            // Process all combinations
+            for (const matchData of combinations) {
+                try {
+                    const response = await $.ajax({
+                        url: '/dokuman/eslestir',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(matchData)
+                    });
+
+                    if (response.isSuccess) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        errors.push(response.message);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    errors.push(error.responseJSON?.message || 'Bir hata oluştu');
+                }
+            }
+
+            // Restore button
+            submitButton.prop('disabled', false).html(originalText);
+
+            // Show results
+            if (errorCount === 0) {
+                toastr.success(`${successCount} eşleştirme başarıyla oluşturuldu`, 'Başarılı!');
+                $('#matchDocumentTypeModal').modal('hide');
+                requirementsTable.ajax.reload();
+            } else if (successCount > 0) {
+                toastr.warning(`${successCount} eşleştirme başarılı, ${errorCount} eşleştirme başarısız`, 'Kısmen Başarılı!');
+                if (errors.length > 0) {
+                    console.error('Eşleştirme hataları:', errors);
+                }
+                requirementsTable.ajax.reload();
+            } else {
+                toastr.error(`${errorCount} eşleştirme başarısız oldu`, 'Hata!');
+                if (errors.length > 0) {
+                    console.error('Eşleştirme hataları:', errors);
+                }
+            }
+        }
+
+        async function deleteRequirement(requirementId) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu eşleştirme silinecek ve geri alınamayacak!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Evet, Sil!',
+                cancelButtonText: 'İptal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        const response = await $.ajax({
+                            url: `/dokuman/eslestirme/${requirementId}`,
+                            type: 'DELETE',
+                            headers: {
+                                'RequestVerificationToken': token
+                            }
+                        });
+
+                        if (response.isSuccess) {
+                            toastr.success(response.message, 'Başarılı!');
+                            requirementsTable.ajax.reload();
+                        } else {
+                            toastr.error(response.message, 'Hata!');
+                        }
+                    } catch (error) {
+                        console.error('Delete Requirement error:', error);
+                        toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+                    }
+                }
+            });
+        }
+    </script>
+}
+

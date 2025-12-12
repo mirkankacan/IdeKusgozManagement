@@ -20,7 +20,7 @@
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="fas fa-file-shield me-2"></i>
-                    Evrak Kontrol
+                    Doküman Kontrol
                 </h5>
                 <div class="file-type-section">
                     <div class="row">
@@ -231,7 +231,7 @@
         async function initializeCompanySelect() {
              try {
                  const response = await $.ajax({
-                     url: `/firma/liste`,
+                     url: `/firma/aktif-liste`,
                      type: 'GET',
                      dataType: 'json'
                  });

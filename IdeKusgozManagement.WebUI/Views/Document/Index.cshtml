@@ -1,0 +1,367 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Doküman Tipi Yönetimi";
+}
+
+@section Styles {
+    <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
+}
+
+@Html.AntiForgeryToken()
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Doküman Tipi Yönetimi
+                </h5>
+             
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#createDocumentTypeModal">
+                        <i class="fas fa-plus me-2"></i>Doküman Tipi Ekle
+                    </button>
+               
+          
+                <br />
+                <br />
+                <div class="table-responsive">
+                    <table id="documentTypesTable" class="table table-striped table-hover display" style="width:100%">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>DOKÜMAN TİPİ ADI</th>
+                                <th>YENİLEME SÜRESİ<br />(AY)</th>
+                                <th>İŞLEMLER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- DataTables will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Document Type Modal -->
+<div class="modal fade" id="createDocumentTypeModal" tabindex="-1" aria-labelledby="createDocumentTypeModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Doküman Tipi Ekleme Penceresi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form class="needs-validation" novalidate id="createDocumentTypeForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="txtCName" class="form-label">Doküman Tipi Adı</label>
+                            <input type="text" class="form-control" id="txtCName" required>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli bir doküman tipi adı giriniz.</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="txtCRenewalPeriod" class="form-label">Yenileme Süresi (Ay) (İsteğe
+                                Bağlı)</label>
+                            <input type="number" class="form-control" id="txtCRenewalPeriod" min="0" step="1">
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli bir yenileme süresi giriniz.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-add me-1"></i>Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Document Type Modal -->
+<div class="modal fade" id="updateDocumentTypeModal" tabindex="-1" aria-labelledby="updateDocumentTypeModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Doküman Tipi Güncelleme Penceresi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form class="needs-validation" novalidate id="updateDocumentTypeForm">
+                <div class="modal-body">
+                    <input type="hidden" id="txtUId">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="txtUName" class="form-label">Doküman Tipi Adı</label>
+                            <input type="text" class="form-control" id="txtUName" required>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli bir doküman tipi adı giriniz.</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="txtURenewalPeriod" class="form-label">Yenileme Süresi (Ay) (İsteğe
+                                Bağlı)</label>
+                            <input type="number" class="form-control" id="txtURenewalPeriod" min="0" step="1">
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli bir yenileme süresi giriniz.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-pen me-1"></i>Güncelle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/theme/assets/plugins/DataTables/datatables.min.js"></script>
+
+    <script>
+        let documentTypesTable;
+
+        $(document).ready(async function () {
+            setupEventListeners();
+
+            await initializeDataTable();
+        });
+
+        async function initializeDataTable() {
+            documentTypesTable = $('#documentTypesTable').DataTable({
+                "processing": true,
+                "ajax": {
+                    "url": "/dokuman/tip-liste",
+                    "type": "GET",
+                    "dataSrc": function (json) {
+                        if (json && json.isSuccess && json.data) {
+                            return json.data;
+                        }
+                        return [];
+                    },
+                    "error": function (xhr, error, code) {
+                        console.error('DataTables AJAX error:', error);
+                        let errorMessage = 'Veriler yüklenirken hata oluştu';
+                        try {
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage += ': ' + xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                errorMessage += ': ' + xhr.responseText;
+                            }
+                        } catch (e) {
+                            errorMessage += ': ' + error;
+                        }
+
+                        toastr.error(errorMessage);
+                    }
+                },
+                "columns": [
+                    {
+                        "data": null,
+                        "width": "5%",
+                        "orderable": false,
+                        "className": "text-center",
+                        "render": function (data, type, row, meta) {
+                            return '';
+                        }
+                    },
+                    {
+                        "data": "name",
+                        "render": function (data) {
+                            return data ? `<strong>${data}</strong>` : '';
+                        }
+                    },
+                    {
+                        "data": "renewalPeriodInMonths",
+                        "width": "15%",
+                        "className": "text-center",
+                        "render": function (data) {
+                            return data ? `${data} Ay` : '-';
+                        }
+                    },
+                    {
+                        "data": null,
+                        "width": "10%",
+                        "orderable": false,
+                        "className": "text-center",
+                        "render": function (data, type, row) {
+                            return `
+                                                                                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                                                                                <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                                                                                    onclick="loadDocumentTypeForEdit('${row.id}')" title="Düzenle">
+                                                                                                                                    <i class="fas fa-edit"></i>
+                                                                                                                                </button>
+                                                                                                                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                                                                    onclick="deleteDocumentType('${row.id}')" title="Sil">
+                                                                                                                                    <i class="fas fa-trash"></i>
+                                                                                                                                </button>
+                                                                                                                            </div>
+                                                                                                                        `;
+                        }
+                    }
+                ],
+                "language": {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
+                },
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "responsive": true,
+                "searchDelay": 300,
+                "order": [[1, "asc"]],
+                "drawCallback": function () {
+                    var api = this.api();
+                    var pageInfo = api.page.info();
+
+                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                        cell.innerHTML = pageInfo.start + i + 1;
+                    });
+                    $('[title]').tooltip();
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Create Document Type form
+            $('#createDocumentTypeForm').on('submit', function (e) {
+                e.preventDefault();
+                if (this.checkValidity()) {
+                    createDocumentType();
+                }
+                $(this).addClass('was-validated');
+            });
+
+            // Update Document Type form
+            $('#updateDocumentTypeForm').on('submit', function (e) {
+                e.preventDefault();
+                if (this.checkValidity()) {
+                    updateDocumentType();
+                }
+                $(this).addClass('was-validated');
+            });
+
+            // Clear forms when modals hide
+            $('#createDocumentTypeModal').on('hidden.bs.modal', function () {
+                $('#createDocumentTypeForm')[0].reset();
+                $('#createDocumentTypeForm').removeClass('was-validated');
+            });
+
+            $('#updateDocumentTypeModal').on('hidden.bs.modal', function () {
+                $('#updateDocumentTypeForm')[0].reset();
+                $('#updateDocumentTypeForm').removeClass('was-validated');
+            });
+        }
+
+        async function createDocumentType() {
+            const documentTypeData = {
+                name: $('#txtCName').val(),
+                renewalPeriodInMonths: $('#txtCRenewalPeriod').val() ? parseInt($('#txtCRenewalPeriod').val()) : null
+            };
+
+            try {
+                const response = await $.ajax({
+                    url: '/dokuman/tip',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(documentTypeData)
+                });
+
+                if (response.isSuccess) {
+                    toastr.success(response.message, 'Başarılı!');
+                    $('#createDocumentTypeModal').modal('hide');
+                    documentTypesTable.ajax.reload();
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                console.error('Create Document Type error:', error);
+                toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+            }
+        }
+
+        async function loadDocumentTypeForEdit(documentTypeId) {
+            try {
+                const response = await $.ajax({
+                    url: `/dokuman/tip/${documentTypeId}`,
+                    type: 'GET'
+                });
+
+                if (response.isSuccess) {
+                    $('#txtUId').val(response.data.id);
+                    $('#txtUName').val(response.data.name);
+                    $('#txtURenewalPeriod').val(response.data.renewalPeriodInMonths || '');
+                    $('#updateDocumentTypeModal').modal('show');
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                console.error('Load Document Type error:', error);
+                toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+            }
+        }
+
+        async function updateDocumentType() {
+            const documentTypeId = $('#txtUId').val();
+            const documentTypeData = {
+                name: $('#txtUName').val(),
+                renewalPeriodInMonths: $('#txtURenewalPeriod').val() ? parseInt($('#txtURenewalPeriod').val()) : null
+            };
+
+            try {
+                const response = await $.ajax({
+                    url: `/dokuman/tip/${documentTypeId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(documentTypeData)
+                });
+
+                if (response.isSuccess) {
+                    toastr.success(response.message, 'Başarılı!');
+                    $('#updateDocumentTypeModal').modal('hide');
+                    documentTypesTable.ajax.reload();
+                } else {
+                    toastr.error(response.message, 'Hata!');
+                }
+            } catch (error) {
+                console.error('Update Document Type error:', error);
+                toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+            }
+        }
+
+        async function deleteDocumentType(documentTypeId) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu doküman tipi silinecek ve geri alınamayacak!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Evet, Sil!',
+                cancelButtonText: 'İptal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await $.ajax({
+                            url: `/dokuman/tip/${documentTypeId}`,
+                            type: 'DELETE'
+                        });
+
+                        if (response.isSuccess) {
+                            toastr.success(response.message, 'Başarılı!');
+                            documentTypesTable.ajax.reload();
+                        } else {
+                            toastr.error(response.message, 'Hata!');
+                        }
+                    } catch (error) {
+                        console.error('Delete Document Type error:', error);
+                        toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+                    }
+                }
+            });
+        }
+
+    </script>
+}

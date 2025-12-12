@@ -265,6 +265,9 @@
                     <li class="@(Context.Request.Path == "/izin" ? "active-page" : "")">
                         <a href="/izin"><i data-feather="navigation"></i>İzinler</a>
                     </li>
+                    <li class="@(Context.Request.Path == "/firma" ? "active-page" : "")">
+                        <a href="/firma"><i data-feather="git-branch"></i>Firmalar</a>
+                    </li>
                     <li class="@(Context.Request.Path == "/puantaj" ? "active-page" : "")">
                         <a href="/puantaj"><i data-feather="list"></i>Puantajlar</a>
                     </li>
@@ -281,10 +284,16 @@
                     <li class="sidebar-title">
                         Doküman İşlemleri
                     </li>
+                    <li class="@(Context.Request.Path == "/dokuman" ? "active-page" : "")">
+                        <a href="/dokuman"><i data-feather="layers"></i>Doküman Tipleri</a>
+                    </li>
+                    <li class="@(Context.Request.Path == "/dokuman/eslestirme" ? "active-page" : "")">
+                        <a href="/dokuman/eslestirme"><i data-feather="link"></i>Doküman Eşleştirme</a>
+                    </li>
                     <li class="@(Context.Request.Path == "/dokuman/yukle" ? "active-page" : "")">
                         <a href="/dokuman/yukle"><i data-feather="upload"></i>Doküman Yükle</a>
                     </li>
-         
+
                     <li class="@(Context.Request.Path == "/dokuman/kontrol" ? "active-page" : "")">
                         <a href="/dokuman/kontrol"><i data-feather="user-check"></i>Doküman Kontrol</a>
                     </li>
