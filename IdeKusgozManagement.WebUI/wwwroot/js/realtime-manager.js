@@ -129,10 +129,10 @@ class RealtimeManager {
         if (includeContentType) {
             headers['Content-Type'] = 'application/json';
         }
-        const token = this.getAntiforgeryToken();
-        if (token) {
-            headers['X-CSRF-TOKEN'] = token;
-        }
+        //const token = this.getAntiforgeryToken();
+        //if (token) {
+        //    headers['X-CSRF-TOKEN'] = token;
+        //}
         return headers;
     }
 

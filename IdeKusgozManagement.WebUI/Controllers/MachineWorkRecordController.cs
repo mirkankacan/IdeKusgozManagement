@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.MachineWorkRecordModels;
+﻿using IdeKusgozManagement.WebUI.Authorization;
+using IdeKusgozManagement.WebUI.Models.MachineWorkRecordModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -56,11 +57,16 @@ namespace IdeKusgozManagement.WebUI.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin, Şef, Yönetici")]
+        [DepartmentDuty("Şoför-Yük Taşıma", "Vinç Operatörü", "Platform Operatörü")]
         [HttpGet("ekle")]
         public IActionResult Create()
         {
-            var userId = _httpContextAccessor.HttpContext.Session.GetString("UserId");
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext == null)
+                return Unauthorized("Lütfen tekrar giriş yapınız");
+
+            var userId = httpContext.Session.GetString("UserId");
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized("Lütfen tekrar giriş yapınız");
 
@@ -70,6 +76,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
         [Authorize]
         [HttpPost("toplu-ekle-duzenle")]
+        [DepartmentDuty("Şoför-Yük Taşıma", "Vinç Operatörü", "Platform Operatörü")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateOrModifyMachineWorkRecord([FromForm] List<CreateOrModifyMachineWorkRecordViewModel> model, CancellationToken cancellationToken)
         {

@@ -30,7 +30,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpPut("{notificationId}/okundu")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(notificationId))
@@ -42,7 +41,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpPut("hepsini-okundu")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
         {
             var response = await _notificationApiService.MarkAllAsReadAsync(cancellationToken);
@@ -50,7 +48,6 @@ namespace IdeKusgozManagement.WebUI.Controllers
         }
 
         [HttpDelete("{notificationId}")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteNotification(string notificationId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(notificationId))

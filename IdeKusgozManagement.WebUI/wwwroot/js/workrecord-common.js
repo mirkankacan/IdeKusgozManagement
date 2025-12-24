@@ -325,6 +325,27 @@ function setMealCheckboxState(row, shouldDisable) {
     }
 }
 
+// Helper functions for consistent disabled styling
+function applyDisabledStyle(element) {
+    if (element && element.length) {
+        element.css({
+            'pointer-events': 'none',
+            'opacity': '0.6',
+            'cursor': 'not-allowed'
+        });
+    }
+}
+
+function removeDisabledStyle(element) {
+    if (element && element.length) {
+        element.css({
+            'pointer-events': '',
+            'opacity': '',
+            'cursor': ''
+        });
+    }
+}
+
 function updateRowFieldsForStatus(day, status) {
     if (!day) {
         return;
@@ -340,8 +361,163 @@ function updateRowFieldsForStatus(day, status) {
         return;
     }
 
-    const disableMeals = shouldDisableMealsForStatus(status);
+    // Check status conditions
+    const isWorking = status === 'Çalışıyor';
+    const isDayOff = status === 'Hafta Tatili (DAY OFF)';
+
+    // For meals: if status is not 'Çalışıyor', always disable meals
+    // Otherwise, use the existing meal logic
+    const disableMeals = !isWorking || shouldDisableMealsForStatus(status);
     setMealCheckboxState(row, disableMeals);
+    
+    // Get all fields that should be disabled/enabled
+    const startTimeInput = row.find('.start-time');
+    const endTimeInput = row.find('.end-time');
+    const additionalStartTimeInput = row.find('.additional-start-time');
+    const additionalEndTimeInput = row.find('.additional-end-time');
+    const projectSelect = row.find('.project-select');
+    const equipmentSelect = row.find('.equipment-select');
+    const provinceSelect = row.find('.province-select');
+    const districtSelect = row.find('.district-select');
+    const descriptionTextarea = row.find('.description-textarea');
+    const internalTransportCheckbox = row.find('.internal-transport-checkbox');
+    const expenseModalBtn = row.find('.expense-modal-btn');
+    const travelExpenseAmount = row.find('.travel-expense-amount');
+    const mealCheckboxLabels = row.find('.meal-checkbox').closest('.form-check-label');
+
+    if (isWorking) {
+        // Enable all fields (but respect existing disabled state from date-too-old or other rules)
+        const isDateTooOld = String(row.attr('data-is-date-too-old')) === 'true';
+        if (!isDateTooOld) {
+            startTimeInput.prop('disabled', false);
+            endTimeInput.prop('disabled', false);
+            if (additionalStartTimeInput.length) additionalStartTimeInput.prop('disabled', false);
+            if (additionalEndTimeInput.length) additionalEndTimeInput.prop('disabled', false);
+            projectSelect.prop('disabled', false);
+            equipmentSelect.prop('disabled', false);
+            provinceSelect.prop('disabled', false);
+            districtSelect.prop('disabled', false);
+            descriptionTextarea.prop('disabled', false);
+            internalTransportCheckbox.prop('disabled', false);
+            expenseModalBtn.prop('disabled', false);
+            travelExpenseAmount.prop('disabled', false);
+
+            // Re-enable all inputs, textareas, and buttons visually
+            removeDisabledStyle(startTimeInput);
+            removeDisabledStyle(endTimeInput);
+            if (additionalStartTimeInput.length) removeDisabledStyle(additionalStartTimeInput);
+            if (additionalEndTimeInput.length) removeDisabledStyle(additionalEndTimeInput);
+            removeDisabledStyle(descriptionTextarea);
+            removeDisabledStyle(internalTransportCheckbox);
+            removeDisabledStyle(expenseModalBtn);
+            removeDisabledStyle(travelExpenseAmount);
+            removeDisabledStyle(mealCheckboxLabels);
+
+            // Handle Select2 dropdowns - re-enable containers
+            const select2Selects = [projectSelect, equipmentSelect, provinceSelect, districtSelect];
+            select2Selects.forEach(select => {
+                if (select.hasClass('select2-hidden-accessible')) {
+                    select.trigger('change.select2');
+                    const container = select.next('.select2-container');
+                    if (container.length) {
+                        container.removeClass('select2-container-disabled');
+                        removeDisabledStyle(container);
+                    }
+                } else {
+                    // For non-Select2 selects, remove style directly
+                    removeDisabledStyle(select);
+                }
+            });
+        }
+    } else if (isDayOff) {
+        // For "Hafta Tatili (DAY OFF)": disable only time inputs, enable other fields
+        const isDateTooOld = String(row.attr('data-is-date-too-old')) === 'true';
+        if (!isDateTooOld) {
+            // Disable time inputs
+            startTimeInput.prop('disabled', true);
+            endTimeInput.prop('disabled', true);
+            if (additionalStartTimeInput.length) additionalStartTimeInput.prop('disabled', true);
+            if (additionalEndTimeInput.length) additionalEndTimeInput.prop('disabled', true);
+            applyDisabledStyle(startTimeInput);
+            applyDisabledStyle(endTimeInput);
+            if (additionalStartTimeInput.length) applyDisabledStyle(additionalStartTimeInput);
+            if (additionalEndTimeInput.length) applyDisabledStyle(additionalEndTimeInput);
+
+            // Enable other fields
+            projectSelect.prop('disabled', false);
+            equipmentSelect.prop('disabled', false);
+            provinceSelect.prop('disabled', false);
+            districtSelect.prop('disabled', false);
+            descriptionTextarea.prop('disabled', false);
+            internalTransportCheckbox.prop('disabled', false);
+            expenseModalBtn.prop('disabled', false);
+            travelExpenseAmount.prop('disabled', false);
+
+            // Re-enable other fields visually
+            removeDisabledStyle(descriptionTextarea);
+            removeDisabledStyle(internalTransportCheckbox);
+            removeDisabledStyle(expenseModalBtn);
+            removeDisabledStyle(travelExpenseAmount);
+            removeDisabledStyle(mealCheckboxLabels);
+
+            // Handle Select2 dropdowns - re-enable containers
+            const select2Selects = [projectSelect, equipmentSelect, provinceSelect, districtSelect];
+            select2Selects.forEach(select => {
+                if (select.hasClass('select2-hidden-accessible')) {
+                    select.trigger('change.select2');
+                    const container = select.next('.select2-container');
+                    if (container.length) {
+                        container.removeClass('select2-container-disabled');
+                        removeDisabledStyle(container);
+                    }
+                } else {
+                    // For non-Select2 selects, remove style directly
+                    removeDisabledStyle(select);
+                }
+            });
+        }
+    } else {
+        // Disable all fields when status is not 'Çalışıyor' or 'Hafta Tatili (DAY OFF)'
+        startTimeInput.prop('disabled', true);
+        endTimeInput.prop('disabled', true);
+        if (additionalStartTimeInput.length) additionalStartTimeInput.prop('disabled', true);
+        if (additionalEndTimeInput.length) additionalEndTimeInput.prop('disabled', true);
+        projectSelect.prop('disabled', true);
+        equipmentSelect.prop('disabled', true);
+        provinceSelect.prop('disabled', true);
+        districtSelect.prop('disabled', true);
+        descriptionTextarea.prop('disabled', true);
+        internalTransportCheckbox.prop('disabled', true);
+        expenseModalBtn.prop('disabled', true);
+        travelExpenseAmount.prop('disabled', true);
+
+        // Apply disabled style to all inputs, textareas, checkboxes, and buttons
+        applyDisabledStyle(startTimeInput);
+        applyDisabledStyle(endTimeInput);
+        if (additionalStartTimeInput.length) applyDisabledStyle(additionalStartTimeInput);
+        if (additionalEndTimeInput.length) applyDisabledStyle(additionalEndTimeInput);
+        applyDisabledStyle(descriptionTextarea);
+        applyDisabledStyle(internalTransportCheckbox);
+        applyDisabledStyle(expenseModalBtn);
+        applyDisabledStyle(travelExpenseAmount);
+        applyDisabledStyle(mealCheckboxLabels);
+
+        // Handle Select2 dropdowns - disable the container as well
+        const select2Selects = [projectSelect, equipmentSelect, provinceSelect, districtSelect];
+        select2Selects.forEach(select => {
+            if (select.hasClass('select2-hidden-accessible')) {
+                select.trigger('change.select2');
+                const container = select.next('.select2-container');
+                if (container.length) {
+                    container.addClass('select2-container-disabled');
+                    applyDisabledStyle(container);
+                }
+            } else {
+                // For non-Select2 selects, apply style directly
+                applyDisabledStyle(select);
+            }
+        });
+    }
 }
 
 function applyDailyStatusRulesForAllRows() {
@@ -572,37 +748,48 @@ function setupLocationEventListeners() {
 function generateStatusBadge(status, statusText) {
     let badgeClass = 'bg-secondary';
     let icon = 'fas fa-clock';
-
-    switch (status) {
-        case 0:
-            badgeClass = 'bg-warning text-dark';
-            icon = 'fas fa-clock';
-            statusText = statusText || 'Beklemede';
-            break;
-        case 1:
-            badgeClass = 'bg-success';
-            icon = 'fas fa-check';
-            statusText = statusText || 'Şef Onayladı';
-            break;
-        case 2:
-            badgeClass = 'bg-info';
-            icon = 'fas fa-check';
-            statusText = statusText || 'Yönetici Onayladı';
-            break;
-        case 3:
-            badgeClass = 'bg-danger';
-            icon = 'fas fa-times';
-            statusText = statusText || 'Şef Reddetti';
-            break;
-        case 4:
-            badgeClass = 'bg-danger';
-            icon = 'fas fa-times';
-            statusText = statusText || 'Yönetici Reddetti';
-            break;
-        default:
-            statusText = statusText || 'Yeni';
-            badgeClass = 'bg-secondary';
-            icon = 'fas fa-circle';
+    
+    // Convert status to number if it's a string, handle null/undefined
+    const statusNum = status === null || status === undefined ? null : parseInt(status, 10);
+    
+    // Check if conversion was successful (not NaN)
+    if (statusNum !== null && !isNaN(statusNum)) {
+        switch (statusNum) {
+            case 0:
+                badgeClass = 'bg-warning text-dark';
+                icon = 'fas fa-clock';
+                statusText = statusText || 'Beklemede';
+                break;
+            case 1:
+                badgeClass = 'bg-success';
+                icon = 'fas fa-check';
+                statusText = statusText || 'Şef Onayladı';
+                break;
+            case 2:
+                badgeClass = 'bg-info';
+                icon = 'fas fa-check';
+                statusText = statusText || 'Yönetici Onayladı';
+                break;
+            case 3:
+                badgeClass = 'bg-danger';
+                icon = 'fas fa-times';
+                statusText = statusText || 'Şef Reddetti';
+                break;
+            case 4:
+                badgeClass = 'bg-danger';
+                icon = 'fas fa-times';
+                statusText = statusText || 'Yönetici Reddetti';
+                break;
+            default:
+                statusText = statusText || 'Yeni';
+                badgeClass = 'bg-secondary';
+                icon = 'fas fa-circle';
+        }
+    } else {
+        // If status is null, undefined, or invalid, show as "Yeni"
+        statusText = statusText || 'Yeni';
+        badgeClass = 'bg-secondary';
+        icon = 'fas fa-circle';
     }
 
     return `<span class="badge ${badgeClass}"><i class="${icon} me-1"></i>${statusText}</span>`;

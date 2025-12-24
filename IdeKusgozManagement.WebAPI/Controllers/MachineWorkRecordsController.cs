@@ -63,6 +63,8 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [HttpPost("batch-create-modify")]
+        [RoleFilter("Admin", "Yönetici", "Şef")]
+        [DepartmentDuty("Şoför-Yük Taşıma", "Vinç Operatörü", "Platform Operatörü")]
         public async Task<IActionResult> BatchCreateOrModifyMachineWorkRecords([FromForm] List<CreateOrModifyMachineWorkRecordDTO> createMachineWorkRecordDTOs, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)

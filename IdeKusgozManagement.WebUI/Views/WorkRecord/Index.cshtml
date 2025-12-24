@@ -855,8 +855,8 @@
         }
 
         function createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge, isSunday = false) {
-            // Onay durumunu kontrol et
-            const isApproved = record.status === 2;
+            // Onay durumunu kontrol et - status 1 (Şef Onayladı) veya 2 (Yönetici Onayladı) onaylanmış demek
+            const isApproved = record.status === 1 || record.status === 2;
             const disabledAttr = isApproved ? 'disabled' : '';
 
             // Get holiday row class from common function (pass isSunday parameter)

@@ -135,7 +135,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     Message = $"{firstRecord.UpdatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için puantaj kayıtlarınız onaylandı.",
                     Type = NotificationType.WorkRecord,
-                    RedirectUrl = "/puantaj/ekle",
+                    RedirectUrl = $"/puantaj/ekle",
                     TargetUsers = new List<string> { firstRecord.CreatedBy }
                 };
 
@@ -253,7 +253,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     Message = $"{mappedWorkRecord.UpdatedByFullName} tarafından, {mappedWorkRecord.Date:dd/MM/yyyy} tarihi için puantaj kaydınız onaylandı.",
                     Type = NotificationType.WorkRecord,
-                    RedirectUrl = "/puantaj/ekle",
+                    RedirectUrl = $"/puantaj/ekle?id={approvedWorkRecord.Id}",
                     TargetUsers = new List<string> { mappedWorkRecord.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
@@ -307,7 +307,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     Message = $"{mappedWorkRecord.UpdatedByFullName} tarafından, {mappedWorkRecord.Date:dd/MM/yyyy} tarihi için puantaj kaydınız reddedildi.",
                     Type = NotificationType.WorkRecord,
-                    RedirectUrl = "/puantaj/ekle",
+                    RedirectUrl = $"/puantaj/ekle?id={rejectedWorkRecord.Id}",
                     TargetUsers = new List<string> { mappedWorkRecord.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);

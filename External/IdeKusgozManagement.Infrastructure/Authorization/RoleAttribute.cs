@@ -1,8 +1,8 @@
-﻿using System.Security.Claims;
-using IdeKusgozManagement.Application.Interfaces.Services;
+﻿using IdeKusgozManagement.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using System.Security.Claims;
 
 namespace IdeKusgozManagement.Infrastructure.Authorization
 {

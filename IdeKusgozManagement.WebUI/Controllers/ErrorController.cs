@@ -8,5 +8,11 @@ namespace IdeKusgozManagement.WebUI.Controllers
         {
             return View();
         }
+
+        [HttpGet("erisim-engellendi")]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
     }
 }

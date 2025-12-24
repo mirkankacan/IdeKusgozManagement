@@ -121,7 +121,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     Message = $"{firstRecord.UpdatedByFullName} tarafından, {firstRecord.Date:MM/yyyy} ayı için makine puantaj kayıtlarınız onaylandı.",
                     Type = NotificationType.WorkRecord,
-                    RedirectUrl = "/puantaj/ekle",
+                    RedirectUrl = "/makine-puantaj/ekle",
                     TargetUsers = new List<string> { firstRecord.CreatedBy }
                 };
 
@@ -174,7 +174,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     Message = $"{mappedWorkRecords.First().UpdatedByFullName} tarafından, {mappedWorkRecords.First().Date:MM/yyyy} ayı için makine puantajı kayıtlarınız reddedildi.",
                     Type = NotificationType.WorkRecord,
-                    RedirectUrl = "/puantaj/ekle",
+                    RedirectUrl = "/makine-puantaj/ekle",
                     TargetUsers = new List<string> { mappedWorkRecords.First().CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
@@ -224,7 +224,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     Message = $"{mappedWorkRecord.UpdatedByFullName} tarafından, {mappedWorkRecord.Date:dd/MM/yyyy} tarihi için makine puantaj kaydınız onaylandı.",
                     Type = NotificationType.WorkRecord,
-                    RedirectUrl = "/puantaj/ekle",
+                    RedirectUrl = "/makine-puantaj/ekle",
                     TargetUsers = new List<string> { mappedWorkRecord.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
@@ -278,7 +278,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     Message = $"{mappedWorkRecord.UpdatedByFullName} tarafından, {mappedWorkRecord.Date:dd/MM/yyyy} tarihi için makine puantajı kaydınız reddedildi.",
                     Type = NotificationType.WorkRecord,
-                    RedirectUrl = "/puantaj/ekle",
+                    RedirectUrl = "/makine-puantaj/ekle",
                     TargetUsers = new List<string> { mappedWorkRecord.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
