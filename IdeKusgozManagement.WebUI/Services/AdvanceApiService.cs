@@ -194,11 +194,18 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<bool>> ApproveAdvanceAsync(string advanceId, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<bool>> ApproveAdvanceAsync(string advanceId, ApproveAdvanceViewModel? model = null, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"api/advances/{advanceId}/approve", null, cancellationToken);
+                HttpContent? content = null;
+                if (model != null)
+                {
+                    var json = JsonConvert.SerializeObject(model);
+                    content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                }
+
+                var response = await _httpClient.PutAsync($"api/advances/{advanceId}/approve", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)
@@ -238,11 +245,11 @@ namespace IdeKusgozManagement.WebUI.Services
             }
         }
 
-        public async Task<ApiResponse<IEnumerable<AdvanceViewModel>>> GetChiefProcessedAdvancesAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<IEnumerable<AdvanceViewModel>>> GetApprovedAdvancesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/advances/chief-processed", cancellationToken);
+                var response = await _httpClient.GetAsync("api/advances/approveds", cancellationToken);
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.IsSuccessStatusCode)

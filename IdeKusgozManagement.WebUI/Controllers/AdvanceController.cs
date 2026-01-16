@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.WebUI.Models;
+﻿using IdeKusgozManagement.WebUI.Authorization;
 using IdeKusgozManagement.WebUI.Models.AdvanceModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -27,23 +27,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [HttpGet("liste")]
         public async Task<IActionResult> GetAdvances(CancellationToken cancellationToken)
         {
-            ApiResponse<IEnumerable<AdvanceViewModel>> response;
-            if (User.IsInRole("Admin"))
-            {
-                response = await _advanceApiService.GetAdvancesAsync(cancellationToken);
-            }
-            else if (User.IsInRole("Yönetici"))
-            {
-                response = await _advanceApiService.GetChiefProcessedAdvancesAsync(cancellationToken);
-            }
-            else if (User.IsInRole("Şef"))
-            {
-                response = await _advanceApiService.GetAdvancesAsync(cancellationToken);
-            }
-            else
-            {
-                return Forbid();
-            }
+            var response = await _advanceApiService.GetAdvancesAsync(cancellationToken);
+
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
@@ -54,7 +39,21 @@ namespace IdeKusgozManagement.WebUI.Controllers
             var response = await _advanceApiService.GetMyAdvancesAsync(cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
-
+        [Authorize(Roles = "Admin, Yönetici")]
+        [DepartmentDuty("Muhasebe Meslek Elemanı", "Muhasebe Müdürü", "Finans Uzmanı")]
+        [HttpGet("onaylanmis")]
+        public IActionResult Approved()
+        {
+            return View();
+        }
+        [Authorize(Roles = "Admin, Yönetici")]
+        [DepartmentDuty("Muhasebe Meslek Elemanı", "Muhasebe Müdürü", "Finans Uzmanı")]
+        [HttpGet("onaylanmis-liste")]
+        public async Task<IActionResult> GetApprovedAdvances(CancellationToken cancellationToken)
+        {
+            var response = await _advanceApiService.GetApprovedAdvancesAsync(cancellationToken);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("kullanici/{userId}")]
         public async Task<IActionResult> GetAdvancesByUser(string userId, CancellationToken cancellationToken)
@@ -133,14 +132,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [ValidateAntiForgeryToken]
         [HttpPut("{advanceId}/onayla")]
-        public async Task<IActionResult> ApproveAdvance(string advanceId, CancellationToken cancellationToken)
+        public async Task<IActionResult> ApproveAdvance(string advanceId, [FromBody] ApproveAdvanceViewModel? model = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {
                 return BadRequest("Avans ID'si gereklidir");
             }
 
-            var response = await _advanceApiService.ApproveAdvanceAsync(advanceId, cancellationToken);
+            var response = await _advanceApiService.ApproveAdvanceAsync(advanceId, model, cancellationToken);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 

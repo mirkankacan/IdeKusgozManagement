@@ -416,8 +416,6 @@
             });
         }
 
-        // No override needed - using common function from workrecord-common.js
-
         // ===== LEAVE REQUEST FUNCTIONS =====
         async function getApprovedLeaveRequests() {
             try {
@@ -649,7 +647,6 @@
                 const isApproved = existingRecord && (existingRecord.status === 1 || existingRecord.status === 2);
                 const isPending = existingRecord && existingRecord.status === 0;
                 const isRejected = existingRecord && (existingRecord.status === 3 || existingRecord.status === 4);
-
 
                 // Check if date is older than 2 days ago (should be disabled)
                 const today = new Date();

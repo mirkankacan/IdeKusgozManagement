@@ -16,6 +16,10 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .IsRequired();
             builder.Property(x => x.EndDate)
                 .IsRequired();
+            builder.Property(x => x.TargetEquipmentIds)
+             .IsRequired(false);
+            builder.Property(x => x.TargetUserIds)
+            .IsRequired(false);
             builder.Property(x => x.IsActive)
                 .IsRequired()
                 .HasDefaultValue(true);

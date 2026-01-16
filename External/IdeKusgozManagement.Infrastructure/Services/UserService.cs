@@ -3,6 +3,7 @@ using IdeKusgozManagement.Application.DTOs.UserDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
+using IdeKusgozManagement.Domain.Enums;
 using Mapster;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .GroupBy(h => h.SubordinateId)
                     .ToDictionary(g => g.Key, g => g.Select(x => x.SuperiorId).ToList());
 
-                // Tüm kullanıcı rollerini tek seferde al (Identity'de böyle bir metod varsa)
                 var userDTOs = new List<UserDTO>();
 
                 foreach (var user in users)
@@ -142,6 +142,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         await unitOfWork.GetRepository<IdtUserHierarchy>().AddRangeAsync(hierarchyList, cancellationToken);
                     }
                 }
+
+                var salaryAdvance = new IdtUserBalance
+                {
+                    UserId = user.Id,
+                    Balance = createUserDTO.SalaryAdvanceBalance ?? 0,
+                    Type = BalanceType.Salary,
+                };
+
+                var jobAdvance = new IdtUserBalance
+                {
+                    UserId = user.Id,
+                    Balance = createUserDTO.JobAdvanceBalance ?? 0,
+                    Type = BalanceType.Job,
+                };
+                await unitOfWork.GetRepository<IdtUserBalance>().AddAsync(salaryAdvance, cancellationToken);
+                await unitOfWork.GetRepository<IdtUserBalance>().AddAsync(jobAdvance, cancellationToken);
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
@@ -271,27 +287,38 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteUserAsync(string userId)
+        public async Task<ServiceResponse<bool>> DeleteUserAsync(string userId, CancellationToken cancellationToken)
         {
             try
             {
+                await unitOfWork.BeginTransactionAsync(cancellationToken);
                 var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return ServiceResponse<bool>.Error("Kullanıcı bulunamadı");
                 }
+                var userBalances = await unitOfWork.GetRepository<IdtUserBalance>().Where(x => x.UserId == userId).ToListAsync(cancellationToken);
+                var userHierarchies = await unitOfWork.GetRepository<IdtUserHierarchy>().Where(x => x.SuperiorId == userId || x.SubordinateId == userId).ToListAsync();
+                var userEntitlements = await unitOfWork.GetRepository<IdtAnnualLeaveEntitlement>().Where(x => x.UserId == userId).ToListAsync(cancellationToken);
+                unitOfWork.GetRepository<IdtUserBalance>().RemoveRange(userBalances);
+                unitOfWork.GetRepository<IdtUserHierarchy>().RemoveRange(userHierarchies);
+                unitOfWork.GetRepository<IdtAnnualLeaveEntitlement>().RemoveRange(userEntitlements);
 
+                await unitOfWork.SaveChangesAsync(cancellationToken);
                 var result = await userManager.DeleteAsync(user);
                 if (!result.Succeeded)
                 {
+                    await unitOfWork.RollbackTransactionAsync(cancellationToken);
                     var errors = result.Errors.Select(e => e.Description).ToList();
                     return ServiceResponse<bool>.Error(errors);
                 }
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
 
                 return ServiceResponse<bool>.Success(true, "Kullanıcı başarıyla silindi");
             }
             catch (Exception ex)
             {
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 logger.LogError(ex, "DeleteUserAsync işleminde hata oluştu. UserId: {UserId}", userId);
                 throw;
             }

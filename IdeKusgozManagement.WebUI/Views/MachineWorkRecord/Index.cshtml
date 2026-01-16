@@ -12,6 +12,43 @@
 
     <link href="~/css/puantaj-common.css" rel="stylesheet" />
 
+    <style>
+        .add-row-btn,
+        .delete-row-btn {
+            padding: 0;
+            font-size: 0.7rem;
+            line-height: 1;
+            vertical-align: middle;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .add-row-btn i,
+        .delete-row-btn i {
+            font-size: 0.7rem;
+        }
+        .date-cell {
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .date-cell .add-row-btn,
+        .date-cell .delete-row-btn {
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+            height: 1.5rem;
+            margin-right: 0.25rem;
+        }
+        .date-cell .badge {
+            vertical-align: middle;
+            display: inline-block;
+        }
+        /* Ensure all date cells have consistent alignment */
+        #workRecordsTable .date-cell {
+            text-align: left;
+        }
+    </style>
+
 }
 
 @Html.AntiForgeryToken()
@@ -21,8 +58,8 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="fas fa-bars-staggered me-2"></i>
-                    Kullanıcıya Göre Puantaj Listesi
+                    <i class="fas fa-gear me-2"></i>
+                    Kullanıcıya Göre Makine Puantaj Listesi
                 </h5>
                 <div class="mb-3">
                     <span class="badge bg-danger me-2">Tam Gün Resmi Tatil</span>
@@ -190,7 +227,7 @@
                     await initializeEquipmentSelect();
                     initializeLocationSelects();
                     await initializeProjectSelect();
-                    await initializeDailyStatusSelect();
+                    await initializeMachineWorkRecordDailyStatusSelect();
                     initializeUserSelect();
                 }
 
@@ -254,6 +291,58 @@
                         }
                     });
 
+                    // Click handler for add row button
+                    $(document).on('click', '.add-row-btn', async function () {
+                        const $button = $(this);
+                        const day = $button.data('day');
+                        const $currentRow = $button.closest('tr');
+                        
+                        // Check if row is locked
+                        if ($currentRow.data('is-locked') === true) {
+                            toastr.warning('Onaylanmış kayıtlar için yeni satır eklenemez!', 'Uyarı!');
+                            return;
+                        }
+
+                        await addNewRowForDay(day, $currentRow);
+                    });
+
+                    // Click handler for delete row button
+                    $(document).on('click', '.delete-row-btn', function () {
+                        const $button = $(this);
+                        const $row = $button.closest('tr');
+                        
+                        // Check if row is locked
+                        if ($row.data('is-locked') === true) {
+                            toastr.warning('Onaylanmış kayıtlar silinemez!', 'Uyarı!');
+                            return;
+                        }
+
+                        // Check if this is an additional row
+                        if ($row.data('is-additional') !== true) {
+                            toastr.warning('Ana satırlar silinemez!', 'Uyarı!');
+                            return;
+                        }
+
+                        // Confirm deletion
+                        Swal.fire({
+                            title: 'Satırı Sil',
+                            text: 'Bu satırı silmek istediğinizden emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: 'Evet, Sil',
+                            cancelButtonText: 'İptal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $row.fadeOut(300, function () {
+                                    $(this).remove();
+                                });
+                                toastr.success('Satır silindi.', 'Başarılı!');
+                            }
+                        });
+                    });
+
                 }
 
                 // ===== TABLE STATE MANAGEMENT =====
@@ -304,7 +393,7 @@
                                                                                                                                                                                                                                             <td colspan="12" class="text-center py-5">
                                                                                                                                                                                                                                                 <div class="text-muted">
                                                                                                                                                                                                                                                     <i class="fas fa-calendar-times fa-2x mb-3 text-warning"></i>
-                                                                                                                                                                                                                                                    <h5>Puantaj Verisi Bulunamadı</h5>
+                                                                                                                                                                                                                                                    <h5>Makine Puantaj Verisi Bulunamadı</h5>
                                                                                                                                                                                                                                                     <p>Seçili kullanıcının ${month}/${year} ayına ait puantaj kaydı bulunmamaktadır.</p>
                                                                                                                                                                                                                                                     <small>Personel henüz bu ay için puantaj doldurmamış olabilir.</small>
                                                                                                                                                                                                                                                 </div>
@@ -398,45 +487,67 @@
                 async function populateTableWithWorkRecords(workRecords) {
                     $('#workRecordsTableBody').empty();
 
-                    // Sort records by date
-                    workRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    // Sort records by date, then by start time
+                    workRecords.sort((a, b) => {
+                        const dateCompare = new Date(a.date) - new Date(b.date);
+                        if (dateCompare !== 0) return dateCompare;
+                        const aTime = a.startTime ? new Date(`2000-01-01T${a.startTime}`) : new Date('2000-01-01T00:00:00');
+                        const bTime = b.startTime ? new Date(`2000-01-01T${b.startTime}`) : new Date('2000-01-01T00:00:00');
+                        return aTime - bTime;
+                    });
 
+                    // Group records by day
+                    const recordsByDay = {};
                     workRecords.forEach(record => {
                         const date = new Date(record.date);
                         const day = date.getDate();
-                        const dayOfWeek = getDayOfWeekTurkish(date.getDay());
-                        const isSunday = date.getDay() === 0;
-                        const formattedDate = `${day.toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()} ${dayOfWeek}`;
-
-                        // Auto-set daily status if empty based on holidays and Sundays
-                        if (!record.dailyStatus) {
-                            const isFullHolidayDay = isFullHoliday(day, currentMonth, currentYear);
-                            if (isFullHolidayDay) {
-                                record.dailyStatus = 'Resmi Tatil';
-                            } else if (isSunday) {
-                                record.dailyStatus = 'Hafta Tatili (DAY OFF)';
-                            } else {
-                                // Default to "Çalışıyor" for regular days
-                                record.dailyStatus = 'Çalışıyor';
-                            }
+                        if (!recordsByDay[day]) {
+                            recordsByDay[day] = [];
                         }
+                        recordsByDay[day].push(record);
+                    });
 
-                        const startTime = formatTimeSpan(record.startTime);
-                        const endTime = formatTimeSpan(record.endTime);
-                        let statusBadge = generateStatusBadge(record.status, record.statusText);
-                        if (record.status === 3 || record.status === 4) {
-                            const reason = record.rejectReason || '';
-                            const encoded = encodeURIComponent(reason);
-                            const hasReason = !!reason;
-                            statusBadge = `
+                    // Process each day
+                    Object.keys(recordsByDay).forEach(day => {
+                        const dayRecords = recordsByDay[day];
+                        dayRecords.forEach((record, index) => {
+                            const date = new Date(record.date);
+                            const dayOfWeek = getDayOfWeekTurkish(date.getDay());
+                            const isSunday = date.getDay() === 0;
+                            const formattedDate = `${day.toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()} ${dayOfWeek}`;
+
+                            // Auto-set daily status if empty based on holidays and Sundays
+                            // For MachineWorkRecord, only use allowed statuses: Çalışıyor, Hafta Tatili (DAY OFF), Transport
+                            if (!record.dailyStatus) {
+                                const isFullHolidayDay = isFullHoliday(parseInt(day), currentMonth, currentYear);
+                                if (isFullHolidayDay) {
+                                    record.dailyStatus = 'Hafta Tatili (DAY OFF)';
+                                } else if (isSunday) {
+                                    record.dailyStatus = 'Hafta Tatili (DAY OFF)';
+                                } else {
+                                    // Default to "Çalışıyor" for regular days
+                                    record.dailyStatus = 'Çalışıyor';
+                                }
+                            }
+
+                            const startTime = formatTimeSpan(record.startTime);
+                            const endTime = formatTimeSpan(record.endTime);
+                            let statusBadge = generateStatusBadge(record.status, record.statusText);
+                            if (record.status === 3 || record.status === 4) {
+                                const reason = record.rejectReason || '';
+                                const encoded = encodeURIComponent(reason);
+                                const hasReason = !!reason;
+                                statusBadge = `
         <span class="badge bg-danger status-rejected" data-reason="${encoded}" title="${hasReason ? 'Reddetme açıklamasını görmek için tıklayın' : 'Reddedildi'}">
         <i class="fas fa-times me-1"></i>Reddedildi${hasReason ? ' <i class=\"fas fa-exclamation-circle ms-1\" title=\"Açıklama var\"></i>' : ''}
         </span>
                                                                                                                                                                                                                                             `;
-                        }
+                            }
 
-                        const row = createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge, isSunday);
-                        $('#workRecordsTableBody').append(row);
+                            const isAdditionalRow = index > 0;
+                            const row = createIndexTableRow(record, parseInt(day), formattedDate, startTime, endTime, statusBadge, isSunday, isAdditionalRow);
+                            $('#workRecordsTableBody').append(row);
+                        });
                     });
 
                     // Initialize location selects and populate values
@@ -448,7 +559,7 @@
                     applyProjectRulesForAllRows();
                 }
 
-                function createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge, isSunday = false) {
+                function createIndexTableRow(record, day, formattedDate, startTime, endTime, statusBadge, isSunday = false, isAdditionalRow = false) {
                     // Onay durumunu kontrol et - MachineWorkRecord için status 1 veya 2 onaylanmış demek
                     const isApproved = record.status === 1 || record.status === 2;
                     const disabledAttr = isApproved ? 'disabled' : '';
@@ -461,9 +572,26 @@
                         ? record.isInternalTransport 
                         : (record.hasInternalTransport || false);
 
+                    // Generate unique row ID
+                    const rowId = `row_${day}_${record.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    const checkboxId = `it_${rowId}`;
+
+                    // Button HTML - only show for main rows (not additional rows)
+                    let buttonHtml = '';
+                    if (!isAdditionalRow) {
+                        buttonHtml = `<button type="button" class="btn btn-sm btn-success add-row-btn me-1" data-day="${day}" title="Aynı gün için yeni satır ekle" ${disabledAttr} style="width: 1.5rem; height: 1.5rem; padding: 0;">
+                            <i class="fas fa-plus"></i>
+                        </button>`;
+                    } else {
+                        buttonHtml = `<button type="button" class="btn btn-sm btn-danger delete-row-btn me-1" title="Bu satırı sil" style="width: 1.5rem; height: 1.5rem; padding: 0;">
+                            <i class="fas fa-times" style="font-size: 0.7rem;"></i>
+                        </button>`;
+                    }
+
                     return `
-                                                                                                                                                                                                                        <tr data-day="${day}" data-record-id="${record.id}" data-is-locked="${isApproved}" class="${rowClass}">
+                                                                                                                                                                                                                        <tr data-day="${day}" data-row-id="${rowId}" data-record-id="${record.id}" data-is-locked="${isApproved}" data-is-additional="${isAdditionalRow}" class="${rowClass}">
                                                                                                                                                                                                                             <td class="date-cell">
+                                                                                                                                                                                                                                ${buttonHtml}
                                                                                                                                                                                                                                 <span class="badge bg-info">${formattedDate}</span>
                                                                                                                                                                                                                             </td>
                                                                                                                                                                                                                             <td>
@@ -494,12 +622,12 @@
                                                                                                                                                                                                                                 </select>
                                                                                                                                                                                                                             </td>
                                                                                                                                                                                                                             <td>
-                                                                                                                                                                                                                                <select class="form-select form-select-sm province-select" data-day="${day}" ${disabledAttr}>
+                                                                                                                                                                                                                                <select class="form-select form-select-sm province-select" data-day="${day}" data-row-id="${rowId}" ${disabledAttr}>
                                                                                                                                                                                                                                     <option value="">İl seçin</option>
                                                                                                                                                                                                                                 </select>
                                                                                                                                                                                                                             </td>
                                                                                                                                                                                                                             <td>
-                                                                                                                                                                                                                                <select class="form-select form-select-sm district-select" data-day="${day}" ${disabledAttr}>
+                                                                                                                                                                                                                                <select class="form-select form-select-sm district-select" data-day="${day}" data-row-id="${rowId}" ${disabledAttr}>
                                                                                                                                                                                                                                     <option value="">İlçe seçin</option>
                                                                                                                                                                                                                                 </select>
                                                                                                                                                                                                                             </td>
@@ -514,11 +642,11 @@
                                                                                                                                                                                                                                 <div class="form-check d-flex justify-content-center">
                                                                                                                                                                                                                                     <input class="form-check-input internal-transport-checkbox" 
                                                                                                                                                                                                                                            type="checkbox" 
-                                                                                                                                                                                                                                           id="it_${day}"
+                                                                                                                                                                                                                                           id="${checkboxId}"
                                                                                                                                                                                                                                            data-day="${day}" 
                                                                                                                                                                                                                                            ${internalTransport ? 'checked' : ''} 
                                                                                                                                                                                                                                            ${disabledAttr}>
-                                                                                                                                                                                                                                    <label class="form-check-label" for="it_${day}">
+                                                                                                                                                                                                                                    <label class="form-check-label" for="${checkboxId}">
 
                                                                                                                                                                                                                                     </label>
                                                                                                                                                                                                                                 </div>
@@ -846,6 +974,207 @@
                         }
                     } catch (error) {
                         handleAjaxError(error, 'Reddetme başarısız');
+                    }
+                }
+
+                // ===== ADD NEW ROW FOR SAME DAY =====
+                async function addNewRowForDay(day, $referenceRow) {
+                    try {
+                        const year = currentYear;
+                        const month = currentMonth;
+                        const date = new Date(year, month - 1, day);
+                        const dayOfWeek = getDayOfWeekTurkish(date.getDay());
+                        const isSunday = date.getDay() === 0;
+                        const formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year} ${dayOfWeek}`;
+
+                        // Get holiday info
+                        const isHolidayDay = checkIfHoliday(day, month, year);
+                        const isFullHolidayDay = isFullHoliday(day, month, year);
+
+                        // Get values from reference row (ana satırdan verileri al, saatler hariç)
+                        const referenceProjectId = $referenceRow.find('.project-select').val() || '';
+                        const referenceEquipmentId = $referenceRow.find('.equipment-select').val() || '';
+                        const referenceProvince = $referenceRow.find('.province-select').val() || '';
+                        const referenceDistrict = $referenceRow.find('.district-select').val() || '';
+                        const referenceDescription = $referenceRow.find('.description-textarea').val() || '';
+                        const referenceInternalTransport = $referenceRow.find('.internal-transport-checkbox').is(':checked');
+                        const referenceDailyStatus = $referenceRow.find('.daily-status-select').val() || '';
+
+                        // Determine default daily status
+                        let dailyStatus = referenceDailyStatus || '';
+                        if (!dailyStatus) {
+                            if (isFullHolidayDay) {
+                                dailyStatus = 'Hafta Tatili (DAY OFF)';
+                            } else if (isSunday) {
+                                dailyStatus = 'Hafta Tatili (DAY OFF)';
+                            } else {
+                                dailyStatus = 'Çalışıyor';
+                            }
+                        }
+
+                        // Create default values for new row (ana satırdan verileri al, saatler hariç)
+                        const defaultValues = {
+                            dailyStatus: dailyStatus,
+                            startTime: '',
+                            endTime: '',
+                            projectId: referenceProjectId,
+                            equipmentId: referenceEquipmentId,
+                            province: referenceProvince,
+                            district: referenceDistrict,
+                            description: referenceDescription,
+                            hasInternalTransport: referenceInternalTransport
+                        };
+
+                        // Status badge for new row
+                        const statusBadge = generateStatusBadge(null, 'Yeni');
+
+                        // Create new row (mark as additional row)
+                        const newRow = createIndexTableRow({
+                            id: '',
+                            date: date,
+                            dailyStatus: dailyStatus,
+                            startTime: null,
+                            endTime: null,
+                            projectId: referenceProjectId,
+                            equipmentId: referenceEquipmentId,
+                            province: referenceProvince,
+                            district: referenceDistrict,
+                            description: referenceDescription,
+                            hasInternalTransport: referenceInternalTransport,
+                            status: 0,
+                            statusText: 'Yeni'
+                        }, day, formattedDate, '', '', statusBadge, isSunday, true);
+
+                        // Insert new row after the reference row
+                        $referenceRow.after(newRow);
+                        const $newRow = $referenceRow.next('tr');
+
+                        // Get all row elements
+                        const startTimeInput = $newRow.find('.start-time');
+                        const endTimeInput = $newRow.find('.end-time');
+                        const projectSelect = $newRow.find('.project-select');
+                        const equipmentSelect = $newRow.find('.equipment-select');
+                        const provinceSelect = $newRow.find('.province-select');
+                        const districtSelect = $newRow.find('.district-select');
+                        const descriptionTextarea = $newRow.find('.description-textarea');
+                        const internalTransportCheckbox = $newRow.find('.internal-transport-checkbox');
+
+                        // Populate provinces for the new row
+                        populateProvinces(provinceSelect);
+
+                        // Initialize Select2 for the new row
+                        await initializeAllSelects();
+                        
+                        // Set values from reference row after Select2 initialization
+                        if (referenceProjectId) {
+                            setTimeout(() => {
+                                projectSelect.val(referenceProjectId).trigger('change');
+                            }, 200);
+                        }
+                        
+                        if (referenceEquipmentId) {
+                            setTimeout(() => {
+                                equipmentSelect.val(referenceEquipmentId).trigger('change');
+                            }, 300);
+                        }
+                        
+                        if (referenceProvince) {
+                            setTimeout(() => {
+                                provinceSelect.val(referenceProvince).trigger('change');
+                                setTimeout(() => {
+                                    if (referenceDistrict) {
+                                        districtSelect.val(referenceDistrict).trigger('change');
+                                    }
+                                }, 100);
+                            }, 400);
+                        }
+
+                        // Apply rules for the new row
+                        const newRowStatusSelect = $newRow.find('.daily-status-select');
+                        const newRowStatus = newRowStatusSelect.val() || newRowStatusSelect.data('current-value') || '';
+                        
+                        // Apply status-based rules directly to the new row
+                        if (newRowStatus) {
+                            const isWorking = newRowStatus === 'Çalışıyor';
+                            const isDayOff = newRowStatus === 'Hafta Tatili (DAY OFF)';
+                            const isTransport = newRowStatus === 'Transport';
+                            
+                            if (isWorking || isTransport) {
+                                startTimeInput.prop('disabled', false);
+                                endTimeInput.prop('disabled', false);
+                                projectSelect.prop('disabled', false);
+                                equipmentSelect.prop('disabled', false);
+                                provinceSelect.prop('disabled', false);
+                                districtSelect.prop('disabled', false);
+                                descriptionTextarea.prop('disabled', false);
+                                internalTransportCheckbox.prop('disabled', false);
+                            } else if (isDayOff) {
+                                startTimeInput.prop('disabled', true);
+                                endTimeInput.prop('disabled', true);
+                                projectSelect.prop('disabled', false);
+                                equipmentSelect.prop('disabled', false);
+                                provinceSelect.prop('disabled', false);
+                                districtSelect.prop('disabled', false);
+                                descriptionTextarea.prop('disabled', false);
+                                internalTransportCheckbox.prop('disabled', false);
+                            } else {
+                                startTimeInput.prop('disabled', true);
+                                endTimeInput.prop('disabled', true);
+                                projectSelect.prop('disabled', true);
+                                equipmentSelect.prop('disabled', true);
+                                provinceSelect.prop('disabled', true);
+                                districtSelect.prop('disabled', true);
+                                descriptionTextarea.prop('disabled', true);
+                                internalTransportCheckbox.prop('disabled', true);
+                            }
+                        }
+                        
+                        // Apply project rules
+                        const selectedProjectName = projectSelect.find('option:selected').text();
+                        const isGarajOrOfis = selectedProjectName && 
+                            (selectedProjectName.toLowerCase() === 'garaj' || selectedProjectName.toLowerCase() === 'ofis');
+                        
+                        if (isGarajOrOfis) {
+                            equipmentSelect.prop('disabled', true);
+                            provinceSelect.prop('disabled', true);
+                            districtSelect.prop('disabled', true);
+                            if (equipmentSelect.data('select2')) {
+                                equipmentSelect.select2('enable', false);
+                                provinceSelect.select2('enable', false);
+                                districtSelect.select2('enable', false);
+                            }
+                        } else {
+                            equipmentSelect.prop('disabled', false);
+                            provinceSelect.prop('disabled', false);
+                            districtSelect.prop('disabled', false);
+                            if (equipmentSelect.data('select2')) {
+                                equipmentSelect.select2('enable', true);
+                                provinceSelect.select2('enable', true);
+                                districtSelect.select2('enable', true);
+                            }
+                        }
+
+                        // Scroll to new row (minimal scroll)
+                        const scrollOffset = 50;
+                        const currentScrollTop = $(window).scrollTop();
+                        const newRowTop = $newRow.offset().top;
+                        const targetScroll = newRowTop - scrollOffset;
+                        
+                        // Only scroll if the new row is significantly below the current view
+                        if (targetScroll > currentScrollTop + $(window).height() - 200) {
+                            $('html, body').animate({
+                                scrollTop: targetScroll
+                            }, 200);
+                        }
+
+                        // Focus on start time input
+                        setTimeout(() => {
+                            $newRow.find('.start-time').focus();
+                        }, 100);
+
+                    } catch (error) {
+                        console.error('Error adding new row:', error);
+                        toastr.error('Yeni satır eklenirken bir hata oluştu.', 'Hata!');
                     }
                 }
     </script>

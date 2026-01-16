@@ -7,7 +7,7 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
 }
@@ -23,7 +23,7 @@
                     Proje Yönetimi
                 </h5>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#createProjectModal">
+                    data-bs-target="#createProjectModal">
                     <i class="fas fa-plus me-2"></i>Proje Ekle
                 </button>
                 <br />
@@ -36,6 +36,8 @@
                                 <th>PROJE ADI</th>
                                 <th>BAŞLANGIÇ<br />TARİHİ</th>
                                 <th>BİTİŞ<br />TARİHİ</th>
+                                <th>ATANAN<br />KULLANICILAR</th>
+                                <th>ATANAN<br />EKİPMANLAR</th>
                                 <th>AKTİF Mİ</th>
                                 <th>İŞLEMLER</th>
                             </tr>
@@ -52,7 +54,7 @@
 
 <!-- Create Project Modal -->
 <div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel"
-     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -73,10 +75,25 @@
                             <div class="input-group">
 
                                 <input type="text" class="form-control date-project" id="c-date-project" required
-                                       placeholder="Başlangıç - Bitiş"> <span class="input-group-text">
+                                    placeholder="Başlangıç - Bitiş"> <span class="input-group-text">
                                     <i class="fas fa-calendar"></i>
                                 </span>
                             </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="selectCTargetUsers" class="form-label">Hedef Kullanıcılar</label>
+                            <select class="form-select" id="selectCTargetUsers" multiple>
+                                <option value="">Yükleniyor...</option>
+                            </select>
+                            <div class="form-text">Projeye atanacak kullanıcıları seçin (çoklu seçim yapabilirsiniz)
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="selectCTargetEquipments" class="form-label">Hedef Ekipmanlar</label>
+                            <select class="form-select" id="selectCTargetEquipments" multiple>
+                                <option value="">Yükleniyor...</option>
+                            </select>
+                            <div class="form-text">Projeye atanacak ekipmanları seçin (çoklu seçim yapabilirsiniz)</div>
                         </div>
 
                     </div>
@@ -92,7 +109,7 @@
 
 <!-- Update Project Modal -->
 <div class="modal fade" id="updateProjectModal" tabindex="-1" aria-labelledby="updateProjectModalLabel"
-     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -114,10 +131,25 @@
                             <div class="input-group">
 
                                 <input type="text" class="form-control date-project" id="u-date-project" required
-                                       placeholder="Başlangıç - Bitiş"> <span class="input-group-text">
+                                    placeholder="Başlangıç - Bitiş"> <span class="input-group-text">
                                     <i class="fas fa-calendar"></i>
                                 </span>
                             </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="selectUTargetUsers" class="form-label">Hedef Kullanıcılar</label>
+                            <select class="form-select" id="selectUTargetUsers" multiple>
+                                <option value="">Yükleniyor...</option>
+                            </select>
+                            <div class="form-text">Projeye atanacak kullanıcıları seçin (çoklu seçim yapabilirsiniz)
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="selectUTargetEquipments" class="form-label">Hedef Ekipmanlar</label>
+                            <select class="form-select" id="selectUTargetEquipments" multiple>
+                                <option value="">Yükleniyor...</option>
+                            </select>
+                            <div class="form-text">Projeye atanacak ekipmanları seçin (çoklu seçim yapabilirsiniz)</div>
                         </div>
                     </div>
                 </div>
@@ -142,6 +174,7 @@
             setupEventListeners();
 
             await initializeDataTable();
+            await initializeSelects();
 
             $('.date-project').daterangepicker({
                 locale: turkishLocale,
@@ -158,7 +191,7 @@
             $('#c-date-project').on('cancel.daterangepicker', function (ev, picker) {
                 $(this).val('');
             });
-             $('#u-date-project').on('apply.daterangepicker', function (ev, picker) {
+            $('#u-date-project').on('apply.daterangepicker', function (ev, picker) {
                 $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
 
@@ -214,16 +247,44 @@
                             return data ? `<strong>${data}</strong>` : '';
                         }
                     },
-                      {
+                    {
                         "data": "startDate",
                         "render": function (data) {
                             return data ? new Date(data).toLocaleDateString('tr-TR') : '';
                         }
                     },
-                      {
+                    {
                         "data": "endDate",
                         "render": function (data) {
                             return data ? new Date(data).toLocaleDateString('tr-TR') : '';
+                        }
+                    },
+                    {
+                        "data": "targetUsers",
+                        "width": "15%",
+                        "orderable": false,
+                        "render": function (data, type, row) {
+                            if (!data || !Array.isArray(data) || data.length === 0) {
+                                return '<span class="text-muted">-</span>';
+                            }
+                            const usersHtml = data.map(user =>
+                                `<span class="badge bg-info me-1 mb-1">${user}</span>`
+                            ).join('');
+                            return usersHtml;
+                        }
+                    },
+                    {
+                        "data": "targetEquipments",
+                        "width": "15%",
+                        "orderable": false,
+                        "render": function (data, type, row) {
+                            if (!data || !Array.isArray(data) || data.length === 0) {
+                                return '<span class="text-muted">-</span>';
+                            }
+                            const equipmentsHtml = data.map(equipment =>
+                                `<span class="badge bg-secondary me-1 mb-1">${equipment}</span>`
+                            ).join('');
+                            return equipmentsHtml;
                         }
                     },
                     {
@@ -245,30 +306,30 @@
 
                             const statusButton = row.isActive
                                 ? `<button type="button" class="btn btn-outline-success btn-sm"
-                                                onclick="deactivateProject('${row.id}')" title="Pasifleştir">
-                                                    <i class="fas fa-toggle-on"></i>
-                                                </button>`
+                                                                        onclick="deactivateProject('${row.id}')" title="Pasifleştir">
+                                                                            <i class="fas fa-toggle-on"></i>
+                                                                        </button>`
                                 : `<button type="button" class="btn btn-outline-secondary btn-sm"
-                                                onclick="activateProject('${row.id}')" title="Aktifleştir">
-                                                    <i class="fas fa-toggle-off"></i>
-                                               </button>`;
+                                                                        onclick="activateProject('${row.id}')" title="Aktifleştir">
+                                                                            <i class="fas fa-toggle-off"></i>
+                                                                       </button>`;
                             return `
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                     <button type="button" class="btn btn-outline-warning btn-sm"
-                                                       onclick="loadProjectForEdit('${row.id}')" title="Düzenle">
-                                                      <i class="fas fa-edit"></i>
-                                                     </button>
-                                                     ${statusButton}
-                                                     <button type="button" class="btn btn-outline-danger btn-sm"
-                                                       onclick="deleteProject('${row.id}')" title="Sil">
-                                                      <i class="fas fa-trash"></i>
-                                                     </button>
-                                                    </div>
-                                               `;
+                                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                             <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                               onclick="loadProjectForEdit('${row.id}')" title="Düzenle">
+                                                                              <i class="fas fa-edit"></i>
+                                                                             </button>
+                                                                             ${statusButton}
+                                                                             <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                               onclick="deleteProject('${row.id}')" title="Sil">
+                                                                              <i class="fas fa-trash"></i>
+                                                                             </button>
+                                                                            </div>
+                                                                       `;
                         }
                     }
                 ],
-                  "language": {
+                "language": {
                     url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
@@ -309,22 +370,132 @@
             $('#createProjectModal').on('hidden.bs.modal', function () {
                 $('#createProjectForm')[0].reset();
                 $('#createProjectForm').removeClass('was-validated');
+                $('#selectCTargetUsers').val(null).trigger('change');
+                $('#selectCTargetEquipments').val(null).trigger('change');
             });
 
             $('#updateProjectModal').on('hidden.bs.modal', function () {
                 $('#updateProjectForm')[0].reset();
                 $('#updateProjectForm').removeClass('was-validated');
+                $('#selectUTargetUsers').val(null).trigger('change');
+                $('#selectUTargetEquipments').val(null).trigger('change');
             });
+        }
+
+        async function initializeSelects() {
+            try {
+                await initializeUserSelects();
+                await initializeEquipmentSelects();
+            } catch (error) {
+                console.error('Select initialization error:', error);
+                toastr.error('Select alanları yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        async function initializeUserSelects() {
+            try {
+                const response = await $.ajax({
+                    url: '/kullanici/liste',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    // Create modal select
+                    $('#selectCTargetUsers').empty();
+                    response.data.forEach(user => {
+                        $('#selectCTargetUsers').append(`<option value="${user.id}">${user.fullNameWithExp || user.fullName}</option>`);
+                    });
+
+                    // Update modal select
+                    $('#selectUTargetUsers').empty();
+                    response.data.forEach(user => {
+                        $('#selectUTargetUsers').append(`<option value="${user.id}">${user.fullNameWithExp || user.fullName}</option>`);
+                    });
+                }
+
+                // Initialize select2 for create modal
+                $('#selectCTargetUsers').select2({
+                    placeholder: 'Kullanıcı seçin',
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    multiple: true,
+                    allowClear: true
+                });
+
+                // Initialize select2 for update modal
+                $('#selectUTargetUsers').select2({
+                    placeholder: 'Kullanıcı seçin',
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    multiple: true,
+                    allowClear: true
+                });
+            } catch (error) {
+                console.error('Kullanıcı listesi yüklenirken hata:', error);
+                toastr.error('Kullanıcı listesi yüklenirken hata oluştu', 'Hata!');
+            }
+        }
+
+        async function initializeEquipmentSelects() {
+            try {
+                const response = await $.ajax({
+                    url: '/ekipman/aktif-liste',
+                    type: 'GET',
+                    dataType: 'json'
+                });
+
+                if (response && response.isSuccess && response.data) {
+                    // Create modal select
+                    $('#selectCTargetEquipments').empty();
+                    response.data.forEach(equipment => {
+                        $('#selectCTargetEquipments').append(`<option value="${equipment.id}">${equipment.name}</option>`);
+                    });
+
+                    // Update modal select
+                    $('#selectUTargetEquipments').empty();
+                    response.data.forEach(equipment => {
+                        $('#selectUTargetEquipments').append(`<option value="${equipment.id}">${equipment.name}</option>`);
+                    });
+                }
+
+                // Initialize select2 for create modal
+                $('#selectCTargetEquipments').select2({
+                    placeholder: 'Ekipman seçin',
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    multiple: true,
+                    allowClear: true
+                });
+
+                // Initialize select2 for update modal
+                $('#selectUTargetEquipments').select2({
+                    placeholder: 'Ekipman seçin',
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    multiple: true,
+                    allowClear: true
+                });
+            } catch (error) {
+                console.error('Ekipman listesi yüklenirken hata:', error);
+                toastr.error('Ekipman listesi yüklenirken hata oluştu', 'Hata!');
+            }
         }
 
         async function createProject() {
             var picker = $('#c-date-project').data('daterangepicker');
             var startDate = picker.startDate.format('YYYY-MM-DD');
             var endDate = picker.endDate.format('YYYY-MM-DD');
+
+            const targetUserIds = $('#selectCTargetUsers').val();
+            const targetEquipmentIds = $('#selectCTargetEquipments').val();
+
             const projectData = {
                 name: $('#txtCName').val().trim(),
                 startDate: startDate,
-                endDate: endDate
+                endDate: endDate,
+                targetUserIds: targetUserIds && targetUserIds.length > 0 ? targetUserIds : null,
+                targetEquipmentIds: targetEquipmentIds && targetEquipmentIds.length > 0 ? targetEquipmentIds : null
             };
 
             try {
@@ -358,7 +529,7 @@
                 if (response.isSuccess) {
                     $('#txtUId').val(response.data.id);
                     $('#txtUName').val(response.data.name);
-                      if ($('#u-date-project').data('daterangepicker')) {
+                    if ($('#u-date-project').data('daterangepicker')) {
                         const startDate = moment(response.data.startDate);
                         const endDate = moment(response.data.endDate);
 
@@ -366,6 +537,21 @@
                         $('#u-date-project').data('daterangepicker').setStartDate(startDate);
                         $('#u-date-project').data('daterangepicker').setEndDate(endDate);
                     }
+
+                    // Set target users
+                    if (response.data.targetUserIds && response.data.targetUserIds.length > 0) {
+                        $('#selectUTargetUsers').val(response.data.targetUserIds).trigger('change');
+                    } else {
+                        $('#selectUTargetUsers').val(null).trigger('change');
+                    }
+
+                    // Set target equipments
+                    if (response.data.targetEquipmentIds && response.data.targetEquipmentIds.length > 0) {
+                        $('#selectUTargetEquipments').val(response.data.targetEquipmentIds).trigger('change');
+                    } else {
+                        $('#selectUTargetEquipments').val(null).trigger('change');
+                    }
+
                     $('#updateProjectModal').modal('show');
                 } else {
                     toastr.error(response.message, 'Hata!');
@@ -377,14 +563,20 @@
         }
 
         async function updateProject() {
-             var picker = $('#u-date-project').data('daterangepicker');
+            var picker = $('#u-date-project').data('daterangepicker');
             const startDate = picker.startDate.format('YYYY-MM-DD');
             const endDate = picker.endDate.format('YYYY-MM-DD');
             const projectId = $('#txtUId').val();
+
+            const targetUserIds = $('#selectUTargetUsers').val();
+            const targetEquipmentIds = $('#selectUTargetEquipments').val();
+
             const projectData = {
                 name: $('#txtUName').val(),
                 startDate: startDate,
-                endDate: endDate
+                endDate: endDate,
+                targetUserIds: targetUserIds && targetUserIds.length > 0 ? targetUserIds : null,
+                targetEquipmentIds: targetEquipmentIds && targetEquipmentIds.length > 0 ? targetEquipmentIds : null
             };
 
             try {

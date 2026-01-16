@@ -53,7 +53,7 @@
 
 <!-- Modal -->
 <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true"
-    data-bs-backdrop="static" data-bs-keyboard="false">
+     data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -153,7 +153,7 @@
                                 Geçerli bir departman görevi seçiniz.
                             </div>
                         </div>
-                         <div class="col-md-6">
+                        <div class="col-md-6">
                             <label for="c-hireDate" class="form-label">İşe Başlangıç Tarihi</label>
                             <div class="input-group">
                                 <input type="text" class="form-control date-user" id="c-hireDate"
@@ -176,6 +176,28 @@
                             </div>
                             <div class="invalid-feedback">
                                 Geçerli bir e-posta adresi giriniz.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="txtCSalaryAdvanceBalance" class="form-label">Maaş Avansı Bakiyesi</label>
+                            <input type="number" class="form-control" id="txtCSalaryAdvanceBalance" value="" step="0.01" min="0">
+
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir tutar giriniz.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="txtCJobAdvanceBalance" class="form-label">İş Avansı Bakiyesi</label>
+                            <input type="number" class="form-control" id="txtCJobAdvanceBalance" value="" step="0.01" min="0">
+
+                            <div class="valid-feedback">
+                                İyi görünüyor!
+                            </div>
+                            <div class="invalid-feedback">
+                                Geçerli bir tutar giriniz.
                             </div>
                         </div>
 
@@ -291,7 +313,7 @@
                             </select>
 
                         </div>
-                          <div class="col-md-6">
+                        <div class="col-md-6">
                             <label for="u-hireDate" class="form-label">İşe Başlangıç Tarihi</label>
                             <div class="input-group">
                                 <input type="text" class="form-control date-user" id="u-hireDate"
@@ -305,7 +327,7 @@
                             <label for="u-terminationDate" class="form-label">İş Çıkış Tarihi</label>
                             <div class="input-group">
                                 <input type="text" class="form-control date-user" id="u-terminationDate"
-                                        placeholder="İş çıkış tarihini seçin">
+                                       placeholder="İş çıkış tarihini seçin">
                                 <span class="input-group-text">
                                     <i class="fas fa-calendar"></i>
                                 </span>
@@ -430,6 +452,8 @@
             $('#txtCSurname').val('');
             $('#txtCEmail').val('');
             $('#c-hireDate').val('');
+            $('#txtCSalaryAdvanceBalance').val('');
+            $('#txtCJobAdvanceBalance').val('');
 
             // Select2 alanlarını temizle
             $('#selectCRole').val('').trigger('change');
@@ -455,7 +479,7 @@
             usersTable = $('#usersTable').DataTable({
                 "processing": true,
                 "ajax": {
-                    "url": "/kullanici/liste",
+                    "url": "/kullanici/ana-liste",
                     "type": "GET",
                     "dataSrc": function (json) {
                         if (json && json.isSuccess && json.data) {
@@ -537,10 +561,12 @@
                         "orderable": false,
                         "className": "text-center",
                         "render": function (data, type, row) {
-                            const currentUserId = '@User.FindFirst(ClaimTypes.NameIdentifier)?.Value';
 
-                            if (row.id === currentUserId) {
+                            if (row.id ===  @Html.Raw(Json.Serialize(User.FindFirst(ClaimTypes.NameIdentifier)?.Value))) {
                                 return '<span class="text-muted">-</span>';
+                            }
+                            if(@Html.Raw(Json.Serialize(User.FindFirst(ClaimTypes.Role)?.Value)) !== "Admin" && row.roleName === "Admin"){
+                                 return '<span class="text-muted">-</span>';
                             }
                             const statusButton = row.isActive
                                 ? `<button type="button" class="btn btn-outline-success btn-sm"
@@ -596,6 +622,10 @@
                 }
                 var picker = $('#c-hireDate').data('daterangepicker');
                 var hireDate = picker.startDate.format('YYYY-MM-DD');
+
+                const salaryAdvanceBalance = $('#txtCSalaryAdvanceBalance').val().trim();
+                const jobAdvanceBalance = $('#txtCJobAdvanceBalance').val().trim();
+
                 const userData = {
                     TCNo: $('#txtCTCNo').val().trim(),
                     Name: $('#txtCName').val().trim(),
@@ -607,7 +637,9 @@
                     RoleName: $('#selectCRole').val(),
                     HireDate: hireDate,
                     IsExpatriate: $('#selectCExpatriate').val() == "true",
-                    SuperiorIds: $('#selectCSuperior').val() || []
+                    SuperiorIds: $('#selectCSuperior').val() || [],
+                    SalaryAdvanceBalance: salaryAdvanceBalance ? parseFloat(salaryAdvanceBalance) : null,
+                    JobAdvanceBalance: jobAdvanceBalance ? parseFloat(jobAdvanceBalance) : null
                 };
                 const submitBtn = $('#btnCreateUser');
                 submitBtn.prop('disabled', true)
@@ -719,7 +751,6 @@
                     width: '100%'
                 });
 
-            
             } catch (error) {
                 console.error('Departman görevi listesi yüklenirken hata:', error);
                 toastr.error('Departman görevi listesi yüklenirken hata oluştu', 'Hata!');

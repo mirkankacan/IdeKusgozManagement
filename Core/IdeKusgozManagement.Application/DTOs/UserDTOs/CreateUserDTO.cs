@@ -13,5 +13,7 @@
         public bool IsExpatriate { get; set; }
         public DateTime? HireDate { get; set; }
         public List<string> SuperiorIds { get; set; } = new();
+        public decimal? SalaryAdvanceBalance { get; set; } = null;
+        public decimal? JobAdvanceBalance { get; set; } = null;
     }
 }

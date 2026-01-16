@@ -3,5 +3,6 @@
     public class UpdateEquipmentDTO
     {
         public string Name { get; set; }
+        public string GroupName { get; set; }
     }
 }

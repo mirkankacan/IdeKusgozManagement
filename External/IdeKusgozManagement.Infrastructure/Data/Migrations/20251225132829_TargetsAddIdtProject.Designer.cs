@@ -4,16 +4,19 @@ using IdeKusgozManagement.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace IdeKusgozManagement.Infrastructure.Data.Migrations
+namespace IdeKusgozManagement.Infrastructure.data.migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251225132829_TargetsAddIdtProject")]
+    partial class TargetsAddIdtProject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -240,52 +243,6 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("IdtAdvances");
-                });
-
-            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtAdvancePart", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("AdvanceId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("ApprovalDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ApprovedById")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("ApprovedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdvanceId");
-
-                    b.HasIndex("ApprovedById");
-
-                    b.ToTable("IdtAdvanceParts");
                 });
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtAnnualLeaveEntitlement", b =>
@@ -1406,24 +1363,6 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtAdvancePart", b =>
-                {
-                    b.HasOne("IdeKusgozManagement.Domain.Entities.IdtAdvance", "Advance")
-                        .WithMany("AdvanceParts")
-                        .HasForeignKey("AdvanceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "ApprovedByUser")
-                        .WithMany()
-                        .HasForeignKey("ApprovedById")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("Advance");
-
-                    b.Navigation("ApprovedByUser");
-                });
-
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtAnnualLeaveEntitlement", b =>
                 {
                     b.HasOne("IdeKusgozManagement.Domain.Entities.ApplicationUser", "User")
@@ -1780,11 +1719,6 @@ namespace IdeKusgozManagement.Infrastructure.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtAdvance", b =>
-                {
-                    b.Navigation("AdvanceParts");
                 });
 
             modelBuilder.Entity("IdeKusgozManagement.Domain.Entities.IdtCompany", b =>

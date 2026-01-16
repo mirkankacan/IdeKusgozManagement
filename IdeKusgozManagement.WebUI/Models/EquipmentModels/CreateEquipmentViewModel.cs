@@ -8,5 +8,7 @@ namespace IdeKusgozManagement.WebUI.Models.EquipmentModels
         [StringLength(100, ErrorMessage = "Ekipman adı en fazla 100 karakter olabilir")]
         [Display(Name = "Ekipman Adı")]
         public string Name { get; set; }
+
+        public string GroupName { get; set; }
     }
 }

@@ -248,6 +248,15 @@
                     </li>
 
                 }
+                @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || departmentDutyName.Contains("Muhasebe Meslek Elemanı") || departmentDutyName.Contains("Muhasebe Müdürü") || departmentDutyName.Contains("Finans Uzmanı"))
+                {
+                    <li class="sidebar-title">
+                        Finans İşlemleri
+                    </li>
+                    <li class="@(Context.Request.Path == "/avans/onaylanmis" ? "active-page" : "")">
+                        <a href="/avans/onaylanmis"><i data-feather="check"></i>Onaylanmış Avanslar</a>
+                    </li>
+                }
                 @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || User.IsInRole("Şef"))
                 {
                     <li class="sidebar-title">
@@ -417,6 +426,7 @@
 
         };
         window.isUserPersonel = @Html.Raw(Json.Serialize(User.IsInRole("Personel")));
+        window.isAdmin = @Html.Raw(Json.Serialize(User.IsInRole("Admin")));
         window.isUserSef = @Html.Raw(Json.Serialize(User.IsInRole("Şef")));
         window.isUserUnitManager = @Html.Raw(Json.Serialize(User.IsInRole("Yönetici")));
         window.signalRUrl = (function () {

@@ -26,9 +26,18 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             return View();
         }
 
+        [Authorize(Roles = "Admin, Yönetici")]
+        [HttpGet("ana-liste")]
+        public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
+        {
+            var response = await _userApiService.GetUsersAsync(cancellationToken);
+
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
         [Authorize(Roles = "Admin, Yönetici, Şef")]
         [HttpGet("liste")]
-        public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAssignedUsers(CancellationToken cancellationToken)
         {
             // Role claim'ini güvenli bir şekilde al
             var roleClaim = User.FindFirst(ClaimTypes.Role);
@@ -42,10 +51,11 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             switch (roleClaim.Value)
             {
                 case "Admin":
-                case "Yönetici":
+
                     response = await _userApiService.GetUsersAsync(cancellationToken);
                     break;
 
+                case "Yönetici":
                 case "Şef":
                     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                     if (string.IsNullOrEmpty(userId))
@@ -83,6 +93,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici,Şef")]
         [HttpGet("departman-gorev/{departmentDutyId}")]
         public async Task<IActionResult> GetUsersByDepartmentDuty(string departmentDutyId, CancellationToken cancellationToken)
@@ -95,6 +106,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
+
         [Authorize(Roles = "Admin, Yönetici")]
         [HttpGet("aktif-roller")]
         public async Task<IActionResult> GetActiveRoles(CancellationToken cancellationToken)

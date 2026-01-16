@@ -395,18 +395,17 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 foreach (var element in workRecordDTOs)
                 {
-                    if (element.Date < DateTime.Today.AddDays(-2))
-                    {
-                        logger.LogWarning("Günümüzden 2 gün öncesinin makine puantajı kaydedilemez MachineWorkRecordDate: {WorkRecordDate}, TodayDate: {TodayDate}", element.Date, DateTime.Now);
-                        continue;
-                    }
-                    // Saat kontrolü
-                    var check = CheckHoursIfValid(element);
-                    if (!check.Item1)
-                        return ServiceResponse<IEnumerable<MachineWorkRecordDTO>>.Error(check.Item2 ?? "Saat kontrolü başarısız");
 
-                    // İlgili tarihin mevcut kaydı
-                    var existingWorkRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == element.Date.Date);
+                    // İlgili tarihin mevcut kayıtları (aynı günde birden fazla kayıt olabilir)
+                    // Önce aynı tarih, saat ve diğer özelliklerle eşleşen kayıt var mı kontrol et
+                    var existingWorkRecord = existingWorkRecords
+                        .FirstOrDefault(x => x.Date.Date == element.Date.Date &&
+                            x.StartTime == element.StartTime &&
+                            x.EndTime == element.EndTime &&
+                            x.ProjectId == element.ProjectId &&
+                            x.EquipmentId == element.EquipmentId &&
+                            x.Province == element.Province &&
+                            x.District == element.District);
 
                     // ========== VAROLAN GÜNCELLEME ==========
                     if (existingWorkRecord is not null)
@@ -420,6 +419,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         {
                             UpdateWorkRecordFields(existingWorkRecord, element);
                             recordsToUpdate.Add(existingWorkRecord);
+                            // Bu kaydı listeden çıkar ki tekrar kullanılmasın
+                            existingWorkRecords.Remove(existingWorkRecord);
                         }
                     }
                     // ========== YENİ KAYIT ==========

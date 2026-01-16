@@ -20,5 +20,9 @@
         public string CreatedByFullName { get; set; }
         public string UserId { get; set; }
         public string UserFullName { get; set; }
+
+        // Advance parts
+        public List<AdvancePartViewModel>? Parts { get; set; }
+        public bool HasParts => Parts != null && Parts.Any();
     }
 }

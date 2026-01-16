@@ -15,9 +15,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var equipments = (await unitOfWork.GetRepository<IdtEquipment>().GetAllAsync(cancellationToken)).OrderByDescending(e => e.CreatedDate);
+                var equipments = await unitOfWork.GetRepository<IdtEquipment>().GetAllAsync(cancellationToken);
 
-                var equipmentDTOs = equipments.Adapt<IEnumerable<EquipmentDTO>>();
+                var equipmentDTOs = equipments.Adapt<IEnumerable<EquipmentDTO>>().OrderBy(x => x.GroupName).ThenByDescending(e => e.CreatedDate);
 
                 return ServiceResponse<IEnumerable<EquipmentDTO>>.Success(equipmentDTOs, "Ekipman listesi başarıyla getirildi");
             }
@@ -140,7 +140,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var equipments = await unitOfWork.GetRepository<IdtEquipment>().Where(e => e.IsActive == true).OrderBy(e => e.Name).ToListAsync(cancellationToken);
+                var equipments = await unitOfWork.GetRepository<IdtEquipment>().Where(e => e.IsActive == true).OrderBy(e => e.GroupName).ThenByDescending(e => e.CreatedDate).ToListAsync(cancellationToken);
 
                 var equipmentDTOs = equipments.Adapt<IEnumerable<EquipmentDTO>>();
 

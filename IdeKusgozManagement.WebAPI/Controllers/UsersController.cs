@@ -36,6 +36,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             var result = await userService.GetUsersByDepartmentAsync(departmentId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
+
         /// <summary>
         /// Departmana göre aktif kullanıcıları getirir
         /// </summary>
@@ -50,6 +51,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             var result = await userService.GetUsersByDepartmentDutyAsync(departmentDutyId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
+
         /// <summary>
         /// Admin, Şef, Yönetici rolüne sahip olan kullanıcıları getirir
         /// </summary>
@@ -158,13 +160,13 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// <param name="userId">Kullanıcı ID'si</param>
         [RoleFilter("Admin", "Yönetici")]
         [HttpDelete("{userId}")]
-        public async Task<IActionResult> DeleteUser(string userId)
+        public async Task<IActionResult> DeleteUser(string userId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(userId))
             {
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
-            var result = await userService.DeleteUserAsync(userId);
+            var result = await userService.DeleteUserAsync(userId, cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

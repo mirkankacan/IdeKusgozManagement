@@ -8,6 +8,8 @@ namespace IdeKusgozManagement.Domain.Entities
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsActive { get; set; }
+        public string TargetUserIds { get; set; }
+        public string TargetEquipmentIds { get; set; }
         public virtual ICollection<IdtWorkRecord> WorkRecords { get; set; } = new List<IdtWorkRecord>();
         public virtual ICollection<IdtMachineWorkRecord> MachineWorkRecord { get; set; } = new List<IdtMachineWorkRecord>();
         public virtual ICollection<IdtTrafficTicket> TrafficTickets { get; set; } = new List<IdtTrafficTicket>();

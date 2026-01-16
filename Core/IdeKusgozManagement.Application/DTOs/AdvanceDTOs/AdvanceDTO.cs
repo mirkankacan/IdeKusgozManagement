@@ -34,5 +34,9 @@ namespace IdeKusgozManagement.Application.DTOs.AdvanceDTOs
         public string? UpdatedBy { get; set; }
         public string? UpdatedByFullName { get; set; }
         public DateTime? UpdatedDate { get; set; }
+        
+        // Advance parts
+        public List<AdvancePartDTO>? Parts { get; set; }
+        public bool HasParts => Parts != null && Parts.Any();
     }
 }

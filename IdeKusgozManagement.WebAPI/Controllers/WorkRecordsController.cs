@@ -35,7 +35,6 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         /// </summary>
         /// <param name="date">Tarih</param>
         /// <param name="userId">Kullanıcı ID'si</param>
-        /// <param name="status">Puantaj durumu</param>
         [HttpGet("approved/user/{userId}/date/{date:datetime}")]
         [RoleFilter("Admin", "Yönetici", "Şef")]
         public async Task<IActionResult> GetApprovedWorkRecordsByUser(string userId, DateTime date, CancellationToken cancellationToken)

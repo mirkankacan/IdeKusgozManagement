@@ -21,7 +21,7 @@ namespace IdeKusgozManagement.Application.Interfaces.Services
 
         Task<ServiceResponse<UserDTO>> UpdateUserAsync(string userId, UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default);
 
-        Task<ServiceResponse<bool>> DeleteUserAsync(string userId);
+        Task<ServiceResponse<bool>> DeleteUserAsync(string userId, CancellationToken cancellationToken);
 
         Task<ServiceResponse<bool>> AssignRoleToUserAsync(AssignRoleDTO assignRoleDTO);
 

@@ -23,5 +23,8 @@ namespace IdeKusgozManagement.Domain.Entities
         public virtual ApplicationUser? UpdatedByUser { get; set; }
         public virtual ApplicationUser? ChiefUser { get; set; }
         public virtual ApplicationUser? UnitManagerUser { get; set; }
+        
+        // Navigation property for advance parts
+        public virtual ICollection<IdtAdvancePart> AdvanceParts { get; set; }
     }
 }

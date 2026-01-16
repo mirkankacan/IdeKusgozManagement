@@ -7,7 +7,7 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
     {
         Task<ApiResponse<IEnumerable<AdvanceViewModel>>> GetAdvancesAsync(CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<IEnumerable<AdvanceViewModel>>> GetChiefProcessedAdvancesAsync(CancellationToken cancellationToken = default);
+        Task<ApiResponse<IEnumerable<AdvanceViewModel>>> GetApprovedAdvancesAsync(CancellationToken cancellationToken = default);
 
         Task<ApiResponse<IEnumerable<AdvanceViewModel>>> GetMyAdvancesAsync(CancellationToken cancellationToken = default);
 
@@ -21,7 +21,7 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
 
         Task<ApiResponse<IEnumerable<AdvanceViewModel>>> GetAdvancesByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
-        Task<ApiResponse<bool>> ApproveAdvanceAsync(string advanceId, CancellationToken cancellationToken = default);
+        Task<ApiResponse<bool>> ApproveAdvanceAsync(string advanceId, ApproveAdvanceViewModel? model = null, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> RejectAdvanceAsync(string advanceId, string? rejectReason, CancellationToken cancellationToken = default);
     }

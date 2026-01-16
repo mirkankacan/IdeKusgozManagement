@@ -4,12 +4,13 @@ using IdeKusgozManagement.Application.DTOs.ProjectDTOs;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
 using Mapster;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class ProjectService(IUnitOfWork unitOfWork, ILogger<ProjectService> logger) : IProjectService
+    public class ProjectService(IUnitOfWork unitOfWork, ILogger<ProjectService> logger, UserManager<ApplicationUser> userManager) : IProjectService
     {
         public async Task<ServiceResponse<string>> CreateProjectAsync(CreateProjectDTO createProjectDTO, CancellationToken cancellationToken = default)
         {
@@ -122,7 +123,35 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 var projects = await unitOfWork.GetRepository<IdtProject>().WhereAsNoTracking(e => e.IsActive == true).OrderByDescending(e => e.EndDate).ToListAsync(cancellationToken);
 
-                var mappedProjects = projects.Adapt<IEnumerable<ProjectDTO>>();
+                var mappedProjects = projects.Adapt<List<ProjectDTO>>();
+                foreach (var project in mappedProjects)
+                {
+                    if (project.TargetUserIds != null && project.TargetUserIds.Any())
+                    {
+                        project.TargetUsers = new List<string>();
+
+                        foreach (var userId in project.TargetUserIds)
+                        {
+                            var user = await userManager.FindByIdAsync(userId);
+                            if (user != null)
+                            {
+                                project.TargetUsers.Add($"{user.Name} {user.Surname}");
+                            }
+                        }
+                    }
+                    if (project.TargetEquipmentIds != null && project.TargetEquipmentIds.Any())
+                    {
+                        project.TargetEquipments = new List<string>();
+                        foreach (var equipmentId in project.TargetEquipmentIds)
+                        {
+                            var equipment = await unitOfWork.GetRepository<IdtEquipment>().WhereAsNoTracking(x => x.Id == equipmentId).FirstOrDefaultAsync(cancellationToken);
+                            if (equipmentId is not null)
+                            {
+                                project.TargetEquipments.Add($"{equipment.Name}");
+                            }
+                        }
+                    }
+                }
 
                 return ServiceResponse<IEnumerable<ProjectDTO>>.Success(mappedProjects, "Aktif proje listesi başarıyla getirildi");
             }
@@ -146,6 +175,32 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var projectDTO = project.Adapt<ProjectDTO>();
 
+                if (projectDTO.TargetUserIds != null && projectDTO.TargetUserIds.Any())
+                {
+                    projectDTO.TargetUsers = new List<string>();
+
+                    foreach (var userId in projectDTO.TargetUserIds)
+                    {
+                        var user = await userManager.FindByIdAsync(userId);
+                        if (user != null)
+                        {
+                            projectDTO.TargetUsers.Add($"{user.Name} {user.Surname}");
+                        }
+                    }
+                }
+                if (projectDTO.TargetEquipmentIds != null && project.TargetEquipmentIds.Any())
+                {
+                    projectDTO.TargetEquipments = new List<string>();
+                    foreach (var equipmentId in projectDTO.TargetEquipmentIds)
+                    {
+                        var equipment = await unitOfWork.GetRepository<IdtEquipment>().WhereAsNoTracking(x => x.Id == equipmentId).FirstOrDefaultAsync(cancellationToken);
+                        if (equipmentId is not null)
+                        {
+                            projectDTO.TargetEquipments.Add($"{equipment.Name}");
+                        }
+                    }
+                }
+
                 return ServiceResponse<ProjectDTO>.Success(projectDTO, "Proje başarıyla getirildi");
             }
             catch (Exception ex)
@@ -161,9 +216,36 @@ namespace IdeKusgozManagement.Infrastructure.Services
             {
                 IEnumerable<IdtProject>? projects = (await unitOfWork.GetRepository<IdtProject>().GetAllAsync(cancellationToken)).OrderByDescending(e => e.CreatedDate);
 
-                var projectDTOs = projects.Adapt<IEnumerable<ProjectDTO>>();
+                var mappedProjects = projects.Adapt<List<ProjectDTO>>();
+                foreach (var project in mappedProjects)
+                {
+                    if (project.TargetUserIds != null && project.TargetUserIds.Any())
+                    {
+                        project.TargetUsers = new List<string>();
 
-                return ServiceResponse<IEnumerable<ProjectDTO>>.Success(projectDTOs, "Proje listesi başarıyla getirildi");
+                        foreach (var userId in project.TargetUserIds)
+                        {
+                            var user = await userManager.FindByIdAsync(userId);
+                            if (user != null)
+                            {
+                                project.TargetUsers.Add($"{user.Name} {user.Surname}");
+                            }
+                        }
+                    }
+                    if (project.TargetEquipmentIds != null && project.TargetEquipmentIds.Any())
+                    {
+                        project.TargetEquipments = new List<string>();
+                        foreach (var equipmentId in project.TargetEquipmentIds)
+                        {
+                            var equipment = await unitOfWork.GetRepository<IdtEquipment>().WhereAsNoTracking(x => x.Id == equipmentId).FirstOrDefaultAsync(cancellationToken);
+                            if (equipmentId is not null)
+                            {
+                                project.TargetEquipments.Add($"{equipment.Name}");
+                            }
+                        }
+                    }
+                }
+                return ServiceResponse<IEnumerable<ProjectDTO>>.Success(mappedProjects, "Proje listesi başarıyla getirildi");
             }
             catch (Exception ex)
             {

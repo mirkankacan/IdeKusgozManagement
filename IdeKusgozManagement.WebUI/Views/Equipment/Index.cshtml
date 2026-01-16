@@ -32,6 +32,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>EKİPMAN ADI</th>
+                                <th>GRUP ADI</th>
                                 <th>AKTİF Mİ</th>
                                 <th>İŞLEMLER</th>
                             </tr>
@@ -64,6 +65,19 @@
                             <div class="valid-feedback">İyi görünüyor!</div>
                             <div class="invalid-feedback">Geçerli bir ekipman adı giriniz.</div>
                         </div>
+                        <div class="col-md-12">
+                            <label for="select-c-equipment-group" class="form-label">Ekipman Grubu</label>
+                            <select class="form-select select-c-equipment-group" id="select-c-equipment-group" required>
+                                <option value="" selected disabled>Ekipman grubu seçiniz...</option>
+                                <option value="Mobil Vinç">Mobil Vinç</option>
+                                <option value="Hi Up">Hi Up</option>
+                                <option value="Forklift">Forklift</option>
+                                <option value="Paletli Vinç">Paletli Vinç</option>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli ekipman grubu seçiniz.</div>
+                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -94,6 +108,19 @@
                             <div class="valid-feedback">İyi görünüyor!</div>
                             <div class="invalid-feedback">Geçerli bir ekipman adı giriniz.</div>
                         </div>
+                        <div class="col-md-12">
+                            <label for="select-u-equipment-group" class="form-label">Ekipman Grubu</label>
+                            <select class="form-select select-u-equipment-group" id="select-u-equipment-group" required>
+                                <option value="" selected disabled>Ekipman grubu seçiniz...</option>
+                                <option value="Mobil Vinç">Mobil Vinç</option>
+                                <option value="Hi Up">Hi Up</option>
+                                <option value="Forklift">Forklift</option>
+                                <option value="Paletli Vinç">Paletli Vinç</option>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli ekipman grubu seçiniz.</div>
+                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -161,6 +188,12 @@
                         "data": "name",
                         "render": function (data) {
                             return data ? `<strong>${data}</strong>` : '';
+                        }
+                    },
+                    {
+                        "data": "groupName",
+                        "render": function (data) {
+                            return data ? data : '';
                         }
                     },
                     {
@@ -258,7 +291,8 @@
 
         async function createEquipment() {
             const equipmentData = {
-                name: $('#txtCName').val()
+                name: $('#txtCName').val(),
+                groupName: $('#select-c-equipment-group').val()
             };
 
             try {
@@ -292,6 +326,7 @@
                 if (response.isSuccess) {
                     $('#txtUId').val(response.data.id);
                     $('#txtUName').val(response.data.name);
+                    $('#select-u-equipment-group').val(response.data.groupName);
                     $('#updateEquipmentModal').modal('show');
                 } else {
                     toastr.error(response.message, 'Hata!');
@@ -305,7 +340,8 @@
         async function updateEquipment() {
             const equipmentId = $('#txtUId').val();
             const equipmentData = {
-                name: $('#txtUName').val()
+                name: $('#txtUName').val(),
+                groupName: $('#select-u-equipment-group').val()
             };
 
             try {

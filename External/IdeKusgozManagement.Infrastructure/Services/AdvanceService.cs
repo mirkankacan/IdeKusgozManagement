@@ -51,6 +51,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
             unitOfWork.GetRepository<IdtUserBalance>().Update(userBalance);
         }
 
+        private async Task IncreaseBalanceByPartAsync(IdtAdvance advance, decimal amount, CancellationToken cancellationToken)
+        {
+            var type = GetBalanceType(advance);
+
+            var userBalance = await unitOfWork.GetRepository<IdtUserBalance>().Where(x => x.Type == type && x.UserId == advance.UserId).SingleOrDefaultAsync(cancellationToken);
+            if (userBalance == null)
+            {
+                logger.LogError("Kullanıcı bakiyesi bulunamadı. Type: {Type}, UserId: {UserId}", type, advance.UserId);
+                throw new ArgumentNullException($"Kullanıcı {type} bakiyesi bulunamadı");
+            }
+            userBalance.Balance += amount;
+            unitOfWork.GetRepository<IdtUserBalance>().Update(userBalance);
+        }
+
         private async Task DecraseBalanceAsync(IdtAdvance advance, CancellationToken cancellationToken)
         {
             var type = GetBalanceType(advance);
@@ -64,7 +78,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             unitOfWork.GetRepository<IdtUserBalance>().Update(userBalance);
         }
 
-        public async Task<ServiceResponse<bool>> ApproveAdvanceAsync(string advanceId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<bool>> ApproveAdvanceAsync(string advanceId, ApproveAdvanceDTO? approveAdvanceDTO = null, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -74,14 +88,27 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 {
                     return ServiceResponse<bool>.Error("Avans isteği bulunamadı");
                 }
+
                 var userId = identityService.GetUserId();
                 var userRole = identityService.GetUserRole();
                 bool isOverThreshold = advance.Amount > approvalThreshold;
 
+                // Parça validasyonu - parçalar UI'dan her zaman gönderilmelidir
+                if (approveAdvanceDTO == null || approveAdvanceDTO.Parts == null || !approveAdvanceDTO.Parts.Any())
+                {
+                    return ServiceResponse<bool>.Error("En az bir parça belirtilmelidir");
+                }
+
+                var totalPartsAmount = approveAdvanceDTO.Parts.Sum(p => p.Amount);
+                if (totalPartsAmount != advance.Amount)
+                {
+                    return ServiceResponse<bool>.Error($"Parça tutarlarının toplamı ({totalPartsAmount}) avans tutarına ({advance.Amount}) eşit olmalıdır");
+                }
+
+                // Rol kontrolü ve status güncelleme
                 switch (userRole)
                 {
                     case "Admin":
-                        // Admin her şeyi onaylayabilir
                         if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
                         {
                             return ServiceResponse<bool>.Error("Avans isteği zaten onaylanmış");
@@ -94,36 +121,32 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         break;
 
                     case "Yönetici":
-                        // Yönetici zaten onaylanmış mı kontrol et
                         if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
                         {
                             return ServiceResponse<bool>.Error("Avans isteği zaten yönetici tarafından onaylanmış");
                         }
-
-                        // Yönetici her durumda onaylayabilir (şef onayını beklemez)
+                        if (!isOverThreshold)
+                        {
+                            return ServiceResponse<bool>.Error("₺5000 ve altındaki avans istekleri sadece şef tarafından onaylanabilir");
+                        }
                         advance.Status = AdvanceStatus.ApprovedByUnitManager;
                         advance.ProcessedByUnitManagerId = userId;
                         advance.UnitManagerProcessedDate = DateTime.Now;
                         break;
 
                     case "Şef":
-                        // Şef 5000 TL üzeri göremez/onaylayamaz
                         if (isOverThreshold)
                         {
                             return ServiceResponse<bool>.Error("₺5000 üzerindeki avans istekleri sadece yönetici tarafından onaylanabilir");
                         }
-
-                        // Şef zaten onaylanmış mı kontrol et
                         if (advance.Status == AdvanceStatus.ApprovedByChief)
                         {
                             return ServiceResponse<bool>.Error("Avans isteği zaten şef tarafından onaylanmış");
                         }
-
                         if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
                         {
                             return ServiceResponse<bool>.Error("Avans isteği zaten yönetici tarafından onaylanmış");
                         }
-
                         advance.Status = AdvanceStatus.ApprovedByChief;
                         advance.ProcessedByChiefId = userId;
                         advance.ChiefProcessedDate = DateTime.Now;
@@ -133,15 +156,45 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         return ServiceResponse<bool>.Error("Avans isteğini onaylamak için yetkiniz yok");
                 }
 
-                // Bakiye sadece YÖNETİCİ ONAYINDA artırılır (her iki senaryo için de son adım)
-                if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
+                var advanceParts = new List<IdtAdvancePart>();
+                foreach (var partDto in approveAdvanceDTO.Parts)
                 {
-                    await IncreaseBalanceAsync(advance, cancellationToken);
+                    // Tarih validasyonu
+                    try
+                    {
+                        var approvalDate = new DateTime(partDto.Year, partDto.Month, partDto.Day);
+                        var advancePart = new IdtAdvancePart
+                        {
+                            AdvanceId = advanceId,
+                            Amount = partDto.Amount,
+                            ApprovalDate = approvalDate,
+                            ApprovedById = userId,
+                            ApprovedDate = DateTime.Now
+                        };
+                        advanceParts.Add(advancePart);
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        return ServiceResponse<bool>.Error($"Geçersiz tarih: {partDto.Day}/{partDto.Month}/{partDto.Year}");
+                    }
                 }
 
+                // Parçaları veritabanına kaydet - HER ZAMAN en az 1 parça kaydedilecek
+                // (Eğer bölünmemişse 1 parça, bölünmüşse n parça)
+                await unitOfWork.GetRepository<IdtAdvancePart>().AddRangeAsync(advanceParts, cancellationToken);
+
+                // Bakiye işlemleri - her parça için ayrı ayrı bakiye artırılır
+                if (advance.Status == AdvanceStatus.ApprovedByUnitManager || advance.Status == AdvanceStatus.ApprovedByChief)
+                {
+                    foreach (var part in advanceParts)
+                    {
+                        await IncreaseBalanceByPartAsync(advance, part.Amount, cancellationToken);
+                    }
+                }
                 unitOfWork.GetRepository<IdtAdvance>().Update(advance);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
+
                 var approvedAdvance = await unitOfWork.GetRepository<IdtAdvance>()
                     .WhereAsNoTracking(e => e.Id == advance.Id)
                     .Include(x => x.User)
@@ -149,6 +202,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .Include(x => x.UnitManagerUser)
                     .Include(x => x.CreatedByUser)
                     .Include(x => x.UpdatedByUser)
+                    .Include(x => x.AdvanceParts)
                     .FirstOrDefaultAsync(cancellationToken);
                 var mappedAdvance = approvedAdvance.Adapt<AdvanceDTO>();
                 CreateNotificationDTO notificationDTO = new()
@@ -164,7 +218,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             catch (Exception ex)
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                logger.LogError(ex, "ApproveAdvanceAsync işleminde hata oluştu");
+                logger.LogError(ex, "ApproveAdvanceAsync (with parts) işleminde hata oluştu");
                 throw;
             }
         }
@@ -255,7 +309,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .Include(x => x.User)
                     .Include(x => x.ChiefUser)
                     .Include(x => x.UnitManagerUser)
-                    .Include(x => x.CreatedByUser).FirstOrDefaultAsync(cancellationToken);
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.AdvanceParts)
+                    .FirstOrDefaultAsync(cancellationToken);
 
                 if (advance == null)
                 {
@@ -277,11 +333,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
         {
             try
             {
-                var advances = await unitOfWork.GetRepository<IdtAdvance>().WhereAsNoTracking(x => x.Id != null)
+                var userRole = identityService.GetUserRole();
+                var query = unitOfWork.GetRepository<IdtAdvance>().WhereAsNoTracking(x => x.Id != null);
+
+                // Şef sadece 5000 ve altı, bekleyen avansları görebilir
+                if (userRole == "Şef")
+                {
+                    query = query.Where(x => x.Amount <= approvalThreshold);
+                }
+                // Admin ve diğer roller tüm avansları görebilir
+
+                var advances = await query
                     .Include(x => x.User)
                     .Include(x => x.ChiefUser)
                     .Include(x => x.UnitManagerUser)
                     .Include(x => x.CreatedByUser)
+                    .Include(x => x.AdvanceParts)
                     .OrderByDescending(x => x.CreatedDate)
                     .ToListAsync(cancellationToken);
 
@@ -310,6 +377,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                       .Include(x => x.ChiefUser)
                     .Include(x => x.UnitManagerUser)
                     .Include(x => x.CreatedByUser)
+                    .Include(x => x.AdvanceParts)
                     .OrderByDescending(x => x.CreatedDate)
                     .ToListAsync(cancellationToken);
 
@@ -329,28 +397,28 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<AdvanceDTO>>> GetChiefProcessedAdvancesAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse<IEnumerable<AdvanceDTO>>> GetApprovedAdvancesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                AdvanceStatus[] statuses = new AdvanceStatus[] { AdvanceStatus.ApprovedByChief, AdvanceStatus.ApprovedByUnitManager, AdvanceStatus.RejectedByUnitManager };
                 var advances = await unitOfWork.GetRepository<IdtAdvance>()
-                    .WhereAsNoTracking(x => statuses.Contains(x.Status))
+                    .WhereAsNoTracking(x => x.Status == AdvanceStatus.ApprovedByUnitManager || x.Status == AdvanceStatus.ApprovedByUnitManager)
                       .Include(x => x.User)
                       .Include(x => x.ChiefUser)
                     .Include(x => x.UnitManagerUser)
                     .Include(x => x.CreatedByUser)
+                    .Include(x => x.AdvanceParts)
                     .OrderByDescending(x => x.CreatedDate)
                     .ToListAsync(cancellationToken);
 
                 if (advances == null)
                 {
-                    return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(null, "Şef onaylı avans istekleri bulunamadı");
+                    return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(null, "Avans istekleri bulunamadı");
                 }
 
                 var advanceDTOs = advances.Adapt<IEnumerable<AdvanceDTO>>();
 
-                return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(advanceDTOs, "Şef onaylı avans istekleri başarıyla getirildi");
+                return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(advanceDTOs, "Avans istekleri başarıyla getirildi");
             }
             catch (Exception ex)
             {
@@ -373,7 +441,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var userId = identityService.GetUserId();
                 var userRole = identityService.GetUserRole();
                 bool isOverThreshold = advance.Amount > approvalThreshold;
-
 
                 switch (userRole)
                 {
@@ -398,6 +465,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         break;
 
                     case "Yönetici":
+                        // Yönetici sadece 5000'in üstü avansları reddedebilir
+                        if (!isOverThreshold)
+                        {
+                            return ServiceResponse<bool>.Error("₺5000 ve altındaki avans istekleri sadece şef tarafından reddedilebilir");
+                        }
+
                         if (advance.Status == AdvanceStatus.RejectedByUnitManager)
                         {
                             return ServiceResponse<bool>.Error("Avans isteği zaten reddedilmiş");
@@ -451,6 +524,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 .Include(x => x.UnitManagerUser)
                 .Include(x => x.CreatedByUser)
                 .Include(x => x.UpdatedByUser)
+                .Include(x => x.AdvanceParts)
                 .FirstOrDefaultAsync(cancellationToken);
                 var mappedAdvance = approvedAdvance.Adapt<AdvanceDTO>();
                 CreateNotificationDTO notificationDTO = new()

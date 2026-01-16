@@ -29,5 +29,7 @@ namespace IdeKusgozManagement.WebUI.Models.UserModels
         public DateTime? HireDate { get; set; } = null;
         public string? Email { get; set; } = null;
         public List<string>? SuperiorIds { get; set; } = new();
+        public decimal? SalaryAdvanceBalance { get; set; } = null;
+        public decimal? JobAdvanceBalance { get; set; } = null;
     }
 }

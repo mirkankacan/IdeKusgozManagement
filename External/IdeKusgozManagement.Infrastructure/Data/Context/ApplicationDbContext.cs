@@ -17,6 +17,7 @@ namespace IdeKusgozManagement.Infrastructure.Data.Context
         }
 
         public DbSet<IdtAdvance> IdtAdvances => Set<IdtAdvance>();
+        public DbSet<IdtAdvancePart> IdtAdvanceParts => Set<IdtAdvancePart>();
         public DbSet<IdtEquipment> IdtEquipments => Set<IdtEquipment>();
         public DbSet<IdtExpense> IdtExpenses => Set<IdtExpense>();
         public DbSet<IdtFile> IdtFiles => Set<IdtFile>();

@@ -21,10 +21,11 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         }
 
         [RoleFilter("Admin", "Yönetici")]
-        [HttpGet("chief-processed")]
-        public async Task<IActionResult> GetChiefProcessedAdvances(CancellationToken cancellationToken)
+        [DepartmentDuty("Muhasebe Meslek Elemanı", "Muhasebe Müdürü", "Finans Uzmanı")]
+        [HttpGet("approveds")]
+        public async Task<IActionResult> GetApprovedAdvances(CancellationToken cancellationToken)
         {
-            var result = await advanceService.GetChiefProcessedAdvancesAsync(cancellationToken);
+            var result = await advanceService.GetApprovedAdvancesAsync(cancellationToken);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
@@ -49,14 +50,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
         [RoleFilter("Admin", "Yönetici", "Şef")]
         [HttpPut("{advanceId}/approve")]
-        public async Task<IActionResult> ApproveAdvance(string advanceId)
+        public async Task<IActionResult> ApproveAdvance(string advanceId, [FromBody] ApproveAdvanceDTO? approveAdvanceDTO = null)
         {
             if (string.IsNullOrWhiteSpace(advanceId))
             {
                 return BadRequest("Avans ID'si gereklidir");
             }
 
-            var result = await advanceService.ApproveAdvanceAsync(advanceId);
+            var result = await advanceService.ApproveAdvanceAsync(advanceId, approveAdvanceDTO);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 

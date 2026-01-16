@@ -265,6 +265,49 @@ async function initializeDailyStatusSelect() {
     }
 }
 
+// MachineWorkRecord sayfaları için özel gün durumu seçimi (sadece Çalışıyor, Hafta Tatili (DAY OFF), Transport)
+async function initializeMachineWorkRecordDailyStatusSelect() {
+    try {
+        const reasons = [
+            { value: 'Çalışıyor', text: 'Çalışıyor' },
+            { value: 'Hafta Tatili (DAY OFF)', text: 'Hafta Tatili (DAY OFF)' },
+            { value: 'Transport', text: 'Transport' }
+        ];
+
+        $('.daily-status-select').each(function () {
+            const currentSelect = $(this);
+            const currentValue = currentSelect.data('current-value');
+
+            currentSelect.empty();
+            currentSelect.append('<option value=""></option>');
+
+            reasons.forEach(reason => {
+                let isSelected = false;
+
+                // Eğer daha önceden bir değer seçilmişse onu kullan
+                if (currentValue && currentValue !== '') {
+                    isSelected = currentValue === reason.value;
+                } else {
+                    // Eğer hiç değer seçilmemişse "Çalışıyor" varsayılan olsun
+                    isSelected = reason.value === 'Çalışıyor';
+                }
+
+                currentSelect.append(`<option value="${reason.value}" ${isSelected ? 'selected' : ''}>${reason.text}</option>`);
+            });
+        });
+
+        $('.daily-status-select').select2({
+            placeholder: 'Gün durumunu seçiniz',
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+
+    } catch (error) {
+        console.error('Gün durumu listesi yüklenirken hata:', error);
+        toastr.error('Gün durumu listesi yüklenirken hata oluştu', 'Hata!');
+    }
+}
+
 function initializeLocationSelects() {
     $('.province-select').select2({
         placeholder: 'İl seçin',
@@ -364,6 +407,7 @@ function updateRowFieldsForStatus(day, status) {
     // Check status conditions
     const isWorking = status === 'Çalışıyor';
     const isDayOff = status === 'Hafta Tatili (DAY OFF)';
+    const isTransport = status === 'Transport';
 
     // For meals: if status is not 'Çalışıyor', always disable meals
     // Otherwise, use the existing meal logic
@@ -385,8 +429,9 @@ function updateRowFieldsForStatus(day, status) {
     const travelExpenseAmount = row.find('.travel-expense-amount');
     const mealCheckboxLabels = row.find('.meal-checkbox').closest('.form-check-label');
 
-    if (isWorking) {
+    if (isWorking || isTransport) {
         // Enable all fields (but respect existing disabled state from date-too-old or other rules)
+        // For Transport status, enable all fields like "Çalışıyor" (working-like)
         const isDateTooOld = String(row.attr('data-is-date-too-old')) === 'true';
         if (!isDateTooOld) {
             startTimeInput.prop('disabled', false);
@@ -477,7 +522,7 @@ function updateRowFieldsForStatus(day, status) {
             });
         }
     } else {
-        // Disable all fields when status is not 'Çalışıyor' or 'Hafta Tatili (DAY OFF)'
+        // Disable all fields when status is not 'Çalışıyor', 'Transport' or 'Hafta Tatili (DAY OFF)'
         startTimeInput.prop('disabled', true);
         endTimeInput.prop('disabled', true);
         if (additionalStartTimeInput.length) additionalStartTimeInput.prop('disabled', true);
@@ -723,8 +768,25 @@ async function populateProvincesAndDistricts(workRecords) {
 function setupLocationEventListeners() {
     $(document).off('change', '.province-select').on('change', '.province-select', function () {
         const provinceSelect = $(this);
+        const rowId = provinceSelect.data('row-id');
         const day = provinceSelect.data('day');
-        const districtSelect = $(`.district-select[data-day="${day}"]`);
+        
+        // Önce row-id ile bul, yoksa day ile bul (geriye dönük uyumluluk için)
+        let districtSelect;
+        if (rowId) {
+            districtSelect = provinceSelect.closest('tr').find('.district-select');
+        } else {
+            // Eğer aynı günde birden fazla satır varsa, en yakın district-select'i bul
+            districtSelect = provinceSelect.closest('tr').find('.district-select');
+            if (!districtSelect.length) {
+                districtSelect = $(`.district-select[data-day="${day}"]`).first();
+            }
+        }
+
+        if (!districtSelect.length) {
+            console.warn('District select bulunamadı');
+            return;
+        }
 
         districtSelect.empty();
         districtSelect.append('<option value="">İlçe seçin</option>');

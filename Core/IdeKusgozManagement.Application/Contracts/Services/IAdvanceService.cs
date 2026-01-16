@@ -7,7 +7,7 @@ namespace IdeKusgozManagement.Application.Contracts.Services
     {
         Task<ServiceResponse<IEnumerable<AdvanceDTO>>> GetAdvancesAsync(CancellationToken cancellationToken = default);
 
-        Task<ServiceResponse<IEnumerable<AdvanceDTO>>> GetChiefProcessedAdvancesAsync(CancellationToken cancellationToken = default);
+        Task<ServiceResponse<IEnumerable<AdvanceDTO>>> GetApprovedAdvancesAsync(CancellationToken cancellationToken = default);
 
         Task<ServiceResponse<AdvanceDTO>> GetAdvanceByIdAsync(string advanceId, CancellationToken cancellationToken = default);
 
@@ -19,7 +19,7 @@ namespace IdeKusgozManagement.Application.Contracts.Services
 
         Task<ServiceResponse<IEnumerable<AdvanceDTO>>> GetAdvancesByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
-        Task<ServiceResponse<bool>> ApproveAdvanceAsync(string advanceId, CancellationToken cancellationToken = default);
+        Task<ServiceResponse<bool>> ApproveAdvanceAsync(string advanceId, ApproveAdvanceDTO? approveAdvanceDTO = null, CancellationToken cancellationToken = default);
 
         Task<ServiceResponse<bool>> RejectAdvanceAsync(string advanceId, string? rejectReason, CancellationToken cancellationToken = default);
     }
