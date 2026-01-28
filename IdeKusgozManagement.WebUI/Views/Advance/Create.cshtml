@@ -6,7 +6,7 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 
 }
 @Html.AntiForgeryToken()
@@ -19,18 +19,20 @@
                     Avans Taleplerim
                 </h5>
                 <div class="mb-3">
-                    <span id="totalJobAdvance" class="badge bg-success me-2 text-dark fs-5">İş Avansı Bakiyesi: ₺0</span>
-                    <span id="totalSalaryAdvance" class="badge bg-success me-2 text-dark fs-5">Maaş Avansı Bakiyesi: ₺0</span>
+                    <span id="totalJobAdvance" class="badge bg-success me-2 text-dark fs-5">İş Avansı Bakiyesi:
+                        ₺0</span>
+                    <span id="totalSalaryAdvance" class="badge bg-success me-2 text-dark fs-5">Maaş Avansı Bakiyesi:
+                        ₺0</span>
                 </div>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#createAdvanceRequestModal">
+                    data-bs-target="#createAdvanceRequestModal">
                     <i class="fas fa-plus me-2"></i>Avans Talebi Oluştur
                 </button>
                 <br />
                 <br />
                 <div class="table-responsive">
                     <table id="myAdvanceRequestsTable" class="table table-striped table-hover display"
-                           style="width:100%">
+                        style="width:100%">
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
@@ -54,7 +56,7 @@
     </div>
 </div>
 <div class="modal fade" id="createAdvanceRequestModal" tabindex="-1" aria-labelledby="createAdvanceRequestModalLabel"
-     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -94,7 +96,7 @@
                         <div class="col-md-12">
                             <label for="txtCDescription" class="form-label">Açıklama (İsteğe Bağlı)</label>
                             <textarea class="form-control" id="txtCDescription" rows="3"
-                                      placeholder="Açıklama..."></textarea>
+                                placeholder="Açıklama..."></textarea>
                         </div>
                         <div class="col-md-12" id="advanceInfoContainer" style="display: none;">
                             <div class="alert alert-info" role="alert">
@@ -131,7 +133,7 @@
     </div>
 </div>
 <div class="modal fade" id="updateAdvanceRequestModal" tabindex="-1" aria-labelledby="updateAdvanceRequestModalLabel"
-     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -162,7 +164,7 @@
                         <div class="col-md-12">
                             <label for="txtUDescription" class="form-label">Açıklama (İsteğe Bağlı)</label>
                             <textarea class="form-control" id="txtUDescription" rows="3"
-                                      placeholder="Açıklama..."></textarea>
+                                placeholder="Açıklama..."></textarea>
                         </div>
 
                     </div>
@@ -229,8 +231,8 @@
                     "url": "/avans/listem",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json) {
+                            return json;
                         }
                         return [];
                     },
@@ -246,7 +248,7 @@
                         } catch (e) {
                             errorMessage += ': ' + error;
                         }
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -305,51 +307,51 @@
                             }) : '';
                         }
                     },
-                      {
+                    {
                         "data": "createdByFullName",
                         "className": "text-center",
                         "render": function (data, type, row) {
-                           return data ? data : "";
-                          }
+                            return data ? data : "";
+                        }
                     },
                     {
                         "data": "chiefByFullName",
                         "className": "text-center",
                         "render": function (data, type, row) {
-                           if(row.unitManagerFullName){
-                               return row.unitManagerFullName;
-                           }
-                           else if(data){
-                               return data
-                           }
-                           else{
-                               return "";
-                           }
+                            if (row.unitManagerFullName) {
+                                return row.unitManagerFullName;
+                            }
+                            else if (data) {
+                                return data
+                            }
+                            else {
+                                return "";
+                            }
 
                         }
                     },
                     {
                         "data": "chiefProcessedDate",
                         "render": function (data, type, row) {
-                            if(row.unitManagerProcessedDate){
-                                    return new Date(row.unitManagerProcessedDate).toLocaleString('tr-TR', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
+                            if (row.unitManagerProcessedDate) {
+                                return new Date(row.unitManagerProcessedDate).toLocaleString('tr-TR', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
                             }
-                            else if(data){
-                                  return new Date(data).toLocaleString('tr-TR', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
+                            else if (data) {
+                                return new Date(data).toLocaleString('tr-TR', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
                             }
-                            else{
+                            else {
                                 return "";
                             }
 
@@ -365,20 +367,20 @@
 
                             if (row.status === 0) {
                                 buttons += `
-                                    <button type="button" class="btn btn-outline-warning btn-sm"
-                                        onclick="loadAdvanceForEdit('${row.id}')" title="Düzenle">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm"
-                                        onclick="deleteAdvanceRequest('${row.id}')" title="Sil">
-                                        <i class="fas fa-trash"></i>
-                                    </button>`;
+                                            <button type="button" class="btn btn-outline-warning btn-sm"
+                                                onclick="loadAdvanceForEdit('${row.id}')" title="Düzenle">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                                onclick="deleteAdvanceRequest('${row.id}')" title="Sil">
+                                                <i class="fas fa-trash"></i>
+                                            </button>`;
                             } else if (row.hasParts && row.parts && row.parts.length > 0) {
                                 buttons += `
-                                    <button type="button" class="btn btn-outline-info btn-sm"
-                                        onclick="viewAdvanceParts('${row.id}')" title="Parçaları Görüntüle">
-                                        <i class="fas fa-list"></i>
-                                    </button>`;
+                                            <button type="button" class="btn btn-outline-info btn-sm"
+                                                onclick="viewAdvanceParts('${row.id}')" title="Parçaları Görüntüle">
+                                                <i class="fas fa-list"></i>
+                                            </button>`;
                             }
 
                             buttons += '</div>';
@@ -408,12 +410,9 @@
         }
         async function initializeUserSelect() {
             try {
-                const response = await $.ajax({
-                    url: '/kullanici/liste',
-                    type: 'GET'
-                });
+                const response = await makeRequest('/kullanici/liste', 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     const select = $('#selectCUserId');
                     select.select2({
                         theme: 'bootstrap-5',
@@ -427,7 +426,7 @@
                     });
 
                     // Kullanıcıları ekle
-                    response.data.forEach(function (user) {
+                    response.forEach(function (user) {
                         if (user.isActive) {
                             const option = new Option(user.fullNameWithExp || user.fullName, user.id, false, false);
                             select.append(option);
@@ -436,7 +435,7 @@
                 }
             } catch (error) {
                 console.error('Kullanıcı listesi yüklenirken hata:', error);
-                toastr.error('Kullanıcı listesi yüklenirken bir hata oluştu.');
+                handleError(error, 'Kullanıcı listesi yüklenirken bir hata oluştu.');
             }
         }
 
@@ -504,14 +503,14 @@
 
             if (advanceType === 'İş Avansı') {
                 content = `
-                                        <p class="mb-2"><strong>İş Avansı:</strong></p>
-                                        <p class="mb-0 small">Görevinizi yerine getirebilmeniz için gerekli olan iş ile ilgili harcamaları karşılamak amacıyla İşveren tarafından önceden verilen nakit veya hesaba havale tutarıdır. Bu avans, işin yürütülmesi için yapılacak masrafları (örneğin seyahat, konaklama, malzeme alımı) karşılamak üzere verilir ve harcama belgeleri ile kapatılır. Kullanılmayan tutar iade edilir.</p>
-                                    `;
+                                                <p class="mb-2"><strong>İş Avansı:</strong></p>
+                                                <p class="mb-0 small">Görevinizi yerine getirebilmeniz için gerekli olan iş ile ilgili harcamaları karşılamak amacıyla İşveren tarafından önceden verilen nakit veya hesaba havale tutarıdır. Bu avans, işin yürütülmesi için yapılacak masrafları (örneğin seyahat, konaklama, malzeme alımı) karşılamak üzere verilir ve harcama belgeleri ile kapatılır. Kullanılmayan tutar iade edilir.</p>
+                                            `;
             } else if (advanceType === 'Maaş Avansı') {
                 content = `
-                                        <p class="mb-2"><strong>Maaş Avansı:</strong></p>
-                                        <p class="mb-0 small">Maaş hakkedişinizden kendi özel harcamalarınıza istinaden maaşından mahsup edilmek üzere istediğiniz tutardır.</p>
-                                    `;
+                                                <p class="mb-2"><strong>Maaş Avansı:</strong></p>
+                                                <p class="mb-0 small">Maaş hakkedişinizden kendi özel harcamalarınıza istinaden maaşından mahsup edilmek üzere istediğiniz tutardır.</p>
+                                            `;
             }
 
             infoContent.html(content);
@@ -523,10 +522,10 @@
             $('#updateAdvanceRequestForm').removeClass('was-validated');
         });
 
-$('#viewPartsModal').on('hidden.bs.modal', function () {
-    $('#viewPartsTableBody').empty();
-    $('#viewPartsModal .modal-title').html('<i class="fas fa-list me-2"></i>Avans Parçaları');
-});
+        $('#viewPartsModal').on('hidden.bs.modal', function () {
+            $('#viewPartsTableBody').empty();
+            $('#viewPartsModal .modal-title').html('<i class="fas fa-list me-2"></i>Avans Parçaları');
+        });
 
         async function createAdvanceRequest() {
             const selectedUserId = $('#selectCUserId').val();
@@ -542,36 +541,23 @@ $('#viewPartsModal').on('hidden.bs.modal', function () {
             }
 
             try {
-                const response = await $.ajax({
-                    url: '/avans/istek-olustur',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(advanceData)
-                });
+                const response = await makeRequest('/avans/istek-olustur', 'POST', advanceData);
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#createAdvanceRequestModal').modal('hide');
-                    myAdvanceRequestsTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('Avans talebi başarıyla oluşturuldu.', 'success', 'Başarılı!');
+                $('#createAdvanceRequestModal').modal('hide');
+                myAdvanceRequestsTable.ajax.reload();
             } catch (error) {
                 console.error('Create advance error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Avans talebi oluşturulurken hata oluştu.');
             }
         }
         async function getMyBalance() {
             try {
-                const response = await $.ajax({
-                    url: `/kullanici-bakiye/bakiyem`,
-                    type: 'GET',
-                    contentType: 'application/json'
-                });
+                const response = await makeRequest(`/kullanici-bakiye/bakiyem`, 'GET');
 
-                if (response && response.data && response.isSuccess) {
-                    const totalJobAdvance = response.data.totalJobAdvanceBalance;
-                    const totalSalaryAdvance = response.data.totalSalaryAdvanceBalance;
+                if (response) {
+                    const totalJobAdvance = response.totalJobAdvanceBalance;
+                    const totalSalaryAdvance = response.totalSalaryAdvanceBalance;
                     $('#totalJobAdvance').text("İş Avansı Bakiyesi: ₺" + totalJobAdvance);
                     $('#totalSalaryAdvance').text("Maaş Avansı Bakiyesi: ₺" + totalSalaryAdvance);
                     if (totalJobAdvance < 0) {
@@ -594,40 +580,21 @@ $('#viewPartsModal').on('hidden.bs.modal', function () {
             } catch (error) {
                 $('#totalJobAdvance').text("İş Avansı Bakiyesi: Hata");
                 $('#totalSalaryAdvance').text("Maaş Avansı Bakiyesi: Hata");
-                // Error mesajını hazırla
-                let errorMessage = "Bir hata oluştu.";
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'Bakiye bilgisi yüklenirken hata oluştu.');
             }
         }
         async function loadAdvanceForEdit(advanceId) {
             try {
-                const response = await $.ajax({
-                    url: `/avans/${advanceId}`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/avans/${advanceId}`, 'GET');
 
-                if (response.isSuccess) {
-                    $('#txtUId').val(response.data.id);
-                    $('#txtUAmount').val(response.data.amount);
-                    $('#txtUDescription').val(response.data.description);
-                    $('#selectUAdvanceReason').val(response.data.reason);
-                    $('#updateAdvanceRequestModal').modal('show');
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                $('#txtUId').val(response.id);
+                $('#txtUAmount').val(response.amount);
+                $('#txtUDescription').val(response.description);
+                $('#selectUAdvanceReason').val(response.reason);
+                $('#updateAdvanceRequestModal').modal('show');
             } catch (error) {
                 console.error('Load advance error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Avans bilgisi yüklenirken hata oluştu.');
             }
         }
 
@@ -640,23 +607,14 @@ $('#viewPartsModal').on('hidden.bs.modal', function () {
             };
 
             try {
-                const response = await $.ajax({
-                    url: `/avans/${expenseId}`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify(advanceData)
-                });
+                const response = await makeRequest(`/avans/${expenseId}`, 'PUT', advanceData);
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#updateAdvanceRequestModal').modal('hide');
-                    myAdvanceRequestsTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('Avans talebi başarıyla güncellendi.', 'success', 'Başarılı!');
+                $('#updateAdvanceRequestModal').modal('hide');
+                myAdvanceRequestsTable.ajax.reload();
             } catch (error) {
                 console.error('Update advance error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Avans talebi güncellenirken hata oluştu.');
             }
         }
         async function deleteAdvanceRequest(advanceRequestId) {
@@ -673,20 +631,14 @@ $('#viewPartsModal').on('hidden.bs.modal', function () {
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/avans/${advanceRequestId}`,
-                                type: 'DELETE',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/avans/${advanceRequestId}`, 'DELETE');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Silme başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;
@@ -716,7 +668,7 @@ $('#viewPartsModal').on('hidden.bs.modal', function () {
             const row = myAdvanceRequestsTable.rows().data().toArray().find(r => r.id === advanceId);
 
             if (!row || !row.parts || row.parts.length === 0) {
-                toastr.warning('Parça bilgisi bulunamadı');
+                showToast('Parça bilgisi bulunamadı', 'warning', 'Uyarı');
                 return;
             }
 
@@ -744,12 +696,12 @@ $('#viewPartsModal').on('hidden.bs.modal', function () {
                 totalAmount += parseFloat(part.amount);
 
                 tbody.append(`
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${formattedDate}</td>
-                        <td class="text-end">${formattedAmount}</td>
-                    </tr>
-                `);
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${formattedDate}</td>
+                                <td class="text-end">${formattedAmount}</td>
+                            </tr>
+                        `);
             });
 
             const totalFormatted = new Intl.NumberFormat('tr-TR', {
@@ -757,11 +709,11 @@ $('#viewPartsModal').on('hidden.bs.modal', function () {
                 currency: 'TRY'
             }).format(totalAmount);
             tbody.append(`
-                <tr class="table-info fw-bold">
-                    <td colspan="2" class="text-end">TOPLAM:</td>
-                    <td class="text-end">${totalFormatted}</td>
-                </tr>
-            `);
+                        <tr class="table-info fw-bold">
+                            <td colspan="2" class="text-end">TOPLAM:</td>
+                            <td class="text-end">${totalFormatted}</td>
+                        </tr>
+                    `);
 
             $('#viewPartsModal').modal('show');
         }

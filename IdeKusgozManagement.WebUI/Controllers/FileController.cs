@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.FileModels;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Models.FileModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,7 +36,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Dosya ID'si gereklidir");
             }
             var result = await _fileApiService.DeleteFileAsync(fileId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("yukle")]
@@ -50,14 +51,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
             var result = await _fileApiService.UploadFileAsync(files, cancellationToken);
 
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("liste/p")]
         public async Task<IActionResult> GetFilesByParams([FromQuery] string? userId, [FromQuery] string? documentType, [FromQuery] string? departmentId, CancellationToken cancellationToken)
         {
             var result = await _fileApiService.GetFilesByParamsAsync(userId, documentType, departmentId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

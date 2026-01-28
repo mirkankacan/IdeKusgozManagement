@@ -17,6 +17,8 @@ namespace IdeKusgozManagement.Application.DTOs.AdvanceDTOs
             AdvanceStatus.ApprovedByChief => "Şef Onayladı",
             AdvanceStatus.RejectedByUnitManager => "Yönetici Reddetti",
             AdvanceStatus.RejectedByChief => "Şef Reddetti",
+            AdvanceStatus.Completed => "Tamamlandı",
+            AdvanceStatus.RejectedByFinance => "Finans Reddeti",
             _ => "Bilinmiyor"
         };
 
@@ -34,9 +36,13 @@ namespace IdeKusgozManagement.Application.DTOs.AdvanceDTOs
         public string? UpdatedBy { get; set; }
         public string? UpdatedByFullName { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        
+        public string? CompletedById { get; set; }
+        public DateTime? CompletedDate { get; set; }
+        public string? CompletedByFullName { get; set; }
+
         // Advance parts
         public List<AdvancePartDTO>? Parts { get; set; }
+
         public bool HasParts => Parts != null && Parts.Any();
     }
 }

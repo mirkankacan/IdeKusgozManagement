@@ -1,3 +1,4 @@
+using IdeKusgozManagement.WebUI.Extensions;
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.LeaveRequestModels;
 using IdeKusgozManagement.WebUI.Models.ProjectModels;
@@ -25,6 +26,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         [HttpGet("ana-sayfa")]
         public IActionResult Index()
         {
+            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
             return View();
         }
 
@@ -79,7 +81,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 default:
                     return Forbid("Yetkisiz erişim");
             }
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -113,7 +115,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                     return Forbid("Yetkisiz erişim");
             }
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

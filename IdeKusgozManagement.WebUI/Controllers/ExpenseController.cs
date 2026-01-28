@@ -1,3 +1,4 @@
+using IdeKusgozManagement.WebUI.Extensions;
 using IdeKusgozManagement.WebUI.Models.ExpenseModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +28,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetExpenses(CancellationToken cancellationToken)
         {
             var response = await _expenseApiService.GetExpensesAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -35,7 +36,15 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetActiveExpenses(CancellationToken cancellationToken)
         {
             var response = await _expenseApiService.GetActiveExpensesAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpGet("ture-gore/{expenseType}")]
+        public async Task<IActionResult> GetExpensesByType(int expenseType, CancellationToken cancellationToken)
+        {
+            var response = await _expenseApiService.GetExpensesByTypeAsync(expenseType, cancellationToken);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -48,7 +57,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _expenseApiService.GetExpenseByIdAsync(expenseId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -62,7 +71,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _expenseApiService.CreateExpenseAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -81,7 +90,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _expenseApiService.UpdateExpenseAsync(expenseId, model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -95,7 +104,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _expenseApiService.DeleteExpenseAsync(expenseId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -109,7 +118,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _expenseApiService.EnableExpenseAsync(expenseId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -123,7 +132,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _expenseApiService.DisableExpenseAsync(expenseId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

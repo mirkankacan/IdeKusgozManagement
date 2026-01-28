@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.DocumentModels;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Models.DocumentModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +45,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetDocumentTypes(CancellationToken cancellationToken)
         {
             var result = await _documentApiService.GetDocumentTypesAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("tip/{documentTypeId}")]
@@ -56,7 +57,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _documentApiService.GetDocumentTypeByIdAsync(documentTypeId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -69,7 +70,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _documentApiService.CreateDocumentTypeAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -87,7 +88,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _documentApiService.UpdateDocumentTypeAsync(documentTypeId, model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -100,7 +101,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _documentApiService.DeleteDocumentTypeAsync(documentTypeId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -113,14 +114,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _documentApiService.CreateDepartmentDocumentRequirmentAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpGet("eslestirme-liste")]
         public async Task<IActionResult> GetDepartmentDocumentRequirments(CancellationToken cancellationToken)
         {
             var result = await _documentApiService.GetDepartmentDocumentRequirmentsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -133,14 +134,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _documentApiService.DeleteDepartmentDocumentRequirmentAsync(requirementId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpGet("{departmentDutyId}/tip-liste")]
         public async Task<IActionResult> GetDocumentTypesByDuty(string departmentDutyId, /*[FromQuery] string? companyId,*/ CancellationToken cancellationToken)
         {
             var result = await _documentApiService.GetDocumentTypesByDutyAsync(departmentDutyId, /*companyId,*/ cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("kontrol-liste")]
@@ -152,7 +153,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Departman görev ID'si gereklidir");
 
             var result = await _documentApiService.GetRequiredDocumentsAsync(departmentId, departmentDutyId, companyId, targetId, documentTypeId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

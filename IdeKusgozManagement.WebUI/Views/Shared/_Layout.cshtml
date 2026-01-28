@@ -246,15 +246,36 @@
                     <li class="@(Context.Request.Path == "/trafik-ceza" ? "active-page" : "")">
                         <a href="/trafik-ceza"><i data-feather="alert-octagon"></i>Trafik Cezaları</a>
                     </li>
-
+                    <li class="@(Context.Request.Path == "/parametre" ? "active-page" : "")">
+                        <a href="/parametre"><i data-feather="settings"></i>Parametreler</a>
+                    </li>
                 }
-                @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || departmentDutyName.Contains("Muhasebe Meslek Elemanı") || departmentDutyName.Contains("Muhasebe Müdürü") || departmentDutyName.Contains("Finans Uzmanı"))
+                @if (User.IsInRole("Admin") ||
+                                User.IsInRole("Yönetici") ||
+                                User.IsInRole("Şef") ||
+                                (departmentDutyName != null && (
+                                departmentDutyName.Contains("Muhasebe Meslek Elemanı") ||
+                                departmentDutyName.Contains("Muhasebe Müdürü") ||
+                                departmentDutyName.Contains("Finans Uzmanı"))))
                 {
                     <li class="sidebar-title">
                         Finans İşlemleri
                     </li>
-                    <li class="@(Context.Request.Path == "/avans/onaylanmis" ? "active-page" : "")">
-                        <a href="/avans/onaylanmis"><i data-feather="check"></i>Onaylanmış Avanslar</a>
+
+                    @if (User.IsInRole("Admin") ||
+                                    User.IsInRole("Yönetici") ||
+                                    (departmentDutyName != null && (
+                                    departmentDutyName.Contains("Muhasebe Meslek Elemanı") ||
+                                    departmentDutyName.Contains("Muhasebe Müdürü") ||
+                                    departmentDutyName.Contains("Finans Uzmanı"))))
+                    {
+                        <li class="@(Context.Request.Path == "/avans/onaylanmis" ? "active-page" : "")">
+                            <a href="/avans/onaylanmis"><i data-feather="check"></i>Onaylanmış Avanslar</a>
+                        </li>
+                    }
+
+                    <li class="@(Context.Request.Path == "/sirket-odemesi" ? "active-page" : "")">
+                        <a href="/sirket-odemesi"><i data-feather="monitor"></i>Şirket Ödemeleri</a>
                     </li>
                 }
                 @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || User.IsInRole("Şef"))
@@ -313,7 +334,7 @@
                 <li class="@(Context.Request.Path == "/puantaj/ekle" ? "active-page" : "")">
                     <a href="/puantaj/ekle"><i data-feather="clock"></i>Puantaj Gir</a>
                 </li>
-                @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || User.IsInRole("Şef") || departmentDutyName.Contains("Operatör") || departmentDutyName.Contains("Şoför-Yük Taşıma"))
+                @if (User.IsInRole("Admin") || User.IsInRole("Yönetici") || User.IsInRole("Şef") || departmentDutyName.Contains("Vinç Operatörü") || departmentDutyName.Contains("Operatör") || departmentDutyName.Contains("Şoför-Yük Taşıma"))
                 {
                     <li class="@(Context.Request.Path == "/makine-puantaj/ekle" ? "active-page" : "")">
                         <a href="/makine-puantaj/ekle"><i data-feather="command"></i>Makine Puantajı Gir</a>
@@ -326,6 +347,10 @@
                 <li class="@(Context.Request.Path == "/avans/istek-olustur" ? "active-page" : "")">
                     <a href="/avans/istek-olustur"><i data-feather="credit-card"></i>Avanslarım</a>
                 </li>
+                <li class="@(Context.Request.Path == "/sirket-odemesi/olustur" ? "active-page" : "")">
+                    <a href="/sirket-odemesi/olustur"><i data-feather="package"></i>Şirket Ödemesi</a>
+                </li>
+
                 <li><br /></li>
 
             </ul>
@@ -381,6 +406,8 @@
     </div>
     <!-- Javascripts -->
     <script src="~/theme/assets/plugins/jquery/jquery-3.4.1.min.js"></script>
+    <script src="~/js/http-client.js"></script>
+    <script src="~/js/customtoastr.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@@popperjs/core/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tippy.js/dist/tippy.umd.min.js"></script>
     <script src="~/theme/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
@@ -389,7 +416,6 @@
             integrity="sha512-gBYquPLlR76UWqCwD06/xwal4so02RjIR0oyG1TIhSGwmBTRrIkQbaPehPF8iwuY9jFikDHMGEelt0DtY7jtvQ=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/toastr/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="~/theme/assets/plugins/blockui/jquery.blockUI.js"></script>
@@ -399,11 +425,13 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <script src="~/theme/assets/plugins/pdfjs/build/pdf.mjs" type="module"></script>
+
     <script type="module">
         var { pdfjsLib } = globalThis;
         pdfjsLib.GlobalWorkerOptions.workerSrc = '~/theme/assets/plugins/pdfjs/build/pdf.worker.mjs';
     </script>
     <script>
+        let approvalThreshold = 5000;
         var turkishLocale = {
             "format": 'DD/MM/YYYY',
             "separator": ' - ',
@@ -429,98 +457,24 @@
         window.isAdmin = @Html.Raw(Json.Serialize(User.IsInRole("Admin")));
         window.isUserSef = @Html.Raw(Json.Serialize(User.IsInRole("Şef")));
         window.isUserUnitManager = @Html.Raw(Json.Serialize(User.IsInRole("Yönetici")));
-        window.signalRUrl = (function () {
-            const currentUrl = window.location.href;
-            if (currentUrl.includes('portal.izmircrane.com')) {
-                return 'http://92.45.19.226:5291/';
-            } else if (currentUrl.startsWith('http://192.168.2.253:5290')) {
-                return 'http://192.168.2.253:5291/';
-            } else if (currentUrl.startsWith('http://localhost:5290')) {
-                return 'http://localhost:5291/';
-            }
+             window.signalRUrl = (function () {
+            const hostname = window.location.hostname;
+            const protocol = window.location.protocol;
+            const portMapping = {
+                'localhost': '8585',
+                '192.168.2.253': '5291',
+                'portal.izmircrane.com': '5291'
+            };
+
+            const port = portMapping[hostname] || '5291';
+
+            const finalProtocol = hostname === 'localhost' ? 'https:' : 'http:';
+
+            return `${finalProtocol}//${hostname}:${port}/`;
         })();
-        window.departmentName = @Html.Raw(Json.Serialize(departmentName))
+             window.departmentName = @Html.Raw(Json.Serialize(departmentName))
             window.departmentDutyName = @Html.Raw(Json.Serialize(departmentDutyName))
 
-            $(document).ready(async function () {
-
-                $.ajaxSetup({
-                    beforeSend: function (xhr, settings) {
-                        if (settings.type !== 'GET') {
-                            const token = $('input[name="__RequestVerificationToken"]').val();
-                            if (token) {
-                                xhr.setRequestHeader('X-CSRF-TOKEN', token);
-                            }
-                        }
-                    },
-                    statusCode: {
-                        401: function (xhr) {
-                            // 401 Unauthorized hatası geldiğinde
-                            let message = 'Oturum süresi doldu. Lütfen tekrar giriş yapın.';
-                            let redirectUrl = '/giris-yap';
-
-                            // Backend'den gelen mesajı kontrol et
-                            try {
-                                const response = JSON.parse(xhr.responseText);
-                                if (response.message) {
-                                    message = response.message;
-                                }
-                                if (response.loginUrl) {
-                                    redirectUrl = response.loginUrl;
-                                }
-                                if (response.redirectToLogin) {
-                                    // Logout işlemi yap ve login sayfasına yönlendir
-                                    handleUnauthorizedError(message, redirectUrl);
-                                    return;
-                                }
-                            } catch (e) {
-                                // JSON parse hatası - direkt logout yap
-                            }
-
-                            // Varsayılan olarak logout yap
-                            handleUnauthorizedError(message, redirectUrl);
-                        }
-                    }
-                });
-            });
-
-        // 401 hatası için logout ve yönlendirme fonksiyonu
-        function handleUnauthorizedError(message, redirectUrl) {
-            // Toastr mesajı göster
-            if (typeof toastr !== 'undefined') {
-                toastr.error(message, 'Oturum Sonlandı', {
-                    timeOut: 3000,
-                    onHidden: function () {
-                        performLogout(redirectUrl);
-                    }
-                });
-            } else {
-                // Toastr yoksa direkt logout yap
-                performLogout(redirectUrl);
-            }
-        }
-
-        // Logout işlemi ve yönlendirme
-        function performLogout(redirectUrl) {
-            // Session storage ve local storage'ı temizle
-            if (typeof sessionStorage !== 'undefined') {
-                sessionStorage.clear();
-            }
-            if (typeof localStorage !== 'undefined') {
-                localStorage.clear();
-            }
-
-            // Logout endpoint'ine istek gönder (GET olarak - başarısız olsa da devam et)
-            $.ajax({
-                url: '/cikis-yap',
-                type: 'GET',
-                async: false,
-                timeout: 2000
-            }).always(function () {
-                // Her durumda login sayfasına yönlendir
-                window.location.href = redirectUrl || '/giris-yap';
-            });
-        }
         function previewFile(file) {
             var fileName = file.name.toLowerCase();
             var fileType = file.type;
@@ -684,6 +638,24 @@
                 excelDiv.empty();
             });
         }
+        async function getApprovalThreshold(){
+                try {
+                const response = await makeRequest('/parametre/ChiefAdvanceApprovalThreshold', 'GET');
+                if(response && response.value){
+                    approvalThreshold = parseFloat(response.value);
+                }
+                else{
+                                approvalThreshold = 5000; // Default değer
+                    showToast('Şef avans onay sınırı alınırken hata oluştu değer default olarak ₺5000 ayarlandı.', 'error', 'Hata');
+                }
+            } catch (error) {
+                console.error('Chief approval threshold error:', error);
+                handleError(error, 'Şef avans onay sınırı alınırken hata oluştu.');
+            }
+        }
+              $(document).ready(async function() {
+            await getApprovalThreshold();
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 

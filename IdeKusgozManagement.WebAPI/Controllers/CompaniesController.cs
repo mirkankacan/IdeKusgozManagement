@@ -1,6 +1,7 @@
-﻿using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.CompanyDTOs;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetCompanies(CancellationToken cancellationToken)
         {
             var result = await companyService.GetCompaniesAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -29,7 +30,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetActiveCompanies(CancellationToken cancellationToken)
         {
             var result = await companyService.GetActiveCompaniesAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -44,7 +45,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Firma ID'si gereklidir");
             }
             var result = await companyService.EnableCompanyAsync(companyId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -59,7 +60,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Firma ID'si gereklidir");
             }
             var result = await companyService.DisableCompanyAsync(companyId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -75,7 +76,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await companyService.GetCompanyByIdAsync(companyId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -91,7 +92,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await companyService.CreateCompanyAsync(createCompanyDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -113,7 +114,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await companyService.UpdateCompanyAsync(companyId, updateCompanyDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -129,7 +130,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await companyService.DeleteCompanyAsync(companyId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

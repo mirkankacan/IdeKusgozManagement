@@ -1,320 +1,118 @@
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.LeaveRequestModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
-using Newtonsoft.Json;
 using System.Net.Http.Headers;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
     public class LeaveRequestApiService : ILeaveRequestApiService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IApiService _apiService;
+        private readonly ILogger<LeaveRequestApiService> _logger;
+        private const string BaseEndpoint = "api/leaveRequests";
 
-        public LeaveRequestApiService(HttpClient httpClient)
+        public LeaveRequestApiService(
+            IApiService apiService,
+            ILogger<LeaveRequestApiService> logger)
         {
-            _httpClient = httpClient;
+            _apiService = apiService;
+            _logger = logger;
         }
 
         public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetSubordinateLeaveRequestsAsync(CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/leaveRequests/subordinates", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<LeaveRequestViewModel>>($"{BaseEndpoint}/subordinates", cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetLeaveRequestsAsync(CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync("api/leaveRequests", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<LeaveRequestViewModel>>(BaseEndpoint, cancellationToken);
         }
 
         public async Task<ApiResponse<LeaveRequestViewModel>> GetLeaveRequestByIdAsync(string leaveRequestId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/leaveRequests/{leaveRequestId}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(content);
-                    return apiResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(content);
-                return errorResponse ?? new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<LeaveRequestViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<LeaveRequestViewModel>($"{BaseEndpoint}/{leaveRequestId}", cancellationToken);
         }
 
         public async Task<ApiResponse<LeaveRequestViewModel>> CreateLeaveRequestAsync(CreateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
         {
-            try
+            using var formData = new MultipartFormDataContent();
+
+            // Add form fields
+            formData.Add(new StringContent(model.StartDate.ToString("yyyy-MM-dd")), "StartDate");
+            formData.Add(new StringContent(model.EndDate.ToString("yyyy-MM-dd")), "EndDate");
+            formData.Add(new StringContent(model.Reason), "Reason");
+
+            if (!string.IsNullOrEmpty(model.Description))
+                formData.Add(new StringContent(model.Description), "Description");
+
+            // Add file if exists
+            if (model.File?.FormFile != null)
             {
-                MultipartFormDataContent? formData = new MultipartFormDataContent();
-
-                // Add form fields
-                formData.Add(new StringContent(model.StartDate.ToString("yyyy-MM-dd")), "StartDate");
-                formData.Add(new StringContent(model.EndDate.ToString("yyyy-MM-dd")), "EndDate");
-                formData.Add(new StringContent(model.Reason), "Reason");
-
-                if (!string.IsNullOrEmpty(model.Description))
-                    formData.Add(new StringContent(model.Description), "Description");
-
-                // Add file if exists
-                if (model.File?.FormFile != null)
-                {
-                    var fileContent = new StreamContent(model.File.FormFile.OpenReadStream());
-                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.File.FormFile.ContentType);
-                    formData.Add(fileContent, "File.FormFile", model.File.FormFile.FileName);
-                }
-
-                var response = await _httpClient.PostAsync("api/leaveRequests", formData, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
-                    return apiResponse ?? new ApiResponse<LeaveRequestViewModel>
-                    {
-                        IsSuccess = false,
-                        Message = "Veri alınamadı"
-                    };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<LeaveRequestViewModel>>(responseContent);
-                return errorResponse ?? new ApiResponse<LeaveRequestViewModel>
-                {
-                    IsSuccess = false,
-                    Message = $"API çağrısı başarısız: {response.StatusCode}"
-                };
+                var fileContent = new StreamContent(model.File.FormFile.OpenReadStream());
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.File.FormFile.ContentType);
+                formData.Add(fileContent, "File.FormFile", model.File.FormFile.FileName);
             }
-            catch (Exception ex)
-            {
-                return new ApiResponse<LeaveRequestViewModel>
-                {
-                    IsSuccess = false,
-                    Message = "Bir hata oluştu"
-                };
-            }
+
+            return await _apiService.PostMultipartAsync<LeaveRequestViewModel>(BaseEndpoint, formData, cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> UpdateLeaveRequestAsync(string leaveRequestId, UpdateLeaveRequestViewModel model, CancellationToken cancellationToken = default)
         {
-            try
+            using var formData = new MultipartFormDataContent();
+
+            // Add form fields
+            formData.Add(new StringContent(model.StartDate.ToString("yyyy-MM-dd")), "StartDate");
+            formData.Add(new StringContent(model.EndDate.ToString("yyyy-MM-dd")), "EndDate");
+            formData.Add(new StringContent(model.Reason), "Reason");
+
+            if (!string.IsNullOrEmpty(model.Description))
+                formData.Add(new StringContent(model.Description), "Description");
+
+            // Add file if exists
+            if (model.File?.FormFile != null)
             {
-                MultipartFormDataContent? formData = new MultipartFormDataContent();
-
-                // Add form fields
-                formData.Add(new StringContent(model.StartDate.ToString("yyyy-MM-dd")), "StartDate");
-                formData.Add(new StringContent(model.EndDate.ToString("yyyy-MM-dd")), "EndDate");
-                formData.Add(new StringContent(model.Reason), "Reason");
-
-                if (!string.IsNullOrEmpty(model.Description))
-                    formData.Add(new StringContent(model.Description), "Description");
-
-                // Add file if exists
-                if (model.File?.FormFile != null)
-                {
-                    var fileContent = new StreamContent(model.File.FormFile.OpenReadStream());
-                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.File.FormFile.ContentType);
-                    formData.Add(fileContent, "File.FormFile", model.File.FormFile.FileName);
-                }
-
-                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}", formData, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool>
-                    {
-                        IsSuccess = false,
-                        Message = "Veri alınamadı"
-                    };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool>
-                {
-                    IsSuccess = false,
-                    Message = $"API çağrısı başarısız: {response.StatusCode}"
-                };
+                var fileContent = new StreamContent(model.File.FormFile.OpenReadStream());
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.File.FormFile.ContentType);
+                formData.Add(fileContent, "File.FormFile", model.File.FormFile.FileName);
             }
-            catch (Exception ex)
-            {
-                return new ApiResponse<bool>
-                {
-                    IsSuccess = false,
-                    Message = "Bir hata oluştu"
-                };
-            }
+
+            return await _apiService.PutMultipartAsync<bool>($"{BaseEndpoint}/{leaveRequestId}", formData, cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> DeleteLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/leaveRequests/{leaveRequestId}", cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.DeleteAsync<bool>($"{BaseEndpoint}/{leaveRequestId}", cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetLeaveRequestsByStatusAsync(int status, string? userId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/leaveRequests/status/{status}?userId={userId}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<LeaveRequestViewModel>>($"{BaseEndpoint}/status/{status}?userId={userId}", cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/leaveRequests/user/{userId}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<LeaveRequestViewModel>>($"{BaseEndpoint}/user/{userId}", cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}/approve", null, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<bool>($"{BaseEndpoint}/{leaveRequestId}/approve", null, cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default)
         {
-            try
+            var endpoint = $"{BaseEndpoint}/{leaveRequestId}/reject";
+            if (!string.IsNullOrEmpty(rejectReason))
             {
-                var response = await _httpClient.PutAsync($"api/leaveRequests/{leaveRequestId}/reject?rejectReason={Uri.EscapeDataString(rejectReason)}", null, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
+                endpoint += $"?rejectReason={Uri.EscapeDataString(rejectReason)}";
             }
-            catch (Exception ex)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<bool>(endpoint, null, cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<LeaveRequestViewModel>>> GetMyLeaveRequestsAsync(CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync("api/leaveRequests/my-leave-requests", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<LeaveRequestViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<LeaveRequestViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<LeaveRequestViewModel>>($"{BaseEndpoint}/my-leave-requests", cancellationToken);
         }
     }
 }

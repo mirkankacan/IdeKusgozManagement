@@ -1,9 +1,9 @@
+using IdeKusgozManagement.WebUI.Extensions;
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 {
@@ -12,11 +12,12 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
     {
         private readonly IUserApiService _userApiService;
         private readonly IRoleApiService _roleApiService;
-
-        public UserController(IUserApiService userApiService, IRoleApiService roleApiService)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public UserController(IUserApiService userApiService, IRoleApiService roleApiService, IHttpContextAccessor httpContextAccessor)
         {
             _userApiService = userApiService;
             _roleApiService = roleApiService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -32,7 +33,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         {
             var response = await _userApiService.GetUsersAsync(cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -40,15 +41,15 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         public async Task<IActionResult> GetAssignedUsers(CancellationToken cancellationToken)
         {
             // Role claim'ini güvenli bir şekilde al
-            var roleClaim = User.FindFirst(ClaimTypes.Role);
-            if (roleClaim == null)
+            var role = _httpContextAccessor.HttpContext?.Session.GetString("RoleName");
+            if (string.IsNullOrEmpty(role))
             {
                 return BadRequest("Rol bilgisi bulunamadı.");
             }
 
             ApiResponse<IEnumerable<UserViewModel>> response;
 
-            switch (roleClaim.Value)
+            switch (role)
             {
                 case "Admin":
 
@@ -57,7 +58,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
 
                 case "Yönetici":
                 case "Şef":
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var userId = _httpContextAccessor.HttpContext?.Session.GetString("UserId");
                     if (string.IsNullOrEmpty(userId))
                     {
                         return BadRequest("Kullanıcı ID'si bulunamadı.");
@@ -69,7 +70,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
                     return Forbid("Yetkisiz erişim.");
             }
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -78,7 +79,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         {
             var response = await _userApiService.GetActiveSuperiorsAsync(cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici,Şef")]
@@ -91,7 +92,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             }
             var response = await _userApiService.GetUsersByDepartmentAsync(departmentId, cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici,Şef")]
@@ -104,7 +105,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             }
             var response = await _userApiService.GetUsersByDepartmentDutyAsync(departmentDutyId, cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -113,7 +114,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         {
             var response = await _roleApiService.GetActiveRolesAsync(cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -127,7 +128,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             }
 
             var response = await _userApiService.CreateUserAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -145,7 +146,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             }
 
             var response = await _userApiService.UpdateUserAsync(userId, model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -158,7 +159,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var response = await _userApiService.DeleteUserAsync(userId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -171,7 +172,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var response = await _userApiService.EnableUserAsync(userId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -184,7 +185,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var response = await _userApiService.DisableUserAsync(userId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -198,7 +199,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             }
 
             var response = await _userApiService.AssignRoleToUserAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -223,7 +224,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
             }
 
             var result = await _userApiService.GetAnnualLeaveDaysByUserAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [Authorize]
@@ -231,7 +232,7 @@ namespace IdeKusgozManagement.WebUI.Areas.Admin.Controllers
         public async Task<IActionResult> GetMyAnnualLeave(CancellationToken cancellationToken)
         {
             var result = await _userApiService.GetMyAnnualLeaveDaysAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

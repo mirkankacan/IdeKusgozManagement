@@ -1,6 +1,7 @@
-﻿using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.TrafficTicketDTOs;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,7 +17,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetTrafficTickets(CancellationToken cancellationToken)
         {
             var result = await trafficTicketService.GetTrafficTicketsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("{ticketId}")]
@@ -28,7 +29,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await trafficTicketService.GetTrafficTicketByIdAsync(ticketId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost]
@@ -40,7 +41,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await trafficTicketService.CreateTrafficTicketAsync(createTrafficTicketDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("{ticketId}")]
@@ -57,7 +58,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await trafficTicketService.UpdateTrafficTicketAsync(ticketId, updateTrafficTicketDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpDelete("{ticketId}")]
@@ -69,7 +70,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await trafficTicketService.DeleteTrafficTicketAsync(ticketId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

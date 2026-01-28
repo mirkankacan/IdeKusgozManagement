@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "İzin Yönetimi";
 }
@@ -7,7 +7,7 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <style>
         a {
@@ -18,9 +18,9 @@
             cursor: pointer;
         }
 
-            .fa-calendar:hover {
-                color: #007bff;
-            }
+        .fa-calendar:hover {
+            color: #007bff;
+        }
     </style>
 }
 
@@ -63,7 +63,7 @@
 
 <!-- Update Modal -->
 <div class="modal fade" id="updateLeaveRequestModal" tabindex="-1" aria-labelledby="updateLeaveRequestModalLabel"
-     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -78,7 +78,7 @@
                             <label for="date-update-leave" class="form-label">İzin Tarih Aralığı</label>
                             <div class="input-group">
                                 <input type="text" class="form-control date-update-leave" id="date-update-leave"
-                                       required placeholder="Başlangıç - Bitiş">
+                                    required placeholder="Başlangıç - Bitiş">
                                 <span class="input-group-text">
                                     <i class="fas fa-calendar"></i>
                                 </span>
@@ -89,12 +89,12 @@
                         <div class="col-md-4">
                             <label for="net-update-leave-day" class="form-label">Net İzin Günü</label>
                             <input type="text" class="form-control" id="net-update-leave-day" disabled readonly
-                                   placeholder="Net izin günü">
+                                placeholder="Net izin günü">
                         </div>
                         <div class="col-md-12">
                             <label for="select-update-leave-reason" class="form-label">İzin Sebebi</label>
                             <select class="form-select select-update-leave-reason" id="select-update-leave-reason"
-                                    required>
+                                required>
                                 <option value="" selected disabled>İzin sebebi seçiniz...</option>
                                 <option value="Rapor">Rapor</option>
                                 <option value="Ücretsiz İzin">Ücretsiz İzin</option>
@@ -113,12 +113,12 @@
                         <div class="col-md-12">
                             <label for="txt-update-description" class="form-label">Açıklama (İsteğe Bağlı)</label>
                             <textarea class="form-control" id="txt-update-description" rows="3"
-                                      placeholder="Açıklama..."></textarea>
+                                placeholder="Açıklama..."></textarea>
                         </div>
                         <div class="col-md-12">
                             <label for="file-update-document" class="form-label">Döküman (İsteğe Bağlı)</label>
                             <input class="form-control" type="file" id="file-update-document"
-                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
                             <div class="form-text">
                                 Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX (Sadece yeni dosya seçtiğinizde
                                 güncellenir)
@@ -148,7 +148,7 @@
                 <div class="mb-3">
                     <label for="txt-rejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
                     <textarea class="form-control" id="txtRejectReason" rows="3"
-                              placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
+                        placeholder="İzin talebini reddetme sebebinizi açıklayın..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -228,9 +228,8 @@
                     "url": `/izin/ast-liste`,
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-
-                            return json.data;
+                        if (json) {
+                            return json;
                         }
                         return [];
                     },
@@ -246,7 +245,7 @@
                         } catch (e) {
                             errorMessage += ': ' + error;
                         }
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -309,10 +308,10 @@
                         "data": "fileId",
                         "render": function (data, type, row) {
                             return data ? `<a href="/dosya/indir/${data}"
-                                                                                                           download
-                                                                                                           class="text-muted text-decoration-underline">
-                                                                                                            <i class="fas fa-file fa-lg"></i>
-                                                                                                        </a>` : '';
+                                                                                                               download
+                                                                                                               class="text-muted text-decoration-underline">
+                                                                                                                <i class="fas fa-file fa-lg"></i>
+                                                                                                            </a>` : '';
                         }
                     },
                     {
@@ -337,47 +336,47 @@
                             const isUnitManagaer = @Html.Raw(Json.Serialize(User.IsInRole("Yönetici")));
                             if (isAdmin || isUnitManagaer) {
                                 return `
-                                                                        <div class="btn-group btn-group-sm" role="group">
-                                                                            <button type="button" class="btn btn-outline-warning btn-sm"
-                                                                                onclick="loadLeaveRequestForEdit('${row.id}')" title="Düzenle">
-                                                                                <i class="fas fa-edit"></i>
-                                                                            </button>
-                                                                            <button type="button" class="btn btn-outline-success btn-sm"
-                                                                                onclick="approveLeaveRequest('${row.id}')" title="Onayla">
-                                                                                <i class="fas fa-check"></i>
-                                                                            </button>
-                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                                onclick="openRejectModal('${row.id}')" title="Reddet">
-                                                                                <i class="fas fa-times"></i>
-                                                                            </button>
-                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                                onclick="deleteLeaveRequest('${row.id}')" title="Sil">
-                                                                                <i class="fas fa-trash"></i>
-                                                                            </button>
-                                                                        </div>
-                                                                    `;
+                                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                                <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                                    onclick="loadLeaveRequestForEdit('${row.id}')" title="Düzenle">
+                                                                                    <i class="fas fa-edit"></i>
+                                                                                </button>
+                                                                                <button type="button" class="btn btn-outline-success btn-sm"
+                                                                                    onclick="approveLeaveRequest('${row.id}')" title="Onayla">
+                                                                                    <i class="fas fa-check"></i>
+                                                                                </button>
+                                                                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                    onclick="openRejectModal('${row.id}')" title="Reddet">
+                                                                                    <i class="fas fa-times"></i>
+                                                                                </button>
+                                                                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                    onclick="deleteLeaveRequest('${row.id}')" title="Sil">
+                                                                                    <i class="fas fa-trash"></i>
+                                                                                </button>
+                                                                            </div>
+                                                                        `;
                             }
                             else {
                                 return row.status === 0 ? `
-                                                                                <div class="btn-group btn-group-sm" role="group">
-                                                                                    <button type="button" class="btn btn-outline-warning btn-sm"
-                                                                                        onclick="loadLeaveRequestForEdit('${row.id}')" title="Düzenle">
-                                                                                        <i class="fas fa-edit"></i>
-                                                                                    </button>
-                                                                                    <button type="button" class="btn btn-outline-success btn-sm"
-                                                                                        onclick="approveLeaveRequest('${row.id}')" title="Onayla">
-                                                                                        <i class="fas fa-check"></i>
-                                                                                    </button>
-                                                                                     <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                  onclick="openRejectModal('${row.id}')"  title="Reddet">
-                                                                    <i class="fas fa-times"></i>
-                                                                </button>
-                                                                                    <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                                        onclick="deleteLeaveRequest('${row.id}')" title="Sil">
-                                                                                        <i class="fas fa-trash"></i>
-                                                                                    </button>
-                                                                                </div>
-                                                                            ` : "";
+                                                                                    <div class="btn-group btn-group-sm" role="group">
+                                                                                        <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                                            onclick="loadLeaveRequestForEdit('${row.id}')" title="Düzenle">
+                                                                                            <i class="fas fa-edit"></i>
+                                                                                        </button>
+                                                                                        <button type="button" class="btn btn-outline-success btn-sm"
+                                                                                            onclick="approveLeaveRequest('${row.id}')" title="Onayla">
+                                                                                            <i class="fas fa-check"></i>
+                                                                                        </button>
+                                                                                         <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                      onclick="openRejectModal('${row.id}')"  title="Reddet">
+                                                                        <i class="fas fa-times"></i>
+                                                                    </button>
+                                                                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                            onclick="deleteLeaveRequest('${row.id}')" title="Sil">
+                                                                                            <i class="fas fa-trash"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                ` : "";
                             }
                         }
                     }
@@ -416,20 +415,14 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/izin/${leaveRequestId}/onayla`,
-                                type: 'PUT',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/izin/${leaveRequestId}/onayla`, 'PUT');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Onaylama başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;
@@ -464,7 +457,7 @@
                 const leaveRequestId = $('#txtRejectLeaveRequestId').val();
 
                 if (!leaveRequestId) {
-                    toastr.error('İzin talebi ID\'si bulunamadı');
+                    showToast('İzin talebi ID\'si bulunamadı', 'error', 'Hata');
                     return;
                 }
 
@@ -474,31 +467,16 @@
                 submitBtn.prop('disabled', true)
                     .html('<i class="fas fa-spinner fa-spin me-2"></i>Reddediliyor...');
 
-                const response = await $.ajax({
-                    url: `/izin/${leaveRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : null}`,
-                    type: 'PUT',
-                    contentType: 'application/json'
-                });
+                const url = `/izin/${leaveRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : ''}`;
+                await makeRequest(url, 'PUT');
 
-                toastr.success('İzin talebi başarıyla reddedildi.');
+                showToast('İzin talebi başarıyla reddedildi.', 'success', 'Başarılı');
                 $('#rejectModal').modal('hide');
                 leaveRequestsTable.ajax.reload(null, false);
 
             } catch (error) {
                 console.error('Reddetme hatası:', error);
-                let errorMessage = 'İzin talebi reddedilirken hata oluştu';
-
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'İzin talebi reddedilirken hata oluştu');
             } finally {
                 const submitBtn = $('#btnRejectLeaveRequest');
                 submitBtn.prop('disabled', false).html('<i class="fas fa-times me-1"></i>Reddet');
@@ -507,41 +485,25 @@
 
         async function calculateNetUpdateLeaveDays(startDate, endDate) {
             try {
-                const response = await $.ajax({
-                    url: `/tatil/baslangic/${startDate}/bitis/${endDate}`,
-                    type: 'GET',
-                    contentType: 'application/json'
-                });
+                const response = await makeRequest(`/tatil/baslangic/${startDate}/bitis/${endDate}`, 'GET');
 
-                if (response && response.data && response.isSuccess) {
-                    $('#net-update-leave-day').val(response.data);
+                if (response !== null && response !== undefined) {
+                    $('#net-update-leave-day').val(response);
                 } else {
                     $('#net-update-leave-day').val('Hesaplanamadı');
                 }
             } catch (error) {
                 $('#net-update-leave-day').val('Hata');
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-                toastr.error(errorMessage);
+                handleError(error, 'Net izin günü hesaplanırken hata oluştu.');
             }
         }
 
         async function loadLeaveRequestForEdit(leaveRequestId) {
             try {
-                const response = await $.ajax({
-                    url: `/izin/${leaveRequestId}`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/izin/${leaveRequestId}`, 'GET');
 
-                if (response.isSuccess && response.data) {
-                    const data = response.data;
+                if (response) {
+                    const data = response;
                     $('#txtUpdateLeaveRequestId').val(data.id);
 
                     // Set date range using moment format (daterangepicker uses moment.js)
@@ -571,16 +533,10 @@
 
                     // Show modal
                     $('#updateLeaveRequestModal').modal('show');
-                } else {
-                    toastr.error(response.message || 'İzin talebi yüklenemedi', 'Hata!');
                 }
             } catch (error) {
                 console.error('Load leave request error:', error);
-                let errorMessage = 'İzin talebi yüklenirken hata oluştu';
-                if (error.responseJSON && error.responseJSON.message) {
-                    errorMessage = error.responseJSON.message;
-                }
-                toastr.error(errorMessage, 'Hata!');
+                handleError(error, 'İzin talebi yüklenirken hata oluştu.');
             }
         }
 
@@ -614,24 +570,12 @@
                     contentType: false
                 });
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#updateLeaveRequestModal').modal('hide');
-                    leaveRequestsTable.ajax.reload(null, false);
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('İzin talebi başarıyla güncellendi.', 'success', 'Başarılı!');
+                $('#updateLeaveRequestModal').modal('hide');
+                leaveRequestsTable.ajax.reload(null, false);
             } catch (error) {
                 console.error('Update leave request error:', error);
-                let errorMessage = 'İzin talebi güncellenirken hata oluştu';
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                }
-                toastr.error(errorMessage, 'Hata!');
+                handleError(error, 'İzin talebi güncellenirken hata oluştu.');
             }
         }
 
@@ -649,20 +593,14 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/izin/${leaveRequestId}`,
-                                type: 'DELETE',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/izin/${leaveRequestId}`, 'DELETE');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Silme başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;

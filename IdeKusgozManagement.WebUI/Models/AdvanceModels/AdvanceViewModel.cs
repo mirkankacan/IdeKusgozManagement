@@ -20,9 +20,13 @@
         public string CreatedByFullName { get; set; }
         public string UserId { get; set; }
         public string UserFullName { get; set; }
+        public string? CompletedById { get; set; }
+        public DateTime? CompletedDate { get; set; }
+        public string? CompletedByFullName { get; set; }
 
         // Advance parts
         public List<AdvancePartViewModel>? Parts { get; set; }
+
         public bool HasParts => Parts != null && Parts.Any();
     }
 }

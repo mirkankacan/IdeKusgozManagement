@@ -1,6 +1,7 @@
 ﻿using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using IdeKusgozManagement.Domain.Entities;
 using IdeKusgozManagement.Infrastructure.Data.Context;
+using IdeKusgozManagement.Infrastructure.Data.Interceptors;
 using IdeKusgozManagement.WebAPI.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -26,7 +27,6 @@ namespace IdeKusgozManagement.WebAPI
         {
             services.AddScoped<GlobalExceptionMiddleware>();
 
-            services.AddAuthorization();
             var connectionString = configuration.GetConnectionString("SqlConnection");
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             using var tempServiceProvider = services.BuildServiceProvider();
@@ -121,16 +121,42 @@ namespace IdeKusgozManagement.WebAPI
                     }
                 };
             });
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("FinansPolicy", policy =>
+                    policy.RequireAssertion(context =>
+                        context.User.IsInRole("Admin") ||
+                        context.User.IsInRole("Yönetici") ||
+                        context.User.IsInRole("Şef") ||
+                        (context.User.IsInRole("Personel") &&
+                         (context.User.HasClaim(c => c.Type == "DepartmentDutyName" &&
+                            (c.Value == "Muhasebe Meslek Elemanı" ||
+                             c.Value == "Muhasebe Müdürü" ||
+                             c.Value == "Finans Uzmanı"))))
+                    ));
+                options.AddPolicy("MakinePolicy", policy =>
+                   policy.RequireAssertion(context =>
+                       context.User.IsInRole("Admin") ||
+                       context.User.IsInRole("Yönetici") ||
+                       context.User.IsInRole("Şef") ||
+                       (context.User.IsInRole("Personel") &&
+                        (context.User.HasClaim(c => c.Type == "DepartmentDutyName" &&
+                           (c.Value == "Şoför-Yük Taşıma" ||
+                            c.Value == "Vinç Operatörü" ||
+                            c.Value == "Platform Operatörü"))))
+                   ));
+            });
             services.AddHttpClient();
             services.AddHttpContextAccessor();
-
-            services.AddDbContext<ApplicationDbContext>(opts =>
-               opts.UseSqlServer(connectionString,
-                   sqlOptions =>
-                   {
-                       sqlOptions.UseCompatibilityLevel(120); // SQL Server 2014 = 120
-                   }));
-
+            services.AddDbContext<ApplicationDbContext>((serviceProvider, opts) =>
+            {
+                opts.UseSqlServer(connectionString,
+                    sqlOptions =>
+                    {
+                        sqlOptions.UseCompatibilityLevel(120); // SQL Server 2014 = 120
+                    })
+                    .AddInterceptors(serviceProvider.GetRequiredService<AuditLogInterceptor>());
+            });
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
             {
@@ -146,6 +172,7 @@ namespace IdeKusgozManagement.WebAPI
                 {
                     policy.WithOrigins(
                       "http://localhost:5290",
+                      "https://localhost:8484",
                       "http://192.168.2.253:5290",
                       "http://192.168.2.253:80",
                       "http://192.168.2.253",

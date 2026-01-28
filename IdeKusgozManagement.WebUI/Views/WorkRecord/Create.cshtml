@@ -346,12 +346,12 @@
             const receiptFile = $('#fileReceipt')[0].files[0] ?? null;
 
             if (expenseId == null || expenseId == undefined || isNaN(amount) || amount == null) {
-                toastr.warning("Masraf türünü ya da tutarı kontrol ediniz");
+                showToast("Masraf türünü ya da tutarı kontrol ediniz", 'warning', 'Uyarı');
                 return;
             }
 
             if (!receiptFile) {
-                toastr.error("Masraf eklemek için belge yüklenmesi zorunludur!");
+                showToast("Masraf eklemek için belge yüklenmesi zorunludur!", 'error', 'Hata');
                 return;
             }
 
@@ -377,7 +377,7 @@
             updateTotalExpense(currentEditingDay);
             updateExpenseButton(currentEditingDay);
             clearExpenseForm();
-            toastr.success('Masraf eklendi!', 'Başarılı!');
+            showToast('Masraf eklendi!', 'success', 'Başarılı!');
         }
 
         function removeExpenseFromDay(index) {
@@ -388,7 +388,7 @@
                 displayCurrentExpenses(currentEditingDay);
                 updateTotalExpense(currentEditingDay);
                 updateExpenseButton(currentEditingDay);
-                toastr.info('Masraf silindi!', 'Bilgi');
+                showToast('Masraf silindi!', 'info', 'Bilgi');
             }
         }
 
@@ -420,14 +420,9 @@
         async function getApprovedLeaveRequests() {
             try {
 
-                const response = await $.ajax({
-                    url: `/izin/listem/durum/1`,
-                    type: 'GET',
-                    dataType: 'json'
-                });
-
-                if (response && response.isSuccess && response.data) {
-                    return response.data;
+                const response = await makeRequest(`/izin/listem/durum/1`, 'GET');
+                if (response && Array.isArray(response)) {
+                    return response;
                 } else {
                     console.warn('Failed to load approved leave requests:', response);
                     return null;
@@ -515,7 +510,7 @@
                 }
 
                 if (!currentEditingDay) {
-                    toastr.error('Gün bilgisi bulunamadı.', 'Hata!');
+                    showToast('Gün bilgisi bulunamadı.', 'error', 'Hata!');
                     return;
                 }
 
@@ -544,16 +539,13 @@
                 resetExpenseDataStore();
 
                 const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
-                const response = await $.ajax({
-                    url: `/puantaj/listem/tarih/${formattedDate}`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/puantaj/listem/tarih/${formattedDate}`, 'GET');
 
-                if (response.isSuccess && response.data && response.data.length > 0) {
+                if (response && Array.isArray(response) && response.length > 0) {
                     existingWorkRecords = {};
                     hasApprovedRecords = false;
 
-                    response.data.forEach(record => {
+                    response.forEach(record => {
                         const date = new Date(record.date);
                         const day = date.getDate();
                         existingWorkRecords[day] = record;
@@ -1010,7 +1002,7 @@
 
                 // Day her zaman zorunlu
                 if (!day || day === '') {
-                    toastr.error('Gün bilgisi boş olamaz!', 'Hata!');
+                    showToast('Gün bilgisi boş olamaz!', 'error', 'Hata!');
                     throw new Error('Gün bilgisi boş olamaz!');
                 }
                 if (dailyStatus === 'Çalışıyor') {
@@ -1064,7 +1056,7 @@
 
             // Eğer hiç kayıt yoksa uyarı ver
             if (workRecords.length === 0) {
-                toastr.warning('Kaydedilecek veri bulunamadı!', 'Uyarı!');
+                showToast('Kaydedilecek veri bulunamadı!', 'warning', 'Uyarı!');
                 return;
             }
 
@@ -1115,25 +1107,11 @@
                     contentType: false
                 });
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    await generateDynamicTable();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('Puantaj başarıyla kaydedildi.', 'success', 'Başarılı!');
+                await generateDynamicTable();
             } catch (error) {
                 console.error('Puantaj kaydedilirken hata:', error);
-                let errorMessage = 'Puantaj kaydedilirken bir hata oluştu.';
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-                toastr.error(errorMessage, 'Hata!');
+                handleError(error, 'Puantaj kaydedilirken bir hata oluştu.');
             } finally {
                 $('.btnSaveWorkRecords').prop('disabled', false)
                     .html('<i class="fas fa-save me-2"></i>Kaydet');

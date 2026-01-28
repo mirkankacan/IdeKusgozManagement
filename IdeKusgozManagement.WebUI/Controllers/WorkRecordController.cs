@@ -1,3 +1,4 @@
+using IdeKusgozManagement.WebUI.Extensions;
 using IdeKusgozManagement.WebUI.Models.WorkRecordModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -23,19 +24,21 @@ namespace IdeKusgozManagement.WebUI.Controllers
         {
             return View();
         }
+
         [Authorize(Roles = "Admin,Yönetici")]
         [HttpGet("liste/onaylanmis/kullanici/{userId}/tarih/{date:datetime}")]
         public async Task<IActionResult> GetApprovedWorkRecordsByUser(string userId, DateTime date, int status, CancellationToken cancellationToken)
         {
             var response = await _workRecordApiService.GetApprovedWorkRecordsByUserAsync(userId, date, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
+
         [Authorize(Roles = "Admin,Yönetici")]
         [HttpGet("liste/kullanici/{userId}/tarih/{date:datetime}/durum/{status:int}")]
-        public async Task<IActionResult> GetWorkRecordsByUserIdAndDate(string userId, DateTime date, int status, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetWorkRecordsByUserIdAndDateStatus(string userId, DateTime date, int status, CancellationToken cancellationToken)
         {
             var response = await _workRecordApiService.GetWorkRecordsByUserIdDateStatusAsync(userId, date, status, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin,Yönetici,Şef")]
@@ -43,7 +46,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetWorkRecordsByUserIdAndDate(string userId, DateTime date, CancellationToken cancellationToken)
         {
             var response = await _workRecordApiService.GetWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -51,7 +54,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetMyWorkRecords(DateTime date, CancellationToken cancellationToken)
         {
             var response = await _workRecordApiService.GetMyWorkRecordsByDateAsync(date, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -76,7 +79,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest(ModelState);
             }
             var response = await _workRecordApiService.BatchCreateOrModifyWorkRecordsAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -89,7 +92,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Kullanıcı ID'si boş geçilemez");
             }
             var response = await _workRecordApiService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, rejectReason, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -102,7 +105,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Kullanıcı ID'si boş geçilemez");
             }
             var response = await _workRecordApiService.BatchApproveWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -116,7 +119,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
             var response = await _workRecordApiService.BatchUpdateWorkRecordsByUserIdAsync(userId, model, cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -129,7 +132,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Puantaj ID'si boş geçilemez");
             }
             var response = await _workRecordApiService.ApproveWorkRecordByIdAsync(workRecordId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -142,7 +145,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Puantaj ID'si boş geçilemez");
             }
             var response = await _workRecordApiService.RejectWorkRecordByIdAsync(workRecordId, rejectReason, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

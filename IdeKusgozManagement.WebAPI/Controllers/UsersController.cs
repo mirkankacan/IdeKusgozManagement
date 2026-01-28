@@ -1,6 +1,7 @@
-﻿using IdeKusgozManagement.Application.DTOs.UserDTOs;
+using IdeKusgozManagement.Application.DTOs.UserDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
         {
             var result = await userService.GetUsersAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -34,7 +35,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Departman ID'si gereklidir");
             }
             var result = await userService.GetUsersByDepartmentAsync(departmentId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -49,7 +50,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Departman görev ID'si gereklidir");
             }
             var result = await userService.GetUsersByDepartmentDutyAsync(departmentDutyId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -60,7 +61,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetActiveSuperiors()
         {
             var result = await userService.GetActiveSuperiorsAsync();
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -76,7 +77,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await userService.GetSubordinatesByUserIdAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -92,7 +93,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await userService.GetUserByIdAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -107,7 +108,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
             var result = await userService.GetUserByIdAsync(currentUserId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -124,13 +125,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await userService.CreateUserAsync(createUserDTO, cancellationToken);
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result);
-            }
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -151,7 +146,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await userService.UpdateUserAsync(userId, updateUserDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -167,7 +162,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await userService.DeleteUserAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -184,7 +179,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await userService.AssignRoleToUserAsync(assignRoleDTO);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -200,7 +195,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await userService.EnableUserAsync(userId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -216,7 +211,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await userService.DisableUserAsync(userId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -239,7 +234,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await userService.ChangePasswordAsync(userId, changePasswordDTO);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -256,7 +251,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await userService.GetAnnualLeaveDaysByUserAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -272,7 +267,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await userService.GetAnnualLeaveDaysByUserAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

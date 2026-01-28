@@ -36,19 +36,15 @@ function hideTableLoading() {
 // ===== SELECT2 MANAGEMENT =====
 async function initializeEquipmentSelect() {
     try {
-        const response = await $.ajax({
-            url: '/ekipman/aktif-liste',
-            type: 'GET',
-            dataType: 'json'
-        });
+        const response = await makeRequest('/ekipman/aktif-liste', 'GET');
 
-        if (response && response.isSuccess && response.data) {
+        if (response && Array.isArray(response)) {
             $('.equipment-select').each(function () {
                 const currentSelect = $(this);
                 const currentValue = currentSelect.data('current-value');
                 currentSelect.empty();
                 currentSelect.append('<option value="">Ekipman seçin</option>');
-                response.data.forEach(equipment => {
+                response.forEach(equipment => {
                     const isSelected = currentValue === equipment.id;
                     currentSelect.append(`<option value="${equipment.id}" ${isSelected ? 'selected' : ''}>${equipment.name}</option>`);
                 });
@@ -62,22 +58,18 @@ async function initializeEquipmentSelect() {
         });
     } catch (error) {
         console.error('Ekipman listesi yüklenirken hata:', error);
-        toastr.error('Ekipman listesi yüklenirken hata oluştu', 'Hata!');
+        handleError(error, 'Ekipman listesi yüklenirken hata oluştu');
     }
 }
 
 async function initializeExpenseSelect() {
     try {
-        const response = await $.ajax({
-            url: '/masraf/aktif-liste',
-            type: 'GET',
-            dataType: 'json'
-        });
+        const response = await makeRequest('/masraf/ture-gore/0', 'GET');
 
-        if (response && response.isSuccess && response.data) {
+        if (response && Array.isArray(response)) {
             $('#expense-select').empty();
             $('#expense-select').append('<option value="">Masraf türü seçin</option>');
-            response.data.forEach(expenseType => {
+            response.forEach(expenseType => {
                 $('#expense-select').append(`<option value="${expenseType.id}">${expenseType.name}</option>`);
             });
         }
@@ -96,25 +88,21 @@ async function initializeExpenseSelect() {
         $('#expense-select').select2(select2Options);
     } catch (error) {
         console.error('Masraf türleri yüklenirken hata:', error);
-        toastr.error('Masraf türleri yüklenirken hata oluştu', 'Hata!');
+        handleError(error, 'Masraf türleri yüklenirken hata oluştu');
     }
 }
 
 async function initializeProjectSelect() {
     try {
-        const response = await $.ajax({
-            url: '/proje/aktif-liste',
-            type: 'GET',
-            dataType: 'json'
-        });
+        const response = await makeRequest('/proje/aktif-liste', 'GET');
 
-        if (response && response.isSuccess && response.data) {
+        if (response && Array.isArray(response)) {
             $('.project-select').each(function () {
                 const currentSelect = $(this);
                 const currentValue = currentSelect.data('current-value');
                 currentSelect.empty();
                 currentSelect.append('<option value="">Proje seçin</option>');
-                response.data.forEach(project => {
+                response.forEach(project => {
                     const isSelected = currentValue === project.id;
                     currentSelect.append(`<option value="${project.id}" ${isSelected ? 'selected' : ''}>${project.name}</option>`);
                 });
@@ -131,7 +119,7 @@ async function initializeProjectSelect() {
         setupProjectChangeHandler();
     } catch (error) {
         console.error('Proje listesi yüklenirken hata:', error);
-        toastr.error('Proje listesi yüklenirken hata oluştu', 'Hata!');
+        handleError(error, 'Proje listesi yüklenirken hata oluştu');
     }
 }
 
@@ -261,7 +249,7 @@ async function initializeDailyStatusSelect() {
 
     } catch (error) {
         console.error('İzin sebep listesi yüklenirken hata:', error);
-        toastr.error('İzin sebep listesi yüklenirken hata oluştu', 'Hata!');
+        handleError(error, 'İzin sebep listesi yüklenirken hata oluştu');
     }
 }
 
@@ -304,7 +292,7 @@ async function initializeMachineWorkRecordDailyStatusSelect() {
 
     } catch (error) {
         console.error('Gün durumu listesi yüklenirken hata:', error);
-        toastr.error('Gün durumu listesi yüklenirken hata oluştu', 'Hata!');
+        handleError(error, 'Gün durumu listesi yüklenirken hata oluştu');
     }
 }
 
@@ -1207,15 +1195,10 @@ let holidayData = {};
 
 async function loadHolidays(year) {
     try {
-        const response = await $.ajax({
-            url: `/tatil/${year}/yili`,
-            type: 'GET',
-            dataType: 'json',
-            timeout: 10000
-        });
-        if (response?.isSuccess && Array.isArray(response.data)) {
+        const response = await makeRequest(`/tatil/${year}/yili`, 'GET');
+        if (Array.isArray(response)) {
             holidayData = {};
-            response.data.forEach(holiday => {
+            response.forEach(holiday => {
                 if (holiday.date && holiday.name) {
                     const isoString = holiday.date.iso;
                     if (!isoString) {

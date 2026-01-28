@@ -3,6 +3,7 @@ using IdeKusgozManagement.Application.DTOs.LeaveRequestDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +22,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetLeaveRequests(CancellationToken cancellationToken)
         {
             var result = await leaveRequestService.GetLeaveRequestsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -37,7 +38,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
             var result = await leaveRequestService.GetLeaveRequestsByUserIdAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -52,7 +53,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı kimliği bulunamadı");
             }
             var result = await leaveRequestService.GetLeaveRequestsByUserIdAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -64,7 +65,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetLeaveRequestsByStatus(LeaveRequestStatus status, [FromQuery] string? userId, CancellationToken cancellationToken)
         {
             var result = await leaveRequestService.GetLeaveRequestsByStatusAsync(status, userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -74,7 +75,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetSubLeaveRequestsBySuperior(CancellationToken cancellationToken)
         {
             var result = await leaveRequestService.GetSubordinateLeaveRequestsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -91,7 +92,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await leaveRequestService.GetLeaveRequestByIdAsync(leaveRequestId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -108,7 +109,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
             var result = await leaveRequestService.CreateLeaveRequestAsync(createLeaveRequestDTO, cancellationToken);
 
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -130,7 +131,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
 
             var result = await leaveRequestService.UpdateLeaveRequestAsync(leaveRequestId, updateLeaveRequestDTO, cancellationToken);
 
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -146,7 +147,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await leaveRequestService.DeleteLeaveRequestAsync(leaveRequestId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -162,7 +163,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("İzin talebi ID'si gereklidir");
             }
             var result = await leaveRequestService.ApproveLeaveRequestAsync(leaveRequestId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -179,7 +180,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await leaveRequestService.RejectLeaveRequestAsync(leaveRequestId, rejectReason, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

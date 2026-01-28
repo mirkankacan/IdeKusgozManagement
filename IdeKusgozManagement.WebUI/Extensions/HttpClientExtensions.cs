@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.WebUI.Handlers;
+using IdeKusgozManagement.WebUI.Handlers;
 using IdeKusgozManagement.WebUI.Services;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 
@@ -10,58 +10,28 @@ namespace IdeKusgozManagement.WebUI.Extensions
         {
             var baseUrl = configuration["ApiSettings:BaseUrl"];
 
+            services.AddHttpClient<IApiService, ApiService>(client => ConfigureClient(client, baseUrl)).AddHttpMessageHandler<JwtTokenHandler>();
             // Token gerektiren API servisleri
-            services.AddHttpClient<IUserApiService, UserApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IRoleApiService, RoleApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IWorkRecordApiService, WorkRecordApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IEquipmentApiService, EquipmentApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IExpenseApiService, ExpenseApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IFileApiService, FileApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IDepartmentApiService, DepartmentApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IDocumentApiService, DocumentApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<ICompanyApiService, CompanyApiService>(client => ConfigureClient(client, baseUrl))
-                  .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IMessageApiService, MessageApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IHolidayApiService, HolidayApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<ILeaveRequestApiService, LeaveRequestApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-            services.AddHttpClient<IMachineWorkRecordApiService, MachineWorkRecordApiService>(client => ConfigureClient(client, baseUrl))
-                .AddHttpMessageHandler<JwtTokenHandler>();
-            services.AddHttpClient<IUserBalanceApiService, UserBalanceApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<ITrafficTicketApiService, TrafficTicketApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IProjectApiService, ProjectApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<IAdvanceApiService, AdvanceApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
-
-            services.AddHttpClient<INotificationApiService, NotificationApiService>(client => ConfigureClient(client, baseUrl))
-                    .AddHttpMessageHandler<JwtTokenHandler>();
+            services.AddScoped<IUserApiService, UserApiService>();
+            services.AddScoped<IRoleApiService, RoleApiService>();
+            services.AddScoped<IWorkRecordApiService, WorkRecordApiService>();
+            services.AddScoped<IEquipmentApiService, EquipmentApiService>();
+            services.AddScoped<IExpenseApiService, ExpenseApiService>();
+            services.AddScoped<IDepartmentApiService, DepartmentApiService>();
+            services.AddScoped<IDocumentApiService, DocumentApiService>();
+            services.AddScoped<IFileApiService, FileApiService>();
+            services.AddScoped<ICompanyApiService, CompanyApiService>();
+            services.AddScoped<IMessageApiService, MessageApiService>();
+            services.AddScoped<IHolidayApiService, HolidayApiService>();
+            services.AddScoped<ILeaveRequestApiService, LeaveRequestApiService>();
+            services.AddScoped<IMachineWorkRecordApiService, MachineWorkRecordApiService>();
+            services.AddScoped<IUserBalanceApiService, UserBalanceApiService>();
+            services.AddScoped<ITrafficTicketApiService, TrafficTicketApiService>();
+            services.AddScoped<IProjectApiService, ProjectApiService>();
+            services.AddScoped<IAdvanceApiService, AdvanceApiService>();
+            services.AddScoped<INotificationApiService, NotificationApiService>();
+            services.AddScoped<ICompanyPaymentApiService, CompanyPaymentApiService>();
+            services.AddScoped<IParameterApiService, ParameterApiService>();
 
             // Auth servisi (özel durum)
             services.AddScoped<IAuthApiService, AuthApiService>();
@@ -78,8 +48,7 @@ namespace IdeKusgozManagement.WebUI.Extensions
         private static void ConfigureClient(HttpClient client, string baseUrl)
         {
             client.BaseAddress = new Uri(baseUrl);
-            client.DefaultRequestHeaders.Add("Accept", "application/json");
-            client.Timeout = TimeSpan.FromSeconds(30);
+            client.Timeout = TimeSpan.FromSeconds(60);
         }
     }
 }

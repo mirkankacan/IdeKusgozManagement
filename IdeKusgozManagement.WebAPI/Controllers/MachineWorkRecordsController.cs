@@ -1,8 +1,9 @@
-﻿using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.MachineWorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +24,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await MachineWorkRecordService.GetMachineWorkRecordsByUserIdAndDateAsync(currentUserId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("approved/user/{userId}/date/{date:datetime}")]
@@ -35,7 +36,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await MachineWorkRecordService.GetApprovedMachineWorkRecordsByUserAsync(userId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("user/{userId}/date/{date:datetime}/status/{status:int}")]
@@ -47,7 +48,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await MachineWorkRecordService.GetMachineWorkRecordsByUserIdDateStatusAsync(userId, date, status, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("user/{userId}/date/{date:datetime}")]
@@ -59,12 +60,11 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await MachineWorkRecordService.GetMachineWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("batch-create-modify")]
-        [RoleFilter("Admin", "Yönetici", "Şef")]
-        [DepartmentDuty("Şoför-Yük Taşıma", "Vinç Operatörü", "Platform Operatörü")]
+        [Authorize(Policy = "MakinePolicy")]
         public async Task<IActionResult> BatchCreateOrModifyMachineWorkRecords([FromForm] List<CreateOrModifyMachineWorkRecordDTO> createMachineWorkRecordDTOs, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
@@ -77,7 +77,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("İşlenecek kayıt bulunamadı");
             }
             var result = await MachineWorkRecordService.BatchCreateOrModifyMachineWorkRecordsAsync(createMachineWorkRecordDTOs, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("batch-update/user/{userId}")]
@@ -94,7 +94,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await MachineWorkRecordService.BatchUpdateMachineWorkRecordsByUserIdAsync(userId, updateMachineWorkRecordDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("batch-approve/user/{userId}/date/{date:datetime}")]
@@ -106,7 +106,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await MachineWorkRecordService.BatchApproveMachineWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("batch-reject/user/{userId}/date/{date:datetime}")]
@@ -118,7 +118,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await MachineWorkRecordService.BatchRejectMachineWorkRecordsByUserIdAndDateAsync(userId, date, rejectReason, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("{id}/reject")]
@@ -130,7 +130,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Puantaj ID'si gereklidir");
             }
             var result = await MachineWorkRecordService.RejectMachineWorkRecordByIdAsync(id, rejectReason, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("{id}/approve")]
@@ -142,7 +142,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Puantaj ID'si gereklidir");
             }
             var result = await MachineWorkRecordService.ApproveMachineWorkRecordByIdAsync(id, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.TrafficTicketModels;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Models.TrafficTicketModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +27,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetTrafficTickets(CancellationToken cancellationToken)
         {
             var response = await _trafficTicketApiService.GetTrafficTicketsAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpGet("{ticketId}")]
@@ -38,7 +39,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _trafficTicketApiService.GetTrafficTicketByIdAsync(ticketId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -51,7 +52,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _trafficTicketApiService.CreateTrafficTicketAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -69,7 +70,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _trafficTicketApiService.UpdateTrafficTicketAsync(ticketId, model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -82,7 +83,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _trafficTicketApiService.DeleteTrafficTicketAsync(ticketId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

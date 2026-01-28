@@ -12,7 +12,8 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-CSRF-TOKEN";
     options.Cookie.Name = "__RequestVerificationToken";
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
 });
 
 builder.Services.AddSession(options =>
@@ -20,8 +21,9 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromHours(8);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.Name = ".IdeKusgozManagement.WebUISession";
 });
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -31,12 +33,36 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LogoutPath = "/cikis-yap";
         options.AccessDeniedPath = "/erisim-engellendi";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.SlidingExpiration = true;
         options.Cookie.Name = "IdeKusgozManagementAuthCookie";
     });
-
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("FinansPolicy", policy =>
+        policy.RequireAssertion(context =>
+            context.User.IsInRole("Admin") ||
+            context.User.IsInRole("Yönetici") ||
+            context.User.IsInRole("Þef") ||
+            (context.User.IsInRole("Personel") &&
+             (context.User.HasClaim(c => c.Type == "DepartmentDutyName" &&
+                (c.Value == "Muhasebe Meslek Elemaný" ||
+                 c.Value == "Muhasebe Müdürü" ||
+                 c.Value == "Finans Uzmaný"))))
+        ));
+    options.AddPolicy("MakinePolicy", policy =>
+       policy.RequireAssertion(context =>
+           context.User.IsInRole("Admin") ||
+           context.User.IsInRole("Yönetici") ||
+           context.User.IsInRole("Þef") ||
+           (context.User.IsInRole("Personel") &&
+            (context.User.HasClaim(c => c.Type == "DepartmentDutyName" &&
+               (c.Value == "Þoför-Yük Taþýma" ||
+                c.Value == "Vinç Operatörü" ||
+                c.Value == "Platform Operatörü"))))
+       ));
+});
 builder.Services.AddHttpContextAccessor();
 // Add SignalR
 builder.Services.AddSignalR(options =>

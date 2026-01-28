@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = null;
 }
 
@@ -23,7 +23,6 @@
     <link href="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.css" rel="stylesheet">
     <link href="~/theme/assets/css/main.min.css" rel="stylesheet">
     <link href="~/theme/assets/css/custom.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
 
 </head>
 
@@ -50,8 +49,8 @@
 
                             <div class="mb-3">
                                 <div class="form-floating">
-                                    <input type="text" class="form-control" id="txtTCNo"
-                                           placeholder="TC No giriniz..." required>
+                                    <input type="text" class="form-control" id="txtTCNo" placeholder="TC No giriniz..."
+                                        required>
                                     <label for="txtTCNo">TC No</label>
                                 </div>
                             </div>
@@ -59,7 +58,7 @@
                             <div class="mb-3">
                                 <div class="form-floating">
                                     <input type="password" class="form-control" id="txtPassword"
-                                           placeholder="Şifre giriniz..." required>
+                                        placeholder="Şifre giriniz..." required>
                                     <label for="txtPassword">Şifre</label>
                                 </div>
                             </div>
@@ -70,7 +69,8 @@
                             </div>
 
                             <div class="d-grid">
-                                <button id="btnLogin" type="submit" class="btn btn-info"><i data-feather="log-in"></i> Giriş Yap</button>
+                                <button id="btnLogin" type="submit" class="btn btn-info"><i data-feather="log-in"></i>
+                                    Giriş Yap</button>
                             </div>
 
                             <div id="errorArea" class="text-danger text-center mt-3"></div>
@@ -91,10 +91,11 @@
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="~/theme/assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
     <script src="~/theme/assets/js/main.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="~/js/http-client.js"></script>
+    <script src="~/js/customtoastr.js"></script>
 
     <script>
-        $("#loginForm").on("submit", function (e) {
+        $("#loginForm").on("submit", async function (e) {
             e.preventDefault();
             const loginDto = {
                 TCNo: $("#txtTCNo").val(),
@@ -102,38 +103,24 @@
                 RememberMe: $("#rememberMe").is(":checked")
             };
 
-            $('#btnLogin').attr("disabled", true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Giriş yapılıyor...');
+            const btnLogin = $('#btnLogin');
+            btnLogin.attr("disabled", true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Giriş yapılıyor...');
 
-            $.ajax({
-                url: "/giris-yap",
-                method: "POST",
-                contentType: "application/json",
-                data: JSON.stringify(loginDto),
-                success: function (response) {
-                    toastr.success("Giriş başarılı.", "Başarılı");
-                    const redirectUrl = response;
-                    setTimeout(() => window.location.href = redirectUrl, 1000);
-                },
-                error: function (xhr) {
-                    let errorMessage = "Bir hata oluştu.";
-                    if (xhr.responseText) {
-                        try {
-                            const errorData = JSON.parse(xhr.responseText);
-                            errorMessage = errorData.message || errorData || xhr.responseText;
-                        } catch (e) {
-                            errorMessage = xhr.responseText;
-                        }
-                    }
-                    toastr.error(errorMessage, "Hata");
-                },
-                complete: function () {
-                    setTimeout(() => {
-                         $('#btnLogin').attr("disabled", false).html('<i data-feather="log-in"></i> Giriş Yap');
+            try {
+                const response = await makeRequest("/giris-yap", "POST", loginDto);
+                showToast("Giriş başarılı.", "success", "Başarılı");
+
+                let redirectUrl = response.redirectUrl; 
+
+                setTimeout(() => window.location.href = redirectUrl, 1000);
+            } catch (error) {
+                handleError(error, "Bir hata oluştu.");
+            } finally {
+                setTimeout(() => {
+                    btnLogin.attr("disabled", false).html('<i data-feather="log-in"></i> Giriş Yap');
                     feather.replace();
-                    }, 1000);
-
-                }
-            });
+                }, 1000);
+            }
         });
     </script>
 </body>

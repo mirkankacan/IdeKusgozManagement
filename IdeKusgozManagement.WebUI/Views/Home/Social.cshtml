@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Sosyal";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -79,16 +79,12 @@
 
         async function initializeTargetRolesSelect() {
             try {
-                const response = await $.ajax({
-                    url: '/kullanici/aktif-roller',
-                    type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest('/kullanici/aktif-roller', 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('#select-target-roles').empty();
 
-                    response.data.forEach(role => {
+                    response.forEach(role => {
                         $('#select-target-roles').append(`<option value="${role.name}">${role.name}</option>`);
                     });
                 }
@@ -103,21 +99,17 @@
                 });
             } catch (error) {
                 console.error('Rol listesi yüklenirken hata:', error);
-                toastr.error('Rol listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Rol listesi yüklenirken hata oluştu');
             }
         }
 
         async function initializeTargetUsersSelect() {
             try {
-                const response = await $.ajax({
-                    url: '/kullanici/liste',
-                    type: 'GET',
-                    dataType: 'json'
-                });
-                if (response && response.isSuccess && response.data) {
+                const response = await makeRequest('/kullanici/liste', 'GET');
+                if (response && Array.isArray(response)) {
                     $('#select-target-users').empty();
 
-                    response.data.forEach(user => {
+                    response.forEach(user => {
                         $('#select-target-users').append(`<option value="${user.id}">${user.fullName}</option>`);
                     });
                 }
@@ -132,7 +124,7 @@
                 });
             } catch (error) {
                 console.error('Kullanıcı listesi yüklenirken hata:', error);
-                toastr.error('Kullanıcı listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Kullanıcı listesi yüklenirken hata oluştu');
             }
         }
 

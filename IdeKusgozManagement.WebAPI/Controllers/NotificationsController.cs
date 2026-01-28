@@ -1,4 +1,5 @@
 using IdeKusgozManagement.Application.Interfaces.Services;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,7 +17,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetNotifications([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             var result = await notificationService.GetNotificationsAsync(pageSize, pageNumber, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -26,7 +27,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetUnreadNotificationCount(CancellationToken cancellationToken)
         {
             var result = await notificationService.GetUnreadNotificationCountAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -36,7 +37,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> MarkAsRead(string notificationId, CancellationToken cancellationToken)
         {
             var result = await notificationService.MarkAsReadAsync(notificationId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
         {
             var result = await notificationService.MarkAllAsReadAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

@@ -4,6 +4,7 @@ using IdeKusgozManagement.Application.Interfaces.Providers;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Infrastructure.Authentication;
+using IdeKusgozManagement.Infrastructure.Data.Interceptors;
 using IdeKusgozManagement.Infrastructure.OptionsSetup;
 using IdeKusgozManagement.Infrastructure.Repositories;
 using IdeKusgozManagement.Infrastructure.Services;
@@ -23,9 +24,17 @@ namespace IdeKusgozManagement.Infrastructure
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
         {
             string connectionString = configuration.GetConnectionString("SqlConnection")!;
-
+            services.ConfigureOptions<JwtOptionsSetup>();
+            services.ConfigureOptions<JwtBearerOptionsSetup>();
+            services.ConfigureOptions<HolidayApiOptionsSetup>();
+            services.ConfigureOptions<EmailOptionsSetup>();
+            services.ConfigureOptions<OpenAiOptionsSetup>();
+            services.ConfigureOptions<OneSignalOptionsSetup>();
             // Providers
             services.AddScoped<IJwtProvider, JwtProvider>();
+
+            services.AddScoped<AuditLogInterceptor>();
+
             // Repositories
             services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -54,6 +63,10 @@ namespace IdeKusgozManagement.Infrastructure
             services.AddScoped<IAIService, OpenAIService>();
             services.AddScoped<IUserBalanceService, UserBalanceService>();
             services.AddScoped<IMachineWorkRecordService, MachineWorkRecordService>();
+            services.AddScoped<ICompanyPaymentService, CompanyPaymentService>();
+            services.AddScoped<IParameterService, ParameterService>();
+            services.AddScoped<IDeviceService, DeviceService>();
+            services.AddScoped<IOneSignalService, OneSignalService>();
             services.AddSingleton<ChatClient>(serviceProvider =>
             {
                 var options = serviceProvider.GetRequiredService<IOptions<OpenAiOptionsDTO>>().Value;
@@ -69,11 +82,13 @@ namespace IdeKusgozManagement.Infrastructure
 
                 return openAIClient.GetChatClient(options.Model);
             });
-            services.ConfigureOptions<JwtOptionsSetup>();
-            services.ConfigureOptions<JwtBearerOptionsSetup>();
-            services.ConfigureOptions<HolidayApiOptionsSetup>();
-            services.ConfigureOptions<EmailOptionsSetup>();
-            services.ConfigureOptions<OpenAiOptionsSetup>();
+            services.AddHttpClient("OneSignal", (serviceProvider, client) =>
+            {
+                var options = serviceProvider.GetRequiredService<IOptions<OneSignalOptionsDTO>>().Value;
+                client.BaseAddress = new Uri(options.BaseAddress ?? "https://api.onesignal.com");
+                client.DefaultRequestHeaders.Add("Authorization", $"Key {options.ApiKey}");
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
 
             services.AddMemoryCache();
 

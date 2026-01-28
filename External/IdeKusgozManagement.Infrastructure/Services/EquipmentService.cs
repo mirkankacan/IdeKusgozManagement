@@ -6,12 +6,13 @@ using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class EquipmentService(IUnitOfWork unitOfWork, ILogger<EquipmentService> logger) : IEquipmentService
     {
-        public async Task<ServiceResponse<IEnumerable<EquipmentDTO>>> GetEquipmentsAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<EquipmentDTO>>> GetEquipmentsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -19,7 +20,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var equipmentDTOs = equipments.Adapt<IEnumerable<EquipmentDTO>>().OrderBy(x => x.GroupName).ThenByDescending(e => e.CreatedDate);
 
-                return ServiceResponse<IEnumerable<EquipmentDTO>>.Success(equipmentDTOs, "Ekipman listesi başarıyla getirildi");
+                return ServiceResult<IEnumerable<EquipmentDTO>>.SuccessAsOk(equipmentDTOs);
             }
             catch (Exception ex)
             {
@@ -28,7 +29,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<EquipmentDTO>> GetEquipmentByIdAsync(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<EquipmentDTO>> GetEquipmentByIdAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -36,12 +37,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (equipment == null)
                 {
-                    return ServiceResponse<EquipmentDTO>.Error("Ekipman bulunamadı");
+                    return ServiceResult<EquipmentDTO>.Error("Ekipman Bulunamadı", "Belirtilen ID'ye sahip ekipman bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var equipmentDTO = equipment.Adapt<EquipmentDTO>();
 
-                return ServiceResponse<EquipmentDTO>.Success(equipmentDTO, "Ekipman başarıyla getirildi");
+                return ServiceResult<EquipmentDTO>.SuccessAsOk(equipmentDTO);
             }
             catch (Exception ex)
             {
@@ -50,7 +51,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<string>> CreateEquipmentAsync(CreateEquipmentDTO createEquipmentDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<string>> CreateEquipmentAsync(CreateEquipmentDTO createEquipmentDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -58,14 +59,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (existingEquipment)
                 {
-                    return ServiceResponse<string>.Error("Bu isimde bir ekipman zaten mevcut");
+                    return ServiceResult<string>.Error("Ekipman Zaten Mevcut", "Bu isimde bir ekipman zaten mevcut. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 var equipment = createEquipmentDTO.Adapt<IdtEquipment>();
                 equipment.IsActive = true;
                 await unitOfWork.GetRepository<IdtEquipment>().AddAsync(equipment, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
-                return ServiceResponse<string>.Success(equipment.Id, "Ekipman başarıyla oluşturuldu");
+                return ServiceResult<string>.SuccessAsCreated(equipment.Id, $"/api/equipments/{equipment.Id}");
             }
             catch (Exception ex)
             {
@@ -74,7 +75,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> UpdateEquipmentAsync(string equipmentId, UpdateEquipmentDTO updateEquipmentDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> UpdateEquipmentAsync(string equipmentId, UpdateEquipmentDTO updateEquipmentDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -82,14 +83,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (equipment == null)
                 {
-                    return ServiceResponse<bool>.Error("Ekipman bulunamadı");
+                    return ServiceResult<bool>.Error("Ekipman Bulunamadı", "Belirtilen ID'ye sahip ekipman bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var existingEquipment = await unitOfWork.GetRepository<IdtEquipment>().AnyAsync(e => e.Name.ToLower() == updateEquipmentDTO.Name.ToLower() && e.Id != equipmentId, cancellationToken);
 
                 if (existingEquipment)
                 {
-                    return ServiceResponse<bool>.Error("Bu isimde başka bir ekipman zaten mevcut");
+                    return ServiceResult<bool>.Error("Ekipman Zaten Mevcut", "Bu isimde başka bir ekipman zaten mevcut. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 updateEquipmentDTO.Adapt(equipment);
@@ -97,7 +98,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtEquipment>().Update(equipment);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Ekipman başarıyla güncellendi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -106,7 +107,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DeleteEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -114,20 +115,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (equipment == null)
                 {
-                    return ServiceResponse<bool>.Error("Ekipman bulunamadı");
+                    return ServiceResult<bool>.Error("Ekipman Bulunamadı", "Belirtilen ID'ye sahip ekipman bulunamadı.", HttpStatusCode.NotFound);
                 }
 
-                var isEquipmentUsed = await unitOfWork.GetRepository<IdtWorkRecord>().AnyAsync(wr => wr.EquipmentId == equipment.Id, cancellationToken);
+                var isEquipmentUsed = await unitOfWork.GetRepository<IdtWorkRecord>().AnyAsync(wr => wr.EquipmentId == equipment.Id, cancellationToken) || await unitOfWork.GetRepository<IdtProject>().AnyAsync(x => equipmentId.Contains(x.TargetEquipmentIds), cancellationToken);
 
                 if (isEquipmentUsed)
                 {
-                    return ServiceResponse<bool>.Error("Bu ekipman puantaj kayıtlarında kullanıldığı için silinemez");
+                    return ServiceResult<bool>.Error("Silme İşlemi Başarısız", "Bu ekipman puantaj kayıtlarında kullanıldığı için silinemez.", HttpStatusCode.BadRequest);
                 }
 
                 unitOfWork.GetRepository<IdtEquipment>().Remove(equipment);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Ekipman başarıyla silindi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -136,7 +137,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<EquipmentDTO>>> GetActiveEquipmentsAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<EquipmentDTO>>> GetActiveEquipmentsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -144,7 +145,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var equipmentDTOs = equipments.Adapt<IEnumerable<EquipmentDTO>>();
 
-                return ServiceResponse<IEnumerable<EquipmentDTO>>.Success(equipmentDTOs, "Aktif ekipman listesi başarıyla getirildi");
+                return ServiceResult<IEnumerable<EquipmentDTO>>.SuccessAsOk(equipmentDTOs);
             }
             catch (Exception ex)
             {
@@ -153,7 +154,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DisableEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DisableEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -161,7 +162,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (equipment == null)
                 {
-                    return ServiceResponse<bool>.Error("Ekipman bulunamadı");
+                    return ServiceResult<bool>.Error("Ekipman Bulunamadı", "Belirtilen ID'ye sahip ekipman bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 equipment.IsActive = false;
@@ -169,7 +170,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtEquipment>().Update(equipment);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Ekipman başarıyla pasif duruma getirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -178,7 +179,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> EnableEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> EnableEquipmentAsync(string equipmentId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -186,7 +187,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (equipment == null)
                 {
-                    return ServiceResponse<bool>.Error("Ekipman bulunamadı");
+                    return ServiceResult<bool>.Error("Ekipman Bulunamadı", "Belirtilen ID'ye sahip ekipman bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 equipment.IsActive = true;
@@ -194,7 +195,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtEquipment>().Update(equipment);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Ekipman başarıyla aktif duruma getirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {

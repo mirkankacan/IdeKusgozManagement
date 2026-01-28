@@ -22,6 +22,7 @@ namespace IdeKusgozManagement.Domain.Enums
         /// </summary>
         Message = 3,
 
-        Advance = 4
+        Advance = 4,
+        CompanyPayment = 5,
     }
 }

@@ -1,55 +1,40 @@
-﻿using IdeKusgozManagement.WebUI.Models;
+using System.Net.Http;
+using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.FileModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
     public class FileApiService : IFileApiService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IApiService _apiService;
+        private readonly ILogger<FileApiService> _logger;
+        private const string BaseEndpoint = "api/files";
 
-        public FileApiService(HttpClient httpClient)
+        public FileApiService(
+            IApiService apiService,
+            ILogger<FileApiService> logger)
         {
-            _httpClient = httpClient;
+            _apiService = apiService;
+            _logger = logger;
         }
 
         public async Task<ApiResponse<bool>> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/files/{fileId}", cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.DeleteAsync<bool>($"{BaseEndpoint}/{fileId}", cancellationToken);
         }
 
         public async Task<ApiResponse<FileStreamResult>> DownloadFileAsync(string fileId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/files/download/{fileId}", cancellationToken);
+                var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseEndpoint}/download/{fileId}");
+                var response = await _apiService.SendRequestAsync(request, cancellationToken);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return new ApiResponse<FileStreamResult>
-                    {
-                        IsSuccess = false,
-                        Message = $"Dosya bulunamadı. Status: {response.StatusCode}"
-                    };
+                    return ApiResponse<FileStreamResult>.Failure($"Dosya bulunamadı. Status: {response.StatusCode}", response.StatusCode);
                 }
 
                 // Başarılı durumda dosya stream'i gelir
@@ -62,111 +47,69 @@ namespace IdeKusgozManagement.WebUI.Services
                     FileDownloadName = fileName
                 };
 
-                return new ApiResponse<FileStreamResult>
-                {
-                    IsSuccess = true,
-                    Data = fileResult
-                };
+                return ApiResponse<FileStreamResult>.Success(fileResult, response.StatusCode);
             }
             catch (Exception ex)
             {
-                return new ApiResponse<FileStreamResult>
-                {
-                    IsSuccess = false,
-                    Message = $"Bir hata oluştu: {ex.Message}"
-                };
+                return ApiResponse<FileStreamResult>.Failure($"Bir hata oluştu: {ex.Message}", System.Net.HttpStatusCode.InternalServerError);
             }
         }
 
         public async Task<ApiResponse<List<FileViewModel>>> GetFilesByParamsAsync(string? userId, string? documentType, string? departmentId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/files/by-params?userId={userId}&documentType={documentType}&departmentId={departmentId}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<List<FileViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<List<FileViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<List<FileViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<List<FileViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<List<FileViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<List<FileViewModel>>($"{BaseEndpoint}/by-params?userId={userId}&documentType={documentType}&departmentId={departmentId}", cancellationToken);
         }
 
         public async Task<ApiResponse<List<FileViewModel>>> UploadFileAsync(List<UploadFileViewModel> files, CancellationToken cancellationToken = default)
         {
-            try
+            using var formData = new MultipartFormDataContent();
+            for (int i = 0; i < files.Count; i++)
             {
-                using var formData = new MultipartFormDataContent();
-                for (int i = 0; i < files.Count; i++)
+                var file = files[i];
+
+                // Dosya içeriği ekle
+                var fileContent = new StreamContent(file.FormFile.OpenReadStream());
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.FormFile.ContentType);
+                formData.Add(fileContent, $"files[{i}].FormFile", file.FormFile.FileName);
+
+                if (!string.IsNullOrEmpty(file.DocumentTypeId))
+                    formData.Add(new StringContent(file.DocumentTypeId.ToString()), $"files[{i}].DocumentTypeId");
+
+                if (!string.IsNullOrEmpty(file.TargetUserId))
+                    formData.Add(new StringContent(file.TargetUserId), $"files[{i}].TargetUserId");
+
+                if (!string.IsNullOrEmpty(file.TargetProjectId))
+                    formData.Add(new StringContent(file.TargetProjectId.ToString()), $"files[{i}].TargetProjectId");
+
+                if (!string.IsNullOrEmpty(file.TargetEquipmentId))
+                    formData.Add(new StringContent(file.TargetEquipmentId.ToString()), $"files[{i}].TargetEquipmentId");
+
+                if (!string.IsNullOrEmpty(file.TargetDepartmentId))
+                    formData.Add(new StringContent(file.TargetDepartmentId.ToString()), $"files[{i}].TargetDepartmentId");
+
+                if (file.TargetCompanyIds != null && file.TargetCompanyIds.Any())
                 {
-                    var file = files[i];
-
-                    // Dosya içeriği ekle
-                    var fileContent = new StreamContent(file.FormFile.OpenReadStream());
-                    fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.FormFile.ContentType);
-                    formData.Add(fileContent, $"files[{i}].FormFile", file.FormFile.FileName);
-
-                    if (!string.IsNullOrEmpty(file.DocumentTypeId))
-                        formData.Add(new StringContent(file.DocumentTypeId.ToString()), $"files[{i}].DocumentTypeId");
-
-                    if (!string.IsNullOrEmpty(file.TargetUserId))
-                        formData.Add(new StringContent(file.TargetUserId), $"files[{i}].TargetUserId");
-
-                    if (!string.IsNullOrEmpty(file.TargetProjectId))
-                        formData.Add(new StringContent(file.TargetProjectId.ToString()), $"files[{i}].TargetProjectId");
-
-                    if (!string.IsNullOrEmpty(file.TargetEquipmentId))
-                        formData.Add(new StringContent(file.TargetEquipmentId.ToString()), $"files[{i}].TargetEquipmentId");
-
-                    if (!string.IsNullOrEmpty(file.TargetDepartmentId))
-                        formData.Add(new StringContent(file.TargetDepartmentId.ToString()), $"files[{i}].TargetDepartmentId");
-
-                    if (file.TargetCompanyIds != null && file.TargetCompanyIds.Any())
+                    for (int j = 0; j < file.TargetCompanyIds.Count; j++)
                     {
-                        for (int j = 0; j < file.TargetCompanyIds.Count; j++)
-                        {
-                            formData.Add(new StringContent(file.TargetCompanyIds[j].ToString()),
-                                $"files[{i}].TargetCompanyIds[{j}]");
-                        }
+                        formData.Add(new StringContent(file.TargetCompanyIds[j].ToString()),
+                            $"files[{i}].TargetCompanyIds[{j}]");
                     }
-
-                    if (!string.IsNullOrEmpty(file.TargetDepartmentDutyId))
-                        formData.Add(new StringContent(file.TargetDepartmentDutyId.ToString()), $"files[{i}].TargetDepartmentDutyId");
-
-                    if (file.StartDate.HasValue)
-                        formData.Add(new StringContent(file.StartDate.Value.ToString("yyyy-MM-dd")), $"files[{i}].StartDate");
-
-                    if (file.EndDate.HasValue)
-                        formData.Add(new StringContent(file.EndDate.Value.ToString("yyyy-MM-dd")), $"files[{i}].EndDate");
-
-                    if (file.HasRenewalPeriod.HasValue)
-                        formData.Add(new StringContent(file.HasRenewalPeriod.Value.ToString()), $"files[{i}].HasRenewalPeriod");
                 }
 
-                var response = await _httpClient.PostAsync("api/files/upload", formData, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (!string.IsNullOrEmpty(file.TargetDepartmentDutyId))
+                    formData.Add(new StringContent(file.TargetDepartmentDutyId.ToString()), $"files[{i}].TargetDepartmentDutyId");
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<List<FileViewModel>>>(responseContent);
-                    return apiResponse ?? new ApiResponse<List<FileViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
+                if (file.StartDate.HasValue)
+                    formData.Add(new StringContent(file.StartDate.Value.ToString("yyyy-MM-dd")), $"files[{i}].StartDate");
 
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<List<FileViewModel>>>(responseContent);
-                return errorResponse ?? new ApiResponse<List<FileViewModel>> { IsSuccess = false, Message = "Dosya yüklenemedi" };
+                if (file.EndDate.HasValue)
+                    formData.Add(new StringContent(file.EndDate.Value.ToString("yyyy-MM-dd")), $"files[{i}].EndDate");
+
+                if (file.HasRenewalPeriod.HasValue)
+                    formData.Add(new StringContent(file.HasRenewalPeriod.Value.ToString()), $"files[{i}].HasRenewalPeriod");
             }
-            catch (Exception ex)
-            {
-                return new ApiResponse<List<FileViewModel>> { IsSuccess = false, Message = $"Bir hata oluştu: {ex.Message}" };
-            }
+
+            return await _apiService.PostMultipartAsync<List<FileViewModel>>($"{BaseEndpoint}/upload", formData, cancellationToken);
         }
     }
 }

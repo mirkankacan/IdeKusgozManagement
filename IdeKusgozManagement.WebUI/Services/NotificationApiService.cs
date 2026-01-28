@@ -1,127 +1,46 @@
 using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.NotificationModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
-using Newtonsoft.Json;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
     public class NotificationApiService : INotificationApiService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IApiService _apiService;
+        private readonly ILogger<NotificationApiService> _logger;
+        private const string BaseEndpoint = "api/notifications";
 
-        public NotificationApiService(HttpClient httpClient)
+        public NotificationApiService(
+            IApiService apiService,
+            ILogger<NotificationApiService> logger)
         {
-            _httpClient = httpClient;
+            _apiService = apiService;
+            _logger = logger;
         }
 
         public async Task<ApiResponse<PagedResult<NotificationViewModel>>> GetNotificationsAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/notifications?pageSize={pageSize}&pageNumber={pageNumber}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<PagedResult<NotificationViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<PagedResult<NotificationViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<PagedResult<NotificationViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<PagedResult<NotificationViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception)
-            {
-                return new ApiResponse<PagedResult<NotificationViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<PagedResult<NotificationViewModel>>($"{BaseEndpoint}?pageSize={pageSize}&pageNumber={pageNumber}", cancellationToken);
         }
 
         public async Task<ApiResponse<int>> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync("api/notifications/unread-count", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<int>>(content);
-                    return apiResponse ?? new ApiResponse<int> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<int>>(content);
-                return errorResponse ?? new ApiResponse<int> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception)
-            {
-                return new ApiResponse<int> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<int>($"{BaseEndpoint}/unread-count", cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> MarkAsReadAsync(string notificationId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync($"api/notifications/{notificationId}/mark-as-read", null, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<bool>($"{BaseEndpoint}/{notificationId}/mark-as-read", null, cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> MarkAllAsReadAsync(CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync("api/notifications/mark-all-as-read", null, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<bool>($"{BaseEndpoint}/mark-all-as-read", null, cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> DeleteNotificationAsync(string notificationId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/notifications/{notificationId}", cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.DeleteAsync<bool>($"{BaseEndpoint}/{notificationId}", cancellationToken);
         }
     }
 }

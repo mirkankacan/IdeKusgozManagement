@@ -7,7 +7,7 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 }
 
 @Html.AntiForgeryToken()
@@ -21,7 +21,7 @@
                     Ekipman Yönetimi
                 </h5>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#createEquipmentModal">
+                    data-bs-target="#createEquipmentModal">
                     <i class="fas fa-plus me-2"></i>Ekipman Ekle
                 </button>
                 <br />
@@ -49,7 +49,7 @@
 
 <!-- Create Equipment Modal -->
 <div class="modal fade" id="createEquipmentModal" tabindex="-1" aria-labelledby="createEquipmentModalLabel"
-     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -91,7 +91,7 @@
 
 <!-- Update Equipment Modal -->
 <div class="modal fade" id="updateEquipmentModal" tabindex="-1" aria-labelledby="updateEquipmentModalLabel"
-     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -153,8 +153,8 @@
                     "url": "/ekipman/liste",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json) {
+                            return json;
                         }
                         return [];
                     },
@@ -171,7 +171,7 @@
                             errorMessage += ': ' + error;
                         }
 
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -215,30 +215,30 @@
 
                             const statusButton = row.isActive
                                 ? `<button type="button" class="btn btn-outline-success btn-sm"
-                                                onclick="deactivateEquipment('${row.id}')" title="Pasifleştir">
-                                                    <i class="fas fa-toggle-on"></i>
-                                                </button>`
+                                                                onclick="deactivateEquipment('${row.id}')" title="Pasifleştir">
+                                                                    <i class="fas fa-toggle-on"></i>
+                                                                </button>`
                                 : `<button type="button" class="btn btn-outline-secondary btn-sm"
-                                                onclick="activateEquipment('${row.id}')" title="Aktifleştir">
-                                                    <i class="fas fa-toggle-off"></i>
-                                               </button>`;
+                                                                onclick="activateEquipment('${row.id}')" title="Aktifleştir">
+                                                                    <i class="fas fa-toggle-off"></i>
+                                                               </button>`;
                             return `
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                     <button type="button" class="btn btn-outline-warning btn-sm"
-                                                       onclick="loadEquipmentForEdit('${row.id}')" title="Düzenle">
-                                                      <i class="fas fa-edit"></i>
-                                                     </button>
-                                                     ${statusButton}
-                                                     <button type="button" class="btn btn-outline-danger btn-sm"
-                                                       onclick="deleteEquipment('${row.id}')" title="Sil">
-                                                      <i class="fas fa-trash"></i>
-                                                     </button>
-                                                    </div>
-                                               `;
+                                                                    <div class="btn-group btn-group-sm" role="group">
+                                                                     <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                       onclick="loadEquipmentForEdit('${row.id}')" title="Düzenle">
+                                                                      <i class="fas fa-edit"></i>
+                                                                     </button>
+                                                                     ${statusButton}
+                                                                     <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                       onclick="deleteEquipment('${row.id}')" title="Sil">
+                                                                      <i class="fas fa-trash"></i>
+                                                                     </button>
+                                                                    </div>
+                                                               `;
                         }
                     }
                 ],
-                  "language": {
+                "language": {
                     url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
@@ -296,44 +296,27 @@
             };
 
             try {
-                const response = await $.ajax({
-                    url: '/ekipman',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(equipmentData)
-                });
-
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#createEquipmentModal').modal('hide');
-                    equipmentsTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                await makeRequest('/ekipman', 'POST', equipmentData);
+                showToast('Ekipman başarıyla oluşturuldu.', 'success', 'Başarılı!');
+                $('#createEquipmentModal').modal('hide');
+                equipmentsTable.ajax.reload();
             } catch (error) {
                 console.error('Create equipment error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Ekipman oluşturulurken hata oluştu.');
             }
         }
 
         async function loadEquipmentForEdit(equipmentId) {
             try {
-                const response = await $.ajax({
-                    url: `/ekipman/${equipmentId}`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/ekipman/${equipmentId}`, 'GET');
 
-                if (response.isSuccess) {
-                    $('#txtUId').val(response.data.id);
-                    $('#txtUName').val(response.data.name);
-                    $('#select-u-equipment-group').val(response.data.groupName);
-                    $('#updateEquipmentModal').modal('show');
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                $('#txtUId').val(response.id);
+                $('#txtUName').val(response.name);
+                $('#select-u-equipment-group').val(response.groupName);
+                $('#updateEquipmentModal').modal('show');
             } catch (error) {
                 console.error('Load equipment error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Ekipman bilgisi yüklenirken hata oluştu.');
             }
         }
 
@@ -345,56 +328,63 @@
             };
 
             try {
-                const response = await $.ajax({
-                    url: `/ekipman/${equipmentId}`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify(equipmentData)
-                });
-
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#updateEquipmentModal').modal('hide');
-                    equipmentsTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                await makeRequest(`/ekipman/${equipmentId}`, 'PUT', equipmentData);
+                showToast('Ekipman başarıyla güncellendi.', 'success', 'Başarılı!');
+                $('#updateEquipmentModal').modal('hide');
+                equipmentsTable.ajax.reload();
             } catch (error) {
                 console.error('Update equipment error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Ekipman güncellenirken hata oluştu.');
             }
         }
 
         async function deleteEquipment(equipmentId) {
-            Swal.fire({
-                title: 'Emin misiniz?',
-                text: "Bu ekipman silinecek ve geri alınamayacak!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Evet, Sil!',
-                cancelButtonText: 'İptal'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    try {
-                        const response = await $.ajax({
-                            url: `/ekipman/${equipmentId}`,
-                            type: 'DELETE'
-                        });
+            try {
+                const result = await Swal.fire({
+                    title: 'Emin misiniz?',
+                    text: "Bu ekipman silinecek ve geri alınamayacak!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Evet, Sil!',
+                    cancelButtonText: 'İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await makeRequest(`/ekipman/${equipmentId}`, 'DELETE');
+                            return response;
+                        } catch (error) {
+                            let errorMessage = 'Ekipman silme başarısız';
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            return false;
 
-                        if (response.isSuccess) {
-                            toastr.success(response.message, 'Başarılı!');
-                            equipmentsTable.ajax.reload();
-                        } else {
-                            toastr.error(response.message, 'Hata!');
                         }
-                    } catch (error) {
-                        console.error('Delete equipment error:', error);
-                        toastr.error(error.responseJSON.message, 'Hata!');
-                    }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Ekipman başarıyla silindi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    equipmentsTable.ajax.reload(null, false);
                 }
-            });
+
+            } catch (error) {
+                console.error('Ekipman silme hatası:', error);
+                throw error;
+            }
         }
 
         async function activateEquipment(equipmentId) {
@@ -411,23 +401,17 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/ekipman/${equipmentId}/aktif-et`,
-                                type: 'PUT',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/ekipman/${equipmentId}/aktif-et`, 'PUT');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Aktifleştirme başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                                                        return false;
+                            return false;
 
                         }
                     },
@@ -466,23 +450,17 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/ekipman/${equipmentId}/pasif-et`,
-                                type: 'PUT',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/ekipman/${equipmentId}/pasif-et`, 'PUT');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Pasifleştirme başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                                                        return false;
+                            return false;
                         }
                     },
                     allowOutsideClick: () => !Swal.isLoading()

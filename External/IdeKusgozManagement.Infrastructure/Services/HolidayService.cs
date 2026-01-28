@@ -1,23 +1,25 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.HolidayDTOs;
 using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Linq;
+using System.Net;
 using System.Text.Json;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class HolidayService(IMemoryCache memoryCache, IOptions<HolidayApiOptionsDTO> holidayApiOptions, ILogger<HolidayService> logger) : IHolidayService
     {
-        public async Task<ServiceResponse<List<HolidayDTO>>> GetHolidaysByYearAsync(int year, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<List<HolidayDTO>>> GetHolidaysByYearAsync(int year, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (memoryCache.TryGetValue($"holidays_{year}", out List<HolidayDTO> cachedHolidays))
                 {
-                    return ServiceResponse<List<HolidayDTO>>.Success(cachedHolidays, "Tatiller listesi cacheden başarıyla getirildi");
+                    return ServiceResult<List<HolidayDTO>>.SuccessAsOk(cachedHolidays);
                 }
 
                 using var httpClient = new HttpClient();
@@ -27,11 +29,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogWarning($"Holiday API çağrısı başarısız. Status: {response.StatusCode}, Year: {year}");
-                    return ServiceResponse<List<HolidayDTO>>.Error("Tatiller listesi getirilirken hata oluştu");
+                    return ServiceResult<List<HolidayDTO>>.Error("Tatil Verileri Alınamadı", "Tatiller listesi getirilirken hata oluştu. Lütfen daha sonra tekrar deneyin.", HttpStatusCode.BadGateway);
                 }
 
                 var json = await response.Content.ReadAsStringAsync(cancellationToken);
-                var holidayResponse = JsonSerializer.Deserialize<HolidayServiceResponseDTO>(json, new JsonSerializerOptions
+                var holidayResponse = JsonSerializer.Deserialize<HolidayServiceResultDTO>(json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -47,7 +49,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
                 memoryCache.Set($"holidays_{year}", officialHolidays, yearEnd);
 
-                return ServiceResponse<List<HolidayDTO>>.Success(officialHolidays, "Tatiller listesi başarıyla getirildi");
+                return ServiceResult<List<HolidayDTO>>.SuccessAsOk(officialHolidays);
             }
             catch (Exception ex)
             {
@@ -56,7 +58,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<double>> CalculateWorkingDaysAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<double>> CalculateWorkingDaysAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -64,7 +66,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var resp = await GetHolidaysByYearAsync(startDate.Year, cancellationToken);
                 if (!resp.IsSuccess)
                 {
-                    return ServiceResponse<double>.Error("Tatil verileri alınırken hata oluştu");
+                    return ServiceResult<double>.Error("Tatil Verileri Alınamadı", "Tatil verileri alınırken hata oluştu. Lütfen daha sonra tekrar deneyin.", HttpStatusCode.BadGateway);
                 }
 
                 var holidays = resp.Data ?? new List<HolidayDTO>();
@@ -116,7 +118,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     currentDate = currentDate.AddDays(1);
                 }
 
-                return ServiceResponse<double>.Success(workingDays, "Net çalışma günü başarıyla hesaplandı");
+                return ServiceResult<double>.SuccessAsOk(workingDays);
             }
             catch (Exception ex)
             {

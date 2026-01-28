@@ -190,15 +190,9 @@
         // ===== LEAVE REQUEST FUNCTIONS =====
         async function getApprovedLeaveRequests() {
             try {
-
-                const response = await $.ajax({
-                    url: `/izin/listem/durum/1`,
-                    type: 'GET',
-                    dataType: 'json'
-                });
-
-                if (response && response.isSuccess && response.data) {
-                    return response.data;
+                const response = await makeRequest(`/izin/listem/durum/1`, 'GET');
+                if (response && Array.isArray(response)) {
+                    return response;
                 } else {
                     return null;
                 }
@@ -283,7 +277,7 @@
 
                 // Check if row is locked
                 if ($currentRow.data('is-locked') === true) {
-                    toastr.warning('Onaylanmış kayıtlar için yeni satır eklenemez!', 'Uyarı!');
+                    showToast('Onaylanmış kayıtlar için yeni satır eklenemez!', 'warning', 'Uyarı!');
                     return;
                 }
 
@@ -297,13 +291,13 @@
 
                 // Check if row is locked
                 if ($row.data('is-locked') === true) {
-                    toastr.warning('Onaylanmış kayıtlar silinemez!', 'Uyarı!');
+                    showToast('Onaylanmış kayıtlar silinemez!', 'warning', 'Uyarı!');
                     return;
                 }
 
                 // Check if this is an additional row
                 if ($row.data('is-additional') !== true) {
-                    toastr.warning('Ana satırlar silinemez!', 'Uyarı!');
+                    showToast('Ana satırlar silinemez!', 'warning', 'Uyarı!');
                     return;
                 }
 
@@ -322,7 +316,7 @@
                         $row.fadeOut(300, function () {
                             $(this).remove();
                         });
-                        toastr.success('Satır silindi.', 'Başarılı!');
+                        showToast('Satır silindi.', 'success', 'Başarılı!');
                     }
                 });
             });
@@ -330,16 +324,13 @@
         async function loadExistingWorkRecords(year, month) {
             try {
                 const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
-                const response = await $.ajax({
-                    url: `/makine-puantaj/listem/tarih/${formattedDate}`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/makine-puantaj/listem/tarih/${formattedDate}`, 'GET');
 
-                if (response.isSuccess && response.data && response.data.length > 0) {
+                if (response && Array.isArray(response) && response.length > 0) {
                     existingWorkRecords = {};
                     hasApprovedRecords = false;
 
-                    response.data.forEach(record => {
+                    response.forEach(record => {
                         // Parse date correctly - handle both string and Date objects
                         let date;
                         if (typeof record.date === 'string') {
@@ -1000,7 +991,7 @@
 
             } catch (error) {
                 console.error('Error adding new row:', error);
-                toastr.error('Yeni satır eklenirken bir hata oluştu.', 'Hata!');
+                handleError(error, 'Yeni satır eklenirken bir hata oluştu.');
             }
         }
 
@@ -1058,7 +1049,7 @@
 
             // Eğer hiç kayıt yoksa uyarı ver
             if (workRecords.length === 0) {
-                toastr.warning('Kaydedilecek veri bulunamadı!', 'Uyarı!');
+                showToast('Kaydedilecek veri bulunamadı!', 'warning', 'Uyarı!');
                 return;
             }
 
@@ -1093,24 +1084,11 @@
                 });
 
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    await generateDynamicTable();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('Makine puantajı başarıyla kaydedildi.', 'success', 'Başarılı!');
+                await generateDynamicTable();
             } catch (error) {
-                let errorMessage = 'Makine puantajı kaydedilirken bir hata oluştu.';
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-                toastr.error(errorMessage, 'Hata!');
+                console.error('Save work records error:', error);
+                handleError(error, 'Makine puantajı kaydedilirken bir hata oluştu.');
             } finally {
                 $('.btnSaveWorkRecords').prop('disabled', false)
                     .html('<i class="fas fa-save me-2"></i>Kaydet');

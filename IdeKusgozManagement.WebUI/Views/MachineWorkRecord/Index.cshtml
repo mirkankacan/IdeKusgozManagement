@@ -299,7 +299,7 @@
                         
                         // Check if row is locked
                         if ($currentRow.data('is-locked') === true) {
-                            toastr.warning('Onaylanmış kayıtlar için yeni satır eklenemez!', 'Uyarı!');
+                            showToast('Onaylanmış kayıtlar için yeni satır eklenemez!', 'warning', 'Uyarı!');
                             return;
                         }
 
@@ -313,13 +313,13 @@
                         
                         // Check if row is locked
                         if ($row.data('is-locked') === true) {
-                            toastr.warning('Onaylanmış kayıtlar silinemez!', 'Uyarı!');
+                            showToast('Onaylanmış kayıtlar silinemez!', 'warning', 'Uyarı!');
                             return;
                         }
 
                         // Check if this is an additional row
                         if ($row.data('is-additional') !== true) {
-                            toastr.warning('Ana satırlar silinemez!', 'Uyarı!');
+                            showToast('Ana satırlar silinemez!', 'warning', 'Uyarı!');
                             return;
                         }
 
@@ -338,7 +338,7 @@
                                 $row.fadeOut(300, function () {
                                     $(this).remove();
                                 });
-                                toastr.success('Satır silindi.', 'Başarılı!');
+                                showToast('Satır silindi.', 'success', 'Başarılı!');
                             }
                         });
                     });
@@ -447,20 +447,17 @@
                          if(window.isUserUnitManager){
                            url = `/makine-puantaj/liste/onaylanmis/kullanici/${selectedUserId}/tarih/${formattedDate}`;
                         }
-                        const response = await $.ajax({
-                            url: url,
-                            type: 'GET'
-                        });
+                        const response = await makeRequest(url, 'GET');
 
-                        if (response.isSuccess && response.data && response.data.length > 0) {
-                            await populateTableWithWorkRecords(response.data);
+                        if (response && Array.isArray(response) && response.length > 0) {
+                            await populateTableWithWorkRecords(response);
                         } else {
                             showNoDataMessage(year, month);
                         }
                     } catch (error) {
                         console.error('Puantaj verileri yüklenirken hata:', error);
                         showErrorMessage();
-                        handleAjaxError(error, 'Puantaj verileri yüklenirken bir hata oluştu');
+                        handleError(error, 'Puantaj verileri yüklenirken bir hata oluştu');
                     } finally {
                         hideTableLoading();
                     }
@@ -468,20 +465,7 @@
 
                 function handleAjaxError(error, defaultMessage = 'Bir hata oluştu') {
                     console.error('Ajax Error:', error);
-
-                    let errorMessage = defaultMessage;
-                    if (error.responseJSON) {
-                        if (error.responseJSON.message) {
-                            errorMessage = error.responseJSON.message;
-                        } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                            errorMessage = error.responseJSON.errors.join(', ');
-                        }
-                    } else if (error.message) {
-                        errorMessage = error.message;
-                    }
-
-                    toastr.error(errorMessage, 'Hata!');
-                    return errorMessage;
+                    handleError(error, defaultMessage);
                 }
 
                 async function populateTableWithWorkRecords(workRecords) {
@@ -689,19 +673,15 @@
                             }
                         });
 
-                        const response = await $.ajax({
-                            url: '/kullanici/liste',
-                            type: 'GET',
-                            dataType: 'json'
-                        });
+                        const response = await makeRequest('/kullanici/liste', 'GET');
 
-                        if (response && response.isSuccess && response.data) {
+                        if (response && Array.isArray(response)) {
                             userSelects.each(function () {
                                 const currentSelect = $(this);
                                 currentSelect.empty();
                                 currentSelect.append('<option value="">Kullanıcı seçin</option>');
 
-                                response.data.forEach(user => {
+                                response.forEach(user => {
                                     currentSelect.append(`<option value="${user.id}">${user.fullNameWithExp}</option>`);
                                 });
 
@@ -709,8 +689,6 @@
                                     currentSelect.trigger('change');
                                 }
                             });
-                        } else {
-                            throw new Error(response?.message || 'Atanmış kullanıcılar yüklenemedi');
                         }
                     } catch (error) {
                         console.error('Atanmış kullanıcılar yüklenirken hata:', error);
@@ -724,7 +702,7 @@
                             }
                         });
 
-                        handleAjaxError(error, 'Atanmış kullanıcılar yüklenirken hata oluştu');
+                        handleError(error, 'Atanmış kullanıcılar yüklenirken hata oluştu');
                     } finally {
                         $('.user-select').prop('disabled', false);
                     }
@@ -746,18 +724,16 @@
                             preConfirm: async () => {
                                 try {
                                     await saveWorkRecords();
-                                    const response = await $.ajax({
-                                        url: `/makine-puantaj/onayla/${id}`,
-                                        type: 'PUT'
-                                    });
-                                    if (!response.isSuccess) {
-                                        Swal.showValidationMessage(`Hata: ${response.message}`);
-                                        throw new Error(response.message);
-                                    }
+                                    const response = await makeRequest(`/makine-puantaj/onayla/${id}`, 'PUT');
                                     return response;
                                 } catch (error) {
-                                    handleAjaxError(error, 'Onaylama başarısız');
-
+                                    let errorMessage = 'Onaylama başarısız';
+                                    if (error.detail) {
+                                        errorMessage = error.detail;
+                                    } else if (error.title) {
+                                        errorMessage = error.title;
+                                    }
+                                    Swal.showValidationMessage(`Hata: ${errorMessage}`);
                                     return false;
                                 }
                             },
@@ -854,14 +830,11 @@
                             contentType: false
                         });
 
-                        if (response.isSuccess) {
-                            toastr.success(response.message, 'Başarılı!');
-                            await loadWorkRecordsByUser();
-                        } else {
-                            toastr.error(response.message, 'Hata!');
-                        }
+                        showToast('Puantaj başarıyla güncellendi.', 'success', 'Başarılı!');
+                        await loadWorkRecordsByUser();
                     } catch (error) {
-                        handleAjaxError(error, 'Puantaj kaydedilirken bir hata oluştu.');
+                        console.error('Save work records error:', error);
+                        handleError(error, 'Puantaj kaydedilirken bir hata oluştu.');
                     } finally {
                         $('.btnUpdateWorkRecords').prop('disabled', false)
                             .html('<i class="fas fa-edit me-2"></i>Güncelle');
@@ -874,7 +847,7 @@
                     const month = parseInt($('#month-select').val());
 
                     if (!selectedUserId) {
-                        toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
+                        showToast('Lütfen bir kullanıcı seçin', 'warning', 'Uyarı!');
                         return;
                     }
 
@@ -894,19 +867,16 @@
                                     await saveWorkRecords();
                                     const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
-                                    const response = await $.ajax({
-                                        url: `/makine-puantaj/toplu-onayla/kullanici/${selectedUserId}/tarih/${formattedDate}`,
-                                        type: 'PUT'
-                                    });
-
-                                    if (!response.isSuccess) {
-                                        Swal.showValidationMessage(`Hata: ${response.message}`);
-                                        throw new Error(response.message);
-                                    }
-
+                                    const response = await makeRequest(`/makine-puantaj/toplu-onayla/kullanici/${selectedUserId}/tarih/${formattedDate}`, 'PUT');
                                     return response;
                                 } catch (error) {
-                                    handleAjaxError(error, 'Onaylama başarısız');
+                                    let errorMessage = 'Onaylama başarısız';
+                                    if (error.detail) {
+                                        errorMessage = error.detail;
+                                    } else if (error.title) {
+                                        errorMessage = error.title;
+                                    }
+                                    Swal.showValidationMessage(`Hata: ${errorMessage}`);
                                     return false;
                                 }
                             },
@@ -914,7 +884,7 @@
                         });
 
                         if (result.isConfirmed) {
-                            toastr.success('Puantaj başarıyla onaylandı', 'Başarılı!');
+                            showToast('Puantaj başarıyla onaylandı', 'success', 'Başarılı!');
                             await loadWorkRecordsByUser();
                         }
                     } catch (error) {
@@ -926,7 +896,7 @@
                     const selectedUserId = $('#user-select').val();
 
                     if (!selectedUserId) {
-                        toastr.warning('Lütfen bir kullanıcı seçin', 'Uyarı!');
+                        showToast('Lütfen bir kullanıcı seçin', 'warning', 'Uyarı!');
                         return;
                     }
 
@@ -947,33 +917,24 @@
                         if (mode === 'single') {
                             const id = $('#txtRejectWorkRecordId').val();
                             const url = `/makine-puantaj/reddet/${id}${reason ? `?rejectReason=${encodeURIComponent(reason)}` : ''}`;
-                            const response = await $.ajax({
-                                url: url,
-                                type: 'PUT'
-                            });
-                            if (response.isSuccess) {
-                                toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');
-                                $('#rejectWorkRecordModal').modal('hide');
-                                await loadWorkRecordsByUser();
-                            }
+                            await makeRequest(url, 'PUT');
+                            showToast('Puantaj başarıyla reddedildi', 'success', 'Başarılı!');
+                            $('#rejectWorkRecordModal').modal('hide');
+                            await loadWorkRecordsByUser();
                         } else if (mode === 'bulk') {
                             const selectedUserId = $('#user-select').val();
                             const year = parseInt($('#year-select').val());
                             const month = parseInt($('#month-select').val());
                             const formattedDate = `${year}-${String(month).padStart(2, '0')}-01`;
                             const url = `/makine-puantaj/toplu-reddet/kullanici/${selectedUserId}/tarih/${formattedDate}${reason ? `?rejectReason=${encodeURIComponent(reason)}` : ''}`;
-                            const response = await $.ajax({
-                                url: url,
-                                type: 'PUT'
-                            });
-                            if (response.isSuccess) {
-                                toastr.success('Puantaj başarıyla reddedildi', 'Başarılı!');
-                                $('#rejectWorkRecordModal').modal('hide');
-                                await loadWorkRecordsByUser();
-                            }
+                            await makeRequest(url, 'PUT');
+                            showToast('Puantaj başarıyla reddedildi', 'success', 'Başarılı!');
+                            $('#rejectWorkRecordModal').modal('hide');
+                            await loadWorkRecordsByUser();
                         }
                     } catch (error) {
-                        handleAjaxError(error, 'Reddetme başarısız');
+                        console.error('Reject work record error:', error);
+                        handleError(error, 'Reddetme başarısız');
                     }
                 }
 
@@ -1174,7 +1135,7 @@
 
                     } catch (error) {
                         console.error('Error adding new row:', error);
-                        toastr.error('Yeni satır eklenirken bir hata oluştu.', 'Hata!');
+                        handleError(error, 'Yeni satır eklenirken bir hata oluştu.');
                     }
                 }
     </script>

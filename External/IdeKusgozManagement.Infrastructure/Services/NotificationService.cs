@@ -1,4 +1,5 @@
 using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
@@ -8,29 +9,34 @@ using Mapster;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class NotificationService(IUnitOfWork unitOfWork, ILogger<NotificationService> logger, IIdentityService identityService, IHubContext<CommunicationHub> hubContext) : INotificationService
+    public class NotificationService(
+        IUnitOfWork unitOfWork,
+        ILogger<NotificationService> logger,
+        IIdentityService identityService,
+        IHubContext<CommunicationHub> hubContext,
+        IOneSignalService oneSignalService) : INotificationService
     {
-        public async Task<ServiceResponse<PagedResult<NotificationDTO>>> GetNotificationsAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<PagedResult<NotificationDTO>>> GetNotificationsAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             try
             {
                 var userId = identityService.GetUserId();
                 var userRole = identityService.GetUserRole();
 
-                // Ortak Where koşulu
                 var baseQuery = unitOfWork.GetRepository<IdtNotification>()
                     .WhereAsNoTracking(x =>
                         (x.TargetUsers.Contains(userId) ||
                          x.TargetRoles.Contains(userRole) ||
                          (x.TargetUsers == null && x.TargetRoles == null))
-                        && x.CreatedBy != userId); // Parantez dışında
+                        && x.CreatedBy != userId);
 
                 var notifications = await baseQuery
-                    .OrderBy(n => n.NotificationReads.Any(nr => nr.CreatedBy == userId)) // Okunmuşlar sona
-                    .ThenByDescending(n => n.CreatedDate) // Sonra tarihe göre
+                    .OrderBy(n => n.NotificationReads.Any(nr => nr.CreatedBy == userId))
+                    .ThenByDescending(n => n.CreatedDate)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
                     .Include(x => x.CreatedByUser)
@@ -56,7 +62,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     PageSize = pageSize,
                 };
 
-                return ServiceResponse<PagedResult<NotificationDTO>>.Success(pagedResult, "Bildirimler başarıyla getirildi");
+                return ServiceResult<PagedResult<NotificationDTO>>.SuccessAsOk(pagedResult);
             }
             catch (Exception ex)
             {
@@ -65,7 +71,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<int>> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<int>> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -77,11 +83,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         (x.TargetUsers.Contains(userId) ||
                          x.TargetRoles.Contains(userRole) ||
                          (x.TargetUsers == null && x.TargetRoles == null))
-                        && x.CreatedBy != userId) // Parantez dışında
+                        && x.CreatedBy != userId)
                     .Where(n => !n.NotificationReads.Any(nr => nr.CreatedBy == userId))
-                    .CountAsync(cancellationToken); // Include kaldırıldı
+                    .CountAsync(cancellationToken);
 
-                return ServiceResponse<int>.Success(unreadCount, "Okunmamış bildirim sayısı başarıyla getirildi");
+                return ServiceResult<int>.SuccessAsOk(unreadCount);
             }
             catch (Exception ex)
             {
@@ -90,7 +96,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        private async Task<ServiceResponse<NotificationDTO>> CreateNotificationAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
+        private async Task<ServiceResult<NotificationDTO>> CreateNotificationAsync(CreateNotificationDTO createNotificationDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -107,7 +113,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var notificationDTO = createdNotification.Adapt<NotificationDTO>();
 
-                return ServiceResponse<NotificationDTO>.Success(notificationDTO, "Bildirim başarıyla oluşturuldu");
+                return ServiceResult<NotificationDTO>.SuccessAsCreated(notificationDTO, $"/api/notifications/{notificationDTO.Id}");
             }
             catch (Exception ex)
             {
@@ -116,7 +122,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> MarkAsReadAsync(string notificationId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> MarkAsReadAsync(string notificationId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -125,7 +131,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var isNotificationRead = await unitOfWork.GetRepository<IdtNotificationRead>().AnyAsync(x => x.CreatedBy == userId && x.NotificationId == notificationId, cancellationToken);
                 if (isNotificationRead)
                 {
-                    return ServiceResponse<bool>.Error("Bildirim daha önceden okundu olarak işaretlenmiş");
+                    return ServiceResult<bool>.Error("Bildirim Zaten Okunmuş", "Bildirim daha önceden okundu olarak işaretlenmiş.", HttpStatusCode.BadRequest);
                 }
                 var notification = await unitOfWork.GetRepository<IdtNotification>()
                 .Where(x => x.Id == notificationId)
@@ -133,7 +139,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (notification == null)
                 {
-                    return ServiceResponse<bool>.Error("Bildirim bulunamadı");
+                    return ServiceResult<bool>.Error("Bildirim Bulunamadı", "Belirtilen ID'ye sahip bildirim bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var notificationRead = new IdtNotificationRead
@@ -144,7 +150,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtNotificationRead>().AddAsync(notificationRead, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Bildirim okundu olarak işaretlendi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -153,7 +159,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> MarkAllAsReadAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> MarkAllAsReadAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -174,7 +180,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtNotificationRead>().AddRangeAsync(notificationReads, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Tüm bildirimler okundu olarak işaretlendi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -191,7 +197,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (response.IsSuccess)
                 {
+                    // SignalR bildirimi (Web tarayıcı için)
                     await hubContext.Clients.All.SendAsync("NewNotification", response.Data, cancellationToken);
+
+                    // OneSignal push bildirimi (Mobil cihazlar için)
+                    await oneSignalService.SendNotificationAsync(
+                        message: createNotificationDTO.Message,
+                        heading: "Yeni Bildirim",
+                        additionalData: new Dictionary<string, object>
+                        {
+                            { "notificationId", response.Data.Id },
+                            { "type", createNotificationDTO.Type.ToString() ?? "general" }
+                        }
+                    );
+
                     logger.LogInformation("Bildirim herkese gönderildi. Message: {Message}", createNotificationDTO.Message);
                 }
             }
@@ -209,18 +228,32 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (createNotificationDTO.TargetRoles == null || !createNotificationDTO.TargetRoles.Any())
                 {
                     logger.LogWarning("TargetRoles boş, bildirim gönderilemedi");
+                    return;
                 }
 
                 var response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
                 if (response.IsSuccess)
                 {
+                    // SignalR bildirimi
                     foreach (var role in createNotificationDTO.TargetRoles)
                     {
                         var groupName = $"Role_{role}";
                         await hubContext.Clients.Group(groupName).SendAsync("NewNotification", response.Data, cancellationToken);
                     }
 
-                    logger.LogInformation(message: "Bildirim rollere gönderildi. Roles: {RoleNames}, Message: {Message}",
+                    // OneSignal push bildirimi (rollere göre)
+                    await oneSignalService.SendNotificationAsync(
+                        message: createNotificationDTO.Message,
+                        heading: "Yeni Bildirim",
+                        roles: createNotificationDTO.TargetRoles,
+                        additionalData: new Dictionary<string, object>
+                        {
+                            { "notificationId", response.Data.Id },
+                            { "type", createNotificationDTO.Type.ToString() ?? "general" }
+                        }
+                    );
+
+                    logger.LogInformation("Bildirim rollere gönderildi. Roles: {RoleNames}, Message: {Message}",
                         string.Join(", ", createNotificationDTO.TargetRoles), createNotificationDTO.Message);
                 }
             }
@@ -244,14 +277,29 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return;
                 }
 
-                ServiceResponse<NotificationDTO>? response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
+                var response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
                 if (response.IsSuccess)
                 {
+                    // SignalR bildirimi
                     foreach (var userId in subordinateIds)
                     {
                         var groupName = $"User_{userId}";
                         await hubContext.Clients.Group(groupName).SendAsync("NewNotification", response.Data, cancellationToken);
                     }
+
+                    // OneSignal push bildirimi
+                    await oneSignalService.SendNotificationAsync(
+                        message: createNotificationDTO.Message,
+                        heading: "Yeni Bildirim",
+                        userIds: subordinateIds,
+                        additionalData: new Dictionary<string, object>
+                        {
+                            { "notificationId", response.Data.Id },
+                            { "type", createNotificationDTO.Type.ToString() ?? "general" }
+                        }
+                    );
+
+                    logger.LogInformation("Bildirim altlara gönderildi. Count: {Count}", subordinateIds.Count);
                 }
             }
             catch (Exception ex)
@@ -272,14 +320,29 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     return;
                 }
 
-                ServiceResponse<NotificationDTO>? response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
+                var response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
                 if (response.IsSuccess)
                 {
+                    // SignalR bildirimi
                     foreach (var userId in superiorIds)
                     {
                         var groupName = $"User_{userId}";
                         await hubContext.Clients.Group(groupName).SendAsync("NewNotification", response.Data, cancellationToken);
                     }
+
+                    // OneSignal push bildirimi
+                    await oneSignalService.SendNotificationAsync(
+                        message: createNotificationDTO.Message,
+                        heading: "Yeni Bildirim",
+                        userIds: superiorIds,
+                        additionalData: new Dictionary<string, object>
+                        {
+                            { "notificationId", response.Data.Id },
+                            { "type", createNotificationDTO.Type.ToString() ?? "general" }
+                        }
+                    );
+
+                    logger.LogInformation("Bildirim üstlere gönderildi. Count: {Count}", superiorIds.Count);
                 }
             }
             catch (Exception ex)
@@ -302,11 +365,25 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var response = await CreateNotificationAsync(createNotificationDTO, cancellationToken);
                 if (response.IsSuccess)
                 {
+                    // SignalR bildirimi
                     foreach (var userId in createNotificationDTO.TargetUsers)
                     {
                         var groupName = $"User_{userId}";
                         await hubContext.Clients.Group(groupName).SendAsync("NewNotification", response.Data, cancellationToken);
                     }
+
+                    // OneSignal push bildirimi
+                    await oneSignalService.SendNotificationAsync(
+                        message: createNotificationDTO.Message,
+                        heading: "Yeni Bildirim",
+                        userIds: createNotificationDTO.TargetUsers,
+
+                        additionalData: new Dictionary<string, object>
+                        {
+                            { "notificationId", response.Data.Id },
+                            { "type", createNotificationDTO.Type.ToString() ?? "general" }
+                        }
+                    );
 
                     logger.LogInformation("Bildirim kullanıcılara gönderildi. TargetUsers: {UserIds}, Message: {Message}",
                         string.Join(", ", createNotificationDTO.TargetUsers), createNotificationDTO.Message);

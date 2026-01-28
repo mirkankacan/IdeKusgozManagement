@@ -21,15 +21,22 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.Property(x => x.ApprovalDate)
                 .IsRequired();
 
-            builder.Property(x => x.ApprovedById)
+            builder.Property(x => x.CompletedById)
                 .IsRequired(false)
                 .HasMaxLength(450)
                 .HasDefaultValue(null);
 
+            builder.Property(x => x.CompletedDate)
+                .IsRequired(false)
+                .HasDefaultValue(null);
+            builder.Property(x => x.ApprovedById)
+             .IsRequired(false)
+             .HasMaxLength(450)
+             .HasDefaultValue(null);
+
             builder.Property(x => x.ApprovedDate)
                 .IsRequired(false)
                 .HasDefaultValue(null);
-
             // Relationship with IdtAdvance
             builder.HasOne(x => x.Advance)
                 .WithMany(x => x.AdvanceParts)
@@ -38,11 +45,15 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
 
             // Relationship with ApplicationUser (ApprovedBy)
             builder.HasOne(x => x.ApprovedByUser)
+              .WithMany()
+              .HasForeignKey(x => x.ApprovedById)
+              .OnDelete(DeleteBehavior.Restrict)
+              .IsRequired(false);
+            builder.HasOne(x => x.CompletedByUser)
                 .WithMany()
-                .HasForeignKey(x => x.ApprovedById)
-                .OnDelete(DeleteBehavior.NoAction)
+                .HasForeignKey(x => x.CompletedById)
+                .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);
         }
     }
 }
-

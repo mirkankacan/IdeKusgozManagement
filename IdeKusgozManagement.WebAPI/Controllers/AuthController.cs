@@ -1,5 +1,6 @@
 ﻿using IdeKusgozManagement.Application.DTOs.AuthDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,7 +25,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await authService.LoginAsync(loginDTO);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -35,7 +36,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> Logout()
         {
             var result = await authService.LogoutAsync();
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -53,7 +54,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await authService.RefreshTokenAsync(refreshTokenDTO);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("reset-password")]
@@ -66,7 +67,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await authService.ResetPasswordAsync(resetPasswordDTO);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("send-reset-email")]
@@ -79,7 +80,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await authService.SendResetPasswordEmailAsync(forgotPasswordDTO);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

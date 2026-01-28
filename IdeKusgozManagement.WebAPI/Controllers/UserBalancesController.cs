@@ -1,6 +1,7 @@
-﻿using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.UserBalanceDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,7 +21,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await userBalanceService.GetUserBalancesByUserAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
         [HttpGet("my-balance")]
         public async Task<IActionResult> GetMyBalances(CancellationToken cancellationToken)
@@ -32,7 +33,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await userBalanceService.GetUserBalancesByUserAsync(userId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("{userId}/decrease")]
@@ -47,7 +48,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
             var result = await userBalanceService.DecreaseUserBalanceAsync(userId, updateUserBalanceDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("{userId}/increase")]
@@ -62,7 +63,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
             var result = await userBalanceService.IncreaseUserBalanceAsync(userId, updateUserBalanceDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

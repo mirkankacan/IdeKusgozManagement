@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Services.Interfaces;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdeKusgozManagement.WebUI.Controllers
@@ -21,7 +22,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Geçersiz yıl değeri. 1900 - 2100 arasında olmalı");
             }
             var response = await _holidayApiService.GetHolidaysByYearAsync(year, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpGet("baslangic/{startDate:datetime}/bitis/{endDate:datetime}")]
@@ -36,7 +37,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Başlangıç tarihi 2025'ten önce olamaz.");
             }
             var response = await _holidayApiService.CalculateWorkingDaysAsync(startDate, endDate, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

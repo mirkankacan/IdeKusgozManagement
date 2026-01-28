@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.AuthModels;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Models.AuthModels;
 using IdeKusgozManagement.WebUI.Models.UserModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
@@ -29,7 +30,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public IActionResult GetToken()
         {
             // Session'dan JWT token'ı al
-            var jwtToken = _httpContextAccessor.HttpContext.Session.GetString("JwtToken");
+            var jwtToken = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
 
             if (string.IsNullOrEmpty(jwtToken))
             {
@@ -46,8 +47,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
             if (User.Identity?.IsAuthenticated == true)
             {
                 // Session bilgilerini kontrol et
-                var userId = _httpContextAccessor.HttpContext.Session.GetString("UserId");
-                var jwtToken = _httpContextAccessor.HttpContext.Session.GetString("JwtToken");
+                var userId = _httpContextAccessor.HttpContext?.Session.GetString("UserId");
+                var jwtToken = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
 
                 // Eğer authenticated ama session bilgileri yoksa silent logout
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jwtToken))
@@ -63,7 +64,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                     }
 
                     // Session'ı temizle
-                    _httpContextAccessor.HttpContext.Session.Clear();
+                    _httpContextAccessor.HttpContext?.Session.Clear();
 
                     // Cookie authentication'ı temizle
                     await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -119,7 +120,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
                 var response = await _authApiService.SendResetPasswordEmailAsync(model, cancellationToken);
 
-                return response.IsSuccess ? Ok(response) : BadRequest(response);
+                return response.ToActionResult();
             }
             catch (Exception ex)
             {
@@ -153,7 +154,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 };
                 return await LoginProcessAsync(loginModel, cancellationToken);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return BadRequest("Şifre sıfırlanırken bir hata oluştu. Lütfen tekrar deneyin.");
             }
@@ -168,10 +169,13 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 await _authApiService.LogoutAsync(cancellationToken);
 
                 // Session'ı temizle
-                _httpContextAccessor.HttpContext.Session.Clear();
+                _httpContextAccessor.HttpContext?.Session.Clear();
 
                 // Cookie authentication'ı temizle
-                await _httpContextAccessor.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    await _httpContextAccessor.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                }
 
                 return Redirect("/giris-yap");
             }
@@ -196,6 +200,11 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> Profile([FromBody] UpdateUserViewModel model, CancellationToken cancellationToken)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Kullanıcı kimliği bulunamadı");
+            }
+
             model.RoleName = null;
             model.IsActive = true;
             if (!ModelState.IsValid)
@@ -204,15 +213,17 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _userApiService.UpdateUserAsync(userId, model, cancellationToken);
-            if (response.IsSuccess)
+            if (response.IsSuccess && response.Data != null)
             {
                 var httpContext = _httpContextAccessor.HttpContext;
-
-                httpContext.Session.SetString("TCNo", response.Data.TCNo);
-                httpContext.Session.SetString("FullNameWithExp", response.Data.FullNameWithExp);
-                httpContext.Session.SetString("RoleName", response.Data.RoleName);
-                httpContext.Session.SetString("FullName", response.Data.FullName);
-                await UpdateUserClaims(response.Data);
+                if (httpContext != null)
+                {
+                    httpContext.Session.SetString("TCNo", response.Data.TCNo);
+                    httpContext.Session.SetString("FullNameWithExp", response.Data.FullNameWithExp);
+                    httpContext.Session.SetString("RoleName", response.Data.RoleName);
+                    httpContext.Session.SetString("FullName", response.Data.FullName);
+                    await UpdateUserClaims(response.Data);
+                }
             }
             return View(response);
         }
@@ -220,7 +231,10 @@ namespace IdeKusgozManagement.WebUI.Controllers
         private async Task UpdateUserClaims(UserViewModel user)
         {
             // Mevcut kimlik bilgilerini al
-            var identity = (ClaimsIdentity)User.Identity;
+            if (User.Identity is not ClaimsIdentity identity)
+            {
+                return;
+            }
 
             // Güncellenebilir claim'leri kaldır
             var claimsToRemove = identity.Claims.Where(c =>
@@ -269,7 +283,12 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
             if (!response.IsSuccess)
             {
-                return BadRequest(response.Errors?.Any() == true ? response.Errors : new[] { response.Message });
+                var errorMessage = !string.IsNullOrEmpty(response.ErrorMessage)
+                    ? response.ErrorMessage
+                    : !string.IsNullOrEmpty(response.ErrorDetail)
+                        ? response.ErrorDetail
+                        : "Giriş başarısız";
+                return BadRequest(new[] { errorMessage });
             }
 
             // Session'a kullanıcı bilgilerini kaydet
@@ -312,7 +331,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
             var role = response.Data?.RoleName;
             var redirectUrl = GetRoleRedirectUrl(role);
-            return Ok(redirectUrl);
+            return Ok(new { redirectUrl = "/ana-sayfa" });
         }
     }
 }

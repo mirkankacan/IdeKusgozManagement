@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.ProjectModels;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Models.ProjectModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +28,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetProjects(CancellationToken cancellationToken)
         {
             var response = await _projectApiService.GetProjectsAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -35,7 +36,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetActiveProjects(CancellationToken cancellationToken)
         {
             var response = await _projectApiService.GetActiveProjectsAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -48,7 +49,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _projectApiService.GetProjectByIdAsync(projectId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -62,7 +63,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _projectApiService.CreateProjectAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -81,7 +82,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _projectApiService.UpdateProjectAsync(projectId, model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -95,7 +96,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _projectApiService.DeleteProjectAsync(projectId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -109,7 +110,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _projectApiService.EnableProjectAsync(projectId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -123,7 +124,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _projectApiService.DisableProjectAsync(projectId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

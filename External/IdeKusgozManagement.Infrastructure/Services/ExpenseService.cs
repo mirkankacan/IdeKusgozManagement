@@ -3,15 +3,17 @@ using IdeKusgozManagement.Application.DTOs.ExpenseDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
+using IdeKusgozManagement.Domain.Enums;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class ExpenseService(IUnitOfWork unitOfWork, ILogger<ExpenseService> logger) : IExpenseService
     {
-        public async Task<ServiceResponse<IEnumerable<ExpenseDTO>>> GetExpensesAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<ExpenseDTO>>> GetExpensesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -19,7 +21,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var expenseDTOs = expenses.Adapt<IEnumerable<ExpenseDTO>>();
 
-                return ServiceResponse<IEnumerable<ExpenseDTO>>.Success(expenseDTOs, "Masraf türü listesi başarıyla getirildi");
+                return ServiceResult<IEnumerable<ExpenseDTO>>.SuccessAsOk(expenseDTOs);
             }
             catch (Exception ex)
             {
@@ -28,7 +30,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<ExpenseDTO>> GetExpenseByIdAsync(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<ExpenseDTO>> GetExpenseByIdAsync(string expenseId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -36,12 +38,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (expense == null)
                 {
-                    return ServiceResponse<ExpenseDTO>.Error("Masraf türü bulunamadı");
+                    return ServiceResult<ExpenseDTO>.Error("Masraf Türü Bulunamadı", "Belirtilen ID'ye sahip masraf türü bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var expenseDTO = expense.Adapt<ExpenseDTO>();
 
-                return ServiceResponse<ExpenseDTO>.Success(expenseDTO, "Masraf türü başarıyla getirildi");
+                return ServiceResult<ExpenseDTO>.SuccessAsOk(expenseDTO);
             }
             catch (Exception ex)
             {
@@ -50,7 +52,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<string>> CreateExpenseAsync(CreateExpenseDTO createExpenseDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<string>> CreateExpenseAsync(CreateExpenseDTO createExpenseDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -58,7 +60,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (existingExpense)
                 {
-                    return ServiceResponse<string>.Error("Bu isimde bir masraf türü zaten mevcut");
+                    return ServiceResult<string>.Error("Masraf Türü Zaten Mevcut", "Bu isimde bir masraf türü zaten mevcut. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 var expense = createExpenseDTO.Adapt<IdtExpense>();
@@ -66,7 +68,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtExpense>().AddAsync(expense, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<string>.Success(expense.Id, "Masraf türü başarıyla oluşturuldu");
+                return ServiceResult<string>.SuccessAsCreated(expense.Id, $"/api/expenses/{expense.Id}");
             }
             catch (Exception ex)
             {
@@ -75,7 +77,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> UpdateExpenseAsync(string expenseId, UpdateExpenseDTO updateExpenseDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> UpdateExpenseAsync(string expenseId, UpdateExpenseDTO updateExpenseDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -83,21 +85,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (expense == null)
                 {
-                    return ServiceResponse<bool>.Error("Masraf türü bulunamadı");
+                    return ServiceResult<bool>.Error("Masraf Türü Bulunamadı", "Belirtilen ID'ye sahip masraf türü bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var existingExpense = await unitOfWork.GetRepository<IdtExpense>().AnyAsync(e => e.Name.ToLower() == updateExpenseDTO.Name.ToLower() && e.Id != expenseId, cancellationToken);
 
                 if (existingExpense)
                 {
-                    return ServiceResponse<bool>.Error("Bu isimde başka bir masraf türü zaten mevcut");
+                    return ServiceResult<bool>.Error("Masraf Türü Zaten Mevcut", "Bu isimde başka bir masraf türü zaten mevcut. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 updateExpenseDTO.Adapt(expense);
                 unitOfWork.GetRepository<IdtExpense>().Update(expense);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Masraf türü başarıyla güncellendi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -106,7 +108,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteExpenseAsync(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DeleteExpenseAsync(string expenseId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -114,20 +116,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (expense == null)
                 {
-                    return ServiceResponse<bool>.Error("Masraf türü bulunamadı");
+                    return ServiceResult<bool>.Error("Masraf Türü Bulunamadı", "Belirtilen ID'ye sahip masraf türü bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var isExpenseUsed = await unitOfWork.GetRepository<IdtWorkRecordExpense>().AnyAsync(wre => wre.ExpenseId == expense.Id, cancellationToken);
 
                 if (isExpenseUsed)
                 {
-                    return ServiceResponse<bool>.Error("Bu masraf türü iş kayıtlarında kullanıldığı için silinemez");
+                    return ServiceResult<bool>.Error("Silme İşlemi Başarısız", "Bu masraf türü iş kayıtlarında kullanıldığı için silinemez.", HttpStatusCode.BadRequest);
                 }
 
                 unitOfWork.GetRepository<IdtExpense>().Remove(expense);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Masraf türü başarıyla silindi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -136,7 +138,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<ExpenseDTO>>> GetActiveExpensesAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<ExpenseDTO>>> GetActiveExpensesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -145,7 +147,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var expenseDTOs = expenses
                     .Adapt<IEnumerable<ExpenseDTO>>();
 
-                return ServiceResponse<IEnumerable<ExpenseDTO>>.Success(expenseDTOs, "Aktif masraf türü listesi başarıyla getirildi");
+                return ServiceResult<IEnumerable<ExpenseDTO>>.SuccessAsOk(expenseDTOs);
             }
             catch (Exception ex)
             {
@@ -154,7 +156,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> EnableExpenseAsync(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> EnableExpenseAsync(string expenseId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -162,7 +164,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (expense == null)
                 {
-                    return ServiceResponse<bool>.Error("Masraf türü bulunamadı");
+                    return ServiceResult<bool>.Error("Masraf Türü Bulunamadı", "Belirtilen ID'ye sahip masraf türü bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 expense.IsActive = true;
@@ -170,7 +172,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtExpense>().Update(expense);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Masraf türü başarıyla aktif duruma getirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -179,7 +181,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DisableExpenseAsync(string expenseId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DisableExpenseAsync(string expenseId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -187,7 +189,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (expense == null)
                 {
-                    return ServiceResponse<bool>.Error("Masraf türü bulunamadı");
+                    return ServiceResult<bool>.Error("Masraf Türü Bulunamadı", "Belirtilen ID'ye sahip masraf türü bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 expense.IsActive = false;
@@ -195,11 +197,31 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtExpense>().Update(expense);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Masraf türü başarıyla pasif duruma getirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "DisableExpenseAsync işleminde hata oluştu");
+                throw;
+            }
+        }
+
+        public async Task<ServiceResult<IEnumerable<ExpenseDTO>>> GetExpensesByTypeAsync(ExpenseType expenseType, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var expenses = await unitOfWork.GetRepository<IdtExpense>()
+                    .Where(e => e.ExpenseType == expenseType)
+                    .OrderByDescending(e => e.CreatedDate)
+                    .ToListAsync(cancellationToken);
+
+                var expenseDTOs = expenses.Adapt<IEnumerable<ExpenseDTO>>();
+
+                return ServiceResult<IEnumerable<ExpenseDTO>>.SuccessAsOk(expenseDTOs);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetExpensesByTypeAsync işleminde hata oluştu");
                 throw;
             }
         }

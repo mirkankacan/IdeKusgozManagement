@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Trafik Cezası Yönetimi";
 }
@@ -7,7 +7,7 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <style>
         a {
@@ -27,7 +27,7 @@
                     Trafik Cezası Yönetimi
                 </h5>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#createtrafficTicketModal">
+                    data-bs-target="#createtrafficTicketModal">
                     <i class="fas fa-plus me-2"></i>Trafik Cezası Ekle
                 </button>
                 <br />
@@ -60,7 +60,7 @@
 
 <!-- Create trafficTicket Modal -->
 <div class="modal fade" id="createtrafficTicketModal" tabindex="-1" aria-labelledby="createtrafficTicketModalLabel"
-     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -106,7 +106,7 @@
                             <label for="c-date-trafficTicket" class="form-label">Ceza Tarihi</label>
                             <div class="input-group">
                                 <input type="text" class="form-control date-trafficTicket" id="c-date-trafficTicket"
-                                       required placeholder="Ceza tarihini seçin">
+                                    required placeholder="Ceza tarihini seçin">
                                 <span class="input-group-text">
                                     <i class="fas fa-calendar"></i>
                                 </span>
@@ -123,7 +123,7 @@
                         <div class="col-md-12">
                             <label for="fileCUpload" class="form-label">Dosya </label>
                             <input type="file" class="form-control" id="fileCUpload"
-                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required>
+                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required>
                             <div class="form-text">Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX</div>
                             <div class="valid-feedback">İyi görünüyor!</div>
                             <div class="invalid-feedback">Lütfen bir dosya seçiniz.</div>
@@ -141,7 +141,7 @@
 
 <!-- Update trafficTicket Modal -->
 <div class="modal fade" id="updatetrafficTicketModal" tabindex="-1" aria-labelledby="updatetrafficTicketModalLabel"
-     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -188,7 +188,7 @@
                             <label for="u-date-trafficTicket" class="form-label">Ceza Tarihi</label>
                             <div class="input-group">
                                 <input type="text" class="form-control date-trafficTicket" id="u-date-trafficTicket"
-                                       required placeholder="Ceza tarihini seçin">
+                                    required placeholder="Ceza tarihini seçin">
                                 <span class="input-group-text">
                                     <i class="fas fa-calendar"></i>
                                 </span>
@@ -205,7 +205,7 @@
                         <div class="col-md-12">
                             <label for="fileUUpload" class="form-label">Dosya</label>
                             <input type="file" class="form-control" id="fileUUpload"
-                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                             <div class="form-text">
                                 Desteklenen formatlar: PDF, JPG, JPEG, PNG, DOC, DOCX (Yeni dosya
                                 seçmezseniz mevcut dosya korunur)
@@ -292,24 +292,20 @@
                 await initializeUserSelect();
             } catch (error) {
                 console.error('Select initialization error:', error);
-                toastr.error('Select alanları yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Select alanları yüklenirken hata oluştu');
             }
         }
 
         async function initializeProjectSelect() {
             try {
-                const response = await $.ajax({
-                    url: '/proje/aktif-liste',
-                    type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest('/proje/aktif-liste', 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('.project-select').each(function () {
                         const currentSelect = $(this);
                         currentSelect.empty();
                         currentSelect.append('<option value="">Proje seçin</option>');
-                        response.data.forEach(project => {
+                        response.forEach(project => {
                             currentSelect.append(`<option value="${project.id}">${project.name}</option>`);
                         });
                     });
@@ -323,24 +319,20 @@
                 });
             } catch (error) {
                 console.error('Proje listesi yüklenirken hata:', error);
-                toastr.error('Proje listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Proje listesi yüklenirken hata oluştu');
             }
         }
 
         async function initializeEquipmentSelect() {
             try {
-                const response = await $.ajax({
-                    url: '/ekipman/aktif-liste',
-                    type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest('/ekipman/aktif-liste', 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('.equipment-select').each(function () {
                         const currentSelect = $(this);
                         currentSelect.empty();
                         currentSelect.append('<option value="">Ekipman seçin</option>');
-                        response.data.forEach(equipment => {
+                        response.forEach(equipment => {
                             currentSelect.append(`<option value="${equipment.id}">${equipment.name}</option>`);
                         });
                     });
@@ -354,24 +346,20 @@
                 });
             } catch (error) {
                 console.error('Ekipman listesi yüklenirken hata:', error);
-                toastr.error('Ekipman listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Ekipman listesi yüklenirken hata oluştu');
             }
         }
 
         async function initializeUserSelect() {
             try {
-                const response = await $.ajax({
-                    url: '/kullanici/liste',
-                    type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest('/kullanici/liste', 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('.user-select').each(function () {
                         const currentSelect = $(this);
                         currentSelect.empty();
                         currentSelect.append('<option value="">Kullanıcı seçin</option>');
-                        response.data.forEach(user => {
+                        response.forEach(user => {
                             currentSelect.append(`<option value="${user.id}">${user.fullName}</option>`);
                         });
                     });
@@ -385,7 +373,7 @@
                 });
             } catch (error) {
                 console.error('Kullanıcı listesi yüklenirken hata:', error);
-                toastr.error('Kullanıcı listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Kullanıcı listesi yüklenirken hata oluştu');
             }
         }
 
@@ -396,8 +384,8 @@
                     "url": "/trafik-ceza/liste",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json) {
+                            return json;
                         }
                         return [];
                     },
@@ -414,7 +402,7 @@
                             errorMessage += ': ' + error;
                         }
 
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -477,11 +465,11 @@
                     {
                         "data": "fileId",
                         "render": function (data, type, row) {
-                              return data ? `<a href="/dosya/indir/${data}"
-                                                           download
-                                                           class="text-muted text-decoration-underline">
-                                                            <i class="fas fa-file fa-lg"></i>
-                                                        </a>` : '';
+                            return data ? `<a href="/dosya/indir/${data}"
+                                                               download
+                                                               class="text-muted text-decoration-underline">
+                                                                <i class="fas fa-file fa-lg"></i>
+                                                            </a>` : '';
                         }
                     },
                     {
@@ -498,17 +486,17 @@
                         "render": function (data, type, row) {
 
                             return `
-                                                                        <div class="btn-group btn-group-sm" role="group">
-                                                                         <button type="button" class="btn btn-outline-warning btn-sm"
-                                                                           onclick="loadtrafficTicketForEdit('${row.id}')" title="Düzenle">
-                                                                          <i class="fas fa-edit"></i>
-                                                                         </button>
-                                                                         <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                           onclick="deletetrafficTicket('${row.id}')" title="Sil">
-                                                                          <i class="fas fa-trash"></i>
-                                                                         </button>
-                                                                        </div>
-                                                                   `;
+                                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                             <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                               onclick="loadtrafficTicketForEdit('${row.id}')" title="Düzenle">
+                                                                              <i class="fas fa-edit"></i>
+                                                                             </button>
+                                                                             <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                               onclick="deletetrafficTicket('${row.id}')" title="Sil">
+                                                                              <i class="fas fa-trash"></i>
+                                                                             </button>
+                                                                            </div>
+                                                                       `;
                         }
                     }
                 ],
@@ -580,7 +568,7 @@
             formData.append('Type', parseInt($('#selectCType').val()));
             formData.append('Amount', parseFloat($('#txtCAmount').val()));
             formData.append('TicketDate', ticketDate);
-                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+            formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
 
             if ($('#selectCType').val() === '1') {
                 formData.append('TargetUserId', $('#selectCUser').val());
@@ -600,51 +588,41 @@
                     contentType: false
                 });
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#createtrafficTicketModal').modal('hide');
-                    trafficTicketsTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('Trafik cezası başarıyla oluşturuldu.', 'success', 'Başarılı!');
+                $('#createtrafficTicketModal').modal('hide');
+                trafficTicketsTable.ajax.reload();
             } catch (error) {
                 console.error('Create trafficTicket error:', error);
-                toastr.error(error.responseJSON?.message || 'Trafik cezası oluşturulurken hata oluştu', 'Hata!');
+                handleError(error, 'Trafik cezası oluşturulurken hata oluştu.');
             }
         }
 
         async function loadtrafficTicketForEdit(trafficTicketId) {
             try {
-                const response = await $.ajax({
-                    url: `/trafik-ceza/${trafficTicketId}`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/trafik-ceza/${trafficTicketId}`, 'GET');
 
-                if (response.isSuccess) {
-                    const data = response.data;
-                    $('#txtUId').val(data.id);
-                    $('#selectUProject').val(data.projectId).trigger('change');
-                    $('#selectUEquipment').val(data.equipmentId).trigger('change');
-                    $('#txtUAmount').val(data.amount);
-                    $('#selectUType').val(data.type).trigger('change');
+                if (response) {
+                    $('#txtUId').val(response.id);
+                    $('#selectUProject').val(response.projectId).trigger('change');
+                    $('#selectUEquipment').val(response.equipmentId).trigger('change');
+                    $('#txtUAmount').val(response.amount);
+                    $('#selectUType').val(response.type).trigger('change');
 
-                    if (data.ticketDate && $('#u-date-trafficTicket').data('daterangepicker')) {
-                        const ticketDate = moment(data.ticketDate);
+                    if (response.ticketDate && $('#u-date-trafficTicket').data('daterangepicker')) {
+                        const ticketDate = moment(response.ticketDate);
                         $('#u-date-trafficTicket').val(ticketDate.format('DD/MM/YYYY'));
                         $('#u-date-trafficTicket').data('daterangepicker').setStartDate(ticketDate);
                     }
 
-                    if (data.type === 1 && data.targetUserId) {
-                        $('#selectUUser').val(data.targetUserId).trigger('change');
+                    if (response.type === 1 && response.targetUserId) {
+                        $('#selectUUser').val(response.targetUserId).trigger('change');
                     }
 
                     $('#updatetrafficTicketModal').modal('show');
-                } else {
-                    toastr.error(response.message, 'Hata!');
                 }
             } catch (error) {
                 console.error('Load trafficTicket error:', error);
-                toastr.error(error.responseJSON?.message || 'Trafik cezası yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Trafik cezası yüklenirken hata oluştu.');
             }
         }
 
@@ -659,7 +637,7 @@
             formData.append('Type', parseInt($('#selectUType').val()));
             formData.append('Amount', parseFloat($('#txtUAmount').val()));
             formData.append('TicketDate', ticketDate);
-                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+            formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
 
             if ($('#selectUType').val() === '1') {
                 formData.append('TargetUserId', $('#selectUUser').val());
@@ -679,49 +657,58 @@
                     contentType: false
                 });
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#updatetrafficTicketModal').modal('hide');
-                    trafficTicketsTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('Trafik cezası başarıyla güncellendi.', 'success', 'Başarılı!');
+                $('#updatetrafficTicketModal').modal('hide');
+                trafficTicketsTable.ajax.reload();
             } catch (error) {
                 console.error('Update trafficTicket error:', error);
-                toastr.error(error.responseJSON?.message || 'Trafik cezası güncellenirken hata oluştu', 'Hata!');
+                handleError(error, 'Trafik cezası güncellenirken hata oluştu.');
             }
         }
 
         async function deletetrafficTicket(trafficTicketId) {
-            Swal.fire({
-                title: 'Emin misiniz?',
-                text: "Bu trafik cezası silinecek ve geri alınamayacak!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Evet, Sil!',
-                cancelButtonText: 'İptal'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    try {
-                        const response = await $.ajax({
-                            url: `/trafik-ceza/${trafficTicketId}`,
-                            type: 'DELETE'
-                        });
-
-                        if (response.isSuccess) {
-                            toastr.success(response.message, 'Başarılı!');
-                            trafficTicketsTable.ajax.reload();
-                        } else {
-                            toastr.error(response.message, 'Hata!');
+            try {
+                const result = await Swal.fire({
+                    title: 'Emin misiniz?',
+                    text: "Bu trafik cezası silinecek ve geri alınamayacak!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Evet, Sil!',
+                    cancelButtonText: 'İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await makeRequest(`/trafik-ceza/${trafficTicketId}`, 'DELETE');
+                            return response;
+                        } catch (error) {
+                            let errorMessage = 'Silme başarısız';
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            return false;
                         }
-                    } catch (error) {
-                        console.error('Delete trafficTicket error:', error);
-                        toastr.error(error.responseJSON.message, 'Hata!');
-                    }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Trafik cezası başarıyla silindi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    trafficTicketsTable.ajax.reload(null, false);
                 }
-            });
+            } catch (error) {
+                console.error('Silme hatası:', error);
+            }
         }
 
     </script>

@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.DTOs.LeaveRequestDTOs;
@@ -10,12 +10,14 @@ using IdeKusgozManagement.Domain.Enums;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class LeaveRequestService(IUnitOfWork unitOfWork, ILogger<LeaveRequestService> logger, IFileService fileService, INotificationService notificationService, IIdentityService identityService, IHolidayService holidayService) : ILeaveRequestService
     {
-        public async Task<ServiceResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -29,7 +31,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 // Mapping config dosyasında CreatedByUser ve UpdatedByUser için gerekli dönüşümler yapıldı
                 var mappedLeaveRequests = leaveRequests.Adapt<IEnumerable<LeaveRequestDTO>>();
 
-                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Success(mappedLeaveRequests, "İzin talepleri başarıyla getirildi");
+                return ServiceResult<IEnumerable<LeaveRequestDTO>>.SuccessAsOk(mappedLeaveRequests);
             }
             catch (Exception ex)
             {
@@ -38,7 +40,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<LeaveRequestDTO>> GetLeaveRequestByIdAsync(string leaveRequestId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<LeaveRequestDTO>> GetLeaveRequestByIdAsync(string leaveRequestId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -52,12 +54,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (leaveRequest == null)
                 {
-                    return ServiceResponse<LeaveRequestDTO>.Error("İzin talebi bulunamadı");
+                    return ServiceResult<LeaveRequestDTO>.Error("İzin Talebi Bulunamadı", "Belirtilen ID'ye sahip izin talebi bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var leaveRequestDTO = leaveRequest.Adapt<LeaveRequestDTO>();
 
-                return ServiceResponse<LeaveRequestDTO>.Success(leaveRequestDTO, "İzin talebi başarıyla getirildi");
+                return ServiceResult<LeaveRequestDTO>.SuccessAsOk(leaveRequestDTO);
             }
             catch (Exception ex)
             {
@@ -66,20 +68,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<LeaveRequestDTO>> CreateLeaveRequestAsync(CreateLeaveRequestDTO createLeaveRequestDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<LeaveRequestDTO>> CreateLeaveRequestAsync(CreateLeaveRequestDTO createLeaveRequestDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 // Tarih kontrolü
                 if (createLeaveRequestDTO.StartDate > createLeaveRequestDTO.EndDate)
                 {
-                    return ServiceResponse<LeaveRequestDTO>.Error("Başlangıç tarihi bitiş tarihinden önce olmalıdır");
+                    return ServiceResult<LeaveRequestDTO>.Error("Tarih Validasyon Hatası", "Başlangıç tarihi bitiş tarihinden önce olmalıdır.", HttpStatusCode.BadRequest);
                 }
 
                 // Geçmiş tarih kontrolü
                 if (createLeaveRequestDTO.StartDate.Date < DateTime.Today.Date)
                 {
-                    return ServiceResponse<LeaveRequestDTO>.Error("Geçmiş tarihli izin talebi oluşturulamaz");
+                    return ServiceResult<LeaveRequestDTO>.Error("Tarih Validasyon Hatası", "Geçmiş tarihli izin talebi oluşturulamaz.", HttpStatusCode.BadRequest);
                 }
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
@@ -104,7 +106,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     {
                         await unitOfWork.RollbackTransactionAsync(cancellationToken);
 
-                        return ServiceResponse<LeaveRequestDTO>.Error(fileResult.Message);
+                        return ServiceResult<LeaveRequestDTO>.Error("Dosya Yükleme Hatası", fileResult.Fail?.Detail ?? "Dosya yüklenirken bir hata oluştu.", HttpStatusCode.BadRequest);
                     }
 
                     leaveRequest.FileId = fileResult.Data.FirstOrDefault().Id;
@@ -130,7 +132,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     TargetUsers = await identityService.GetUserSuperiorsAsync()
                 };
                 await notificationService.SendNotificationToSuperiorsAsync(createNotification, cancellationToken);
-                return ServiceResponse<LeaveRequestDTO>.Success(leaveRequestDTO, "İzin talebi başarıyla oluşturuldu");
+                return ServiceResult<LeaveRequestDTO>.SuccessAsCreated(leaveRequestDTO, $"/api/leaveRequests/{leaveRequestDTO.Id}");
             }
             catch (Exception ex)
             {
@@ -141,7 +143,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteLeaveRequestAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DeleteLeaveRequestAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -149,13 +151,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (leaveRequest == null)
                 {
-                    return ServiceResponse<bool>.Error("İzin talebi bulunamadı");
+                    return ServiceResult<bool>.Error("İzin Talebi Bulunamadı", "Belirtilen ID'ye sahip izin talebi bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 // Sadece beklemede olan talepler silinebilir
                 if (leaveRequest.Status != LeaveRequestStatus.Pending)
                 {
-                    return ServiceResponse<bool>.Error("Sadece beklemede olan izin talepleri silinebilir");
+                    return ServiceResult<bool>.Error("Silme İşlemi Başarısız", "Sadece beklemede olan izin talepleri silinebilir.", HttpStatusCode.BadRequest);
                 }
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
@@ -165,7 +167,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtLeaveRequest>().Remove(leaveRequest);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
-                return ServiceResponse<bool>.Success(true, "İzin talebi başarıyla silindi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -175,7 +177,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> ApproveLeaveRequestAsync(string leaveRequestId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -183,13 +185,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (leaveRequest == null)
                 {
-                    return ServiceResponse<bool>.Error("İzin talebi bulunamadı");
+                    return ServiceResult<bool>.Error("İzin Talebi Bulunamadı", "Belirtilen ID'ye sahip izin talebi bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 // Sadece beklemede olan talepler onaylanabilir
                 if (leaveRequest.Status != LeaveRequestStatus.Pending)
                 {
-                    return ServiceResponse<bool>.Error("Sadece beklemede olan izin talepleri onaylanabilir");
+                    return ServiceResult<bool>.Error("Onay İşlemi Başarısız", "Sadece beklemede olan izin talepleri onaylanabilir.", HttpStatusCode.BadRequest);
                 }
 
                 leaveRequest.Status = LeaveRequestStatus.Approved;
@@ -211,7 +213,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     TargetUsers = new List<string> { mappedLeaveRequest.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(createNotification, cancellationToken);
-                return ServiceResponse<bool>.Success(true, $"İzin talebi başarıyla onaylandı. LeaveRequestId: {leaveRequestId}");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -220,19 +222,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> RejectLeaveRequestAsync(string leaveRequestId, string? rejectReason, CancellationToken cancellationToken = default)
         {
             try
             {
                 var leaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>().GetByIdAsync(leaveRequestId, cancellationToken);
                 if (leaveRequest == null)
                 {
-                    return ServiceResponse<bool>.Error("İzin talebi bulunamadı");
+                    return ServiceResult<bool>.Error("İzin Talebi Bulunamadı", "Belirtilen ID'ye sahip izin talebi bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 if (leaveRequest.Status != LeaveRequestStatus.Pending)
                 {
-                    return ServiceResponse<bool>.Error("Sadece beklemede olan izin talepleri reddedilebilir");
+                    return ServiceResult<bool>.Error("Red İşlemi Başarısız", "Sadece beklemede olan izin talepleri reddedilebilir.", HttpStatusCode.BadRequest);
                 }
 
                 leaveRequest.Status = LeaveRequestStatus.Rejected;
@@ -255,7 +257,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     TargetUsers = new List<string> { mappedLeaveRequest.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(createNotification, cancellationToken);
-                return ServiceResponse<bool>.Success(true, $"İzin talebi başarıyla reddedildi. LeaveRequestId: {leaveRequestId}");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -264,7 +266,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByUserIdAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -278,7 +280,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var leaveRequestDTOs = leaveRequests.Adapt<IEnumerable<LeaveRequestDTO>>();
 
-                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, $"Kullanıcının izin talepleri başarıyla getirildi. UserId: {userId}");
+                return ServiceResult<IEnumerable<LeaveRequestDTO>>.SuccessAsOk(leaveRequestDTOs);
             }
             catch (Exception ex)
             {
@@ -287,7 +289,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByStatusAsync(LeaveRequestStatus status, string? userId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<LeaveRequestDTO>>> GetLeaveRequestsByStatusAsync(LeaveRequestStatus status, string? userId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -307,7 +309,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var leaveRequestDTOs = leaveRequests.Adapt<IEnumerable<LeaveRequestDTO>>();
 
-                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, "Duruma göre izin talepleri başarıyla getirildi");
+                return ServiceResult<IEnumerable<LeaveRequestDTO>>.SuccessAsOk(leaveRequestDTOs);
             }
             catch (Exception ex)
             {
@@ -316,19 +318,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> UpdateLeaveRequestAsync(string leaveRequestId, UpdateLeaveRequestDTO updateLeaveRequestDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> UpdateLeaveRequestAsync(string leaveRequestId, UpdateLeaveRequestDTO updateLeaveRequestDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 // Tarih kontrolü
                 if (updateLeaveRequestDTO.StartDate > updateLeaveRequestDTO.EndDate)
                 {
-                    return ServiceResponse<bool>.Error("Başlangıç tarihi bitiş tarihinden önce olmalıdır");
+                    return ServiceResult<bool>.Error("Tarih Validasyon Hatası", "Başlangıç tarihi bitiş tarihinden önce olmalıdır.", HttpStatusCode.BadRequest);
                 }
                 // Geçmiş tarih kontrolü
                 if (updateLeaveRequestDTO.StartDate.Date < DateTime.Today.Date)
                 {
-                    return ServiceResponse<bool>.Error("Geçmiş tarihli izin talebi oluşturulamaz");
+                    return ServiceResult<bool>.Error("Tarih Validasyon Hatası", "Geçmiş tarihli izin talebi oluşturulamaz.", HttpStatusCode.BadRequest);
                 }
 
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
@@ -336,11 +338,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var leaveRequest = await unitOfWork.GetRepository<IdtLeaveRequest>().GetByIdAsync(leaveRequestId, cancellationToken);
                 if (leaveRequest == null)
                 {
-                    return ServiceResponse<bool>.Error("İzin talebi bulunamadı");
+                    return ServiceResult<bool>.Error("İzin Talebi Bulunamadı", "Belirtilen ID'ye sahip izin talebi bulunamadı.", HttpStatusCode.NotFound);
                 }
                 if (leaveRequest.Status == LeaveRequestStatus.Approved && (userRole != "Yönetici" || userRole != "Admin"))
                 {
-                    return ServiceResponse<bool>.Error("İzin talebi daha önceden onaylanmış güncelleme yetkiniz bulunmamaktadır");
+                    return ServiceResult<bool>.Error("Yetki Hatası", "İzin talebi daha önceden onaylanmış, güncelleme yetkiniz bulunmamaktadır.", HttpStatusCode.Forbidden);
                 }
 
                 var changedFields = GetChangedFields(leaveRequest, updateLeaveRequestDTO);
@@ -374,7 +376,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     {
                         await unitOfWork.RollbackTransactionAsync(cancellationToken);
 
-                        return ServiceResponse<bool>.Error(fileUploadResult.Message);
+                        return ServiceResult<bool>.Error("Dosya Yükleme Hatası", fileUploadResult.Fail?.Detail ?? "Dosya yüklenirken bir hata oluştu.", HttpStatusCode.BadRequest);
                     }
                     if (!string.IsNullOrEmpty(oldFileId))
                     {
@@ -382,7 +384,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         if (!fileDeleteResult.IsSuccess)
                         {
                             logger.LogWarning("Dosya silinirken hata oluştu. FileId: {FileId}, Error: {Error}",
-                                oldFileId, fileDeleteResult.Message);
+                                oldFileId, fileDeleteResult.Fail?.Detail ?? "Bilinmeyen hata");
                         }
                     }
 
@@ -411,7 +413,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 };
 
                 await notificationService.SendNotificationToUsersAsync(createNotification, cancellationToken);
-                return ServiceResponse<bool>.Success(true, "İzin talebi başarıyla güncellendi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -443,13 +445,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return changedFields;
         }
 
-        public async Task<ServiceResponse<IEnumerable<LeaveRequestDTO>>> GetSubordinateLeaveRequestsAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<LeaveRequestDTO>>> GetSubordinateLeaveRequestsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 var superiorId = identityService.GetUserId();
                 if (superiorId == null)
-                    return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Error("Kullanıcı bilgisi alınamadı");
+                    return ServiceResult<IEnumerable<LeaveRequestDTO>>.Error("Kullanıcı Bilgisi Alınamadı", "Kullanıcı bilgisi alınamadı. Lütfen tekrar giriş yapın.", HttpStatusCode.Unauthorized);
 
                 var subordinateIds = await unitOfWork.GetRepository<IdtUserHierarchy>()
                     .Where(x => x.SuperiorId == superiorId)
@@ -465,7 +467,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var leaveRequestDTOs = leaveRequests.Adapt<IEnumerable<LeaveRequestDTO>>();
 
-                return ServiceResponse<IEnumerable<LeaveRequestDTO>>.Success(leaveRequestDTOs, "Kullanıcının astlarının izin talepleri başarıyla getirildi");
+                return ServiceResult<IEnumerable<LeaveRequestDTO>>.SuccessAsOk(leaveRequestDTOs);
             }
             catch (Exception ex)
             {

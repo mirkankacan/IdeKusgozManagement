@@ -1,10 +1,10 @@
-﻿using IdeKusgozManagement.Application.Interfaces.Services;
+﻿using System.Security.Claims;
+using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Security.Claims;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
@@ -26,6 +26,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 throw new UnauthorizedAccessException("Kullanıcı kimliği doğrulanmadı");
             }
             return accessor.HttpContext!.User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier)!.Value!;
+        }
+        public string? GetUserIdOrNull()
+        {
+            if (!accessor.HttpContext!.User.Identity!.IsAuthenticated)
+            {
+                return null;
+            }
+            return accessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         }
 
         public string GetUserRole()
@@ -64,6 +72,22 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 throw new UnauthorizedAccessException("Kullanıcı kimliği doğrulanmadı");
             }
             return accessor.HttpContext!.User.Claims.First(c => c.Type == "TCNo")!.Value!;
+        }
+        public string GetUserDepartment()
+        {
+            if (!accessor.HttpContext!.User.Identity!.IsAuthenticated)
+            {
+                throw new UnauthorizedAccessException("Kullanıcı kimliği doğrulanmadı");
+            }
+            return accessor.HttpContext!.User.Claims.First(c => c.Type == "DepartmentName")!.Value!;
+        }
+        public string GetUserDepartmentDuty()
+        {
+            if (!accessor.HttpContext!.User.Identity!.IsAuthenticated)
+            {
+                throw new UnauthorizedAccessException("Kullanıcı kimliği doğrulanmadı");
+            }
+            return accessor.HttpContext!.User.Claims.First(c => c.Type == "DepartmentDutyName")!.Value!;
         }
     }
 }

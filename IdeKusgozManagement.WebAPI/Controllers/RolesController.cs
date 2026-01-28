@@ -1,6 +1,7 @@
-﻿using IdeKusgozManagement.Application.DTOs.RoleDTOs;
+using IdeKusgozManagement.Application.DTOs.RoleDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetRoles()
         {
             var result = await roleService.GetRolesAsync();
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -30,7 +31,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetActiveRoles()
         {
             var result = await roleService.GetActiveRolesAsync();
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Rol ID'si gereklidir");
             }
             var result = await roleService.GetRoleByIdAsync(roleId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -62,7 +63,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Rol adı gereklidir");
             }
             var result = await roleService.GetRoleByNameAsync(roleName);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -79,7 +80,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await roleService.CreateRoleAsync(createRoleDTO);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -101,7 +102,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await roleService.UpdateRoleAsync(roleId, updateRoleDTO);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -117,7 +118,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Rol ID'si gereklidir");
             }
             var result = await roleService.DeleteRoleAsync(roleId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -133,7 +134,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Rol ID'si gereklidir");
             }
             var result = await roleService.EnableRoleAsync(roleId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -149,7 +150,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Rol ID'si gereklidir");
             }
             var result = await roleService.DisableRoleAsync(roleId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

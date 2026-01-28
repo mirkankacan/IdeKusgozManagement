@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "İzin Taleplerim";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -197,17 +197,13 @@
         });
                  async function getMyRemainingLeaveDays() {
             try {
-                const response = await $.ajax({
-                    url: `/kullanici/kalan-izinlerim`,
-                    type: 'GET',
-                    contentType: 'application/json'
-                });
+                const response = await makeRequest(`/kullanici/kalan-izinlerim`, 'GET');
 
-                if (response && response.data && response.isSuccess) {
+                if (response) {
                     // Ana bilgiler
-                    $('#remainingDays').text("Kalan İzin: " + response.data.remainingDays + " Gün");
-                    $('#totalEntitlement').text("Toplam Hak Edilen İzin: " + response.data.totalEntitlement + " Gün");
-                    $('#totalUsedDays').text("Toplam Kullanılan İzin: " + response.data.totalUsedDays + " Gün");
+                    $('#remainingDays').text("Kalan İzin: " + response.remainingDays + " Gün");
+                    $('#totalEntitlement').text("Toplam Hak Edilen İzin: " + response.totalEntitlement + " Gün");
+                    $('#totalUsedDays').text("Toplam Kullanılan İzin: " + response.totalUsedDays + " Gün");
 
                     // Bu yıl bilgileri
                     // $('#currentYearEntitlement').text("Bu Yıl Hak Edilen İzin: " + response.data.currentYearEntitlement + " Gün");
@@ -228,47 +224,21 @@
                 // $('#currentYearEntitlement').text("Bu Yıl Hak Edilen İzin: Hata");
                 // $('#currentYearUsedDays').text("Bu Yıl Kullanılan İzin: Hata");
 
-                // Error mesajını hazırla
-                let errorMessage = "Bir hata oluştu.";
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'Kalan izin bilgisi yüklenirken hata oluştu.');
             }
         }
                 async function calculateNetLeaveDays(startDate, endDate) {
             try {
-                const response = await $.ajax({
-                    url: `/tatil/baslangic/${startDate}/bitis/${endDate}`,
-                    type: 'GET',
-                    contentType: 'application/json'
-                });
+                const response = await makeRequest(`/tatil/baslangic/${startDate}/bitis/${endDate}`, 'GET');
 
-                if (response && response.data && response.isSuccess) {
-                    $('#net-leave-day').val(response.data);
+                if (response !== null && response !== undefined) {
+                    $('#net-leave-day').val(response);
                 } else {
                     $('#net-leave-day').val('Hesaplanamadı');
                 }
             } catch (error) {
                 $('#net-leave-day').val('Hata');
-               if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'Net izin günü hesaplanırken hata oluştu.');
             }
         }
         async function initializeDataTable() {
@@ -278,8 +248,8 @@
                     "url": "/izin/listem",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json) {
+                            return json;
                         }
                         return [];
                     },
@@ -295,7 +265,7 @@
                         } catch (e) {
                             errorMessage += ': ' + error;
                         }
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -449,22 +419,18 @@
                     contentType: false,
                 });
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#createLeaveRequestModal').modal('hide');
-                    myLeaveRequestsTable.ajax.reload(null, false);
+                showToast('İzin talebi başarıyla oluşturuldu.', 'success', 'Başarılı!');
+                $('#createLeaveRequestModal').modal('hide');
+                myLeaveRequestsTable.ajax.reload(null, false);
 
-                    // Reset form
-                    $('#date-leave').val('');
-                    $('#select-leave-reason').val(0);
-                    $('#txt-description').val('');
-                    $('#file-document').val('');
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                // Reset form
+                $('#date-leave').val('');
+                $('#select-leave-reason').val(0);
+                $('#txt-description').val('');
+                $('#file-document').val('');
             } catch (error) {
                 console.error('Create leave request error:', error);
-                toastr.error(error.responseJSON?.message || 'Bir hata oluştu!', 'Hata!');
+                handleError(error, 'İzin talebi oluşturulurken hata oluştu.');
             }
         }
 
@@ -482,23 +448,17 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/izin/${leaveRequestId}`,
-                                type: 'DELETE',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/izin/${leaveRequestId}`, 'DELETE');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Silme başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
-                                                        return false;
+                            return false;
 
                         }
                     },

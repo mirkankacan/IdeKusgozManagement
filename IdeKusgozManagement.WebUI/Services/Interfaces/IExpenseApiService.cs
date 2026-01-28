@@ -20,5 +20,7 @@ namespace IdeKusgozManagement.WebUI.Services.Interfaces
         Task<ApiResponse<bool>> UpdateExpenseAsync(string expenseId, UpdateExpenseViewModel model, CancellationToken cancellationToken = default);
 
         Task<ApiResponse<bool>> DeleteExpenseAsync(string expenseId, CancellationToken cancellationToken = default);
+
+        Task<ApiResponse<IEnumerable<ExpenseViewModel>>> GetExpensesByTypeAsync(int expenseType, CancellationToken cancellationToken = default);
     }
 }

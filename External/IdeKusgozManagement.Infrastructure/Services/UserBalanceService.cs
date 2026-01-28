@@ -1,21 +1,23 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.UserBalanceDTOs;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
 using IdeKusgozManagement.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class UserBalanceService(IUnitOfWork unitOfWork, ILogger<DepartmentService> logger) : IUserBalanceService
     {
-        public async Task<ServiceResponse<UserBalanceDTO>> GetUserBalancesByUserAsync(string userId, CancellationToken cancellationToken)
+        public async Task<ServiceResult<UserBalanceDTO>> GetUserBalancesByUserAsync(string userId, CancellationToken cancellationToken)
         {
             try
             {
                 if (string.IsNullOrEmpty(userId))
-                    return ServiceResponse<UserBalanceDTO>.Error("Kullanıcı ID'si boş geçilemez");
+                    return ServiceResult<UserBalanceDTO>.Error("Validasyon Hatası", "Kullanıcı ID'si boş geçilemez.", HttpStatusCode.BadRequest);
 
                 var parameters = new object[] { userId };
 
@@ -27,8 +29,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var result = funcResults.FirstOrDefault();
 
                 return result != null
-                    ? ServiceResponse<UserBalanceDTO>.Success(result)
-                    : ServiceResponse<UserBalanceDTO>.Error("Veri alınamadı");
+                    ? ServiceResult<UserBalanceDTO>.SuccessAsOk(result)
+                    : ServiceResult<UserBalanceDTO>.Error("Veri Bulunamadı", "Kullanıcı bakiyesi verisi alınamadı.", HttpStatusCode.NotFound);
             }
             catch (Exception ex)
             {
@@ -37,19 +39,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> IncreaseUserBalanceAsync(string userId, UpdateUserBalanceDTO updateUserBalanceDTO, CancellationToken cancellationToken)
+        public async Task<ServiceResult<bool>> IncreaseUserBalanceAsync(string userId, UpdateUserBalanceDTO updateUserBalanceDTO, CancellationToken cancellationToken)
         {
             try
             {
                 var userBalance = await unitOfWork.GetRepository<IdtUserBalance>().Where(x => x.UserId == userId && x.Type == updateUserBalanceDTO.Type).FirstOrDefaultAsync(cancellationToken);
                 if (userBalance == null)
-                    return ServiceResponse<bool>.Error("Kullanıcı bakiyesi bulunamadı");
+                    return ServiceResult<bool>.Error("Bakiye Bulunamadı", "Kullanıcı bakiyesi bulunamadı.", HttpStatusCode.NotFound);
 
                 userBalance.Balance = userBalance.Balance + updateUserBalanceDTO.Amount;
 
                 unitOfWork.GetRepository<IdtUserBalance>().Update(userBalance);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
-                return ServiceResponse<bool>.Success(true);
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -58,19 +60,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DecreaseUserBalanceAsync(string userId, UpdateUserBalanceDTO updateUserBalanceDTO, CancellationToken cancellationToken)
+        public async Task<ServiceResult<bool>> DecreaseUserBalanceAsync(string userId, UpdateUserBalanceDTO updateUserBalanceDTO, CancellationToken cancellationToken)
         {
             try
             {
                 var userBalance = await unitOfWork.GetRepository<IdtUserBalance>().Where(x => x.UserId == userId && x.Type == updateUserBalanceDTO.Type).FirstOrDefaultAsync(cancellationToken);
                 if (userBalance == null)
-                    return ServiceResponse<bool>.Error("Kullanıcı bakiyesi bulunamadı");
+                    return ServiceResult<bool>.Error("Bakiye Bulunamadı", "Kullanıcı bakiyesi bulunamadı.", HttpStatusCode.NotFound);
 
                 userBalance.Balance = userBalance.Balance - updateUserBalanceDTO.Amount;
 
                 unitOfWork.GetRepository<IdtUserBalance>().Update(userBalance);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
-                return ServiceResponse<bool>.Success(true);
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {

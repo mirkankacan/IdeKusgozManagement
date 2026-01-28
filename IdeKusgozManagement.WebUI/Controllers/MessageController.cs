@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.MessageModels;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Models.MessageModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetMessages([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             var response = await _messageApiService.GetMessagesAsync(pageSize, pageNumber, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -29,7 +30,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> CreateMessage([FromBody] CreateMessageViewModel model, CancellationToken cancellationToken)
         {
             var response = await _messageApiService.CreateMessageAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -38,7 +39,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> DeleteMessage(string messageId, CancellationToken cancellationToken)
         {
             var response = await _messageApiService.DeleteMessageAsync(messageId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

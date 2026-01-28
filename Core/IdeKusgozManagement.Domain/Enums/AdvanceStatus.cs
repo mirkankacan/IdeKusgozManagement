@@ -6,6 +6,8 @@
         ApprovedByUnitManager = 1,
         ApprovedByChief = 2,
         RejectedByUnitManager = 3,
-        RejectedByChief = 4
+        RejectedByChief = 4,
+        RejectedByFinance = 5,
+        Completed = 6
     }
 }

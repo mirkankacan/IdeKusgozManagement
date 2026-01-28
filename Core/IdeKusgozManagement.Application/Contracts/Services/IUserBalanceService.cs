@@ -5,10 +5,10 @@ namespace IdeKusgozManagement.Application.Contracts.Services
 {
     public interface IUserBalanceService
     {
-        Task<ServiceResponse<UserBalanceDTO>> GetUserBalancesByUserAsync(string userId, CancellationToken cancellationToken);
+        Task<ServiceResult<UserBalanceDTO>> GetUserBalancesByUserAsync(string userId, CancellationToken cancellationToken);
 
-        Task<ServiceResponse<bool>> IncreaseUserBalanceAsync(string userId, UpdateUserBalanceDTO updateUserBalanceDTO, CancellationToken cancellationToken);
+        Task<ServiceResult<bool>> IncreaseUserBalanceAsync(string userId, UpdateUserBalanceDTO updateUserBalanceDTO, CancellationToken cancellationToken);
 
-        Task<ServiceResponse<bool>> DecreaseUserBalanceAsync(string userId, UpdateUserBalanceDTO updateUserBalanceDTO, CancellationToken cancellationToken);
+        Task<ServiceResult<bool>> DecreaseUserBalanceAsync(string userId, UpdateUserBalanceDTO updateUserBalanceDTO, CancellationToken cancellationToken);
     }
 }

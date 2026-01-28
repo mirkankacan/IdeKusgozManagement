@@ -9,13 +9,12 @@ using IdeKusgozManagement.Domain.Enums;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
-    public class AdvanceService(IUnitOfWork unitOfWork, ILogger<AdvanceService> logger, IIdentityService identityService, INotificationService notificationService) : IAdvanceService
+    public class AdvanceService(IUnitOfWork unitOfWork, ILogger<AdvanceService> logger, IIdentityService identityService, INotificationService notificationService, IParameterService parameterService) : IAdvanceService
     {
-        private const decimal approvalThreshold = 5000m;
-
         private BalanceType? GetBalanceType(IdtAdvance advance)
         {
             BalanceType? type = null;
@@ -32,7 +31,6 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 default:
                     logger.LogError("Bakiye tipi bulunamadı Reason: {Reason}", advance.Reason);
                     throw new ArgumentException($"{advance.Reason} bakiye tipi bulunamadı");
-                    break;
             }
             return type.Value;
         }
@@ -78,15 +76,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
             unitOfWork.GetRepository<IdtUserBalance>().Update(userBalance);
         }
 
-        public async Task<ServiceResponse<bool>> ApproveAdvanceAsync(string advanceId, ApproveAdvanceDTO? approveAdvanceDTO = null, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> ApproveAdvanceAsync(string advanceId, ApproveAdvanceDTO? approveAdvanceDTO = null, CancellationToken cancellationToken = default)
         {
             try
             {
+                var paramServiceResult = await parameterService.GetParameterByKeyAsync("ChiefAdvanceApprovalThreshold", cancellationToken);
+                if (!paramServiceResult.IsSuccess)
+                    return ServiceResult<bool>.Error("Parametre Hata", "Avans onaylama sınır parametresi alınamadı.", HttpStatusCode.NotFound);
+
+                decimal approvalThreshold = decimal.Parse(paramServiceResult.Data.Value);
+
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
                 var advance = await unitOfWork.GetRepository<IdtAdvance>().GetByIdAsync(advanceId, cancellationToken);
                 if (advance == null)
                 {
-                    return ServiceResponse<bool>.Error("Avans isteği bulunamadı");
+                    return ServiceResult<bool>.Error("Avans İsteği Bulunamadı", "Belirtilen ID'ye sahip avans isteği bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var userId = identityService.GetUserId();
@@ -96,13 +100,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 // Parça validasyonu - parçalar UI'dan her zaman gönderilmelidir
                 if (approveAdvanceDTO == null || approveAdvanceDTO.Parts == null || !approveAdvanceDTO.Parts.Any())
                 {
-                    return ServiceResponse<bool>.Error("En az bir parça belirtilmelidir");
+                    return ServiceResult<bool>.Error("Parça Validasyon Hatası", "Avans onayı için en az bir parça belirtilmelidir.", HttpStatusCode.BadRequest);
                 }
 
                 var totalPartsAmount = approveAdvanceDTO.Parts.Sum(p => p.Amount);
                 if (totalPartsAmount != advance.Amount)
                 {
-                    return ServiceResponse<bool>.Error($"Parça tutarlarının toplamı ({totalPartsAmount}) avans tutarına ({advance.Amount}) eşit olmalıdır");
+                    return ServiceResult<bool>.Error("Parça Tutar Uyumsuzluğu", $"Parça tutarlarının toplamı ({totalPartsAmount}) avans tutarına ({advance.Amount}) eşit olmalıdır.", HttpStatusCode.BadRequest);
                 }
 
                 // Rol kontrolü ve status güncelleme
@@ -111,7 +115,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     case "Admin":
                         if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
                         {
-                            return ServiceResponse<bool>.Error("Avans isteği zaten onaylanmış");
+                            return ServiceResult<bool>.Error("Avans Zaten Onaylanmış", "Bu avans isteği daha önce onaylanmış durumda.", HttpStatusCode.BadRequest);
                         }
                         advance.Status = AdvanceStatus.ApprovedByUnitManager;
                         advance.ProcessedByUnitManagerId = userId;
@@ -123,12 +127,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     case "Yönetici":
                         if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
                         {
-                            return ServiceResponse<bool>.Error("Avans isteği zaten yönetici tarafından onaylanmış");
+                            return ServiceResult<bool>.Error("Avans Zaten Onaylanmış", "Bu avans isteği daha önce yönetici tarafından onaylanmış durumda.", HttpStatusCode.BadRequest);
                         }
-                        if (!isOverThreshold)
-                        {
-                            return ServiceResponse<bool>.Error("₺5000 ve altındaki avans istekleri sadece şef tarafından onaylanabilir");
-                        }
+
                         advance.Status = AdvanceStatus.ApprovedByUnitManager;
                         advance.ProcessedByUnitManagerId = userId;
                         advance.UnitManagerProcessedDate = DateTime.Now;
@@ -137,15 +138,15 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     case "Şef":
                         if (isOverThreshold)
                         {
-                            return ServiceResponse<bool>.Error("₺5000 üzerindeki avans istekleri sadece yönetici tarafından onaylanabilir");
+                            return ServiceResult<bool>.Error("Yetki Hatası", $"₺{approvalThreshold} üzerindeki avans istekleri sadece yönetici tarafından onaylanabilir.", HttpStatusCode.Forbidden);
                         }
                         if (advance.Status == AdvanceStatus.ApprovedByChief)
                         {
-                            return ServiceResponse<bool>.Error("Avans isteği zaten şef tarafından onaylanmış");
+                            return ServiceResult<bool>.Error("Avans Zaten Onaylanmış", "Bu avans isteği daha önce şef tarafından onaylanmış durumda.", HttpStatusCode.BadRequest);
                         }
                         if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
                         {
-                            return ServiceResponse<bool>.Error("Avans isteği zaten yönetici tarafından onaylanmış");
+                            return ServiceResult<bool>.Error("Avans Zaten Onaylanmış", "Bu avans isteği daha önce yönetici tarafından onaylanmış durumda.", HttpStatusCode.BadRequest);
                         }
                         advance.Status = AdvanceStatus.ApprovedByChief;
                         advance.ProcessedByChiefId = userId;
@@ -153,9 +154,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         break;
 
                     default:
-                        return ServiceResponse<bool>.Error("Avans isteğini onaylamak için yetkiniz yok");
+                        return ServiceResult<bool>.Error("Yetki Hatası", "Avans isteğini onaylamak için yeterli yetkiniz bulunmamaktadır.", HttpStatusCode.Forbidden);
                 }
-
                 var advanceParts = new List<IdtAdvancePart>();
                 foreach (var partDto in approveAdvanceDTO.Parts)
                 {
@@ -175,22 +175,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     }
                     catch (ArgumentOutOfRangeException)
                     {
-                        return ServiceResponse<bool>.Error($"Geçersiz tarih: {partDto.Day}/{partDto.Month}/{partDto.Year}");
+                        return ServiceResult<bool>.Error("Geçersiz Tarih", $"Belirtilen tarih geçersizdir: {partDto.Day}/{partDto.Month}/{partDto.Year}", HttpStatusCode.BadRequest);
                     }
                 }
 
                 // Parçaları veritabanına kaydet - HER ZAMAN en az 1 parça kaydedilecek
                 // (Eğer bölünmemişse 1 parça, bölünmüşse n parça)
                 await unitOfWork.GetRepository<IdtAdvancePart>().AddRangeAsync(advanceParts, cancellationToken);
-
-                // Bakiye işlemleri - her parça için ayrı ayrı bakiye artırılır
-                if (advance.Status == AdvanceStatus.ApprovedByUnitManager || advance.Status == AdvanceStatus.ApprovedByChief)
-                {
-                    foreach (var part in advanceParts)
-                    {
-                        await IncreaseBalanceByPartAsync(advance, part.Amount, cancellationToken);
-                    }
-                }
                 unitOfWork.GetRepository<IdtAdvance>().Update(advance);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
@@ -213,7 +204,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     TargetUsers = new List<string> { advance.UserId }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
-                return ServiceResponse<bool>.Success(true, "Avans isteği başarıyla onaylandı");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -223,7 +214,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<string>> CreateAdvanceAsync(CreateAdvanceDTO createAdvanceDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<string>> CreateAdvanceAsync(CreateAdvanceDTO createAdvanceDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -262,7 +253,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     TargetUsers = await identityService.GetUserSuperiorsAsync(cancellationToken)
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
-                return ServiceResponse<string>.Success(newAdvance.Id, "Avans isteği başarıyla oluşturuldu");
+                return ServiceResult<string>.SuccessAsCreated(newAdvance.Id, $"/api/advances/{newAdvance.Id}");
             }
             catch (Exception ex)
             {
@@ -271,7 +262,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteAdvanceAsync(string advanceId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DeleteAdvanceAsync(string advanceId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -279,20 +270,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (advance == null)
                 {
-                    return ServiceResponse<bool>.Error("Avans isteği bulunamadı");
+                    return ServiceResult<bool>.Error("Avans İsteği Bulunamadı", "Belirtilen ID'ye sahip avans isteği bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var isAdvanceApproved = await unitOfWork.GetRepository<IdtAdvance>().AnyAsync(x => x.Status == AdvanceStatus.ApprovedByUnitManager && x.Id == advance.Id, cancellationToken);
 
                 if (isAdvanceApproved)
                 {
-                    return ServiceResponse<bool>.Error("Bu avans isteği birim yönetici tarafından onaylandığı için silinemez");
+                    return ServiceResult<bool>.Error("Silme İşlemi Başarısız", "Bu avans isteği birim yönetici tarafından onaylandığı için silinemez.", HttpStatusCode.BadRequest);
                 }
 
                 unitOfWork.GetRepository<IdtAdvance>().Remove(advance);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Avans isteği başarıyla silindi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -301,7 +292,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<AdvanceDTO>> GetAdvanceByIdAsync(string advanceId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<AdvanceDTO>> GetAdvanceByIdAsync(string advanceId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -315,12 +306,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (advance == null)
                 {
-                    return ServiceResponse<AdvanceDTO>.Success(null, "Avans isteği bulunamadı");
+                    return ServiceResult<AdvanceDTO>.Error("Avans İsteği Bulunamadı", "Belirtilen ID'ye sahip avans isteği bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var advanceDTO = advance.Adapt<AdvanceDTO>();
 
-                return ServiceResponse<AdvanceDTO>.Success(advanceDTO, "Avans isteği başarıyla getirildi");
+                return ServiceResult<AdvanceDTO>.SuccessAsOk(advanceDTO);
             }
             catch (Exception ex)
             {
@@ -329,17 +320,33 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<AdvanceDTO>>> GetAdvancesAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<AdvanceDTO>>> GetAdvancesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
+                var paramServiceResult = await parameterService.GetParameterByKeyAsync("ChiefAdvanceApprovalThreshold", cancellationToken);
+                if (!paramServiceResult.IsSuccess)
+                    return ServiceResult<IEnumerable<AdvanceDTO>>.Error("Parametre Hata", "Avans onaylama sınır parametresi alınamadı.", HttpStatusCode.NotFound);
+
+                decimal approvalThreshold = decimal.Parse(paramServiceResult.Data.Value);
+
                 var userRole = identityService.GetUserRole();
+                var userId = identityService.GetUserId();
+
                 var query = unitOfWork.GetRepository<IdtAdvance>().WhereAsNoTracking(x => x.Id != null);
 
-                // Şef sadece 5000 ve altı, bekleyen avansları görebilir
+                // Şef sadece approvalThreshold ve altı, bekleyen avansları görebilir
                 if (userRole == "Şef")
                 {
-                    query = query.Where(x => x.Amount <= approvalThreshold);
+                    var parameterLastModified = (paramServiceResult.Data.UpdatedDate ?? paramServiceResult.Data.CreatedDate).Date;
+
+                    query = query.Where(x =>
+                        x.Amount <= approvalThreshold &&
+                        (
+                            x.ProcessedByChiefId == userId || // Daha önce bu şef işlem yaptıysa
+                            (x.UpdatedDate ?? x.CreatedDate) >= parameterLastModified // VEYA yeni tarihli avans ise
+                        )
+                    );
                 }
                 // Admin ve diğer roller tüm avansları görebilir
 
@@ -352,14 +359,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .OrderByDescending(x => x.CreatedDate)
                     .ToListAsync(cancellationToken);
 
-                if (advances == null)
+                if (advances == null || !advances.Any())
                 {
-                    return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(null, "Avans istekleri bulunamadı");
+                    return ServiceResult<IEnumerable<AdvanceDTO>>.SuccessAsOk(Enumerable.Empty<AdvanceDTO>());
                 }
 
                 var advanceDTOs = advances.Adapt<IEnumerable<AdvanceDTO>>();
 
-                return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(advanceDTOs, "Avans istekleri başarıyla getirildi");
+                return ServiceResult<IEnumerable<AdvanceDTO>>.SuccessAsOk(advanceDTOs);
             }
             catch (Exception ex)
             {
@@ -368,7 +375,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<AdvanceDTO>>> GetAdvancesByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<AdvanceDTO>>> GetAdvancesByUserIdAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -381,14 +388,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .OrderByDescending(x => x.CreatedDate)
                     .ToListAsync(cancellationToken);
 
-                if (advances == null)
+                if (advances == null || !advances.Any())
                 {
-                    return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(null, "Kullanıcının avans istekleri bulunamadı");
+                    return ServiceResult<IEnumerable<AdvanceDTO>>.SuccessAsOk(Enumerable.Empty<AdvanceDTO>());
                 }
 
                 var advanceDTOs = advances.Adapt<IEnumerable<AdvanceDTO>>();
 
-                return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(advanceDTOs, "Kullanıcının avans istekleri başarıyla getirildi");
+                return ServiceResult<IEnumerable<AdvanceDTO>>.SuccessAsOk(advanceDTOs);
             }
             catch (Exception ex)
             {
@@ -397,12 +404,52 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<AdvanceDTO>>> GetApprovedAdvancesAsync(CancellationToken cancellationToken = default)
+        // AdvanceService.cs içine ekle
+        public async Task<ServiceResult<AdvanceStatisticDTO>> GetAdvanceStatisticsAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var userRole = identityService.GetUserRole();
+                var query = unitOfWork.GetRepository<IdtAdvance>().WhereAsNoTracking(x => x.Id != null);
+
+                var advances = await query.ToListAsync(cancellationToken);
+
+                var pendingCount = advances.Count(x => x.Status == AdvanceStatus.Pending);
+                var approvedCount = advances.Count(x => x.Status == AdvanceStatus.ApprovedByChief ||
+                                                          x.Status == AdvanceStatus.ApprovedByUnitManager);
+                var rejectedCount = advances.Count(x => x.Status == AdvanceStatus.RejectedByChief ||
+                                                          x.Status == AdvanceStatus.RejectedByUnitManager);
+                var completedCount = advances.Count(x => x.Status == AdvanceStatus.Completed);
+                var totalCount = advances.Count;
+
+                var statistics = new AdvanceStatisticDTO
+                {
+                    PendingCount = pendingCount,
+                    ApprovedCount = approvedCount,
+                    RejectedCount = rejectedCount,
+                    CompletedCount = completedCount,
+                    TotalCount = totalCount,
+                    PendingPercentage = totalCount > 0 ? Math.Round((decimal)pendingCount / totalCount * 100, 2) : 0,
+                    ApprovedPercentage = totalCount > 0 ? Math.Round((decimal)approvedCount / totalCount * 100, 2) : 0,
+                    RejectedPercentage = totalCount > 0 ? Math.Round((decimal)rejectedCount / totalCount * 100, 2) : 0,
+                    CompletedPercentage = totalCount > 0 ? Math.Round((decimal)completedCount / totalCount * 100, 2) : 0
+                };
+
+                return ServiceResult<AdvanceStatisticDTO>.SuccessAsOk(statistics);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetAdvanceStatisticsAsync işleminde hata oluştu");
+                throw;
+            }
+        }
+
+        public async Task<ServiceResult<IEnumerable<AdvanceDTO>>> GetApprovedAdvancesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 var advances = await unitOfWork.GetRepository<IdtAdvance>()
-                    .WhereAsNoTracking(x => x.Status == AdvanceStatus.ApprovedByUnitManager || x.Status == AdvanceStatus.ApprovedByUnitManager)
+                    .WhereAsNoTracking(x => x.Status == AdvanceStatus.ApprovedByUnitManager || x.Status == AdvanceStatus.ApprovedByChief)
                       .Include(x => x.User)
                       .Include(x => x.ChiefUser)
                     .Include(x => x.UnitManagerUser)
@@ -411,32 +458,68 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .OrderByDescending(x => x.CreatedDate)
                     .ToListAsync(cancellationToken);
 
-                if (advances == null)
+                if (advances == null || !advances.Any())
                 {
-                    return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(null, "Avans istekleri bulunamadı");
+                    return ServiceResult<IEnumerable<AdvanceDTO>>.SuccessAsOk(Enumerable.Empty<AdvanceDTO>());
                 }
 
                 var advanceDTOs = advances.Adapt<IEnumerable<AdvanceDTO>>();
 
-                return ServiceResponse<IEnumerable<AdvanceDTO>>.Success(advanceDTOs, "Avans istekleri başarıyla getirildi");
+                return ServiceResult<IEnumerable<AdvanceDTO>>.SuccessAsOk(advanceDTOs);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "GetChiefProcessedAdvancesAsync işleminde hata oluştu");
+                logger.LogError(ex, "GetApprovedAdvancesAsync işleminde hata oluştu");
                 throw;
             }
         }
 
-        public async Task<ServiceResponse<bool>> RejectAdvanceAsync(string advanceId, string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<AdvanceDTO>>> GetCompletedAdvancesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
+                var advances = await unitOfWork.GetRepository<IdtAdvance>()
+                    .WhereAsNoTracking(x => x.Status == AdvanceStatus.Completed)
+                      .Include(x => x.User)
+                      .Include(x => x.ChiefUser)
+                    .Include(x => x.UnitManagerUser)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.CompletedByUser)
+                    .Include(x => x.AdvanceParts)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .ToListAsync(cancellationToken);
+
+                if (advances == null || !advances.Any())
+                {
+                    return ServiceResult<IEnumerable<AdvanceDTO>>.SuccessAsOk(Enumerable.Empty<AdvanceDTO>());
+                }
+
+                var advanceDTOs = advances.Adapt<IEnumerable<AdvanceDTO>>();
+
+                return ServiceResult<IEnumerable<AdvanceDTO>>.SuccessAsOk(advanceDTOs);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetCompletedAdvancesAsync işleminde hata oluştu");
+                throw;
+            }
+        }
+
+        public async Task<ServiceResult<bool>> RejectAdvanceAsync(string advanceId, string? rejectReason, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var paramServiceResult = await parameterService.GetParameterByKeyAsync("ChiefAdvanceApprovalThreshold", cancellationToken);
+                if (!paramServiceResult.IsSuccess)
+                    return ServiceResult<bool>.Error("Parametre Hata", "Avans onaylama sınır parametresi alınamadı.", HttpStatusCode.NotFound);
+
+                decimal approvalThreshold = decimal.Parse(paramServiceResult.Data.Value);
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var advance = await unitOfWork.GetRepository<IdtAdvance>().GetByIdAsync(advanceId, cancellationToken);
                 if (advance == null)
                 {
-                    return ServiceResponse<bool>.Error("Avans isteği bulunamadı");
+                    return ServiceResult<bool>.Error("Avans İsteği Bulunamadı", "Belirtilen ID'ye sahip avans isteği bulunamadı.", HttpStatusCode.NotFound);
                 }
                 var userId = identityService.GetUserId();
                 var userRole = identityService.GetUserRole();
@@ -448,7 +531,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         // Admin can reject any amount
                         if (advance.Status == AdvanceStatus.RejectedByUnitManager)
                         {
-                            return ServiceResponse<bool>.Error("Avans isteği zaten reddedilmiş");
+                            return ServiceResult<bool>.Error("Avans Zaten Reddedilmiş", "Bu avans isteği daha önce reddedilmiş durumda.", HttpStatusCode.BadRequest);
+                        }
+                        if (advance.Status == AdvanceStatus.RejectedByFinance)
+                        {
+                            return ServiceResult<bool>.Error("Avans Zaten Reddedilmiş", "Bu avans isteği daha önce finans tarafından reddedilmiş durumda.", HttpStatusCode.BadRequest);
                         }
                         if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
                         {
@@ -465,21 +552,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         break;
 
                     case "Yönetici":
-                        // Yönetici sadece 5000'in üstü avansları reddedebilir
-                        if (!isOverThreshold)
-                        {
-                            return ServiceResponse<bool>.Error("₺5000 ve altındaki avans istekleri sadece şef tarafından reddedilebilir");
-                        }
 
                         if (advance.Status == AdvanceStatus.RejectedByUnitManager)
                         {
-                            return ServiceResponse<bool>.Error("Avans isteği zaten reddedilmiş");
+                            return ServiceResult<bool>.Error("Avans Zaten Reddedilmiş", "Bu avans isteği daha önce reddedilmiş durumda.", HttpStatusCode.BadRequest);
+                        }
+                        if (advance.Status == AdvanceStatus.RejectedByFinance)
+                        {
+                            return ServiceResult<bool>.Error("Avans Zaten Reddedilmiş", "Bu avans isteği daha önce finans tarafından reddedilmiş durumda.", HttpStatusCode.BadRequest);
                         }
                         if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
                         {
                             // Bakiye işlemleri
                             await DecraseBalanceAsync(advance, cancellationToken);
                         }
+
                         advance.Status = AdvanceStatus.RejectedByUnitManager;
                         advance.ProcessedByUnitManagerId = userId;
                         advance.UnitManagerProcessedDate = DateTime.Now;
@@ -489,19 +576,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     case "Şef":
                         if (isOverThreshold)
                         {
-                            return ServiceResponse<bool>.Error("₺5000 üzerindeki avans istekleri sadece yönetici tarafından reddedilebilir");
+                            return ServiceResult<bool>.Error("Yetki Hatası", $"₺{approvalThreshold} üzerindeki avans istekleri sadece yönetici tarafından reddedilebilir.", HttpStatusCode.Forbidden);
                         }
                         if (advance.Status == AdvanceStatus.RejectedByChief)
                         {
-                            return ServiceResponse<bool>.Error("Avans isteği zaten şef tarafından reddedilmiş");
+                            return ServiceResult<bool>.Error("Avans Zaten Reddedilmiş", "Bu avans isteği daha önce şef tarafından reddedilmiş durumda.", HttpStatusCode.BadRequest);
                         }
                         if (advance.Status == AdvanceStatus.RejectedByUnitManager)
                         {
-                            return ServiceResponse<bool>.Error("Avans isteği zaten yönetici tarafından reddedilmiş");
+                            return ServiceResult<bool>.Error("Avans Zaten Reddedilmiş", "Bu avans isteği daha önce yönetici tarafından reddedilmiş durumda.", HttpStatusCode.BadRequest);
                         }
-                        if (advance.Status == AdvanceStatus.ApprovedByUnitManager)
+                        if (advance.Status == AdvanceStatus.RejectedByFinance)
                         {
-                            return ServiceResponse<bool>.Error("Avans isteği yönetici tarafından onaylanmış, reddedemezsiniz");
+                            return ServiceResult<bool>.Error("Avans Zaten Reddedilmiş", "Bu avans isteği daha önce finans tarafından reddedilmiş durumda.", HttpStatusCode.BadRequest);
                         }
 
                         advance.Status = AdvanceStatus.RejectedByChief;
@@ -511,7 +598,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         break;
 
                     default:
-                        return ServiceResponse<bool>.Error("Avans isteği reddetmek için yetkiniz yok");
+                        return ServiceResult<bool>.Error("Yetki Hatası", "Avans isteği reddetmek için yeterli yetkiniz bulunmamaktadır.", HttpStatusCode.Forbidden);
                 }
 
                 unitOfWork.GetRepository<IdtAdvance>().Update(advance);
@@ -535,7 +622,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     TargetUsers = new List<string> { advance.UserId }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
-                return ServiceResponse<bool>.Success(true, "Avans isteği başarıyla reddedildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -545,24 +632,109 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> UpdateAdvanceAsync(string advanceId, UpdateAdvanceDTO updateAdvanceDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> UpdateAdvanceAsync(string advanceId, UpdateAdvanceDTO updateAdvanceDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 var advance = await unitOfWork.GetRepository<IdtAdvance>().GetByIdAsync(advanceId, cancellationToken);
                 if (advance == null)
                 {
-                    return ServiceResponse<bool>.Error("Avans isteği bulunamadı");
+                    return ServiceResult<bool>.Error("Avans İsteği Bulunamadı", "Belirtilen ID'ye sahip avans isteği bulunamadı.", HttpStatusCode.NotFound);
                 }
                 updateAdvanceDTO.Adapt(advance);
 
                 unitOfWork.GetRepository<IdtAdvance>().Update(advance);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
-                return ServiceResponse<bool>.Success(true, "Avans isteği başarıyla reddedildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "RejectAdvanceAsync işleminde hata oluştu");
+                throw;
+            }
+        }
+
+        public async Task<ServiceResult<bool>> CompleteAdvanceAsync(string advanceId, ApproveAdvanceDTO? approveAdvanceDTO = null, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var userId = identityService.GetUserId();
+                var userRole = identityService.GetUserRole();
+                var userDepartmentDuty = identityService.GetUserDepartmentDuty();
+                bool isAuthorized = userRole == "Admin" ||
+                             userRole == "Yönetici" ||
+                             userDepartmentDuty == "Muhasebe Meslek Elemanı" ||
+                             userDepartmentDuty == "Muhasebe Müdürü" ||
+                             userDepartmentDuty == "Finans Uzmanı";
+                if (!isAuthorized)
+                {
+                    return ServiceResult<bool>.Error("Yetki Hatası", "Avans isteğini tamamlamak için yeterli yetkiniz bulunmamaktadır.", HttpStatusCode.Forbidden);
+                }
+                await unitOfWork.BeginTransactionAsync(cancellationToken);
+                var advance = await unitOfWork.GetRepository<IdtAdvance>().GetByIdAsync(advanceId, cancellationToken);
+                if (advance == null)
+                {
+                    return ServiceResult<bool>.Error("Avans İsteği Bulunamadı", "Belirtilen ID'ye sahip avans isteği bulunamadı.", HttpStatusCode.NotFound);
+                }
+
+                // Parça validasyonu - parçalar UI'dan her zaman gönderilmelidir
+                if (approveAdvanceDTO == null || approveAdvanceDTO.Parts == null || !approveAdvanceDTO.Parts.Any())
+                {
+                    return ServiceResult<bool>.Error("Parça Validasyon Hatası", "Avans onayı için en az bir parça belirtilmelidir.", HttpStatusCode.BadRequest);
+                }
+
+                var totalPartsAmount = approveAdvanceDTO.Parts.Sum(p => p.Amount);
+                if (totalPartsAmount != advance.Amount)
+                {
+                    return ServiceResult<bool>.Error("Parça Tutar Uyumsuzluğu", $"Parça tutarlarının toplamı ({totalPartsAmount}) avans tutarına ({advance.Amount}) eşit olmalıdır.", HttpStatusCode.BadRequest);
+                }
+
+                if (advance.Status == AdvanceStatus.Completed)
+                {
+                    return ServiceResult<bool>.Error("Avans Zaten Tamamlanmış", "Bu avans isteği daha önce tamamlanmış durumda.", HttpStatusCode.BadRequest);
+                }
+                DateTime now = DateTime.Now;
+                advance.Status = AdvanceStatus.Completed;
+                advance.CompletedDate = now;
+                advance.CompletedById = userId;
+                var advanceParts = await unitOfWork.GetRepository<IdtAdvancePart>().Where(x => x.AdvanceId == advance.Id).ToListAsync(cancellationToken);
+
+                foreach (var part in advanceParts)
+                {
+                    part.CompletedById = userId;
+                    part.CompletedDate = now;
+                    await IncreaseBalanceByPartAsync(advance, part.Amount, cancellationToken);
+                }
+                unitOfWork.GetRepository<IdtAdvance>().Update(advance);
+                unitOfWork.GetRepository<IdtAdvancePart>().UpdateRange(advanceParts);
+
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                var approvedAdvance = await unitOfWork.GetRepository<IdtAdvance>()
+                    .WhereAsNoTracking(e => e.Id == advance.Id)
+                    .Include(x => x.User)
+                    .Include(x => x.ChiefUser)
+                    .Include(x => x.UnitManagerUser)
+                    .Include(x => x.CreatedByUser)
+                    .Include(x => x.UpdatedByUser)
+                    .Include(x => x.AdvanceParts)
+                    .FirstOrDefaultAsync(cancellationToken);
+                var mappedAdvance = approvedAdvance.Adapt<AdvanceDTO>();
+                CreateNotificationDTO notificationDTO = new()
+                {
+                    Message = $"{mappedAdvance.UpdatedByFullName} tarafından, {mappedAdvance.CreatedDate:dd/MM/yyyy} tarihinde oluşturduğunuz {mappedAdvance.Reason} avans isteğiniz tamamlandı olarak güncellendi.",
+                    Type = NotificationType.Advance,
+                    RedirectUrl = "/avans/listem",
+                    TargetUsers = new List<string> { advance.UserId }
+                };
+                await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
+                return ServiceResult<bool>.SuccessAsOk(true);
+            }
+            catch (Exception ex)
+            {
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                logger.LogError(ex, "ApproveAdvanceAsync (with parts) işleminde hata oluştu");
                 throw;
             }
         }

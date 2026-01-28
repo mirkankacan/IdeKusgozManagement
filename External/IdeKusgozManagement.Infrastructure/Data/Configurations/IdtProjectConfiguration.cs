@@ -20,6 +20,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
              .IsRequired(false);
             builder.Property(x => x.TargetUserIds)
             .IsRequired(false);
+            builder.Property(x => x.ProjectColor)
+                .HasMaxLength(10)
+             .IsRequired();
             builder.Property(x => x.IsActive)
                 .IsRequired()
                 .HasDefaultValue(true);

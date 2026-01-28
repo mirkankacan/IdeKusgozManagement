@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Takvim";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -95,45 +95,45 @@
 
                     if (info.event.extendedProps.type === 'leave') {
                         tooltipContent = `
-                                <div>
-                                    <strong>🏖️ ${info.event.extendedProps.createdByName}</strong><br>
-                                    <small><b>Sebep:</b> ${info.event.extendedProps.reason}</small><br>
-                                    <small><b>Başlangıç:</b> ${new Date(info.event.start).toLocaleDateString('tr-TR')}</small><br>
-                                    <small><b>Bitiş:</b> ${new Date(info.event.extendedProps.originalEndDate).toLocaleDateString('tr-TR')}</small><br>
-                                    <small><b>Net İzin Süresi:</b> ${info.event.extendedProps.duration}</small><br>
-                                    <small><b>İzin Oluşturulma Tarihi:</b> ${new Date(info.event.extendedProps.createdDate).toLocaleString('tr-TR', {
+                                    <div>
+                                        <strong>🏖️ ${info.event.extendedProps.createdByName}</strong><br>
+                                        <small><b>Sebep:</b> ${info.event.extendedProps.reason}</small><br>
+                                        <small><b>Başlangıç:</b> ${new Date(info.event.start).toLocaleDateString('tr-TR')}</small><br>
+                                        <small><b>Bitiş:</b> ${new Date(info.event.extendedProps.originalEndDate).toLocaleDateString('tr-TR')}</small><br>
+                                        <small><b>Net İzin Süresi:</b> ${info.event.extendedProps.duration}</small><br>
+                                        <small><b>İzin Oluşturulma Tarihi:</b> ${new Date(info.event.extendedProps.createdDate).toLocaleString('tr-TR', {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',
                             hour: '2-digit',
                             minute: '2-digit'
                         })}</small><br>
-                                    <small><b>İzin Onaylanma Tarihi:</b> ${new Date(info.event.extendedProps.updatedDate).toLocaleString('tr-TR', {
+                                        <small><b>İzin Onaylanma Tarihi:</b> ${new Date(info.event.extendedProps.updatedDate).toLocaleString('tr-TR', {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',
                             hour: '2-digit',
                             minute: '2-digit'
                         })}</small><br>
-                                    <small><b>Onaylayan:</b> ${info.event.extendedProps.updatedByName}</small>
-                                </div>
-                            `;
+                                        <small><b>Onaylayan:</b> ${info.event.extendedProps.updatedByName}</small>
+                                    </div>
+                                `;
                     } else if (info.event.extendedProps.type === 'project') {
                         tooltipContent = `
-                                <div>
-                                    <strong>📋 ${info.event.extendedProps.projectName}</strong><br>
-                                    <small><b>Başlangıç:</b> ${new Date(info.event.start).toLocaleDateString('tr-TR')}</small><br>
-                                    <small><b>Bitiş:</b> ${new Date(info.event.extendedProps.originalEndDate).toLocaleDateString('tr-TR')}</small><br>
-                                    <small><b>Durum:</b> ${info.event.extendedProps.isActive ? '✅ Aktif' : '❌ Pasif'}</small><br>
-                                    <small><b>Oluşturulma:</b> ${new Date(info.event.extendedProps.createdDate).toLocaleString('tr-TR', {
+                                    <div>
+                                        <strong>📋 ${info.event.extendedProps.projectName}</strong><br>
+                                        <small><b>Başlangıç:</b> ${new Date(info.event.start).toLocaleDateString('tr-TR')}</small><br>
+                                        <small><b>Bitiş:</b> ${new Date(info.event.extendedProps.originalEndDate).toLocaleDateString('tr-TR')}</small><br>
+                                        <small><b>Durum:</b> ${info.event.extendedProps.isActive ? '✅ Aktif' : '❌ Pasif'}</small><br>
+                                        <small><b>Oluşturulma:</b> ${new Date(info.event.extendedProps.createdDate).toLocaleString('tr-TR', {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',
                             hour: '2-digit',
                             minute: '2-digit'
                         })}</small>
-                                </div>
-                            `;
+                                    </div>
+                                `;
                     }
 
                     tippy(info.el, {
@@ -158,18 +158,16 @@
                         });
 
                         // İzinleri al
-                        const leaveResponse = await fetch('/takvim/izinler');
-                        const leaveData = await leaveResponse.json();
+                        const leaveData = await makeRequest('/takvim/izinler', 'GET');
 
                         // Projeleri al
-                        const projectResponse = await fetch('/takvim/projeler');
-                        const projectData = await projectResponse.json();
+                        const projectData = await makeRequest('/takvim/projeler', 'GET');
 
                         let events = [];
 
                         // İzinleri event'lere çevir
-                        if (leaveData.isSuccess && leaveData.data) {
-                            const leaveEvents = leaveData.data.map(leave => {
+                        if (leaveData && Array.isArray(leaveData)) {
+                            const leaveEvents = leaveData.map(leave => {
                                 const color = getLeaveColor(leave.createdBy);
                                 const startDate = new Date(leave.startDate);
                                 const endDate = new Date(leave.endDate);
@@ -202,22 +200,33 @@
                         }
 
                         // Projeleri event'lere çevir
-                        if (projectData.isSuccess && projectData.data) {
-                            const projectEvents = projectData.data
+                        if (projectData && Array.isArray(projectData)) {
+                            const projectEvents = projectData
                                 .filter(project => project.name !== 'Ofis' && project.name !== 'Garaj')
                                 .map(project => {
                                     const startDate = new Date(project.startDate);
                                     const endDate = new Date(project.endDate);
                                     endDate.setDate(endDate.getDate() + 1);
+                                    const hexToRgb = (hex) => {
+                                        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                                        return result ? {
+                                            r: parseInt(result[1], 16),
+                                            g: parseInt(result[2], 16),
+                                            b: parseInt(result[3], 16)
+                                        } : null;
+                                    };
 
+                                    const rgb = hexToRgb(project.projectColor || '#563d7c');
+                                    const bgColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`;
+                                    const borderColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.8)`;
                                     return {
                                         id: 'project-' + project.id,
                                         title: '📋 ' + project.name,
                                         start: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
                                         end: endDate.toISOString().split('T')[0],     // YYYY-MM-DD format
                                         allDay: true,
-                                        backgroundColor: 'rgba(13, 110, 253, 0.2)',
-                                        borderColor: 'rgba(13, 110, 253, 0.8)',
+                                        backgroundColor: bgColor,
+                                        borderColor: borderColor,
                                         classNames: ['event-project'],
                                         extendedProps: {
                                             type: 'project',
@@ -236,6 +245,7 @@
 
                     } catch (error) {
                         console.error('Veri yükleme hatası:', error);
+                        handleError(error, 'Takvim verileri yüklenirken bir hata oluştu');
                         failureCallback();
                     }
                 }

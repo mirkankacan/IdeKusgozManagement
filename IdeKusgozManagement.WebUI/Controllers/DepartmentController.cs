@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Services.Interfaces;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,14 +26,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken)
         {
             var result = await _departmentApiService.GetDepartmentsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("{departmentId}/gorev-liste")]
         public async Task<IActionResult> GetDepartmentDutiesByDepartment(string departmentId, CancellationToken cancellationToken)
         {
             var result = await _departmentApiService.GetDepartmentDutiesByDepartmentAsync(departmentId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Doküman Yükle";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -321,14 +321,10 @@
 
         async function initializeDepartmentSelect() {
             try {
-                const response = await $.ajax({
-                    url: '/departman/liste',
-                    type: 'GET',
-                    dataType: 'json'
-                });
-                if (response?.isSuccess && response.data) {
+                const response = await makeRequest('/departman/liste', 'GET');
+                if (response && Array.isArray(response)) {
                     $('#department-select').empty().append('<option value="">Departman seçin</option>');
-                    response.data.forEach(department => {
+                    response.forEach(department => {
                         $('#department-select').append(`<option value="${department.id}">${department.name}</option>`);
                     });
                 }
@@ -359,7 +355,7 @@
                 });
             } catch (error) {
                 console.error('Departman listesi yüklenirken hata:', error);
-                toastr.error('Departman listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Departman listesi yüklenirken hata oluştu');
             }
         }
             async function initializeDepartmentDutySelect(departmentId) {
@@ -368,15 +364,11 @@
                     resetSelect('#department-duty-select', 'Departman görevi seçin');
                     return;
                 }
-                const response = await $.ajax({
-                    url: `/departman/${departmentId}/gorev-liste`,
-                    type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest(`/departman/${departmentId}/gorev-liste`, 'GET');
 
-                if (response?.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('#department-duty-select').empty().append('<option value="">Departman görevi seçin</option>');
-                    response.data.forEach(duty => {
+                    response.forEach(duty => {
                         $('#department-duty-select').append(`<option data-scope=${duty.scope} value="${duty.id}">${duty.name}</option>`);
                     });
                 }
@@ -411,20 +403,16 @@
                 });
             } catch (error) {
                 console.error('Departman görevi listesi yüklenirken hata:', error);
-                toastr.error('Departman görevi listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Departman görevi listesi yüklenirken hata oluştu');
             }
         }
             async function initializeCompanySelect() {
             try {
                 
-                const response = await $.ajax({
-                    url: `/firma/aktif-liste`,
-                    type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest(`/firma/aktif-liste`, 'GET');
 
-                if (response?.isSuccess && response.data) {
-                    response.data.forEach(company => {
+                if (response && Array.isArray(response)) {
+                    response.forEach(company => {
                         $('#company-select').append(`<option value="${company.id}">${company.name}</option>`);
                     });
                 }
@@ -442,7 +430,7 @@
 
             } catch (error) {
                 console.error('Firma listesi yüklenirken hata:', error);
-                toastr.error('Firma listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Firma listesi yüklenirken hata oluştu');
             }
         }
          async function initializeDocumentTypeSelect(departmentDutyId) {
@@ -451,15 +439,11 @@
                     resetSelect('#document-type-select', 'Doküman tipi seçin');
                     return;
                 }
-                const response = await $.ajax({
-                     url: `/dokuman/${departmentDutyId}/tip-liste`,
-                        type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest(`/dokuman/${departmentDutyId}/tip-liste`, 'GET');
 
-                if (response?.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('#document-type-select').empty().append('<option value="">Doküman tipi seçin</option>');
-                    response.data.forEach(docType => {
+                    response.forEach(docType => {
                         $('#document-type-select').append(`<option data-period="${docType.renewalPeriodInMonths}" value="${docType.id}">${docType.name}</option>`);
                     });
                 }
@@ -486,7 +470,7 @@
                 });
             } catch (error) {
                 console.error('Doküman tipi listesi yüklenirken hata:', error);
-                toastr.error('Doküman tipi listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Doküman tipi listesi yüklenirken hata oluştu');
             }
         }
 
@@ -518,15 +502,11 @@
                 }
 
                 // Scope 1 veya 2 için API isteği at
-                const response = await $.ajax({
-                    url: url,
-                    type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest(url, 'GET');
 
-                if (response?.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('#target-select').empty().append(`<option value="">${placeholder}</option>`);
-                    response.data.forEach(target => {
+                    response.forEach(target => {
                       const displayName = scope === 1 ? target.fullName : target.name;
 
                         $('#target-select').append(`<option value="${target.id}">${displayName}</option>`);
@@ -542,7 +522,7 @@
 
             } catch (error) {
                 console.error('Hedef listesi yüklenirken hata:', error);
-                toastr.error('Hedef listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Hedef listesi yüklenirken hata oluştu');
             }
         }
 
@@ -616,7 +596,7 @@
                         const documentTypeId = $("#document-type-select").val();
 
                         if (!targetDepartmentId || !documentTypeId || !targetDepartmentDutyId) {
-                            toastr.warning("Lütfen önce departman, görev ve doküman tipi seçin!", 'Uyarı!');
+                            showToast("Lütfen önce departman, görev ve doküman tipi seçin!", 'warning', 'Uyarı!');
                             dropzone.removeFile(file);
                             return;
                                         }
@@ -651,9 +631,9 @@
 
                     this.on("success", function (file, response) {
                         if (response?.success) {
-                            toastr.success("Dosyalar başarıyla yüklendi", 'Başarılı!');
+                            showToast("Dosyalar başarıyla yüklendi", 'success', 'Başarılı!');
                         } else {
-                            toastr.error(response?.message || "Yükleme başarısız", 'Hata!');
+                            showToast(response?.message || "Yükleme başarısız", 'error', 'Hata!');
                         }
 
                         updateProgress(100);
@@ -670,7 +650,7 @@
                     this.on("error", function (file, errorMessage) {
                         const message = typeof errorMessage === 'string' ? errorMessage :
                             errorMessage?.message || "Yükleme sırasında hata oluştu";
-                        toastr.error(message, 'Hata!');
+                        showToast(message, 'error', 'Hata!');
                         hideProgress();
                         setProgressStatus('Hata oluştu.');
                     });
@@ -698,15 +678,15 @@
                         const targetId = $("#target-select").val();
 
                         if (!targetDepartmentId) {
-                            toastr.warning("Lütfen departman seçin!", 'Uyarı!');
+                            showToast("Lütfen departman seçin!", 'warning', 'Uyarı!');
                             return;
                         }
                         if (!targetDepartmentDutyId) {
-                            toastr.warning("Lütfen departman görevi seçin!", 'Uyarı!');
+                            showToast("Lütfen departman görevi seçin!", 'warning', 'Uyarı!');
                             return;
                         }
                         if (!documentTypeId) {
-                            toastr.warning("Lütfen doküman tipini seçin!", 'Uyarı!');
+                            showToast("Lütfen doküman tipini seçin!", 'warning', 'Uyarı!');
                             return;
                         }
 
@@ -715,13 +695,13 @@
                             const targetName = currentDepartmentScope === 1 ? 'kullanıcı' :
                                 currentDepartmentScope === 2 ? 'ekipman' :
                                     currentDepartmentScope === 4 ? 'proje' : '';
-                            toastr.warning(`Lütfen ${targetName} seçin!`, 'Uyarı!');
+                            showToast(`Lütfen ${targetName} seçin!`, 'warning', 'Uyarı!');
                             return;
                         }
 
                         const files = dropzone.getAcceptedFiles();
                         if (files.length === 0) {
-                            toastr.warning("Lütfen en az bir dosya seçin!", 'Uyarı!');
+                            showToast("Lütfen en az bir dosya seçin!", 'warning', 'Uyarı!');
                             return;
                         }
 
@@ -806,7 +786,7 @@
                                     `${files.length} dosya başarıyla yüklendi!` :
                                     response?.message || 'Dosyalar başarıyla yüklendi!';
 
-                                toastr.success(message, 'Başarılı!');
+                                showToast(message, 'success', 'Başarılı!');
                                 updateProgress(100);
                                 setProgressStatus('İşlem tamamlandı.');
 
@@ -833,7 +813,7 @@
                                     errorMessage = xhr.responseText || errorMessage;
                                 }
 
-                                toastr.error(errorMessage, 'Hata!');
+                                showToast(errorMessage, 'error', 'Hata!');
                                 setProgressStatus('Hata oluştu.');
                             },
                             complete: function () {

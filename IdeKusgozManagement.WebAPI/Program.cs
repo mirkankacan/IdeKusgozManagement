@@ -25,8 +25,6 @@ builder.Services.AddSignalR(options =>
 
 var app = builder.Build();
 
-app.UseMiddleware<GlobalExceptionMiddleware>();
-
 // Database initialization
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
@@ -94,7 +92,9 @@ app.UseStaticFiles();
 
 // Security and CORS
 app.UseCors();
+
 app.UseRouting();
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Authentication & Authorization
 app.UseAuthentication();

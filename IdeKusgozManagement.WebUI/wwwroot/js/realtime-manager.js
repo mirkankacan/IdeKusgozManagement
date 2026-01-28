@@ -70,7 +70,9 @@ class RealtimeManager {
     }
 
     showToast(message, title, type) {
-        if (typeof toastr !== 'undefined') {
+        if (typeof showToast !== 'undefined') {
+            showToast(message, type, title);
+        } else if (typeof toastr !== 'undefined') {
             toastr[type](message, title);
         }
     }
@@ -226,8 +228,8 @@ class NotificationManager extends RealtimeManager {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.isSuccess) {
-                    this.unreadCount = result.data;
+                if (result !== null && result !== undefined) {
+                    this.unreadCount = Array.isArray(result) ? result.length : (typeof result === 'number' ? result : 0);
                     this.updateUnreadCount();
                 }
             }
@@ -258,8 +260,17 @@ class NotificationManager extends RealtimeManager {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.isSuccess && result.data) {
-                    const newNotifications = result.data.data || [];
+                if (result && result.data && Array.isArray(result.data)) {
+                    const newNotifications = result.data;
+                    this.notifications = reset ? newNotifications : [...this.notifications, ...newNotifications];
+                    this.hasMoreData = newNotifications.length === this.pageSize;
+
+                    this.sortNotifications();
+                    this.renderNotifications(newNotifications, reset);
+
+                    $('#loadMoreContainer')[this.hasMoreData ? 'show' : 'hide']();
+                } else if (Array.isArray(result)) {
+                    const newNotifications = result;
                     this.notifications = reset ? newNotifications : [...this.notifications, ...newNotifications];
                     this.hasMoreData = newNotifications.length === this.pageSize;
 
@@ -406,22 +417,18 @@ class NotificationManager extends RealtimeManager {
             const result = await response.json();
 
             if (response.ok) {
-                if (result.isSuccess) {
-                    const notification = this.notifications.find(n => n.id === notificationId);
-                    if (notification && !notification.isRead) {
-                        notification.isRead = true;
-                        notification.readDate = new Date().toISOString();
-                        this.unreadCount = Math.max(0, this.unreadCount - 1);
-                        this.updateUnreadCount();
-                        this.renderAllNotifications();
-                    }
-                    return true; // Başarılı
-                } else {
-                    this.showError(result.message || 'Bildirim okundu olarak işaretlenemedi');
-                    return false;
+                const notification = this.notifications.find(n => n.id === notificationId);
+                if (notification && !notification.isRead) {
+                    notification.isRead = true;
+                    notification.readDate = new Date().toISOString();
+                    this.unreadCount = Math.max(0, this.unreadCount - 1);
+                    this.updateUnreadCount();
+                    this.renderAllNotifications();
                 }
+                return true; // Başarılı
             } else {
-                this.showError(result.message);
+                const errorMessage = result?.message || result?.detail || 'Bildirim okundu olarak işaretlenemedi';
+                this.showError(errorMessage);
                 return false;
             }
         } catch (error) {
@@ -570,8 +577,16 @@ class MessageManager extends RealtimeManager {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.isSuccess && result.data) {
-                    const newMessages = result.data.data || [];
+                if (result && result.data && Array.isArray(result.data)) {
+                    const newMessages = result.data;
+                    this.messages = reset ? newMessages : [...this.messages, ...newMessages];
+                    this.hasMoreData = newMessages.length === this.pageSize;
+
+                    this.messages.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+                    this.displayMessages(newMessages, reset);
+                    $('#loadMoreContainer')[this.hasMoreData ? 'show' : 'hide']();
+                } else if (Array.isArray(result)) {
+                    const newMessages = result;
                     this.messages = reset ? newMessages : [...this.messages, ...newMessages];
                     this.hasMoreData = newMessages.length === this.pageSize;
 
@@ -579,7 +594,7 @@ class MessageManager extends RealtimeManager {
                     this.displayMessages(newMessages, reset);
                     $('#loadMoreContainer')[this.hasMoreData ? 'show' : 'hide']();
                 } else {
-                    throw new Error(result.message || 'Mesajlar yüklenirken bir hata oluştu');
+                    throw new Error(result?.message || result?.detail || 'Mesajlar yüklenirken bir hata oluştu');
                 }
             } else {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -719,23 +734,20 @@ class MessageManager extends RealtimeManager {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.isSuccess) {
-                    // Mesajı hemen UI'ya ekle (gönderen kişi için)
-                    if (result.data) {
-                        this.handleNewMessage(result.data);
-                    } else {
-                        console.warn('No message data in response');
-                    }
-
-                    messageInput.val('');
-                    roleSelect.val(null).trigger('change');
-                    userSelect.val(null).trigger('change');
-                    this.showSuccess('Mesaj başarıyla gönderildi');
+                // Mesajı hemen UI'ya ekle (gönderen kişi için)
+                if (result) {
+                    this.handleNewMessage(result);
                 } else {
-                    throw new Error(result.message || 'Mesaj gönderilirken bir hata oluştu');
+                    console.warn('No message data in response');
                 }
+
+                messageInput.val('');
+                roleSelect.val(null).trigger('change');
+                userSelect.val(null).trigger('change');
+                this.showSuccess('Mesaj başarıyla gönderildi');
             } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData?.message || errorData?.detail || `HTTP error! status: ${response.status}`);
             }
         } catch (error) {
             console.error('Error sending message:', error);

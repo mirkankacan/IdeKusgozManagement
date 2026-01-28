@@ -11,8 +11,10 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             base.Configure(builder); // BaseEntity konfigürasyonlarını uygula
 
             builder.Property(x => x.ProjectId)
+                .HasMaxLength(450)
                 .IsRequired();
             builder.Property(x => x.EquipmentId)
+                 .HasMaxLength(450)
                 .IsRequired();
             builder.Property(x => x.Type)
                 .IsRequired()

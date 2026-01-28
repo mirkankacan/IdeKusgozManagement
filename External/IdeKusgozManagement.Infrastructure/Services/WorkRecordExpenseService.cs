@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.DTOs.WorkRecordExpenseDTOs;
@@ -8,12 +8,14 @@ using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class WorkRecordExpenseService(IUnitOfWork unitOfWork, IFileService fileService, ILogger<WorkRecordExpenseService> logger, IIdentityService identityService) : IWorkRecordExpenseService
     {
-        public async Task<ServiceResponse<IEnumerable<WorkRecordExpenseDTO>>> BatchCreateOrModifyWorkRecordExpensesAsync(IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<WorkRecordExpenseDTO>>> BatchCreateOrModifyWorkRecordExpensesAsync(IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -27,7 +29,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<WorkRecordExpenseDTO>>> BatchUpdateWorkRecordByUserIdExpensesAsync(string userId, IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<WorkRecordExpenseDTO>>> BatchUpdateWorkRecordByUserIdExpensesAsync(string userId, IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -40,7 +42,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        private async Task<ServiceResponse<IEnumerable<WorkRecordExpenseDTO>>> ProcessWorkRecordExpensesAsync(string userId, IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken)
+        private async Task<ServiceResult<IEnumerable<WorkRecordExpenseDTO>>> ProcessWorkRecordExpensesAsync(string userId, IEnumerable<CreateOrModifyWorkRecordExpenseDTO> expenseDTOs, CancellationToken cancellationToken)
         {
             var realExpenses = expenseDTOs.Where(e => e.Id != Guid.Empty.ToString()).ToList();
             var workRecordIds = expenseDTOs.Select(e => e.WorkRecordId).Distinct().ToList();
@@ -108,7 +110,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                             var fileUploadServiceResult = await fileService.UploadFileAsync(fileList, cancellationToken);
 
                             if (!fileUploadServiceResult.IsSuccess)
-                                throw new InvalidOperationException(message: $"Dosya yüklenirken hata oluştu: {fileUploadServiceResult.Message}");
+                                throw new InvalidOperationException(message: $"Dosya yüklenirken hata oluştu: {fileUploadServiceResult.Fail?.Detail ?? "Bilinmeyen hata"}");
 
                             // Eski dosyayı sil (yeni dosya başarıyla yüklendikten sonra)
                             if (!string.IsNullOrEmpty(oldFileId))
@@ -135,7 +137,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         var fileUploadResult = await fileService.UploadFileAsync(fileList, cancellationToken);
 
                         if (!fileUploadResult.IsSuccess)
-                            throw new InvalidOperationException($"Dosya yüklenirken hata oluştu: {fileUploadResult.Message}");
+                            throw new InvalidOperationException($"Dosya yüklenirken hata oluştu: {fileUploadResult.Fail?.Detail ?? "Bilinmeyen hata"}");
 
                         fileId = fileUploadResult.Data.FirstOrDefault()?.Id;
                     }
@@ -179,7 +181,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!fileDeleteResult.IsSuccess)
                 {
                     logger.LogWarning("Dosya silinirken hata oluştu. FileId: {FileId}, Error: {Error}",
-                        fileId, fileDeleteResult.Message);
+                        fileId, fileDeleteResult.Fail?.Detail ?? "Bilinmeyen hata");
                 }
             }
 
@@ -193,11 +195,10 @@ namespace IdeKusgozManagement.Infrastructure.Services
             logger.LogInformation("Puantaj masraf kayıtları işlendi. CreatedCount: {CreatedCount}, UpdatedCount: {UpdatedCount}, DeletedCount: {DeletedCount}, UserId: {UserId}",
                 createdCount, updatedCount, deletedCount, userId);
 
-            return ServiceResponse<IEnumerable<WorkRecordExpenseDTO>>.Success(mappedExpenses,
-                $"Puantaj masraf kayıtları işlendi. {createdCount} eklendi, {updatedCount} güncellendi, {deletedCount} silindi.");
+            return ServiceResult<IEnumerable<WorkRecordExpenseDTO>>.SuccessAsOk(mappedExpenses);
         }
 
-        public async Task<ServiceResponse<bool>> BatchDeleteWorkRecordExpensesAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> BatchDeleteWorkRecordExpensesAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -226,7 +227,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 logger.LogInformation("Masraf kayıtları silindi. DeletedCount: {DeletedCount}", expensesToDelete.Count);
 
-                return ServiceResponse<bool>.Success(true, $"{expensesToDelete.Count} adet harcama kaydı başarıyla silindi.");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {

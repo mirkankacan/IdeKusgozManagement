@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.CompanyDTOs;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
@@ -6,12 +6,14 @@ using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class CompanyService(IUnitOfWork unitOfWork, ILogger<CompanyService> logger) : ICompanyService
     {
-        public async Task<ServiceResponse<IEnumerable<CompanyDTO>>> GetCompaniesAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<CompanyDTO>>> GetCompaniesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -19,7 +21,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var companyDTOs = companies.Adapt<IEnumerable<CompanyDTO>>();
 
-                return ServiceResponse<IEnumerable<CompanyDTO>>.Success(companyDTOs, "Firma listesi başarıyla getirildi");
+                return ServiceResult<IEnumerable<CompanyDTO>>.SuccessAsOk(companyDTOs);
             }
             catch (Exception ex)
             {
@@ -28,7 +30,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<CompanyDTO>> GetCompanyByIdAsync(string companyId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<CompanyDTO>> GetCompanyByIdAsync(string companyId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -36,12 +38,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (company == null)
                 {
-                    return ServiceResponse<CompanyDTO>.Error("Firma bulunamadı");
+                    return ServiceResult<CompanyDTO>.Error("Firma Bulunamadı", "Belirtilen ID'ye sahip firma bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var companyDTO = company.Adapt<CompanyDTO>();
 
-                return ServiceResponse<CompanyDTO>.Success(companyDTO, "Firma başarıyla getirildi");
+                return ServiceResult<CompanyDTO>.SuccessAsOk(companyDTO);
             }
             catch (Exception ex)
             {
@@ -50,7 +52,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<string>> CreateCompanyAsync(CreateCompanyDTO createCompanyDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<string>> CreateCompanyAsync(CreateCompanyDTO createCompanyDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -58,14 +60,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (existingCompany)
                 {
-                    return ServiceResponse<string>.Error("Bu isimde bir firma zaten mevcut");
+                    return ServiceResult<string>.Error("Firma Zaten Mevcut", "Bu isimde bir firma zaten mevcut. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 var company = createCompanyDTO.Adapt<IdtCompany>();
                 company.IsActive = true;
                 await unitOfWork.GetRepository<IdtCompany>().AddAsync(company, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
-                return ServiceResponse<string>.Success(company.Id, "Firma başarıyla oluşturuldu");
+                return ServiceResult<string>.SuccessAsCreated(company.Id, $"/api/companies/{company.Id}");
             }
             catch (Exception ex)
             {
@@ -74,7 +76,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> UpdateCompanyAsync(string companyId, UpdateCompanyDTO updateCompanyDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> UpdateCompanyAsync(string companyId, UpdateCompanyDTO updateCompanyDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -82,14 +84,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (company == null)
                 {
-                    return ServiceResponse<bool>.Error("Firma bulunamadı");
+                    return ServiceResult<bool>.Error("Firma Bulunamadı", "Belirtilen ID'ye sahip firma bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var existingCompany = await unitOfWork.GetRepository<IdtCompany>().AnyAsync(c => c.Name.ToLower() == updateCompanyDTO.Name.ToLower() && c.Id != companyId, cancellationToken);
 
                 if (existingCompany)
                 {
-                    return ServiceResponse<bool>.Error("Bu isimde başka bir firma zaten mevcut");
+                    return ServiceResult<bool>.Error("Firma Zaten Mevcut", "Bu isimde başka bir firma zaten mevcut. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 updateCompanyDTO.Adapt(company);
@@ -97,7 +99,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtCompany>().Update(company);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Firma başarıyla güncellendi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -106,7 +108,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteCompanyAsync(string companyId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DeleteCompanyAsync(string companyId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -114,20 +116,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (company == null)
                 {
-                    return ServiceResponse<bool>.Error("Firma bulunamadı");
+                    return ServiceResult<bool>.Error("Firma Bulunamadı", "Belirtilen ID'ye sahip firma bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var isCompanyUsed = await unitOfWork.GetRepository<IdtFile>().AnyAsync(f => f.TargetCompanyId == company.Id, cancellationToken);
 
                 if (isCompanyUsed)
                 {
-                    return ServiceResponse<bool>.Error("Bu firma dosya kayıtlarında kullanıldığı için silinemez");
+                    return ServiceResult<bool>.Error("Silme İşlemi Başarısız", "Bu firma dosya kayıtlarında kullanıldığı için silinemez.", HttpStatusCode.BadRequest);
                 }
 
                 unitOfWork.GetRepository<IdtCompany>().Remove(company);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Firma başarıyla silindi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -136,7 +138,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<CompanyDTO>>> GetActiveCompaniesAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<CompanyDTO>>> GetActiveCompaniesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -144,7 +146,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var companyDTOs = companies.Adapt<IEnumerable<CompanyDTO>>();
 
-                return ServiceResponse<IEnumerable<CompanyDTO>>.Success(companyDTOs, "Aktif firma listesi başarıyla getirildi");
+                return ServiceResult<IEnumerable<CompanyDTO>>.SuccessAsOk(companyDTOs);
             }
             catch (Exception ex)
             {
@@ -153,7 +155,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DisableCompanyAsync(string companyId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DisableCompanyAsync(string companyId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -161,7 +163,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (company == null)
                 {
-                    return ServiceResponse<bool>.Error("Firma bulunamadı");
+                    return ServiceResult<bool>.Error("Firma Bulunamadı", "Belirtilen ID'ye sahip firma bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 company.IsActive = false;
@@ -169,7 +171,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtCompany>().Update(company);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Firma başarıyla pasif duruma getirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -178,7 +180,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> EnableCompanyAsync(string companyId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> EnableCompanyAsync(string companyId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -186,7 +188,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (company == null)
                 {
-                    return ServiceResponse<bool>.Error("Firma bulunamadı");
+                    return ServiceResult<bool>.Error("Firma Bulunamadı", "Belirtilen ID'ye sahip firma bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 company.IsActive = true;
@@ -194,7 +196,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtCompany>().Update(company);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Firma başarıyla aktif duruma getirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {

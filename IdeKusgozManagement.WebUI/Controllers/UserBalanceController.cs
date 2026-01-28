@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.UserBalanceModels;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Models.UserBalanceModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +26,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
             var response = await _userBalanceApiService.GetUserBalancesByUserAsync(userId, cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -34,7 +35,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         {
             var response = await _userBalanceApiService.GetMyBalancesAsync(cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -47,7 +48,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
             var response = await _userBalanceApiService.IncreaseUserBalanceAsync(userId, model, cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici")]
@@ -60,7 +61,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
             var response = await _userBalanceApiService.DecreaseUserBalanceAsync(userId, model, cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

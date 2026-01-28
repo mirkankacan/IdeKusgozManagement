@@ -482,8 +482,8 @@
                     "url": "/kullanici/ana-liste",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json) {
+                            return json;
                         }
                         return [];
                     },
@@ -500,7 +500,7 @@
                             errorMessage += ': ' + error;
                         }
 
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -645,35 +645,15 @@
                 submitBtn.prop('disabled', true)
                     .html('<i class="fas fa-spinner fa-spin me-2"></i>Oluşturuluyor...');
 
-                const response = await $.ajax({
-                    url: '/kullanici/olustur',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(userData)
-                });
+                await makeRequest('/kullanici/olustur', 'POST', userData);
 
-                toastr.success('Kullanıcı başarıyla oluşturuldu!');
+                showToast('Kullanıcı başarıyla oluşturuldu!', 'success', 'Başarılı!');
                 $('#createUserModal').modal('hide');
                 usersTable.ajax.reload(null, false);
 
             } catch (error) {
                 console.error('Kullanıcı oluşturma hatası:', error);
-
-                let errorMessage = 'Kullanıcı oluşturulurken hata oluştu';
-
-                if (error.responseJSON) {
-
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    }
-                    else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'Kullanıcı oluşturulurken hata oluştu');
             } finally {
                 const submitBtn = $('#btnCreateUser');
                 submitBtn.prop('disabled', false).html('Oluştur');
@@ -681,14 +661,10 @@
         }
            async function initializeDepartmentSelect() {
             try {
-                const response = await $.ajax({
-                    url: '/departman/liste',
-                    type: 'GET',
-                    dataType: 'json'
-                });
-                if (response?.isSuccess && response.data) {
+                const response = await makeRequest('/departman/liste', 'GET');
+                if (response && Array.isArray(response)) {
                     $('.department-select').empty().append('<option value="">Departman seçin</option>');
-                    response.data.forEach(department => {
+                    response.forEach(department => {
                         $('.department-select').append(`<option value="${department.id}">${department.name}</option>`);
                     });
                 }
@@ -723,7 +699,7 @@
 
             } catch (error) {
                 console.error('Departman listesi yüklenirken hata:', error);
-                toastr.error('Departman listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Departman listesi yüklenirken hata oluştu');
             }
         }
             async function initializeDepartmentDutySelect(departmentId) {
@@ -731,15 +707,11 @@
                   if (!departmentId) {
                     return;
                 }
-                const response = await $.ajax({
-                    url: `/departman/${departmentId}/gorev-liste`,
-                    type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest(`/departman/${departmentId}/gorev-liste`, 'GET');
 
-                if (response?.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('.department-duty-select').empty().append('<option value="">Departman görevi seçin</option>');
-                    response.data.forEach(duty => {
+                    response.forEach(duty => {
                         $('.department-duty-select').append(`<option data-scope=${duty.scope} value="${duty.id}">${duty.name}</option>`);
                     });
                 }
@@ -753,7 +725,7 @@
 
             } catch (error) {
                 console.error('Departman görevi listesi yüklenirken hata:', error);
-                toastr.error('Departman görevi listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Departman görevi listesi yüklenirken hata oluştu');
             }
         }
         async function updateUser() {
@@ -785,7 +757,7 @@
                 };
 
                 if (!userData.Id) {
-                    toastr.error('Kullanıcı ID\'si bulunamadı');
+                    showToast('Kullanıcı ID\'si bulunamadı', 'error', 'Hata');
                     return;
                 }
 
@@ -794,35 +766,15 @@
                     .html('<i class="fas fa-spinner fa-spin me-2"></i>Güncelleniyor...');
 
                 // API çağrısı
-                const response = await $.ajax({
-                    url: `/kullanici/guncelle/${userData.Id}`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify(userData)
-                });
+                await makeRequest(`/kullanici/guncelle/${userData.Id}`, 'PUT', userData);
 
-                toastr.success('Kullanıcı başarıyla güncellendi!');
+                showToast('Kullanıcı başarıyla güncellendi!', 'success', 'Başarılı!');
                 $('#updateUserModal').modal('hide');
                 usersTable.ajax.reload(null, false);
 
             } catch (error) {
                 console.error('Kullanıcı güncelleme hatası:', error);
-
-                let errorMessage = 'Kullanıcı güncellenirken hata oluştu';
-
-                if (error.responseJSON) {
-
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    }
-                    else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'Kullanıcı güncellenirken hata oluştu');
             } finally {
                 const submitBtn = $('#updateUserModal button[type="submit"]');
                 submitBtn.prop('disabled', false).html('Güncelle');
@@ -843,24 +795,15 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/kullanici/aktif-et/${userId}`,
-                                type: 'PUT',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/kullanici/aktif-et/${userId}`, 'PUT');
                             return response;
                         } catch (error) {
-
                             let errorMessage = 'Aktifleştirme başarısız';
-
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
-
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;
                         }
@@ -900,24 +843,15 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/kullanici/pasif-et/${userId}`,
-                                type: 'PUT',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/kullanici/pasif-et/${userId}`, 'PUT');
                             return response;
                         } catch (error) {
-
                             let errorMessage = 'Pasifleştirme başarısız';
-
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
-
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;
                         }
@@ -957,24 +891,15 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/kullanici/sil/${userId}`,
-                                type: 'DELETE',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/kullanici/sil/${userId}`, 'DELETE');
                             return response;
                         } catch (error) {
-
                             let errorMessage = 'Silme başarısız';
-
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
-
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;
                         }
@@ -1014,11 +939,7 @@
                                                             `);
                 }
 
-                const response = await $.ajax({
-                    url: `/kullanici/${userId}`,
-                    type: 'GET',
-                    contentType: 'application/json'
-                });
+                const response = await makeRequest(`/kullanici/${userId}`, 'GET');
 
                 if (response) {
                     const userData = response;
@@ -1065,17 +986,7 @@
 
             } catch (error) {
                 console.error('Kullanıcı getirme hatası:', error);
-                let errorMessage = 'Kullanıcı bilgileri alınırken hata oluştu';
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-                toastr.error(errorMessage);
+                handleError(error, 'Kullanıcı bilgileri alınırken hata oluştu');
                 throw error;
             } finally {
                 $('#formLoader').remove();
@@ -1094,26 +1005,20 @@
                 roleSelects.prop('disabled', true);
                 roleSelects.html('<option value="">Yükleniyor...</option>');
 
-                const response = await $.ajax({
-                    url: '/kullanici/aktif-roller',
-                    type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest('/kullanici/aktif-roller', 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     roleSelects.each(function () {
                         const currentSelect = $(this);
                         currentSelect.empty();
                         currentSelect.append('<option selected disabled value="">Rol seçiniz...</option>');
 
-                        response.data.forEach(role => {
+                        response.forEach(role => {
                             currentSelect.append(`<option value="${role.name}">${role.name}</option>`);
 
                         });
                     });
 
-                } else {
-                    throw new Error(response?.message || 'Roller yüklenemedi');
                 }
             } catch (error) {
                 console.error('Roller yüklenirken hata:', error);
@@ -1121,19 +1026,7 @@
                     $(this).html('<option value="">Rol yüklenemedi</option>');
                 });
 
-                let errorMessage = 'Roller yüklenirken hata oluştu';
-
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'Roller yüklenirken hata oluştu');
             } finally {
                 $('.selectRole').prop('disabled', false);
             }
@@ -1161,17 +1054,13 @@
                     }
                 });
 
-                const response = await $.ajax({
-                    url: '/kullanici/aktif-ust-kullanicilar',
-                    type: 'GET',
-                    dataType: 'json'
-                });
-                if (response && response.isSuccess && response.data) {
+                const response = await makeRequest('/kullanici/aktif-ust-kullanicilar', 'GET');
+                if (response && Array.isArray(response)) {
                     superiorSelects.each(function () {
                         const currentSelect = $(this);
                         currentSelect.empty();
 
-                        response.data.forEach(user => {
+                        response.forEach(user => {
                             currentSelect.append(`<option value="${user.id}">${user.fullName}</option>`);
 
                         });
@@ -1181,8 +1070,6 @@
                             currentSelect.trigger('change');
                         }
                     });
-                } else {
-                    throw new Error(response?.message || 'Üst kullanıcılar yüklenemedi');
                 }
             } catch (error) {
                 console.error('Üst kullanıcılar yüklenirken hata:', error);
@@ -1197,18 +1084,7 @@
                     }
                 });
 
-                let errorMessage = 'Üst kullanıcılar yüklenirken hata oluştu';
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'Üst kullanıcılar yüklenirken hata oluştu');
             } finally {
                 $('.superior-select').prop('disabled', false);
             }

@@ -1,113 +1,51 @@
-﻿using IdeKusgozManagement.WebUI.Models;
+using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.MachineWorkRecordModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
-using Newtonsoft.Json;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
     public class MachineWorkRecordApiService : IMachineWorkRecordApiService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IApiService _apiService;
+        private readonly ILogger<MachineWorkRecordApiService> _logger;
+        private const string BaseEndpoint = "api/MachineWorkRecords";
 
-        public MachineWorkRecordApiService(HttpClient httpClient)
+        public MachineWorkRecordApiService(
+            IApiService apiService,
+            ILogger<MachineWorkRecordApiService> logger)
         {
-            _httpClient = httpClient;
+            _apiService = apiService;
+            _logger = logger;
         }
 
         public async Task<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>> GetMyMachineWorkRecordsByDateAsync(DateTime date, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/MachineWorkRecords/my-records/date/{date:yyyy-MM-dd}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<MachineWorkRecordViewModel>>($"{BaseEndpoint}/my-records/date/{date:yyyy-MM-dd}", cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>> GetMachineWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/MachineWorkRecords/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<MachineWorkRecordViewModel>>($"{BaseEndpoint}/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>> BatchCreateOrModifyMachineWorkRecordsAsync(IEnumerable<CreateOrModifyMachineWorkRecordViewModel> createMachineWorkRecordViewModels, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                using var formData = new MultipartFormDataContent();
-                var recordsList = createMachineWorkRecordViewModels.ToList();
+            using var formData = new MultipartFormDataContent();
+            var recordsList = createMachineWorkRecordViewModels.ToList();
 
-                AddMachineWorkRecordsToFormData(formData, recordsList);
+            AddMachineWorkRecordsToFormData(formData, recordsList);
 
-                var response = await _httpClient.PostAsync("api/MachineWorkRecords/batch-create-modify", formData, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(responseContent);
-                    return apiResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(responseContent);
-                return errorResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "İş kayıtları oluşturulamadı" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = $"Bir hata oluştu: {ex.Message}" };
-            }
+            return await _apiService.PostMultipartAsync<IEnumerable<MachineWorkRecordViewModel>>($"{BaseEndpoint}/batch-create-modify", formData, cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>> BatchUpdateMachineWorkRecordsByUserIdAsync(string userId, IEnumerable<CreateOrModifyMachineWorkRecordViewModel> updateMachineWorkRecordViewModel, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                using var formData = new MultipartFormDataContent();
-                var recordsList = updateMachineWorkRecordViewModel.ToList();
+            using var formData = new MultipartFormDataContent();
+            var recordsList = updateMachineWorkRecordViewModel.ToList();
 
-                AddMachineWorkRecordsToFormData(formData, recordsList);
+            AddMachineWorkRecordsToFormData(formData, recordsList);
 
-                var response = await _httpClient.PutAsync($"api/MachineWorkRecords/batch-update/user/{userId}", formData, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(responseContent);
-                    return apiResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(responseContent);
-                return errorResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "İş kayıtları güncellenemedi" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = $"Bir hata oluştu: {ex.Message}" };
-            }
+            return await _apiService.PutMultipartAsync<IEnumerable<MachineWorkRecordViewModel>>($"{BaseEndpoint}/batch-update/user/{userId}", formData, cancellationToken);
         }
 
         private void AddMachineWorkRecordsToFormData(MultipartFormDataContent formData, List<CreateOrModifyMachineWorkRecordViewModel> recordsList)
@@ -147,136 +85,42 @@ namespace IdeKusgozManagement.WebUI.Services
 
         public async Task<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>> BatchApproveMachineWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync($"api/MachineWorkRecords/batch-approve/user/{userId}/date/{date:yyyy-MM-dd}", null, cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Toplu onaylama başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<IEnumerable<MachineWorkRecordViewModel>>($"{BaseEndpoint}/batch-approve/user/{userId}/date/{date:yyyy-MM-dd}", null, cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>> BatchRejectMachineWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, string? rejectReason, CancellationToken cancellationToken = default)
         {
-            try
+            var endpoint = $"{BaseEndpoint}/batch-reject/user/{userId}/date/{date:yyyy-MM-dd}";
+            if (!string.IsNullOrEmpty(rejectReason))
             {
-                var encodedRejectReason = string.IsNullOrEmpty(rejectReason)
-                    ? string.Empty
-                    : Uri.EscapeDataString(rejectReason);
-                var response = await _httpClient.PutAsync($"api/MachineWorkRecords/batch-reject/user/{userId}/date/{date:yyyy-MM-dd}?rejectReason={encodedRejectReason}", null, cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Toplu reddetme başarısız" };
+                endpoint += $"?rejectReason={Uri.EscapeDataString(rejectReason)}";
             }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<IEnumerable<MachineWorkRecordViewModel>>(endpoint, null, cancellationToken);
         }
 
         public async Task<ApiResponse<MachineWorkRecordViewModel>> ApproveMachineWorkRecordByIdAsync(string userId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync($"api/MachineWorkRecords/{userId}/approve", null, cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<MachineWorkRecordViewModel>>(content);
-                    return apiResponse ?? new ApiResponse<MachineWorkRecordViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<MachineWorkRecordViewModel>>(content);
-                return errorResponse ?? new ApiResponse<MachineWorkRecordViewModel> { IsSuccess = false, Message = "Onaylama başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<MachineWorkRecordViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<MachineWorkRecordViewModel>($"{BaseEndpoint}/{userId}/approve", null, cancellationToken);
         }
 
         public async Task<ApiResponse<MachineWorkRecordViewModel>> RejectMachineWorkRecordByIdAsync(string userId, string? rejectReason, CancellationToken cancellationToken = default)
         {
-            try
+            var endpoint = $"{BaseEndpoint}/{userId}/reject";
+            if (!string.IsNullOrEmpty(rejectReason))
             {
-                var encodedRejectReason = string.IsNullOrEmpty(rejectReason)
-                 ? string.Empty
-                 : Uri.EscapeDataString(rejectReason);
-
-                var response = await _httpClient.PutAsync($"api/MachineWorkRecords/{userId}/reject?rejectReason={encodedRejectReason}", null, cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<MachineWorkRecordViewModel>>(content);
-                    return apiResponse ?? new ApiResponse<MachineWorkRecordViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<MachineWorkRecordViewModel>>(content);
-                return errorResponse ?? new ApiResponse<MachineWorkRecordViewModel> { IsSuccess = false, Message = "Reddetme başarısız" };
+                endpoint += $"?rejectReason={Uri.EscapeDataString(rejectReason)}";
             }
-            catch (Exception ex)
-            {
-                return new ApiResponse<MachineWorkRecordViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<MachineWorkRecordViewModel>(endpoint, null, cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>> GetMachineWorkRecordsByUserIdDateStatusAsync(string userId, DateTime date, int status, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/MachineWorkRecords/user/{userId}/date/{date:yyyy-MM-dd}/status/{status}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<MachineWorkRecordViewModel>>($"{BaseEndpoint}/user/{userId}/date/{date:yyyy-MM-dd}/status/{status}", cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>> GetApprovedMachineWorkRecordsByUserAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/MachineWorkRecords/approved/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<MachineWorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<MachineWorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<MachineWorkRecordViewModel>>($"{BaseEndpoint}/approved/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
         }
     }
 }

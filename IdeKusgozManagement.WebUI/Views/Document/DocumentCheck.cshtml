@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Doküman Kontrol";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -7,7 +7,7 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 
 }
 
@@ -101,61 +101,53 @@
         });
 
         async function initializeDepartmentSelect() {
-             try {
-                 const response = await $.ajax({
-                     url: '/departman/liste',
-                     type: 'GET',
-                     dataType: 'json'
-                 });
-                 if (response?.isSuccess && response.data) {
-                     $('#department-select').empty().append('<option value="">Departman seçin</option>');
-                     response.data.forEach(department => {
-                         $('#department-select').append(`<option value="${department.id}">${department.name}</option>`);
-                     });
-                 }
-                 $('#department-select').select2({
-                     placeholder: 'Departman seçin',
-                     theme: 'bootstrap-5',
-                     allowClear: true,
-                     width: '100%'
-                 });
-                 $('#department-select').on('change', async function () {
-                     const departmentId = $(this).val();
-
-                     // Reset other selects
-                     $('#department-duty-select').val(null).trigger('change');
-                     $('#company-select').val(null).trigger('change');
-                     $('#target-select').val(null).trigger('change');
-
-                     if (departmentId) {
-                         await initializeDepartmentDutySelect(departmentId);
-                     } else {
-                         await initializeDepartmentDutySelect(null);
-                         await initializeTargetSelect(null);
-                     }
-
-                     debouncedCheckAndLoadTable();
-                 });
-             } catch (error) {
-                 console.error('Departman listesi yüklenirken hata:', error);
-                 toastr.error('Departman listesi yüklenirken hata oluştu', 'Hata!');
-             }
-         }
-            async function initializeDocumentTypeSelect(departmentDutyId) {
             try {
-                  if (!departmentDutyId) {
+                const response = await makeRequest('/departman/liste', 'GET');
+                if (response && Array.isArray(response)) {
+                    $('#department-select').empty().append('<option value="">Departman seçin</option>');
+                    response.forEach(department => {
+                        $('#department-select').append(`<option value="${department.id}">${department.name}</option>`);
+                    });
+                }
+                $('#department-select').select2({
+                    placeholder: 'Departman seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
+                $('#department-select').on('change', async function () {
+                    const departmentId = $(this).val();
+
+                    // Reset other selects
+                    $('#department-duty-select').val(null).trigger('change');
+                    $('#company-select').val(null).trigger('change');
+                    $('#target-select').val(null).trigger('change');
+
+                    if (departmentId) {
+                        await initializeDepartmentDutySelect(departmentId);
+                    } else {
+                        await initializeDepartmentDutySelect(null);
+                        await initializeTargetSelect(null);
+                    }
+
+                    debouncedCheckAndLoadTable();
+                });
+            } catch (error) {
+                console.error('Departman listesi yüklenirken hata:', error);
+                handleError(error, 'Departman listesi yüklenirken hata oluştu');
+            }
+        }
+        async function initializeDocumentTypeSelect(departmentDutyId) {
+            try {
+                if (!departmentDutyId) {
                     resetSelect('#document-type-select', 'Doküman tipi seçin');
                     return;
                 }
-                const response = await $.ajax({
-                     url: `/dokuman/${departmentDutyId}/tip-liste`,
-                        type: 'GET',
-                    dataType: 'json'
-                });
+                const response = await makeRequest(`/dokuman/${departmentDutyId}/tip-liste`, 'GET');
 
-                if (response?.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('#document-type-select').empty().append('<option value="">Doküman tipi seçin</option>');
-                    response.data.forEach(docType => {
+                    response.forEach(docType => {
                         $('#document-type-select').append(`<option data-period="${docType.renewalPeriodInMonths}" value="${docType.id}">${docType.name}</option>`);
                     });
                 }
@@ -169,49 +161,45 @@
 
                 $('#document-type-select').on('change', async function () {
                     const docTypeId = $(this).val();
-                                     debouncedCheckAndLoadTable();
+                    debouncedCheckAndLoadTable();
 
                 });
             } catch (error) {
                 console.error('Doküman tipi listesi yüklenirken hata:', error);
-                toastr.error('Doküman tipi listesi yüklenirken hata oluştu', 'Hata!');
+                handleError(error, 'Doküman tipi listesi yüklenirken hata oluştu');
             }
         }
-         async function initializeDepartmentDutySelect(departmentId) {
-             try {
-                   if (!departmentId) {
-                     resetSelect('#department-duty-select', 'Departman görevi seçin');
-                     return;
-                 }
-                 const response = await $.ajax({
-                     url: `/departman/${departmentId}/gorev-liste`,
-                     type: 'GET',
-                     dataType: 'json'
-                 });
+        async function initializeDepartmentDutySelect(departmentId) {
+            try {
+                if (!departmentId) {
+                    resetSelect('#department-duty-select', 'Departman görevi seçin');
+                    return;
+                }
+                const response = await makeRequest(`/departman/${departmentId}/gorev-liste`, 'GET');
 
-                 if (response?.isSuccess && response.data) {
-                     $('#department-duty-select').empty().append('<option value="">Departman görevi seçin</option>');
-                     response.data.forEach(duty => {
-                         $('#department-duty-select').append(`<option data-scope=${duty.scope} value="${duty.id}">${duty.name}</option>`);
-                     });
-                 }
+                if (response && Array.isArray(response)) {
+                    $('#department-duty-select').empty().append('<option value="">Departman görevi seçin</option>');
+                    response.forEach(duty => {
+                        $('#department-duty-select').append(`<option data-scope=${duty.scope} value="${duty.id}">${duty.name}</option>`);
+                    });
+                }
 
-                 $('#department-duty-select').select2({
-                     placeholder: 'Departman görevi seçin',
-                     theme: 'bootstrap-5',
-                     allowClear: true,
-                     width: '100%'
-                 });
+                $('#department-duty-select').select2({
+                    placeholder: 'Departman görevi seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
 
-                 $('#department-duty-select').on('change', async function () {
-                     const departmentDutyId = $(this).val();
-                     const scope = $(this).find(':selected').data('scope');
+                $('#department-duty-select').on('change', async function () {
+                    const departmentDutyId = $(this).val();
+                    const scope = $(this).find(':selected').data('scope');
 
-                     // Reset other selects
-                        $('#company-select').val(null).trigger('change');
+                    // Reset other selects
+                    $('#company-select').val(null).trigger('change');
                     $('#document-type-select').val(null).trigger('change');
                     $('#target-select').val(null).trigger('change');
-                     if (departmentDutyId) {
+                    if (departmentDutyId) {
                         await initializeDocumentTypeSelect(departmentDutyId);
                         await initializeTargetSelect(scope);
                         currentDepartmentScope = scope;
@@ -221,143 +209,135 @@
                         await initializeTargetSelect(null);
                     }
 
-                 });
-             } catch (error) {
-                 console.error('Departman görevi listesi yüklenirken hata:', error);
-                 toastr.error('Departman görevi listesi yüklenirken hata oluştu', 'Hata!');
-             }
-         }
+                });
+            } catch (error) {
+                console.error('Departman görevi listesi yüklenirken hata:', error);
+                handleError(error, 'Departman görevi listesi yüklenirken hata oluştu');
+            }
+        }
 
         async function initializeCompanySelect() {
-             try {
-                 const response = await $.ajax({
-                     url: `/firma/aktif-liste`,
-                     type: 'GET',
-                     dataType: 'json'
-                 });
+            try {
+                const response = await makeRequest(`/firma/aktif-liste`, 'GET');
 
-                 if (response?.isSuccess && response.data) {
-                                          $('#company-select').empty().append('<option value="">Firma seçin</option>');
+                if (response && Array.isArray(response)) {
+                    $('#company-select').empty().append('<option value="">Firma seçin</option>');
 
-                     response.data.forEach(company => {
-                         $('#company-select').append(`<option value="${company.id}">${company.name}</option>`);
-                     });
-                 }
+                    response.forEach(company => {
+                        $('#company-select').append(`<option value="${company.id}">${company.name}</option>`);
+                    });
+                }
 
-                 $('#company-select').select2({
-                     placeholder: 'Firma seçin',
-                     theme: 'bootstrap-5',
-                     allowClear: true,
-                     width: '100%'
-                 });
+                $('#company-select').select2({
+                    placeholder: 'Firma seçin',
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
 
-                    $('#company-select').on('change', async function () {
-                     debouncedCheckAndLoadTable();
-                 });
+                $('#company-select').on('change', async function () {
+                    debouncedCheckAndLoadTable();
+                });
 
-             } catch (error) {
-                 console.error('Firma listesi yüklenirken hata:', error);
-                 toastr.error('Firma listesi yüklenirken hata oluştu', 'Hata!');
-             }
-         }
+            } catch (error) {
+                console.error('Firma listesi yüklenirken hata:', error);
+                handleError(error, 'Firma listesi yüklenirken hata oluştu');
+            }
+        }
 
-         async function initializeTargetSelect(scope) {
-             try {
-                 if (!scope) {
-                     resetSelect('#target-select', 'Hedef seçin');
-                     return;
-                 }
+        async function initializeTargetSelect(scope) {
+            try {
+                if (!scope) {
+                    resetSelect('#target-select', 'Hedef seçin');
+                    return;
+                }
 
-                 const departmentDutyId = $("#department-duty-select").val();
-                 let url = '';
-                 let placeholder = 'Hedef seçin';
+                const departmentDutyId = $("#department-duty-select").val();
+                let url = '';
+                let placeholder = 'Hedef seçin';
 
-                 // Scope'a göre URL ve placeholder belirleme
-                 if (scope === 1) {
-                     url = `/kullanici/departman-gorev/${departmentDutyId}`;
-                 } else if (scope === 2) {
-                     url = `/ekipman/aktif-liste`;
-                 } else if (scope === 3) {
-                     // Scope 3 için sadece placeholder ayarla, istek atma
-                     $('#target-select').empty().append('<option value="">Firma</option>');
-                     $('#target-select').select2({
-                         placeholder: 'Firma olduğu için hedef seçmeye gerek yok',
-                         theme: 'bootstrap-5',
-                         allowClear: true,
-                         width: '100%',
-                         disabled: true
-                     });
+                // Scope'a göre URL ve placeholder belirleme
+                if (scope === 1) {
+                    url = `/kullanici/departman-gorev/${departmentDutyId}`;
+                } else if (scope === 2) {
+                    url = `/ekipman/aktif-liste`;
+                } else if (scope === 3) {
+                    // Scope 3 için sadece placeholder ayarla, istek atma
+                    $('#target-select').empty().append('<option value="">Firma</option>');
+                    $('#target-select').select2({
+                        placeholder: 'Firma olduğu için hedef seçmeye gerek yok',
+                        theme: 'bootstrap-5',
+                        allowClear: true,
+                        width: '100%',
+                        disabled: true
+                    });
 
-                     // Scope 3 için tablo kontrolü yap
-                     debouncedCheckAndLoadTable();
-                     return;
-                 }
+                    // Scope 3 için tablo kontrolü yap
+                    debouncedCheckAndLoadTable();
+                    return;
+                }
 
-                 // Scope 1 veya 2 için API isteği at
-                 const response = await $.ajax({
-                     url: url,
-                     type: 'GET',
-                     dataType: 'json'
-                 });
+                // Scope 1 veya 2 için API isteği at
+                const response = await makeRequest(url, 'GET');
 
-                 if (response?.isSuccess && response.data) {
-                     $('#target-select').empty().append(`<option value="">${placeholder}</option>`);
-                     response.data.forEach(target => {
-                       const displayName = scope === 1 ? target.fullName : target.name;
-                         $('#target-select').append(`<option value="${target.id}">${displayName}</option>`);
-                     });
-                 }
+                if (response && Array.isArray(response)) {
+                    $('#target-select').empty().append(`<option value="">${placeholder}</option>`);
+                    response.forEach(target => {
+                        const displayName = scope === 1 ? target.fullName : target.name;
+                        $('#target-select').append(`<option value="${target.id}">${displayName}</option>`);
+                    });
+                }
 
-                 $('#target-select').select2({
-                     placeholder: placeholder,
-                     theme: 'bootstrap-5',
-                     allowClear: true,
-                     width: '100%'
-                 });
+                $('#target-select').select2({
+                    placeholder: placeholder,
+                    theme: 'bootstrap-5',
+                    allowClear: true,
+                    width: '100%'
+                });
 
-                 // Target select change event
-                 $('#target-select').on('change', function () {
-                     debouncedCheckAndLoadTable();
-                 });
+                // Target select change event
+                $('#target-select').on('change', function () {
+                    debouncedCheckAndLoadTable();
+                });
 
-             } catch (error) {
-                 console.error('Hedef listesi yüklenirken hata:', error);
-                 toastr.error('Hedef listesi yüklenirken hata oluştu', 'Hata!');
-             }
-         }
+            } catch (error) {
+                console.error('Hedef listesi yüklenirken hata:', error);
+                handleError(error, 'Hedef listesi yüklenirken hata oluştu');
+            }
+        }
 
-         function resetSelect(selector, placeholder) {
-             $(selector).empty().append(`<option value="">${placeholder}</option>`);
-             initSelect(selector, placeholder);
-         }
+        function resetSelect(selector, placeholder) {
+            $(selector).empty().append(`<option value="">${placeholder}</option>`);
+            initSelect(selector, placeholder);
+        }
 
-         function initSelect(selector, placeholder, disabled = false) {
-             $(selector).select2({
-                 placeholder,
-                 theme: 'bootstrap-5',
-                 allowClear: true,
-                 width: '100%',
-                 disabled
-             });
-         }
+        function initSelect(selector, placeholder, disabled = false) {
+            $(selector).select2({
+                placeholder,
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%',
+                disabled
+            });
+        }
 
-         // Debounce fonksiyonu
-         function debounce(func, wait) {
-             let timeout;
-             return function executedFunction(...args) {
-                 const context = this;
-                 clearTimeout(timeout);
-                 timeout = setTimeout(() => func.apply(context, args), wait);
-             };
-         }
+        // Debounce fonksiyonu
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
 
-         // Debounced tablo yükleme fonksiyonu
-         const debouncedCheckAndLoadTable = debounce(function() {
-             checkAndLoadTable();
-         }, DEBOUNCE_DELAY);
+        // Debounced tablo yükleme fonksiyonu
+        const debouncedCheckAndLoadTable = debounce(function () {
+            checkAndLoadTable();
+        }, DEBOUNCE_DELAY);
 
-         // Tablo yükleme kontrolü fonksiyonu
-             function checkAndLoadTable() {
+        // Tablo yükleme kontrolü fonksiyonu
+        function checkAndLoadTable() {
             const departmentId = $('#department-select').val();
             const departmentDutyId = $('#department-duty-select').val();
             const targetId = $('#target-select').val();
@@ -384,25 +364,25 @@
             }
         }
 
-         // DataTable yükleme fonksiyonu
-         function loadDataTable() {
-             const departmentId = $('#department-select').val();
-             const departmentDutyId = $('#department-duty-select').val();
-             const companyId = $('#company-select').val() || '';
-             const targetId = $('#target-select').val() || '';
-             const documentTypeId = $("#document-type-select").val() || "";
+        // DataTable yükleme fonksiyonu
+        function loadDataTable() {
+            const departmentId = $('#department-select').val();
+            const departmentDutyId = $('#department-duty-select').val();
+            const companyId = $('#company-select').val() || '';
+            const targetId = $('#target-select').val() || '';
+            const documentTypeId = $("#document-type-select").val() || "";
 
-             // URL oluştur
-             const url = `/dokuman/kontrol-liste?departmentId=${departmentId}&departmentDutyId=${departmentDutyId}&companyId=${companyId}&targetId=${targetId}&documentTypeId=${documentTypeId}`;
+            // URL oluştur
+            const url = `/dokuman/kontrol-liste?departmentId=${departmentId}&departmentDutyId=${departmentDutyId}&companyId=${companyId}&targetId=${targetId}&documentTypeId=${documentTypeId}`;
 
-             // Eğer tablo varsa, sadece URL'i güncelle ve yeniden yükle
-             if (filesTable) {
-                 filesTable.ajax.url(url).load();
-             } else {
-                 // Tablo yoksa oluştur
-                 initializeDataTable(url);
-             }
-         }
+            // Eğer tablo varsa, sadece URL'i güncelle ve yeniden yükle
+            if (filesTable) {
+                filesTable.ajax.url(url).load();
+            } else {
+                // Tablo yoksa oluştur
+                initializeDataTable(url);
+            }
+        }
 
         async function initializeDataTable(url) {
             filesTable = $('#filesTable').DataTable({
@@ -410,7 +390,7 @@
                 ajax: {
                     url: url,
                     type: "GET",
-                    dataSrc: (json) => json?.isSuccess && json.data ? json.data : [],
+                    dataSrc: (json) => json && Array.isArray(json) ? json : [],
                     error: (xhr, error, thrown) => {
                         console.error('DataTables AJAX error:', error, thrown);
                         let errorMessage = 'Veriler yüklenirken hata oluştu';
@@ -421,7 +401,7 @@
                             errorMessage += ': ' + xhr.responseJSON.message;
                         }
 
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 columns: [
@@ -458,14 +438,14 @@
                         render: (data, type, row) => {
                             if (!row.currentFileId) return "";
                             return `
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a class="btn btn-outline-primary btn-sm" href="/dosya/indir/${row.currentFileId}" title="İndir" download>
-                                        <i class="fas fa-download"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteFile('${row.currentFileId}')" title="Sil">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>`;
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a class="btn btn-outline-primary btn-sm" href="/dosya/indir/${row.currentFileId}" title="İndir" download>
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteFile('${row.currentFileId}')" title="Sil">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>`;
                         }
                     }
                 ],
@@ -500,17 +480,13 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            return await $.ajax({
-                                url: `/dosya/${fileId}`,
-                                type: 'DELETE',
-                                contentType: 'application/json'
-                            });
+                            return await makeRequest(`/dosya/${fileId}`, 'DELETE');
                         } catch (error) {
                             let errorMessage = 'Silme başarısız';
-                            if (error.responseJSON?.message) {
-                                errorMessage = error.responseJSON.message;
-                            } else if (error.responseJSON?.errors?.length > 0) {
-                                errorMessage = error.responseJSON.errors.join(', ');
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;

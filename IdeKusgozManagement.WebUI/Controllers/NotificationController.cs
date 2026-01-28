@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Services.Interfaces;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,14 +20,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetNotifications(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
             var response = await _notificationApiService.GetNotificationsAsync(pageSize, pageNumber, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpGet("okunmayan-sayisi")]
         public async Task<IActionResult> GetUnreadNotificationCount(CancellationToken cancellationToken)
         {
             var response = await _notificationApiService.GetUnreadNotificationCountAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpPut("{notificationId}/okundu")]
@@ -37,14 +38,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Bildirim ID'si gereklidir");
             }
             var response = await _notificationApiService.MarkAsReadAsync(notificationId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpPut("hepsini-okundu")]
         public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
         {
             var response = await _notificationApiService.MarkAllAsReadAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpDelete("{notificationId}")]
@@ -55,7 +56,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Bildirim ID'si gereklidir");
             }
             var response = await _notificationApiService.DeleteNotificationAsync(notificationId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

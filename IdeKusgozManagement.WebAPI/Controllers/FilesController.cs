@@ -1,5 +1,6 @@
-﻿using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.FileDTOs;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,50 +21,39 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await fileService.UploadFileAsync(files, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetFileById(string id, CancellationToken cancellationToken)
         {
             var result = await fileService.GetFileByIdAsync(id, cancellationToken);
-            if (!result.IsSuccess || result.Data == null)
-            {
-                return NotFound(result);
-            }
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFile(string id, CancellationToken cancellationToken)
         {
             var result = await fileService.DeleteFileAsync(id, cancellationToken);
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result);
-            }
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("by-params")]
         public async Task<IActionResult> GetFilesByParams([FromQuery] string? userId, [FromQuery] string? documentType, [FromQuery] string? departmentId, CancellationToken cancellationToken)
         {
             var result = await fileService.GetFilesByParamsAsync(userId, documentType, departmentId, cancellationToken);
-            if (!result.IsSuccess || result.Data == null)
-            {
-                return NotFound(result);
-            }
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("download/{id}")]
         public async Task<IActionResult> DownloadFile(string id, CancellationToken cancellationToken)
         {
             var result = await fileService.GetFileStreamByIdAsync(id, cancellationToken);
-            return result.IsSuccess ? File(result.Data.fileStream, result.Data.contentType, result.Data.originalName) : BadRequest(result);
+            if (result.IsSuccess)
+            {
+                return File(result.Data.fileStream, result.Data.contentType, result.Data.originalName);
+            }
+            return result.ToActionResult();
         }
     }
 }

@@ -1,9 +1,10 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.MessageDTOs;
 using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,7 +38,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                     break;
             }
             var result = await messageService.GetMessagesAsync(pageSize, pageNumber, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -47,7 +48,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         [RoleFilter("Admin", "Yönetici")]
         public async Task<IActionResult> CreateMessage([FromBody] CreateMessageDTO createMessageDTO, CancellationToken cancellationToken)
         {
-            ServiceResponse<MessageDTO> messageResponse = new();
+            ServiceResult<MessageDTO> messageResponse = new();
             if (createMessageDTO.TargetRoles.Any())
                 messageResponse = await messageService.SendMessageToRolesAsync(createMessageDTO, cancellationToken);
 
@@ -75,7 +76,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             if (!createMessageDTO.TargetRoles.Any() && !createMessageDTO.TargetUsers.Any())
                 await notificationService.SendNotificationToAllAsync(createNotification, cancellationToken);
 
-            return Ok(messageResponse);
+            return messageResponse.ToActionResult();
         }
 
         /// <summary>
@@ -92,7 +93,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Mesaj ID'si gereklidir");
             }
             var result = await messageService.DeleteMessageAsync(messageId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

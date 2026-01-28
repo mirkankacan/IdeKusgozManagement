@@ -1,10 +1,10 @@
-﻿using IdeKusgozManagement.WebUI.Models;
+using System.Net.Http.Headers;
+using System.Text;
+using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.AuthModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.Text;
 
 namespace IdeKusgozManagement.WebUI.Handlers
 {
@@ -122,8 +122,13 @@ namespace IdeKusgozManagement.WebUI.Handlers
                     }
                     else
                     {
-                        _logger.LogWarning("Refresh token başarısız - Message: {Message}, Errors: {Errors}",
-                            apiResponse?.Message, string.Join(", ", apiResponse?.Errors ?? new List<string>()));
+                        var errorMessage = !string.IsNullOrEmpty(apiResponse?.ErrorMessage)
+                            ? apiResponse.ErrorMessage
+                            : !string.IsNullOrEmpty(apiResponse?.ErrorDetail)
+                                ? apiResponse.ErrorDetail
+                                : "Refresh token başarısız";
+                        _logger.LogWarning("Refresh token başarısız - ErrorMessage: {ErrorMessage}",
+                            errorMessage);
                     }
                 }
                 else
@@ -223,6 +228,7 @@ namespace IdeKusgozManagement.WebUI.Handlers
             {
                 try
                 {
+                    // Content'i okumadan önce, orijinal content'in kopyasını oluştur
                     var contentBytes = await originalRequest.Content.ReadAsByteArrayAsync();
                     clonedRequest.Content = new ByteArrayContent(contentBytes);
 
@@ -232,9 +238,11 @@ namespace IdeKusgozManagement.WebUI.Handlers
                         clonedRequest.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
                     }
                 }
-                catch (Exception)
+                catch
                 {
                     // Content okunamadıysa null bırak
+                    // Bu durumda orijinal request'in content'i zaten okunmuş olabilir
+                    // Bu durumda yeni request content olmadan gönderilir
                     clonedRequest.Content = null;
                 }
             }

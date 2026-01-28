@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
@@ -9,6 +9,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
@@ -16,14 +17,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
     {
         private readonly PhysicalFileProvider _physicalFileProvider = (PhysicalFileProvider)fileProvider;
 
-        public async Task<ServiceResponse<List<FileDTO>>> UploadFileAsync(List<UploadFileDTO> files, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<List<FileDTO>>> UploadFileAsync(List<UploadFileDTO> files, CancellationToken cancellationToken = default)
         {
             try
             {
                 var wwwrootPath = _physicalFileProvider.Root;
                 if (string.IsNullOrEmpty(wwwrootPath))
                 {
-                    return ServiceResponse<List<FileDTO>>.Error("wwwroot klasörü bulunamadı");
+                    return ServiceResult<List<FileDTO>>.Error("Klasör Bulunamadı", "wwwroot klasörü bulunamadı. Lütfen sistem yöneticisiyle iletişime geçin.", HttpStatusCode.InternalServerError);
                 }
 
                 var dateFolder = DateTime.Now.ToString("yyyy-MM");
@@ -52,7 +53,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtFile>().AddRangeAsync(newFiles, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<List<FileDTO>>.Success(uploadedFiles);
+                return ServiceResult<List<FileDTO>>.SuccessAsOk(uploadedFiles);
             }
             catch (Exception ex)
             {
@@ -107,6 +108,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             var newFileName = $"{NewId.NextGuid()}{fileExtension}";
             var fullFolderPath = Path.Combine(wwwrootPath, "Uploads", userFolder, documentTypeName, dateFolder);
             var contentType = FileHelper.GetContentType(fileExtension);
+
             if (!Directory.Exists(fullFolderPath))
             {
                 Directory.CreateDirectory(fullFolderPath);
@@ -116,20 +118,30 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
             DateTime? startDate = file.StartDate;
             DateTime? endDate = file.EndDate;
-            if (file.HasRenewalPeriod.HasValue)
+
+            if (file.HasRenewalPeriod.HasValue && file.HasRenewalPeriod.Value == true)
             {
-                if (file.HasRenewalPeriod.Value == true && file.StartDate == null && file.EndDate == null)
+                if (file.StartDate == null && file.EndDate == null)
                 {
-                    var aiResponse = await aiService.AnalyzeDocumentDateAsync(file.FormFile, documentTypeName, cancellationToken);
+                    // Renewal period kontrolü ekle
+                    if (!renewalPeriodInMonths.HasValue)
+                    {
+                        throw new Exception($"Doküman tipi '{documentTypeName}' için yenileme periyodu tanımlanmamış.");
+                    }
+
+                    var aiResponse = await aiService.AnalyzeDocumentDateAsync(
+                        file.FormFile,
+                        documentTypeName,
+                        cancellationToken);
 
                     if (aiResponse.IsSuccess && !string.IsNullOrEmpty(aiResponse.Data.SelectedDate))
                     {
                         startDate = DateTime.Parse(aiResponse.Data.SelectedDate);
-                        endDate = startDate.Value.AddMonths(renewalPeriodInMonths!.Value);
+                        endDate = startDate.Value.AddMonths(renewalPeriodInMonths.Value); // Artık güvenli
                     }
                     else
                     {
-                        throw new Exception(aiResponse.Message);
+                        throw new Exception(aiResponse.Fail?.Detail ?? "AI analiz hatası");
                     }
                 }
             }
@@ -220,7 +232,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return results;
         }
 
-        public async Task<ServiceResponse<bool>> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DeleteFileAsync(string fileId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -228,7 +240,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (file == null)
                 {
                     logger.LogWarning("Dosya kaydı bulunamadı: {FileId}", fileId);
-                    return ServiceResponse<bool>.Error("Dosya kaydı bulunamadı");
+                    return ServiceResult<bool>.Error("Dosya Bulunamadı", "Belirtilen ID'ye sahip dosya kaydı bulunamadı.", HttpStatusCode.NotFound);
                 }
                 var fullPath = Path.Combine(_physicalFileProvider.Root, file.Path.TrimStart('/'));
 
@@ -239,11 +251,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     await unitOfWork.SaveChangesAsync(cancellationToken);
 
                     logger.LogInformation("Dosya silindi: {FileId}", fileId);
-                    return ServiceResponse<bool>.Success(true, "Dosya silindi");
+                    return ServiceResult<bool>.SuccessAsOk(true);
                 }
 
                 logger.LogWarning("Silinecek dosya bulunamadı: {FileId}", fileId);
-                return ServiceResponse<bool>.Error("Dosya bulunamadı");
+                return ServiceResult<bool>.Error("Dosya Bulunamadı", "Fiziksel dosya bulunamadı.", HttpStatusCode.NotFound);
             }
             catch (Exception ex)
             {
@@ -252,7 +264,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<FileDTO>> GetFileByIdAsync(string fileId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<FileDTO>> GetFileByIdAsync(string fileId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -266,7 +278,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (file == null)
                 {
                     logger.LogWarning("Dosya kaydı bulunamadı: {FileId}", fileId);
-                    return ServiceResponse<FileDTO>.Success(new FileDTO(), "Dosya kaydı bulunamadı");
+                    return ServiceResult<FileDTO>.Error("Dosya Bulunamadı", "Belirtilen ID'ye sahip dosya kaydı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var fileDTO = new FileDTO
@@ -293,7 +305,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     CreatedDate = file.CreatedDate
                 };
 
-                return ServiceResponse<FileDTO>.Success(fileDTO);
+                return ServiceResult<FileDTO>.SuccessAsOk(fileDTO);
             }
             catch (Exception ex)
             {
@@ -302,7 +314,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<(FileStream fileStream, string contentType, string originalName)>> GetFileStreamByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<(FileStream fileStream, string contentType, string originalName)>> GetFileStreamByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -313,7 +325,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (file == null)
                 {
                     logger.LogWarning("Dosya bulunamadı. FileId: {FileId}", id);
-                    return ServiceResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya bulunamadı");
+                    return ServiceResult<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya Bulunamadı", "Belirtilen ID'ye sahip dosya kaydı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var fullPath = Path.Combine(_physicalFileProvider.Root, file.Path.TrimStart('/'));
@@ -321,13 +333,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!File.Exists(fullPath))
                 {
                     logger.LogWarning("Fiziksel dosya bulunamadı. FileId: {FileId}, Path: {Path}", id, fullPath);
-                    return ServiceResponse<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya yolu bulunamadı");
+                    return ServiceResult<(FileStream fileStream, string contentType, string originalName)>.Error("Dosya Yolu Bulunamadı", "Fiziksel dosya yolu bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
                 var extension = Path.GetExtension(file.OriginalName).ToLowerInvariant();
                 var contentType = FileHelper.GetContentType(extension);
-                return ServiceResponse<(FileStream fileStream, string contentType, string originalName)>.Success((fileStream, contentType, file.OriginalName), "Dosya kaydı bulunamadı");
+                return ServiceResult<(FileStream fileStream, string contentType, string originalName)>.SuccessAsOk((fileStream, contentType, file.OriginalName));
             }
             catch (Exception ex)
             {
@@ -336,7 +348,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<List<FileDTO>>> GetFilesByParamsAsync(string? userId, string? documentType, string? departmentId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<List<FileDTO>>> GetFilesByParamsAsync(string? userId, string? documentType, string? departmentId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -357,7 +369,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (!files.Any())
                 {
-                    return ServiceResponse<List<FileDTO>>.Success(new List<FileDTO>(), "Dosya kaydı bulunamadı");
+                    return ServiceResult<List<FileDTO>>.SuccessAsOk(new List<FileDTO>());
                 }
 
                 var fileDTOs = new List<FileDTO>();
@@ -391,7 +403,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     fileDTOs.Add(fileDTO);
                 }
 
-                return ServiceResponse<List<FileDTO>>.Success(fileDTOs);
+                return ServiceResult<List<FileDTO>>.SuccessAsOk(fileDTOs);
             }
             catch (Exception ex)
             {

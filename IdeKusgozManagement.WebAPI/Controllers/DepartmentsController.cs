@@ -1,5 +1,6 @@
-﻿using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,14 +16,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken)
         {
             var result = await departmentService.GetDepartmentsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("{departmentId}/duties")]
         public async Task<IActionResult> GetDepartmentDutiesByDepartment(string departmentId, CancellationToken cancellationToken)
         {
             var result = await departmentService.GetDepartmentDutiesByDepartmentAsync(departmentId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         //[HttpGet("duty/document/relations")]

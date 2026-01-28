@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.CompanyModels;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Models.CompanyModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,14 +27,14 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetCompanies(CancellationToken cancellationToken)
         {
             var response = await _companyApiService.GetCompaniesAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpGet("aktif-liste")]
         public async Task<IActionResult> GetActiveCompanies(CancellationToken cancellationToken)
         {
             var response = await _companyApiService.GetActiveCompaniesAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [HttpGet("{companyId}")]
@@ -45,7 +46,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _companyApiService.GetCompanyByIdAsync(companyId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -58,7 +59,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _companyApiService.CreateCompanyAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -76,7 +77,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _companyApiService.UpdateCompanyAsync(companyId, model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -89,7 +90,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _companyApiService.DeleteCompanyAsync(companyId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -102,7 +103,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _companyApiService.EnableCompanyAsync(companyId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [ValidateAntiForgeryToken]
@@ -115,7 +116,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _companyApiService.DisableCompanyAsync(companyId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

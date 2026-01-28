@@ -1,113 +1,51 @@
-﻿using IdeKusgozManagement.WebUI.Models;
+using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.WorkRecordModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
-using Newtonsoft.Json;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
     public class WorkRecordApiService : IWorkRecordApiService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IApiService _apiService;
+        private readonly ILogger<WorkRecordApiService> _logger;
+        private const string BaseEndpoint = "api/workrecords";
 
-        public WorkRecordApiService(HttpClient httpClient)
+        public WorkRecordApiService(
+            IApiService apiService,
+            ILogger<WorkRecordApiService> logger)
         {
-            _httpClient = httpClient;
+            _apiService = apiService;
+            _logger = logger;
         }
 
         public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetMyWorkRecordsByDateAsync(DateTime date, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/workrecords/my-records/date/{date:yyyy-MM-dd}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<WorkRecordViewModel>>($"{BaseEndpoint}/my-records/date/{date:yyyy-MM-dd}", cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/workrecords/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<WorkRecordViewModel>>($"{BaseEndpoint}/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateOrModifyWorkRecordViewModel> createWorkRecordViewModels, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                using var formData = new MultipartFormDataContent();
-                var recordsList = createWorkRecordViewModels.ToList();
+            using var formData = new MultipartFormDataContent();
+            var recordsList = createWorkRecordViewModels.ToList();
 
-                AddWorkRecordsToFormData(formData, recordsList);
+            AddWorkRecordsToFormData(formData, recordsList);
 
-                var response = await _httpClient.PostAsync("api/workrecords/batch-create-modify", formData, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(responseContent);
-                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(responseContent);
-                return errorResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "İş kayıtları oluşturulamadı" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = $"Bir hata oluştu: {ex.Message}" };
-            }
+            return await _apiService.PostMultipartAsync<IEnumerable<WorkRecordViewModel>>($"{BaseEndpoint}/batch-create-modify", formData, cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchUpdateWorkRecordsByUserIdAsync(string userId, IEnumerable<CreateOrModifyWorkRecordViewModel> updateWorkRecordViewModel, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                using var formData = new MultipartFormDataContent();
-                var recordsList = updateWorkRecordViewModel.ToList();
+            using var formData = new MultipartFormDataContent();
+            var recordsList = updateWorkRecordViewModel.ToList();
 
-                AddWorkRecordsToFormData(formData, recordsList);
+            AddWorkRecordsToFormData(formData, recordsList);
 
-                var response = await _httpClient.PutAsync($"api/workrecords/batch-update/user/{userId}", formData, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(responseContent);
-                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(responseContent);
-                return errorResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "İş kayıtları güncellenemedi" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = $"Bir hata oluştu: {ex.Message}" };
-            }
+            return await _apiService.PutMultipartAsync<IEnumerable<WorkRecordViewModel>>($"{BaseEndpoint}/batch-update/user/{userId}", formData, cancellationToken);
         }
 
         private void AddWorkRecordsToFormData(MultipartFormDataContent formData, List<CreateOrModifyWorkRecordViewModel> recordsList)
@@ -182,136 +120,42 @@ namespace IdeKusgozManagement.WebUI.Services
 
         public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync($"api/workrecords/batch-approve/user/{userId}/date/{date:yyyy-MM-dd}", null, cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Toplu onaylama başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<IEnumerable<WorkRecordViewModel>>($"{BaseEndpoint}/batch-approve/user/{userId}/date/{date:yyyy-MM-dd}", null, cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, string? rejectReason, CancellationToken cancellationToken = default)
         {
-            try
+            var endpoint = $"{BaseEndpoint}/batch-reject/user/{userId}/date/{date:yyyy-MM-dd}";
+            if (!string.IsNullOrEmpty(rejectReason))
             {
-                var encodedRejectReason = string.IsNullOrEmpty(rejectReason)
-                    ? string.Empty
-                    : Uri.EscapeDataString(rejectReason);
-                var response = await _httpClient.PutAsync($"api/workrecords/batch-reject/user/{userId}/date/{date:yyyy-MM-dd}?rejectReason={encodedRejectReason}", null, cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Toplu reddetme başarısız" };
+                endpoint += $"?rejectReason={Uri.EscapeDataString(rejectReason)}";
             }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<IEnumerable<WorkRecordViewModel>>(endpoint, null, cancellationToken);
         }
 
         public async Task<ApiResponse<WorkRecordViewModel>> ApproveWorkRecordByIdAsync(string userId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync($"api/workrecords/{userId}/approve", null, cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
-                    return apiResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
-                return errorResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Onaylama başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<WorkRecordViewModel>($"{BaseEndpoint}/{userId}/approve", null, cancellationToken);
         }
 
         public async Task<ApiResponse<WorkRecordViewModel>> RejectWorkRecordByIdAsync(string userId, string? rejectReason, CancellationToken cancellationToken = default)
         {
-            try
+            var endpoint = $"{BaseEndpoint}/{userId}/reject";
+            if (!string.IsNullOrEmpty(rejectReason))
             {
-                var encodedRejectReason = string.IsNullOrEmpty(rejectReason)
-                 ? string.Empty
-                 : Uri.EscapeDataString(rejectReason);
-
-                var response = await _httpClient.PutAsync($"api/workrecords/{userId}/reject?rejectReason={encodedRejectReason}", null, cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
-                    return apiResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<WorkRecordViewModel>>(content);
-                return errorResponse ?? new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Reddetme başarısız" };
+                endpoint += $"?rejectReason={Uri.EscapeDataString(rejectReason)}";
             }
-            catch (Exception ex)
-            {
-                return new ApiResponse<WorkRecordViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PutAsync<WorkRecordViewModel>(endpoint, null, cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetWorkRecordsByUserIdDateStatusAsync(string userId, DateTime date, int status, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/workrecords/user/{userId}/date/{date:yyyy-MM-dd}/status/{status}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<WorkRecordViewModel>>($"{BaseEndpoint}/user/{userId}/date/{date:yyyy-MM-dd}/status/{status}", cancellationToken);
         }
 
         public async Task<ApiResponse<IEnumerable<WorkRecordViewModel>>> GetApprovedWorkRecordsByUserAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/workrecords/approved/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<WorkRecordViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<IEnumerable<WorkRecordViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<IEnumerable<WorkRecordViewModel>>($"{BaseEndpoint}/approved/user/{userId}/date/{date:yyyy-MM-dd}", cancellationToken);
         }
     }
 }

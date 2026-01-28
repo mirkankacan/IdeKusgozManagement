@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.FileDTOs;
 using IdeKusgozManagement.Application.DTOs.TrafficTicketDTOs;
@@ -7,12 +7,14 @@ using IdeKusgozManagement.Domain.Entities;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class TrafficTicketService(IUnitOfWork unitOfWork, ILogger<TrafficTicketService> logger, IFileService fileService) : ITrafficTicketService
     {
-        public async Task<ServiceResponse<string>> CreateTrafficTicketAsync(CreateTrafficTicketDTO createTrafficTicketDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<string>> CreateTrafficTicketAsync(CreateTrafficTicketDTO createTrafficTicketDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -31,7 +33,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     if (!fileResult.IsSuccess)
                     {
                         await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                        return ServiceResponse<string>.Error(fileResult.Message);
+                        return ServiceResult<string>.Error("Dosya Yükleme Hatası", fileResult.Fail?.Detail ?? "Dosya yüklenirken bir hata oluştu.", HttpStatusCode.BadRequest);
                     }
 
                     newTicket.FileId = fileResult.Data.FirstOrDefault()?.Id;
@@ -39,7 +41,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtTrafficTicket>().AddAsync(newTicket, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
-                return ServiceResponse<string>.Success(newTicket.Id, "Trafik cezası başarıyla oluşturuldu");
+                return ServiceResult<string>.SuccessAsCreated(newTicket.Id, $"/api/trafficTickets/{newTicket.Id}");
             }
             catch (Exception ex)
             {
@@ -49,7 +51,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteTrafficTicketAsync(string trafficTicketId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DeleteTrafficTicketAsync(string trafficTicketId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -57,7 +59,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (ticket == null)
                 {
-                    return ServiceResponse<bool>.Error("Trafik cezası bulunamadı");
+                    return ServiceResult<bool>.Error("Trafik Cezası Bulunamadı", "Belirtilen ID'ye sahip trafik cezası bulunamadı.", HttpStatusCode.NotFound);
                 }
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
@@ -67,7 +69,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtTrafficTicket>().Remove(ticket);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
-                return ServiceResponse<bool>.Success(true, "Trafik cezası başarıyla silindi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -77,7 +79,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<TrafficTicketDTO>> GetTrafficTicketByIdAsync(string trafficTicketId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<TrafficTicketDTO>> GetTrafficTicketByIdAsync(string trafficTicketId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -92,12 +94,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (ticket == null)
                 {
-                    return ServiceResponse<TrafficTicketDTO>.Error("Trafik cezası bulunamadı");
+                    return ServiceResult<TrafficTicketDTO>.Error("Trafik Cezası Bulunamadı", "Belirtilen ID'ye sahip trafik cezası bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var ticketDTO = ticket.Adapt<TrafficTicketDTO>();
 
-                return ServiceResponse<TrafficTicketDTO>.Success(ticketDTO, "Trafik cezası başarıyla getirildi");
+                return ServiceResult<TrafficTicketDTO>.SuccessAsOk(ticketDTO);
             }
             catch (Exception ex)
             {
@@ -106,7 +108,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<TrafficTicketDTO>>> GetTrafficTicketsAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<TrafficTicketDTO>>> GetTrafficTicketsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -121,7 +123,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 var ticketDTOs = tickets.Adapt<IEnumerable<TrafficTicketDTO>>();
 
-                return ServiceResponse<IEnumerable<TrafficTicketDTO>>.Success(ticketDTOs, "Trafik cezası listesi başarıyla getirildi");
+                return ServiceResult<IEnumerable<TrafficTicketDTO>>.SuccessAsOk(ticketDTOs);
             }
             catch (Exception ex)
             {
@@ -130,7 +132,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> UpdateTrafficTicketAsync(string trafficTicketId, UpdateTrafficTicketDTO updateTrafficTicketDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> UpdateTrafficTicketAsync(string trafficTicketId, UpdateTrafficTicketDTO updateTrafficTicketDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -138,7 +140,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (ticket == null)
                 {
-                    return ServiceResponse<bool>.Error("Trafik cezası bulunamadı");
+                    return ServiceResult<bool>.Error("Trafik Cezası Bulunamadı", "Belirtilen ID'ye sahip trafik cezası bulunamadı.", HttpStatusCode.NotFound);
                 }
                 await unitOfWork.BeginTransactionAsync(cancellationToken);
 
@@ -157,7 +159,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     if (!fileResult.IsSuccess)
                     {
                         await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                        return ServiceResponse<bool>.Error(fileResult.Message);
+                        return ServiceResult<bool>.Error("Dosya Yükleme Hatası", fileResult.Fail?.Detail ?? "Dosya yüklenirken bir hata oluştu.", HttpStatusCode.BadRequest);
                     }
 
                     ticket.FileId = fileResult.Data.FirstOrDefault()?.Id;
@@ -165,7 +167,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtTrafficTicket>().Update(ticket);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
-                return ServiceResponse<bool>.Success(true, "Trafik cezası başarıyla güncellendi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {

@@ -1,6 +1,7 @@
-﻿using IdeKusgozManagement.Application.Contracts.Services;
+using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.ProjectDTOs;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,14 +16,14 @@ namespace IdeKusgozManagement.WebAPI.Controllers
         public async Task<IActionResult> GetProjects(CancellationToken cancellationToken)
         {
             var result = await projectService.GetProjectsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("active-projects")]
         public async Task<IActionResult> GetActiveProjects(CancellationToken cancellationToken)
         {
             var result = await projectService.GetActiveProjectsAsync(cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [RoleFilter("Admin", "Yönetici", "Şef")]
@@ -34,7 +35,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Proje ID'si gereklidir");
             }
             var result = await projectService.EnableProjectAsync(projectId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [RoleFilter("Admin", "Yönetici", "Şef")]
@@ -46,7 +47,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Proje ID'si gereklidir");
             }
             var result = await projectService.DisableProjectAsync(projectId);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("{projectId}")]
@@ -58,7 +59,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await projectService.GetProjectByIdAsync(projectId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost]
@@ -71,7 +72,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await projectService.CreateProjectAsync(createProjectDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("{projectId}")]
@@ -89,7 +90,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await projectService.UpdateProjectAsync(projectId, updateProjectDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpDelete("{projectId}")]
@@ -102,7 +103,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await projectService.DeleteProjectAsync(projectId, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

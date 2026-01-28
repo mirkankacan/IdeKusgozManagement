@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.ProjectDTOs;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
@@ -7,12 +7,14 @@ using Mapster;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class ProjectService(IUnitOfWork unitOfWork, ILogger<ProjectService> logger, UserManager<ApplicationUser> userManager) : IProjectService
     {
-        public async Task<ServiceResponse<string>> CreateProjectAsync(CreateProjectDTO createProjectDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<string>> CreateProjectAsync(CreateProjectDTO createProjectDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -20,7 +22,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (existingProject)
                 {
-                    return ServiceResponse<string>.Error("Bu isimde bir proje zaten mevcut");
+                    return ServiceResult<string>.Error("Proje Zaten Mevcut", "Bu isimde bir proje zaten mevcut. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 var project = createProjectDTO.Adapt<IdtProject>();
@@ -28,7 +30,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await unitOfWork.GetRepository<IdtProject>().AddAsync(project, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<string>.Success(project.Id, "Proje başarıyla oluşturuldu");
+                return ServiceResult<string>.SuccessAsCreated(project.Id, $"/api/projects/{project.Id}");
             }
             catch (Exception ex)
             {
@@ -37,7 +39,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteProjectAsync(string projectId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DeleteProjectAsync(string projectId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -45,20 +47,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (project == null)
                 {
-                    return ServiceResponse<bool>.Error("Proje bulunamadı");
+                    return ServiceResult<bool>.Error("Proje Bulunamadı", "Belirtilen ID'ye sahip proje bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var isProjectUsed = await unitOfWork.GetRepository<IdtWorkRecord>().AnyAsync(wre => wre.ProjectId == project.Id, cancellationToken);
 
                 if (isProjectUsed)
                 {
-                    return ServiceResponse<bool>.Error("Bu proje iş kayıtlarında kullanıldığı için silinemez");
+                    return ServiceResult<bool>.Error("Silme İşlemi Başarısız", "Bu proje iş kayıtlarında kullanıldığı için silinemez.", HttpStatusCode.BadRequest);
                 }
 
                 unitOfWork.GetRepository<IdtProject>().Remove(project);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Proje başarıyla silindi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -67,7 +69,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DisableProjectAsync(string projectId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DisableProjectAsync(string projectId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -75,7 +77,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (project == null)
                 {
-                    return ServiceResponse<bool>.Error("Proje bulunamadı");
+                    return ServiceResult<bool>.Error("Proje Bulunamadı", "Belirtilen ID'ye sahip proje bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 project.IsActive = false;
@@ -83,7 +85,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtProject>().Update(project);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Proje başarıyla pasif duruma getirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -92,7 +94,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> EnableProjectAsync(string projectId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> EnableProjectAsync(string projectId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -100,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (project == null)
                 {
-                    return ServiceResponse<bool>.Error("Proje bulunamadı");
+                    return ServiceResult<bool>.Error("Proje Bulunamadı", "Belirtilen ID'ye sahip proje bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 project.IsActive = true;
@@ -108,7 +110,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 unitOfWork.GetRepository<IdtProject>().Update(project);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Proje başarıyla aktif duruma getirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -117,7 +119,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<ProjectDTO>>> GetActiveProjectsAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<ProjectDTO>>> GetActiveProjectsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -153,7 +155,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     }
                 }
 
-                return ServiceResponse<IEnumerable<ProjectDTO>>.Success(mappedProjects, "Aktif proje listesi başarıyla getirildi");
+                return ServiceResult<IEnumerable<ProjectDTO>>.SuccessAsOk(mappedProjects);
             }
             catch (Exception ex)
             {
@@ -162,7 +164,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<ProjectDTO>> GetProjectByIdAsync(string projectId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<ProjectDTO>> GetProjectByIdAsync(string projectId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -170,7 +172,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (project == null)
                 {
-                    return ServiceResponse<ProjectDTO>.Error("Proje bulunamadı");
+                    return ServiceResult<ProjectDTO>.Error("Proje Bulunamadı", "Belirtilen ID'ye sahip proje bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var projectDTO = project.Adapt<ProjectDTO>();
@@ -201,7 +203,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     }
                 }
 
-                return ServiceResponse<ProjectDTO>.Success(projectDTO, "Proje başarıyla getirildi");
+                return ServiceResult<ProjectDTO>.SuccessAsOk(projectDTO);
             }
             catch (Exception ex)
             {
@@ -210,7 +212,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<ProjectDTO>>> GetProjectsAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<ProjectDTO>>> GetProjectsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -245,7 +247,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                         }
                     }
                 }
-                return ServiceResponse<IEnumerable<ProjectDTO>>.Success(mappedProjects, "Proje listesi başarıyla getirildi");
+                return ServiceResult<IEnumerable<ProjectDTO>>.SuccessAsOk(mappedProjects);
             }
             catch (Exception ex)
             {
@@ -254,7 +256,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> UpdateProjectAsync(string projectId, UpdateProjectDTO updateProjectDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> UpdateProjectAsync(string projectId, UpdateProjectDTO updateProjectDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -262,21 +264,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (project == null)
                 {
-                    return ServiceResponse<bool>.Error("Proje bulunamadı");
+                    return ServiceResult<bool>.Error("Proje Bulunamadı", "Belirtilen ID'ye sahip proje bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var existingProject = await unitOfWork.GetRepository<IdtProject>().AnyAsync(e => e.Name.ToLower() == updateProjectDTO.Name.ToLower() && e.Id != projectId, cancellationToken);
 
                 if (existingProject)
                 {
-                    return ServiceResponse<bool>.Error("Bu isimde başka bir proje zaten mevcut");
+                    return ServiceResult<bool>.Error("Proje Zaten Mevcut", "Bu isimde başka bir proje zaten mevcut. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 updateProjectDTO.Adapt(project);
                 unitOfWork.GetRepository<IdtProject>().Update(project);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Proje başarıyla güncellendi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {

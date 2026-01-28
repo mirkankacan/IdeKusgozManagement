@@ -1,4 +1,5 @@
-﻿using IdeKusgozManagement.WebUI.Models.LeaveRequestModels;
+﻿using IdeKusgozManagement.WebUI.Extensions;
+using IdeKusgozManagement.WebUI.Models.LeaveRequestModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +30,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetLeaveRequests(CancellationToken cancellationToken)
         {
             var response = await _leaveRequestApiService.GetLeaveRequestsAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -37,7 +38,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetSubordinateLeaveRequests(CancellationToken cancellationToken)
         {
             var response = await _leaveRequestApiService.GetSubordinateLeaveRequestsAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -50,7 +51,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _leaveRequestApiService.GetLeaveRequestByIdAsync(id, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -71,7 +72,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _leaveRequestApiService.CreateLeaveRequestAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -89,7 +90,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _leaveRequestApiService.UpdateLeaveRequestAsync(leaveRequestId, model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -103,7 +104,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _leaveRequestApiService.DeleteLeaveRequestAsync(leaveRequestId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -111,7 +112,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetLeaveRequestsByStatus(int status, [FromQuery] string? userId, CancellationToken cancellationToken)
         {
             var response = await _leaveRequestApiService.GetLeaveRequestsByStatusAsync(status, userId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -124,7 +125,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return Unauthorized("Lütfen tekrar giriş yapınız");
             }
             var response = await _leaveRequestApiService.GetLeaveRequestsByStatusAsync(status, userId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -132,7 +133,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetMyLeaveRequests(CancellationToken cancellationToken)
         {
             var response = await _leaveRequestApiService.GetMyLeaveRequestsAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -140,7 +141,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetLeaveRequestsByUserId(string userId, CancellationToken cancellationToken)
         {
             var response = await _leaveRequestApiService.GetLeaveRequestsByUserIdAsync(userId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -154,7 +155,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _leaveRequestApiService.ApproveLeaveRequestAsync(leaveRequestId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -169,7 +170,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
 
             var response = await _leaveRequestApiService.RejectLeaveRequestAsync(leaveRequestId, rejectReason,
             cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

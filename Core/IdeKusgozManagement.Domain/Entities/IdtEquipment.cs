@@ -11,5 +11,6 @@ namespace IdeKusgozManagement.Domain.Entities
         public virtual ICollection<IdtMachineWorkRecord> MachineWorkRecord { get; set; } = new List<IdtMachineWorkRecord>();
         public virtual ICollection<IdtTrafficTicket> TrafficTickets { get; set; } = new List<IdtTrafficTicket>();
         public virtual ICollection<IdtFile> Files { get; set; } = new List<IdtFile>();
+        public virtual ICollection<IdtCompanyPayment> CompanyPayments { get; set; } = new List<IdtCompanyPayment>();
     }
 }

@@ -6,9 +6,8 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <style>
-
 
     </style>
 }
@@ -49,7 +48,7 @@
     </div>
 </div>
 <div class="modal fade" id="updateAdvanceRequestModal" tabindex="-1" aria-labelledby="updateAdvanceRequestModalLabel"
-    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -79,7 +78,7 @@
                         <div class="col-md-12">
                             <label for="txtUDescription" class="form-label">Açıklama (İsteğe Bağlı)</label>
                             <textarea class="form-control" id="txtUDescription" rows="3"
-                                placeholder="Açıklama..."></textarea>
+                                      placeholder="Açıklama..."></textarea>
                         </div>
 
                     </div>
@@ -94,7 +93,7 @@
 </div>
 <!-- Approve Modal -->
 <div class="modal fade" id="approveAdvanceModal" tabindex="-1" aria-labelledby="approveAdvanceModalLabel"
-    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -183,7 +182,7 @@
                 <div class="mb-3">
                     <label for="txtRejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
                     <textarea class="form-control" id="txtRejectReason" rows="3"
-                        placeholder="Avans talebini reddetme sebebinizi açıklayın..."></textarea>
+                              placeholder="Avans talebini reddetme sebebinizi açıklayın..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -213,8 +212,8 @@
                     "url": "/avans/liste",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json) {
+                            return json;
                         }
                         return [];
                     },
@@ -230,7 +229,7 @@
                         } catch (e) {
                             errorMessage += ': ' + error;
                         }
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -270,8 +269,10 @@
                                 return `<span class="badge bg-success">${data}</span>`;
                             } else if (row.status === 2) {
                                 return `<span class="badge bg-primary">${data}</span>`;
-                            } else if (row.status === 3 || row.status === 4) {
+                            } else if (row.status === 3 || row.status === 4 || row.status=== 5) {
                                 return `<span class="badge bg-danger">${data}</span>`;
+                            } else if (row.status === 6) {
+                                return `<span class="badge bg-success">${data}</span>`;
                             } else {
                                 return `<span class="badge bg-secondary">${data}</span>`;
                             }
@@ -353,21 +354,19 @@
                         "className": "text-center",
                         "render": function (data, type, row) {
                             var buttons = '<div class="btn-group btn-group-sm" role="group">';
-                            const approvalThreshold = 5000;
                             const amount = parseFloat(row.amount) || 0;
                             const isOverThreshold = amount > approvalThreshold;
 
-                            // Eğer status == 1 (ApprovedByUnitManager) veya 2 (ApprovedByChief) ise
-                            if (row.status === 1 || row.status === 2) {
+                            if (row.status === 1 || row.status === 2 || row.status===6) {
                                 // Eğer parçalar varsa görüntüle butonu göster
                                 if (row.hasParts && row.parts && row.parts.length > 0) {
                                     buttons += `
-                                                <button type="button" class="btn btn-outline-info btn-sm"
-                                                    onclick="viewAdvanceParts('${row.id}')" 
-                                                    data-advance-id="${row.id}"
-                                                    title="Parçaları Görüntüle">
-                                                    <i class="fas fa-list"></i>
-                                                </button>`;
+                                                                <button type="button" class="btn btn-outline-info btn-sm"
+                                                                    onclick="viewAdvanceParts('${row.id}')"
+                                                                    data-advance-id="${row.id}"
+                                                                    title="Parçaları Görüntüle">
+                                                                    <i class="fas fa-list"></i>
+                                                                </button>`;
                                 }
                                 buttons += '</div>';
                                 return buttons;
@@ -377,24 +376,23 @@
                             if (window.isUserUnitManager || window.isAdmin) {
                                 if (!isOverThreshold && row.status !== 2) {
 
-
                                     buttons += `
-                                                                                            <button type="button" class="btn btn-outline-warning btn-sm"
-                                                                                                onclick="loadAdvanceForEdit('${row.id}')" title="Düzenle">
-                                                                                                <i class="fas fa-edit"></i>
-                                                                                            </button>
-                                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                                                onclick="deleteAdvanceRequest('${row.id}')" title="Sil">
-                                                                                                <i class="fas fa-trash"></i>
-                                                                                            </button>
-                                                                                              <button type="button" class="btn btn-outline-success btn-sm"
-                                                                                                onclick="approveAdvanceRequest('${row.id}')" title="Onayla">
-                                                                                                <i class="fas fa-check"></i>
-                                                                                            </button>
-                                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                                                onclick="openRejectModal('${row.id}')" title="Reddet">
-                                                                                                <i class="fas fa-times"></i>
-                                                                                            </button>`;
+                                                                                                            <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                                                                onclick="loadAdvanceForEdit('${row.id}')" title="Düzenle">
+                                                                                                                <i class="fas fa-edit"></i>
+                                                                                                            </button>
+                                                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                                                onclick="deleteAdvanceRequest('${row.id}')" title="Sil">
+                                                                                                                <i class="fas fa-trash"></i>
+                                                                                                            </button>
+                                                                                                              <button type="button" class="btn btn-outline-success btn-sm"
+                                                                                                                onclick="approveAdvanceRequest('${row.id}')" title="Onayla">
+                                                                                                                <i class="fas fa-check"></i>
+                                                                                                            </button>
+                                                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                                                onclick="openRejectModal('${row.id}')" title="Reddet">
+                                                                                                                <i class="fas fa-times"></i>
+                                                                                                            </button>`;
                                 }
                             }
                             // Şef rolü kontrolü - Can only approve/reject advances up to ₺5000
@@ -402,22 +400,22 @@
                                 // Only show approve/reject buttons if amount <= ₺5000
                                 if (!isOverThreshold) {
                                     buttons += `
-                                                                                               <button type="button" class="btn btn-outline-warning btn-sm"
-                                                                                                onclick="loadAdvanceForEdit('${row.id}')" title="Düzenle">
-                                                                                                <i class="fas fa-edit"></i>
-                                                                                            </button>
-                                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                                                onclick="deleteAdvanceRequest('${row.id}')" title="Sil">
-                                                                                                <i class="fas fa-trash"></i>
-                                                                                            </button>
-                                                                                            <button type="button" class="btn btn-outline-success btn-sm"
-                                                                                                onclick="approveAdvanceRequest('${row.id}')" title="Onayla">
-                                                                                                <i class="fas fa-check"></i>
-                                                                                            </button>
-                                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                                                onclick="openRejectModal('${row.id}')" title="Reddet">
-                                                                                                <i class="fas fa-times"></i>
-                                                                                            </button>`;
+                                                                                                               <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                                                                onclick="loadAdvanceForEdit('${row.id}')" title="Düzenle">
+                                                                                                                <i class="fas fa-edit"></i>
+                                                                                                            </button>
+                                                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                                                onclick="deleteAdvanceRequest('${row.id}')" title="Sil">
+                                                                                                                <i class="fas fa-trash"></i>
+                                                                                                            </button>
+                                                                                                            <button type="button" class="btn btn-outline-success btn-sm"
+                                                                                                                onclick="approveAdvanceRequest('${row.id}')" title="Onayla">
+                                                                                                                <i class="fas fa-check"></i>
+                                                                                                            </button>
+                                                                                                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                                                                onclick="openRejectModal('${row.id}')" title="Reddet">
+                                                                                                                <i class="fas fa-times"></i>
+                                                                                                            </button>`;
                                 }
                             }
 
@@ -516,45 +514,29 @@
             };
 
             try {
-                const response = await $.ajax({
-                    url: '/avans/istek-olustur',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(advanceData)
-                });
+                const response = await makeRequest('/avans/istek-olustur', 'POST', advanceData);
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#createAdvanceRequestModal').modal('hide');
-                    advancesTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('Avans talebi başarıyla oluşturuldu.', 'success', 'Başarılı!');
+                $('#createAdvanceRequestModal').modal('hide');
+                advancesTable.ajax.reload();
             } catch (error) {
                 console.error('Create advance error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Avans talebi oluşturulurken hata oluştu.');
             }
         }
 
         async function loadAdvanceForEdit(advanceId) {
             try {
-                const response = await $.ajax({
-                    url: `/avans/${advanceId}`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/avans/${advanceId}`, 'GET');
 
-                if (response.isSuccess) {
-                    $('#txtUId').val(response.data.id);
-                    $('#txtUAmount').val(response.data.amount);
-                    $('#txtUDescription').val(response.data.description);
-                    $('#selectUAdvanceReason').val(response.data.reason);
-                    $('#updateAdvanceRequestModal').modal('show');
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                $('#txtUId').val(response.id);
+                $('#txtUAmount').val(response.amount);
+                $('#txtUDescription').val(response.description);
+                $('#selectUAdvanceReason').val(response.reason);
+                $('#updateAdvanceRequestModal').modal('show');
             } catch (error) {
                 console.error('Load advance error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Avans bilgisi yüklenirken hata oluştu.');
             }
         }
 
@@ -567,23 +549,14 @@
             };
 
             try {
-                const response = await $.ajax({
-                    url: `/avans/${expenseId}`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify(advanceData)
-                });
+                const response = await makeRequest(`/avans/${expenseId}`, 'PUT', advanceData);
 
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#updateAdvanceRequestModal').modal('hide');
-                    advancesTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('Avans talebi başarıyla güncellendi.', 'success', 'Başarılı!');
+                $('#updateAdvanceRequestModal').modal('hide');
+                advancesTable.ajax.reload();
             } catch (error) {
                 console.error('Update advance error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Avans talebi güncellenirken hata oluştu.');
             }
         }
         async function deleteAdvanceRequest(advanceRequestId) {
@@ -600,20 +573,14 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/avans/${advanceRequestId}`,
-                                type: 'DELETE',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/avans/${advanceRequestId}`, 'DELETE');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Silme başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;
@@ -644,21 +611,14 @@
         async function approveAdvanceRequest(advanceId) {
             try {
                 // Avans bilgisini al
-                const response = await $.ajax({
-                    url: `/avans/${advanceId}`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/avans/${advanceId}`, 'GET');
 
-                if (response.isSuccess) {
-                    approveTotalAmount = parseFloat(response.data.amount) || 0;
-                    approveParts = [];
-                    openApproveModal(advanceId, approveTotalAmount);
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                approveTotalAmount = parseFloat(response.amount) || 0;
+                approveParts = [];
+                openApproveModal(advanceId, approveTotalAmount);
             } catch (error) {
                 console.error('Avans bilgisi alınırken hata:', error);
-                toastr.error(error.responseJSON?.message || 'Avans bilgisi alınırken hata oluştu', 'Hata!');
+                handleError(error, 'Avans bilgisi alınırken hata oluştu');
             }
         }
 
@@ -737,42 +697,42 @@
             const maxAmountForThisPart = approveTotalAmount - otherPartsTotal;
 
             const partHtml = `
-                                                                            <div class="card mb-3 approve-part-item" data-part-id="${partId}">
-                                                                                <div class="card-body">
-                                                                                    <div class="row g-3 align-items-end">
-                                                                                        <div class="col-md-2">
-                                                                                            <label class="form-label">Gün</label>
-                                                                                            <select class="form-select approve-part-day" required>
-                                                                                                ${days.map(d => `<option value="${d}" ${d === part.day ? 'selected' : ''}>${d}</option>`).join('')}
-                                                                                            </select>
-                                                                                        </div>
-                                                                                        <div class="col-md-3">
-                                                                                            <label class="form-label">Ay</label>
-                                                                                            <select class="form-select approve-part-month" required>
-                                                                                                ${months.map(m => `<option value="${m.value}" ${m.value === part.month ? 'selected' : ''}>${m.text}</option>`).join('')}
-                                                                                            </select>
-                                                                                        </div>
-                                                                                        <div class="col-md-2">
-                                                                                            <label class="form-label">Yıl</label>
-                                                                                            <select class="form-select approve-part-year" required>
-                                                                                                ${years.map(y => `<option value="${y}" ${y === part.year ? 'selected' : ''}>${y}</option>`).join('')}
-                                                                                            </select>
-                                                                                        </div>
-                                                                                        <div class="col-md-3">
-                                                                                            <label class="form-label">Tutar</label>
-                                                                                            <input type="number" class="form-control approve-part-amount" 
-                                                                                                   step="0.01" min="0.01" max="${maxAmountForThisPart > 0 ? maxAmountForThisPart : approveTotalAmount}" value="${amount}" required>
-                                                                                        </div>
-                                                                                        <div class="col-md-2">
-                                                                                            <button type="button" class="btn btn-outline-danger btn-sm w-100" 
-                                                                                                    onclick="removeApprovePart('${partId}')" title="Sil">
-                                                                                                <i class="fas fa-trash"></i>
-                                                                                            </button>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        `;
+                                                                                            <div class="card mb-3 approve-part-item" data-part-id="${partId}">
+                                                                                                <div class="card-body">
+                                                                                                    <div class="row g-3 align-items-end">
+                                                                                                        <div class="col-md-2">
+                                                                                                            <label class="form-label">Gün</label>
+                                                                                                            <select class="form-select approve-part-day" required>
+                                                                                                                ${days.map(d => `<option value="${d}" ${d === part.day ? 'selected' : ''}>${d}</option>`).join('')}
+                                                                                                            </select>
+                                                                                                        </div>
+                                                                                                        <div class="col-md-3">
+                                                                                                            <label class="form-label">Ay</label>
+                                                                                                            <select class="form-select approve-part-month" required>
+                                                                                                                ${months.map(m => `<option value="${m.value}" ${m.value === part.month ? 'selected' : ''}>${m.text}</option>`).join('')}
+                                                                                                            </select>
+                                                                                                        </div>
+                                                                                                        <div class="col-md-2">
+                                                                                                            <label class="form-label">Yıl</label>
+                                                                                                            <select class="form-select approve-part-year" required>
+                                                                                                                ${years.map(y => `<option value="${y}" ${y === part.year ? 'selected' : ''}>${y}</option>`).join('')}
+                                                                                                            </select>
+                                                                                                        </div>
+                                                                                                        <div class="col-md-3">
+                                                                                                            <label class="form-label">Tutar</label>
+                                                                                                            <input type="number" class="form-control approve-part-amount"
+                                                                                                                   step="0.01" min="0.01" max="${maxAmountForThisPart > 0 ? maxAmountForThisPart : approveTotalAmount}" value="${amount}" required>
+                                                                                                        </div>
+                                                                                                        <div class="col-md-2">
+                                                                                                            <button type="button" class="btn btn-outline-danger btn-sm w-100"
+                                                                                                                    onclick="removeApprovePart('${partId}')" title="Sil">
+                                                                                                                <i class="fas fa-trash"></i>
+                                                                                                            </button>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        `;
 
             $('#approvePartsContainer').append(partHtml);
             updateRemainingAmount();
@@ -808,7 +768,7 @@
 
         window.removeApprovePart = function (partId) {
             if (approveParts.length <= 1) {
-                toastr.warning('En az bir parça olmalıdır.');
+                showToast('En az bir parça olmalıdır.', 'warning', 'Uyarı');
                 return;
             }
 
@@ -925,12 +885,12 @@
             const totalPartsAmount = approveParts.reduce((sum, part) => sum + (parseFloat(part.amount) || 0), 0);
 
             if (totalPartsAmount > approveTotalAmount) {
-                toastr.error(`Toplam parça tutarı (${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalPartsAmount)}) toplam avans tutarını (${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(approveTotalAmount)}) aşamaz.`);
+                showToast(`Toplam parça tutarı (${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalPartsAmount)}) toplam avans tutarını (${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(approveTotalAmount)}) aşamaz.`, 'error', 'Hata');
                 return false;
             }
 
             if (totalPartsAmount < approveTotalAmount) {
-                toastr.warning(`Toplam parça tutarı (${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalPartsAmount)}) toplam avans tutarına (${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(approveTotalAmount)}) eşit olmalıdır.`);
+                showToast(`Toplam parça tutarı (${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalPartsAmount)}) toplam avans tutarına (${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(approveTotalAmount)}) eşit olmalıdır.`, 'warning', 'Uyarı');
                 return false;
             }
 
@@ -938,7 +898,7 @@
             for (let part of approveParts) {
                 const date = new Date(part.year, part.month - 1, part.day);
                 if (date.getDate() !== part.day || date.getMonth() !== part.month - 1 || date.getFullYear() !== part.year) {
-                    toastr.error('Geçersiz tarih seçildi.');
+                    showToast('Geçersiz tarih seçildi.', 'error', 'Hata');
                     return false;
                 }
             }
@@ -963,31 +923,14 @@
             submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Onaylanıyor...');
 
             try {
-                const response = await $.ajax({
-                    url: `/avans/${advanceId}/onayla`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ parts: parts })
-                });
+                const response = await makeRequest(`/avans/${advanceId}/onayla`, 'PUT', { parts: parts });
 
-                if (response.isSuccess) {
-                    toastr.success(response.message || 'Avans talebi başarıyla onaylandı.', 'Başarılı!');
-                    $('#approveAdvanceModal').modal('hide');
-                    advancesTable.ajax.reload(null, false);
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                showToast('Avans talebi başarıyla onaylandı.', 'success', 'Başarılı!');
+                $('#approveAdvanceModal').modal('hide');
+                advancesTable.ajax.reload(null, false);
             } catch (error) {
                 console.error('Onaylama hatası:', error);
-                let errorMessage = 'Onaylama başarısız';
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                }
-                toastr.error(errorMessage, 'Hata!');
+                handleError(error, 'Onaylama başarısız');
             } finally {
                 submitBtn.prop('disabled', false).html('<i class="fas fa-check me-1"></i>Onayla');
             }
@@ -997,7 +940,7 @@
             const row = advancesTable.rows().data().toArray().find(r => r.id === advanceId);
 
             if (!row || !row.parts || row.parts.length === 0) {
-                toastr.warning('Parça bilgisi bulunamadı');
+                showToast('Parça bilgisi bulunamadı', 'warning', 'Uyarı');
                 return;
             }
 
@@ -1026,12 +969,12 @@
                 totalAmount += parseFloat(part.amount);
 
                 tbody.append(`
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td>${formattedDate}</td>
-                                <td class="text-end">${formattedAmount}</td>
-                            </tr>
-                        `);
+                                            <tr>
+                                                <td>${index + 1}</td>
+                                                <td>${formattedDate}</td>
+                                                <td class="text-end">${formattedAmount}</td>
+                                            </tr>
+                                        `);
             });
 
             // Toplam satırı ekle
@@ -1040,11 +983,11 @@
                 currency: 'TRY'
             }).format(totalAmount);
             tbody.append(`
-                        <tr class="table-info fw-bold">
-                            <td colspan="2" class="text-end">TOPLAM:</td>
-                            <td class="text-end">${totalFormatted}</td>
-                        </tr>
-                    `);
+                                        <tr class="table-info fw-bold">
+                                            <td colspan="2" class="text-end">TOPLAM:</td>
+                                            <td class="text-end">${totalFormatted}</td>
+                                        </tr>
+                                    `);
 
             $('#viewPartsModal').modal('show');
         }
@@ -1059,7 +1002,7 @@
                 const advanceRequestId = $('#txtRejectAdvanceRequestId').val();
 
                 if (!advanceRequestId) {
-                    toastr.error('Avans talebi ID\'si bulunamadı');
+                    showToast('Avans talebi ID\'si bulunamadı', 'error', 'Hata');
                     return;
                 }
 
@@ -1068,31 +1011,16 @@
                 const submitBtn = $('#btnRejectAdvanceRequest');
                 submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Reddediliyor...');
 
-                const response = await $.ajax({
-                    url: `/avans/${advanceRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : null}`,
-                    type: 'PUT',
-                    contentType: 'application/json'
-                });
+                const url = `/avans/${advanceRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : ''}`;
+                await makeRequest(url, 'PUT');
 
-                toastr.success('Avans talebi başarıyla reddedildi.');
+                showToast('Avans talebi başarıyla reddedildi.', 'success', 'Başarılı');
                 $('#rejectModal').modal('hide');
                 advancesTable.ajax.reload(null, false);
 
             } catch (error) {
                 console.error('Reddetme hatası:', error);
-                let errorMessage = 'Avans talebi reddedilirken hata oluştu';
-
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'Avans talebi reddedilirken hata oluştu');
             } finally {
                 const submitBtn = $('#btnRejectAdvanceRequest');
                 submitBtn.prop('disabled', false).html('<i class="fas fa-times me-1"></i>Reddet');

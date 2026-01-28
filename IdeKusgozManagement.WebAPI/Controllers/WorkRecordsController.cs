@@ -1,7 +1,8 @@
-﻿using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
+using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Enums;
 using IdeKusgozManagement.Infrastructure.Authorization;
+using IdeKusgozManagement.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,7 +28,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await workRecordService.GetWorkRecordsByUserIdAndDateAsync(currentUserId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -44,7 +45,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await workRecordService.GetApprovedWorkRecordsByUserAsync(userId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -62,7 +63,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await workRecordService.GetWorkRecordsByUserIdDateStatusAsync(userId, date, status, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -79,7 +80,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await workRecordService.GetWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -99,7 +100,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("İşlenecek kayıt bulunamadı");
             }
             var result = await workRecordService.BatchCreateOrModifyWorkRecordsAsync(createWorkRecordDTOs, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -121,7 +122,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
             }
 
             var result = await workRecordService.BatchUpdateWorkRecordsByUserIdAsync(userId, updateWorkRecordDTO, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -138,7 +139,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await workRecordService.BatchApproveWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -155,7 +156,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Kullanıcı ID'si gereklidir");
             }
             var result = await workRecordService.BatchRejectWorkRecordsByUserIdAndDateAsync(userId, date, rejectReason, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -171,7 +172,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Puantaj ID'si gereklidir");
             }
             var result = await workRecordService.RejectWorkRecordByIdAsync(id, rejectReason, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         /// <summary>
@@ -187,7 +188,7 @@ namespace IdeKusgozManagement.WebAPI.Controllers
                 return BadRequest("Puantaj ID'si gereklidir");
             }
             var result = await workRecordService.ApproveWorkRecordByIdAsync(id, cancellationToken);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
     }
 }

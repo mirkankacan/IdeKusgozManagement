@@ -17,6 +17,9 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.Property(x => x.IsActive)
                 .IsRequired()
                 .HasDefaultValue(true);
+
+            builder.Property(x => x.ExpenseType)
+            .IsRequired();
         }
     }
 }

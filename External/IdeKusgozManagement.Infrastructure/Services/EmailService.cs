@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.OptionDTOs;
 using Microsoft.Extensions.Logging;
@@ -10,7 +10,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class EmailService(ILogger<EmailService> logger, IOptions<EmailOptionsDTO> options) : IEmailService
     {
-        public async Task<ServiceResponse<bool>> SendVerificationCodeEmailAsync(string email, string verificationCode, string fullName, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> SendVerificationCodeEmailAsync(string email, string verificationCode, string fullName, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -18,7 +18,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!ValidateSmtpSettings(smtpSettings))
                 {
                     logger.LogError("SMTP ayarları eksik veya hatalı");
-                    return ServiceResponse<bool>.Error(message: "SMTP ayarları eksik veya hatalı");
+                    return ServiceResult<bool>.Error("SMTP Yapılandırma Hatası", "SMTP ayarları eksik veya hatalı. Lütfen sistem yöneticisiyle iletişime geçin.", HttpStatusCode.InternalServerError);
                 }
 
                 using var smtpClient = CreateSmtpClient(smtpSettings);
@@ -28,7 +28,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 await smtpClient.SendMailAsync(mailMessage, cancellationToken);
 
                 logger.LogInformation("Doğrulama kodu emaili başarıyla gönderildi. Email: {Email}", email);
-                return ServiceResponse<bool>.Success(true, "Doğrulama kodu emaili başarıyla gönderildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (SmtpException ex)
             {

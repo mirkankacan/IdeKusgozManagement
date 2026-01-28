@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using IdeKusgozManagement.Infrastructure.Helpers;
+using Microsoft.AspNetCore.Mvc;
 using Serilog.Context;
 using System.Net;
 using System.Security.Claims;
@@ -9,14 +10,18 @@ namespace IdeKusgozManagement.WebAPI.Middlewares
     public class GlobalExceptionMiddleware : IMiddleware
     {
         private readonly ILogger<GlobalExceptionMiddleware> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public GlobalExceptionMiddleware(ILogger<GlobalExceptionMiddleware> logger)
+        public GlobalExceptionMiddleware(ILogger<GlobalExceptionMiddleware> logger, IHttpContextAccessor httpContextAccessor)
         {
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
+            SetLogContext(context);
+
             try
             {
                 await next(context);
@@ -27,30 +32,41 @@ namespace IdeKusgozManagement.WebAPI.Middlewares
             }
         }
 
+        private void SetLogContext(HttpContext context)
+        {
+            var request = context.Request;
+
+            var userId = context.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? null;
+            var clientIp = IpHelper.GetClientIp(_httpContextAccessor);
+            var userAgent = IpHelper.GetUserAgent(_httpContextAccessor);
+            var requestId = context.TraceIdentifier;
+            var action = $"{request.Method} {request.Path}";
+            var endpoint = context.GetEndpoint();
+            var controllerActionDescriptor = endpoint?.Metadata
+                .GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>();
+
+            var module = controllerActionDescriptor?.ControllerName + "Controller" ?? "Unknown";
+
+
+            LogContext.PushProperty("UserId", userId);
+            LogContext.PushProperty("Action", action);
+            LogContext.PushProperty("Module", module);
+            LogContext.PushProperty("ClientIP", clientIp);
+            LogContext.PushProperty("UserAgent", userAgent);
+            LogContext.PushProperty("RequestId", requestId);
+        }
+
+
         private async Task LogAndHandleExceptionAsync(HttpContext context, Exception exception)
         {
             var request = context.Request;
 
-            var userId = context.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "Anonymous";
-            var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
-            var userAgent = request.Headers["User-Agent"].ToString();
-            var requestId = context.TraceIdentifier;
-            var action = $"{request.Method} {request.Path}";
-            var module = "GlobalExceptionMiddleware";
-
-            using (LogContext.PushProperty("UserId", userId))
-            using (LogContext.PushProperty("Action", action))
-            using (LogContext.PushProperty("Module", module))
-            using (LogContext.PushProperty("ClientIP", clientIp))
-            using (LogContext.PushProperty("UserAgent", userAgent))
-            using (LogContext.PushProperty("RequestId", requestId))
-            {
-                _logger.LogError(exception,
-                    "HTTP {Method} {Path} başarısız oldu. QueryString: {QueryString}",
-                    request.Method,
-                    request.Path,
-                    request.QueryString.ToString());
-            }
+            // LogContext zaten SetLogContext() tarafından set edildi
+            _logger.LogError(exception,
+                "HTTP {Method} {Path} başarısız oldu. QueryString: {QueryString}",
+                request.Method,
+                request.Path,
+                request.QueryString.ToString());
 
             await HandleExceptionAsync(context, exception);
         }
@@ -82,6 +98,7 @@ namespace IdeKusgozManagement.WebAPI.Middlewares
             var json = JsonSerializer.Serialize(problemDetails, options);
             await context.Response.WriteAsync(json);
         }
+
 
         private static ProblemDetails CreateUnauthorizedProblemDetails(HttpContext context)
         {
@@ -160,4 +177,6 @@ namespace IdeKusgozManagement.WebAPI.Middlewares
             };
         }
     }
+
+
 }

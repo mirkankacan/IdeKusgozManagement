@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Doküman Tipi Yönetimi";
 }
@@ -138,8 +138,8 @@
                     "url": "/dokuman/tip-liste",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json && Array.isArray(json)) {
+                            return json;
                         }
                         return [];
                     },
@@ -156,7 +156,7 @@
                             errorMessage += ': ' + error;
                         }
 
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -262,44 +262,26 @@
             };
 
             try {
-                const response = await $.ajax({
-                    url: '/dokuman/tip',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(documentTypeData)
-                });
-
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#createDocumentTypeModal').modal('hide');
-                    documentTypesTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                await makeRequest('/dokuman/tip', 'POST', documentTypeData);
+                showToast('Doküman tipi başarıyla oluşturuldu', 'success', 'Başarılı!');
+                $('#createDocumentTypeModal').modal('hide');
+                documentTypesTable.ajax.reload();
             } catch (error) {
                 console.error('Create Document Type error:', error);
-                toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+                handleError(error, 'Doküman tipi oluşturulurken bir hata oluştu');
             }
         }
 
         async function loadDocumentTypeForEdit(documentTypeId) {
             try {
-                const response = await $.ajax({
-                    url: `/dokuman/tip/${documentTypeId}`,
-                    type: 'GET'
-                });
-
-                if (response.isSuccess) {
-                    $('#txtUId').val(response.data.id);
-                    $('#txtUName').val(response.data.name);
-                    $('#txtURenewalPeriod').val(response.data.renewalPeriodInMonths || '');
-                    $('#updateDocumentTypeModal').modal('show');
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                const response = await makeRequest(`/dokuman/tip/${documentTypeId}`, 'GET');
+                $('#txtUId').val(response.id);
+                $('#txtUName').val(response.name);
+                $('#txtURenewalPeriod').val(response.renewalPeriodInMonths || '');
+                $('#updateDocumentTypeModal').modal('show');
             } catch (error) {
                 console.error('Load Document Type error:', error);
-                toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+                handleError(error, 'Doküman tipi yüklenirken bir hata oluştu');
             }
         }
 
@@ -311,23 +293,13 @@
             };
 
             try {
-                const response = await $.ajax({
-                    url: `/dokuman/tip/${documentTypeId}`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify(documentTypeData)
-                });
-
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#updateDocumentTypeModal').modal('hide');
-                    documentTypesTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                await makeRequest(`/dokuman/tip/${documentTypeId}`, 'PUT', documentTypeData);
+                showToast('Doküman tipi başarıyla güncellendi', 'success', 'Başarılı!');
+                $('#updateDocumentTypeModal').modal('hide');
+                documentTypesTable.ajax.reload();
             } catch (error) {
                 console.error('Update Document Type error:', error);
-                toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+                handleError(error, 'Doküman tipi güncellenirken bir hata oluştu');
             }
         }
 
@@ -344,20 +316,12 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
-                        const response = await $.ajax({
-                            url: `/dokuman/tip/${documentTypeId}`,
-                            type: 'DELETE'
-                        });
-
-                        if (response.isSuccess) {
-                            toastr.success(response.message, 'Başarılı!');
-                            documentTypesTable.ajax.reload();
-                        } else {
-                            toastr.error(response.message, 'Hata!');
-                        }
+                        await makeRequest(`/dokuman/tip/${documentTypeId}`, 'DELETE');
+                        showToast('Doküman tipi başarıyla silindi', 'success', 'Başarılı!');
+                        documentTypesTable.ajax.reload();
                     } catch (error) {
                         console.error('Delete Document Type error:', error);
-                        toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+                        handleError(error, 'Doküman tipi silinirken bir hata oluştu');
                     }
                 }
             });

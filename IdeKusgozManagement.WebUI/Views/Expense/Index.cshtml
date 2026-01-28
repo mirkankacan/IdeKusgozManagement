@@ -29,6 +29,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>MASRAF TÜRÜ ADI</th>
+                                <th>MASRAF TİPİ</th>
                                 <th>AKTİF Mİ</th>
                                 <th>İŞLEMLER</th>
                             </tr>
@@ -61,6 +62,16 @@
                             <div class="valid-feedback">İyi görünüyor!</div>
                             <div class="invalid-feedback">Geçerli bir masraf türü adı giriniz.</div>
                         </div>
+                        <div class="col-md-12">
+                            <label for="selectCType" class="form-label">Masraf Tipi</label>
+                            <select class="form-select" id="selectCType" required>
+                                <option value="" selected disabled>Masraf tipi seçiniz...</option>
+                                <option value="0">Masraf Kalemi</option>
+                                <option value="1">Fatura Kalemi</option>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli masraf tipi seçiniz.</div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -91,6 +102,16 @@
                             <div class="valid-feedback">İyi görünüyor!</div>
                             <div class="invalid-feedback">Geçerli bir masraf türü adı giriniz.</div>
                         </div>
+                        <div class="col-md-12">
+                            <label for="selectUType" class="form-label">Masraf Tipi</label>
+                            <select class="form-select" id="selectUType" required>
+                                <option value="" selected disabled>Masraf tipi seçiniz...</option>
+                                <option value="0">Masraf Kalemi</option>
+                                <option value="1">Fatura Kalemi</option>
+                            </select>
+                            <div class="valid-feedback">İyi görünüyor!</div>
+                            <div class="invalid-feedback">Geçerli masraf tipi seçiniz.</div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -112,7 +133,7 @@
             setupEventListeners();
 
             await initializeDataTable();
-            
+
         });
         async function initializeDataTable() {
             expensesTable = $('#expensesTable').DataTable({
@@ -121,8 +142,8 @@
                     "url": "/masraf/liste",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json) {
+                            return json;
                         }
                         return [];
                     },
@@ -139,7 +160,7 @@
                             errorMessage += ': ' + error;
                         }
 
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -156,6 +177,12 @@
                         "data": "name",
                         "render": function (data) {
                             return data ? `<strong>${data}</strong>` : '';
+                        }
+                    },
+                      {
+                        "data": "typeText",
+                        "render": function (data) {
+                            return data ? `${data}` : '';
                         }
                     },
                     {
@@ -177,36 +204,36 @@
 
                             const statusButton = row.isActive
                                 ? `<button type="button" class="btn btn-outline-success btn-sm"
-                                        onclick="deactivateExpense('${row.id}')" title="Pasifleştir">
-                                        <i class="fas fa-toggle-on"></i>
-                                       </button>`
+                                            onclick="deactivateExpense('${row.id}')" title="Pasifleştir">
+                                            <i class="fas fa-toggle-on"></i>
+                                           </button>`
                                 : `<button type="button" class="btn btn-outline-secondary btn-sm"
-                                        onclick="activateExpense('${row.id}')" title="Aktifleştir">
-                                        <i class="fas  fa-toggle-off"></i>
-                                       </button>`;
+                                            onclick="activateExpense('${row.id}')" title="Aktifleştir">
+                                            <i class="fas  fa-toggle-off"></i>
+                                           </button>`;
                             return `<div class="btn-group btn-group-sm" role="group">
-                                             <button type="button" class="btn btn-outline-warning btn-sm"
-                                               onclick="loadExpenseForEdit('${row.id}')" title="Düzenle">
-                                              <i class="fas fa-edit"></i>
-                                             </button>
-                                             ${statusButton}
-                                             <button type="button" class="btn btn-outline-danger btn-sm"
-                                               onclick="deleteExpense('${row.id}')" title="Sil">
-                                              <i class="fas fa-trash"></i>
-                                             </button>
-                                            </div>
-                                       `;
+                                                 <button type="button" class="btn btn-outline-warning btn-sm"
+                                                   onclick="loadExpenseForEdit('${row.id}')" title="Düzenle">
+                                                  <i class="fas fa-edit"></i>
+                                                 </button>
+                                                 ${statusButton}
+                                                 <button type="button" class="btn btn-outline-danger btn-sm"
+                                                   onclick="deleteExpense('${row.id}')" title="Sil">
+                                                  <i class="fas fa-trash"></i>
+                                                 </button>
+                                                </div>
+                                           `;
                         }
                     }
                 ],
-                 "language": {
+                "language": {
                     url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
                 },
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
                 "pageLength": 10,
                 "responsive": true,
                 "searchDelay": 300,
-                "order": [[2, "asc"]],
+                "order": [[3, "asc"]],
                 "drawCallback": function () {
                     var api = this.api();
                     var pageInfo = api.page.info();
@@ -252,107 +279,98 @@
 
         async function createExpense() {
             const expenseData = {
-                name: $('#txtCName').val().trim()
+                name: $('#txtCName').val().trim(),
+                expenseType: $('#selectCType').val()
             };
 
             try {
-                const response = await $.ajax({
-                    url: '/masraf',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(expenseData)
-                });
-
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#createExpenseModal').modal('hide');
-                    expensesTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                await makeRequest('/masraf', 'POST', expenseData);
+                showToast('Masraf türü başarıyla oluşturuldu.', 'success', 'Başarılı!');
+                $('#createExpenseModal').modal('hide');
+                expensesTable.ajax.reload();
             } catch (error) {
                 console.error('Create expense error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Masraf türü oluşturulurken hata oluştu.');
             }
         }
 
         async function loadExpenseForEdit(expenseId) {
             try {
-                const response = await $.ajax({
-                    url: `/masraf/${expenseId}`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/masraf/${expenseId}`, 'GET');
 
-                if (response.isSuccess) {
-                    $('#txtUId').val(response.data.id);
-                    $('#txtUName').val(response.data.name);
-                    $('#updateExpenseModal').modal('show');
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                $('#txtUId').val(response.id);
+                $('#txtUName').val(response.name);
+                $('#selectUType').val(response.expenseType);
+                $('#updateExpenseModal').modal('show');
             } catch (error) {
                 console.error('Load expense error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Masraf türü bilgisi yüklenirken hata oluştu.');
             }
         }
 
         async function updateExpense() {
             const expenseId = $('#txtUId').val();
             const expenseData = {
-                name: $('#txtUName').val()
+                name: $('#txtUName').val().trim(),
+                expenseType: $('#selectUType').val(),
             };
 
             try {
-                const response = await $.ajax({
-                    url: `/masraf/${expenseId}`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify(expenseData)
-                });
-
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#updateExpenseModal').modal('hide');
-                    expensesTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
+                await makeRequest(`/masraf/${expenseId}`, 'PUT', expenseData);
+                showToast('Masraf türü başarıyla güncellendi.', 'success', 'Başarılı!');
+                $('#updateExpenseModal').modal('hide');
+                expensesTable.ajax.reload();
             } catch (error) {
                 console.error('Update expense error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
+                handleError(error, 'Masraf türü güncellenirken hata oluştu.');
             }
         }
 
         async function deleteExpense(expenseId) {
-            Swal.fire({
-                title: 'Emin misiniz?',
-                text: "Bu masraf türü silinecek ve geri alınamayacak!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Evet, Sil!',
-                cancelButtonText: 'İptal'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    try {
-                        const response = await $.ajax({
-                            url: `/masraf/${expenseId}`,
-                            type: 'DELETE'
-                        });
+            try {
+                const result = await Swal.fire({
+                    title: 'Emin misiniz?',
+                    text: "Bu masraf türü silinecek ve geri alınamayacak!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Evet, Sil!',
+                    cancelButtonText: 'İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await makeRequest(`/masraf/${expenseId}`, 'DELETE');
+                            return response;
+                        } catch (error) {
+                            let errorMessage = 'Masraf türü silme başarısız';
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
+                            }
+                            Swal.showValidationMessage(`Hata: ${errorMessage}`);
+                            return false;
 
-                        if (response.isSuccess) {
-                            toastr.success(response.message, 'Başarılı!');
-                            expensesTable.ajax.reload();
-                        } else {
-                            toastr.error(response.message, 'Hata!');
                         }
-                    } catch (error) {
-                        console.error('Delete expense error:', error);
-                        toastr.error(error.responseJSON.message, 'Hata!');
-                    }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+
+                if (result.isConfirmed) {
+                    await Swal.fire({
+                        title: 'Başarılı!',
+                        text: 'Masraf türü başarıyla silindi.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    expensesTable.ajax.reload(null, false);
                 }
-            });
+
+            } catch (error) {
+                console.error('Silme hatası:', error);
+            }
         }
 
         async function activateExpense(expenseId) {
@@ -369,20 +387,14 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/masraf/${expenseId}/aktif-et`,
-                                type: 'PUT',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/masraf/${expenseId}/aktif-et`, 'PUT');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Aktifleştirme başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;
@@ -423,20 +435,14 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/masraf/${expenseId}/pasif-et`,
-                                type: 'PUT',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/masraf/${expenseId}/pasif-et`, 'PUT');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Pasifleştirme başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;

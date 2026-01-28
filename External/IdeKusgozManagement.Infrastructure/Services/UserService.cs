@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.UserDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Application.Interfaces.UnitOfWork;
@@ -8,6 +8,7 @@ using Mapster;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
@@ -15,7 +16,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
     {
         private readonly string[] superiorRoles = new[] { "Şef", "Yönetici", "Admin" };
 
-        public async Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<UserDTO>>> GetUsersAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -50,8 +51,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                     userDTOs.Add(userDTO);
                 }
-
-                return ServiceResponse<IEnumerable<UserDTO>>.Success(userDTOs);
+                userDTOs.OrderBy(x => x.Name);
+                return ServiceResult<IEnumerable<UserDTO>>.SuccessAsOk(userDTOs);
             }
             catch (Exception ex)
             {
@@ -60,14 +61,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<UserDTO>> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<UserDTO>> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    return ServiceResponse<UserDTO>.Error("Kullanıcı bulunamadı");
+                    return ServiceResult<UserDTO>.Error("Kullanıcı Bulunamadı", "Belirtilen ID'ye sahip kullanıcı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var roles = await userManager.GetRolesAsync(user);
@@ -78,7 +79,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 userDTO.SuperiorIds = superiorIds;
 
-                return ServiceResponse<UserDTO>.Success(userDTO);
+                return ServiceResult<UserDTO>.SuccessAsOk(userDTO);
             }
             catch (Exception ex)
             {
@@ -87,7 +88,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<UserDTO>> CreateUserAsync(CreateUserDTO createUserDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<UserDTO>> CreateUserAsync(CreateUserDTO createUserDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -97,7 +98,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var existingUser = await userManager.FindByNameAsync(createUserDTO.TCNo);
                 if (existingUser != null)
                 {
-                    return ServiceResponse<UserDTO>.Error("Bu kullanıcı adı zaten kullanılıyor");
+                    return ServiceResult<UserDTO>.Error("Kullanıcı Adı Zaten Kullanılıyor", "Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir TC No kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 var user = createUserDTO.Adapt<ApplicationUser>();
@@ -107,8 +108,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var result = await userManager.CreateAsync(user, createUserDTO.Password);
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<UserDTO>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<UserDTO>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
                 if (!string.IsNullOrEmpty(createUserDTO.RoleName))
@@ -165,7 +166,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var userDTO = user.Adapt<UserDTO>();
                 userDTO.RoleName = createUserDTO.RoleName;
 
-                return ServiceResponse<UserDTO>.Success(userDTO, "Kullanıcı başarıyla oluşturuldu");
+                return ServiceResult<UserDTO>.SuccessAsCreated(userDTO, $"/api/users/{userDTO.Id}");
             }
             catch (Exception ex)
             {
@@ -175,7 +176,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<UserDTO>> UpdateUserAsync(string userId, UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<UserDTO>> UpdateUserAsync(string userId, UpdateUserDTO updateUserDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -184,7 +185,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    return ServiceResponse<UserDTO>.Error("Kullanıcı bulunamadı");
+                    return ServiceResult<UserDTO>.Error("Kullanıcı Bulunamadı", "Belirtilen ID'ye sahip kullanıcı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 if (!string.IsNullOrEmpty(updateUserDTO.TCNo))
@@ -192,7 +193,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     var isUserExist = await userManager.Users.AnyAsync(x => x.TCNo == updateUserDTO.TCNo && x.UserName == updateUserDTO.TCNo && x.Id != userId, cancellationToken);
                     if (isUserExist)
                     {
-                        return ServiceResponse<UserDTO>.Error("Bu TC No kullanılıyor");
+                        return ServiceResult<UserDTO>.Error("TC No Zaten Kullanılıyor", "Bu TC No kullanılıyor. Lütfen farklı bir TC No kullanın.", HttpStatusCode.BadRequest);
                     }
                 }
 
@@ -217,8 +218,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     var passwordResult = await userManager.ResetPasswordAsync(user, token, updateUserDTO.Password);
                     if (!passwordResult.Succeeded)
                     {
-                        var passwordErrors = passwordResult.Errors.Select(e => e.Description).ToList();
-                        return ServiceResponse<UserDTO>.Error(passwordErrors);
+                        var passwordErrors = passwordResult.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                        return ServiceResult<UserDTO>.ErrorFromValidation(passwordErrors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                     }
                 }
 
@@ -234,8 +235,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var result = await userManager.UpdateAsync(user);
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<UserDTO>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<UserDTO>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
                 var superiors = await unitOfWork.GetRepository<IdtUserHierarchy>().Where(x => x.SubordinateId == user.Id).ToListAsync(cancellationToken);
@@ -250,12 +251,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     var superiorExists = await userManager.FindByIdAsync(superiorId);
                     if (superiorExists == null || !superiorExists.IsActive)
                     {
-                        return ServiceResponse<UserDTO>.Error($"Geçersiz üst kullanıcı ID: {superiorId}");
+                        return ServiceResult<UserDTO>.Error("Geçersiz Üst Kullanıcı", $"Geçersiz üst kullanıcı ID: {superiorId}", HttpStatusCode.BadRequest);
                     }
 
                     if (superiorId == user.Id)
                     {
-                        return ServiceResponse<UserDTO>.Error("Kullanıcı kendi üstü olamaz");
+                        return ServiceResult<UserDTO>.Error("Hiyerarşi Hatası", "Kullanıcı kendi üstü olamaz.", HttpStatusCode.BadRequest);
                     }
 
                     var hierarchy = new IdtUserHierarchy
@@ -277,7 +278,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var role = (await userManager.GetRolesAsync(user)).FirstOrDefault()!;
                 mappedUser.RoleName = role;
 
-                return ServiceResponse<UserDTO>.Success(mappedUser, "Kullanıcı başarıyla güncellendi");
+                return ServiceResult<UserDTO>.SuccessAsOk(mappedUser);
             }
             catch (Exception ex)
             {
@@ -287,7 +288,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteUserAsync(string userId, CancellationToken cancellationToken)
+        public async Task<ServiceResult<bool>> DeleteUserAsync(string userId, CancellationToken cancellationToken)
         {
             try
             {
@@ -295,7 +296,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    return ServiceResponse<bool>.Error("Kullanıcı bulunamadı");
+                    return ServiceResult<bool>.Error("Kullanıcı Bulunamadı", "Belirtilen ID'ye sahip kullanıcı bulunamadı.", HttpStatusCode.NotFound);
                 }
                 var userBalances = await unitOfWork.GetRepository<IdtUserBalance>().Where(x => x.UserId == userId).ToListAsync(cancellationToken);
                 var userHierarchies = await unitOfWork.GetRepository<IdtUserHierarchy>().Where(x => x.SuperiorId == userId || x.SubordinateId == userId).ToListAsync();
@@ -309,12 +310,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (!result.Succeeded)
                 {
                     await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<bool>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<bool>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                return ServiceResponse<bool>.Success(true, "Kullanıcı başarıyla silindi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -324,19 +325,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> AssignRoleToUserAsync(AssignRoleDTO assignRoleDTO)
+        public async Task<ServiceResult<bool>> AssignRoleToUserAsync(AssignRoleDTO assignRoleDTO)
         {
             try
             {
                 var user = await userManager.FindByIdAsync(assignRoleDTO.UserId);
                 if (user == null)
                 {
-                    return ServiceResponse<bool>.Error("Kullanıcı bulunamadı");
+                    return ServiceResult<bool>.Error("Kullanıcı Bulunamadı", "Belirtilen ID'ye sahip kullanıcı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 if (!await roleManager.RoleExistsAsync(assignRoleDTO.RoleName))
                 {
-                    return ServiceResponse<bool>.Error("Rol bulunamadı");
+                    return ServiceResult<bool>.Error("Rol Bulunamadı", "Belirtilen role sahip rol bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 // Kullanıcının mevcut rollerini temizle (çünkü sadece 1 rol olacak)
@@ -350,11 +351,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var result = await userManager.AddToRoleAsync(user, assignRoleDTO.RoleName);
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<bool>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<bool>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
-                return ServiceResponse<bool>.Success(true, "Rol başarıyla atandı");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -363,14 +364,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> EnableUserAsync(string userId)
+        public async Task<ServiceResult<bool>> EnableUserAsync(string userId)
         {
             try
             {
                 var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    return ServiceResponse<bool>.Error("Kullanıcı bulunamadı");
+                    return ServiceResult<bool>.Error("Kullanıcı Bulunamadı", "Belirtilen ID'ye sahip kullanıcı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 user.IsActive = true;
@@ -378,11 +379,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<bool>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<bool>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
-                return ServiceResponse<bool>.Success(true, "Kullanıcı başarıyla aktifleştirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -391,14 +392,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DisableUserAsync(string userId)
+        public async Task<ServiceResult<bool>> DisableUserAsync(string userId)
         {
             try
             {
                 var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    return ServiceResponse<bool>.Error("Kullanıcı bulunamadı");
+                    return ServiceResult<bool>.Error("Kullanıcı Bulunamadı", "Belirtilen ID'ye sahip kullanıcı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 user.IsActive = false;
@@ -406,11 +407,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<bool>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<bool>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
-                return ServiceResponse<bool>.Success(true, "Kullanıcı başarıyla pasifleştirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -419,24 +420,24 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> ChangePasswordAsync(string userId, ChangePasswordDTO changePasswordDTO)
+        public async Task<ServiceResult<bool>> ChangePasswordAsync(string userId, ChangePasswordDTO changePasswordDTO)
         {
             try
             {
                 var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    return ServiceResponse<bool>.Error("Kullanıcı bulunamadı");
+                    return ServiceResult<bool>.Error("Kullanıcı Bulunamadı", "Belirtilen ID'ye sahip kullanıcı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var result = await userManager.ChangePasswordAsync(user, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword);
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<bool>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<bool>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
-                return ServiceResponse<bool>.Success(true, "Şifre başarıyla değiştirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -445,7 +446,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<UserDTO>>> GetActiveSuperiorsAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<UserDTO>>> GetActiveSuperiorsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -465,9 +466,9 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     }
                 }
 
-                var mappedActiveSuperiors = superiorUsers.Adapt<IEnumerable<UserDTO>>();
+                var mappedActiveSuperiors = superiorUsers.Adapt<IEnumerable<UserDTO>>().OrderBy(x => x.Name);
 
-                return ServiceResponse<IEnumerable<UserDTO>>.Success(mappedActiveSuperiors);
+                return ServiceResult<IEnumerable<UserDTO>>.SuccessAsOk(mappedActiveSuperiors);
             }
             catch (Exception ex)
             {
@@ -476,13 +477,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<UserDTO>>> GetSubordinatesByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<UserDTO>>> GetSubordinatesByUserIdAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return ServiceResponse<IEnumerable<UserDTO>>.Error("Kullanıcı kimliği geçersiz");
+                    return ServiceResult<IEnumerable<UserDTO>>.Error("Validasyon Hatası", "Kullanıcı kimliği geçersiz.", HttpStatusCode.BadRequest);
                 }
 
                 var subordinateIds = await unitOfWork.GetRepository<IdtUserHierarchy>()
@@ -492,13 +493,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (subordinateIds == null || !subordinateIds.Any())
                 {
-                    return ServiceResponse<IEnumerable<UserDTO>>.Success(new List<UserDTO>(), "Alt kullanıcılar bulunamadı");
+                    return ServiceResult<IEnumerable<UserDTO>>.SuccessAsOk(new List<UserDTO>());
                 }
                 var users = await userManager.Users.Where(x => subordinateIds.Contains(x.Id)).ToListAsync(cancellationToken);
 
-                var mappedUsers = users.Adapt<IEnumerable<UserDTO>>();
+                var mappedUsers = users.Adapt<IEnumerable<UserDTO>>().OrderBy(x => x.Name);
 
-                return ServiceResponse<IEnumerable<UserDTO>>.Success(mappedUsers);
+                return ServiceResult<IEnumerable<UserDTO>>.SuccessAsOk(mappedUsers);
             }
             catch (Exception ex)
             {
@@ -507,12 +508,12 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<AnnualLeaveBalanceDTO>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<AnnualLeaveBalanceDTO>> GetAnnualLeaveDaysByUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (string.IsNullOrEmpty(userId))
-                    return ServiceResponse<AnnualLeaveBalanceDTO>.Error("Kullanıcı ID'si boş geçilemez");
+                    return ServiceResult<AnnualLeaveBalanceDTO>.Error("Validasyon Hatası", "Kullanıcı ID'si boş geçilemez.", HttpStatusCode.BadRequest);
 
                 var parameters = new object[] { userId };
 
@@ -524,8 +525,8 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var result = funcResults.FirstOrDefault();
 
                 return result != null
-                    ? ServiceResponse<AnnualLeaveBalanceDTO>.Success(result)
-                    : ServiceResponse<AnnualLeaveBalanceDTO>.Error("Veri alınamadı");
+                    ? ServiceResult<AnnualLeaveBalanceDTO>.SuccessAsOk(result)
+                    : ServiceResult<AnnualLeaveBalanceDTO>.Error("Veri Bulunamadı", "Yıllık izin bakiyesi verisi alınamadı.", HttpStatusCode.NotFound);
             }
             catch (Exception ex)
             {
@@ -534,20 +535,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentDutyAsync(string departmentDutyId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<UserDTO>>> GetUsersByDepartmentDutyAsync(string departmentDutyId, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (string.IsNullOrEmpty(departmentDutyId))
                 {
-                    return ServiceResponse<IEnumerable<UserDTO>>.Error("Departman görev ID'si boş geçilemez");
+                    return ServiceResult<IEnumerable<UserDTO>>.Error("Validasyon Hatası", "Departman görev ID'si boş geçilemez.", HttpStatusCode.BadRequest);
                 }
 
                 var users = await userManager.Users.Where(x => x.DepartmentDutyId == departmentDutyId && x.IsActive == true).ToListAsync(cancellationToken);
 
-                var mappedUsers = users.Adapt<IEnumerable<UserDTO>>();
+                var mappedUsers = users.Adapt<IEnumerable<UserDTO>>().OrderBy(x => x.Name);
 
-                return ServiceResponse<IEnumerable<UserDTO>>.Success(mappedUsers);
+                return ServiceResult<IEnumerable<UserDTO>>.SuccessAsOk(mappedUsers);
             }
             catch (Exception ex)
             {
@@ -556,20 +557,20 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<UserDTO>>> GetUsersByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<UserDTO>>> GetUsersByDepartmentAsync(string departmentId, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (string.IsNullOrEmpty(departmentId))
                 {
-                    return ServiceResponse<IEnumerable<UserDTO>>.Error("Departman ID'si boş geçilemez");
+                    return ServiceResult<IEnumerable<UserDTO>>.Error("Validasyon Hatası", "Departman ID'si boş geçilemez.", HttpStatusCode.BadRequest);
                 }
 
                 var users = await userManager.Users.Where(x => x.DepartmentId == departmentId && x.IsActive == true).ToListAsync(cancellationToken);
 
-                var mappedUsers = users.Adapt<IEnumerable<UserDTO>>();
+                var mappedUsers = users.Adapt<IEnumerable<UserDTO>>().OrderBy(x => x.Name);
 
-                return ServiceResponse<IEnumerable<UserDTO>>.Success(mappedUsers);
+                return ServiceResult<IEnumerable<UserDTO>>.SuccessAsOk(mappedUsers);
             }
             catch (Exception ex)
             {

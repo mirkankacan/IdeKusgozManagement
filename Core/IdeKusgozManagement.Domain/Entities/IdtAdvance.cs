@@ -17,13 +17,15 @@ namespace IdeKusgozManagement.Domain.Entities
         public DateTime? ChiefProcessedDate { get; set; }
         public string? ProcessedByChiefId { get; set; }
         public string? ChiefRejectReason { get; set; }
-
+        public string? CompletedById { get; set; }
+        public DateTime? CompletedDate { get; set; }
         public virtual ApplicationUser User { get; set; }
         public virtual ApplicationUser CreatedByUser { get; set; }
         public virtual ApplicationUser? UpdatedByUser { get; set; }
         public virtual ApplicationUser? ChiefUser { get; set; }
         public virtual ApplicationUser? UnitManagerUser { get; set; }
-        
+        public virtual ApplicationUser? CompletedByUser { get; set; }
+
         // Navigation property for advance parts
         public virtual ICollection<IdtAdvancePart> AdvanceParts { get; set; }
     }

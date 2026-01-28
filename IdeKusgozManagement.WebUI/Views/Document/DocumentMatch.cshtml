@@ -128,8 +128,8 @@
                     "url": "/dokuman/eslestirme-liste",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json && Array.isArray(json)) {
+                            return json;
                         }
                         return [];
                     },
@@ -145,7 +145,7 @@
                         } catch (e) {
                             errorMessage += ': ' + error;
                         }
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -347,21 +347,18 @@
 
         async function loadDepartmentsForMatch() {
             try {
-                const response = await $.ajax({
-                    url: '/departman/liste',
-                    type: 'GET'
-                });
+                const response = await makeRequest('/departman/liste', 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('#selectMatchDepartment').empty().append('<option value="">Departman seçin</option>');
-                    response.data.forEach(dept => {
+                    response.forEach(dept => {
                         $('#selectMatchDepartment').append(`<option value="${dept.id}">${dept.name}</option>`);
                     });
                     $('#selectMatchDepartment').trigger('change');
                 }
             } catch (error) {
                 console.error('Departmanlar yüklenirken hata:', error);
-                toastr.error('Departmanlar yüklenirken bir hata oluştu', 'Hata!');
+                handleError(error, 'Departmanlar yüklenirken bir hata oluştu');
             }
         }
 
@@ -369,14 +366,11 @@
             try {
                 $('#selectMatchDepartmentDuty').prop('disabled', true).empty().val(null).trigger('change');
 
-                const response = await $.ajax({
-                    url: `/departman/${departmentId}/gorev-liste`,
-                    type: 'GET'
-                });
+                const response = await makeRequest(`/departman/${departmentId}/gorev-liste`, 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('#selectMatchDepartmentDuty').empty();
-                    response.data.forEach(duty => {
+                    response.forEach(duty => {
                         $('#selectMatchDepartmentDuty').append(`<option value="${duty.id}">${duty.name}</option>`);
                     });
                     $('#selectMatchDepartmentDuty').prop('disabled', false).trigger('change');
@@ -385,48 +379,42 @@
                 }
             } catch (error) {
                 console.error('Görevler yüklenirken hata:', error);
-                toastr.error('Görevler yüklenirken bir hata oluştu', 'Hata!');
+                handleError(error, 'Görevler yüklenirken bir hata oluştu');
                 $('#selectMatchDepartmentDuty').empty().prop('disabled', true).val(null).trigger('change');
             }
         }
 
         async function loadDocumentTypesForMatch() {
             try {
-                const response = await $.ajax({
-                    url: '/dokuman/tip-liste',
-                    type: 'GET'
-                });
+                const response = await makeRequest('/dokuman/tip-liste', 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('#selectMatchDocumentType').empty();
-                    response.data.forEach(docType => {
+                    response.forEach(docType => {
                         $('#selectMatchDocumentType').append(`<option value="${docType.id}">${docType.name}</option>`);
                     });
                     $('#selectMatchDocumentType').trigger('change');
                 }
             } catch (error) {
                 console.error('Doküman tipleri yüklenirken hata:', error);
-                toastr.error('Doküman tipleri yüklenirken bir hata oluştu', 'Hata!');
+                handleError(error, 'Doküman tipleri yüklenirken bir hata oluştu');
             }
         }
 
         async function loadCompaniesForMatch() {
             try {
-                const response = await $.ajax({
-                    url: '/firma/aktif-liste',
-                    type: 'GET'
-                });
+                const response = await makeRequest('/firma/aktif-liste', 'GET');
 
-                if (response && response.isSuccess && response.data) {
+                if (response && Array.isArray(response)) {
                     $('#selectMatchCompany').empty();
-                    response.data.forEach(company => {
+                    response.forEach(company => {
                         $('#selectMatchCompany').append(`<option value="${company.id}">${company.name}</option>`);
                     });
                     $('#selectMatchCompany').trigger('change');
                 }
             } catch (error) {
                 console.error('Firmalar yüklenirken hata:', error);
-                toastr.error('Firmalar yüklenirken bir hata oluştu', 'Hata!');
+                handleError(error, 'Firmalar yüklenirken bir hata oluştu');
             }
         }
 
@@ -438,17 +426,17 @@
 
             // Validate that at least one item is selected in each multi-select
             if (!departmentDutyIds.length) {
-                toastr.error('Lütfen en az bir görev seçiniz', 'Hata!');
+                showToast('Lütfen en az bir görev seçiniz', 'error', 'Hata!');
                 return;
             }
 
             if (!documentTypeIds.length) {
-                toastr.error('Lütfen en az bir doküman tipi seçiniz', 'Hata!');
+                showToast('Lütfen en az bir doküman tipi seçiniz', 'error', 'Hata!');
                 return;
             }
 
             if (!companyIds.length) {
-                toastr.error('Lütfen en az bir firma seçiniz', 'Hata!');
+                showToast('Lütfen en az bir firma seçiniz', 'error', 'Hata!');
                 return;
             }
 
@@ -479,22 +467,12 @@
             // Process all combinations
             for (const matchData of combinations) {
                 try {
-                    const response = await $.ajax({
-                        url: '/dokuman/eslestir',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify(matchData)
-                    });
-
-                    if (response.isSuccess) {
-                        successCount++;
-                    } else {
-                        errorCount++;
-                        errors.push(response.message);
-                    }
+                    await makeRequest('/dokuman/eslestir', 'POST', matchData);
+                    successCount++;
                 } catch (error) {
                     errorCount++;
-                    errors.push(error.responseJSON?.message || 'Bir hata oluştu');
+                    const errorMessage = error.detail || error.title || 'Bir hata oluştu';
+                    errors.push(errorMessage);
                 }
             }
 
@@ -503,17 +481,17 @@
 
             // Show results
             if (errorCount === 0) {
-                toastr.success(`${successCount} eşleştirme başarıyla oluşturuldu`, 'Başarılı!');
+                showToast(`${successCount} eşleştirme başarıyla oluşturuldu`, 'success', 'Başarılı!');
                 $('#matchDocumentTypeModal').modal('hide');
                 requirementsTable.ajax.reload();
             } else if (successCount > 0) {
-                toastr.warning(`${successCount} eşleştirme başarılı, ${errorCount} eşleştirme başarısız`, 'Kısmen Başarılı!');
+                showToast(`${successCount} eşleştirme başarılı, ${errorCount} eşleştirme başarısız`, 'warning', 'Kısmen Başarılı!');
                 if (errors.length > 0) {
                     console.error('Eşleştirme hataları:', errors);
                 }
                 requirementsTable.ajax.reload();
             } else {
-                toastr.error(`${errorCount} eşleştirme başarısız oldu`, 'Hata!');
+                showToast(`${errorCount} eşleştirme başarısız oldu`, 'error', 'Hata!');
                 if (errors.length > 0) {
                     console.error('Eşleştirme hataları:', errors);
                 }
@@ -533,24 +511,12 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
-                        const token = $('input[name="__RequestVerificationToken"]').val();
-                        const response = await $.ajax({
-                            url: `/dokuman/eslestirme/${requirementId}`,
-                            type: 'DELETE',
-                            headers: {
-                                'RequestVerificationToken': token
-                            }
-                        });
-
-                        if (response.isSuccess) {
-                            toastr.success(response.message, 'Başarılı!');
-                            requirementsTable.ajax.reload();
-                        } else {
-                            toastr.error(response.message, 'Hata!');
-                        }
+                        await makeRequest(`/dokuman/eslestirme/${requirementId}`, 'DELETE');
+                        showToast('Eşleştirme başarıyla silindi', 'success', 'Başarılı!');
+                        requirementsTable.ajax.reload();
                     } catch (error) {
                         console.error('Delete Requirement error:', error);
-                        toastr.error(error.responseJSON?.message || 'Bir hata oluştu', 'Hata!');
+                        handleError(error, 'Eşleştirme silinirken bir hata oluştu');
                     }
                 }
             });

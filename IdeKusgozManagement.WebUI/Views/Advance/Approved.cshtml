@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Onaylanmış Avanslar";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -6,10 +6,56 @@
     <link href="~/theme/assets/plugins/DataTables/datatables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 
 }
 @Html.AntiForgeryToken()
+<div class="row">
+    <div class="col-md-6 col-xl-3">
+        <div class="card stat-widget">
+            <div class="card-body">
+                <h5 class="card-title">Beklemede Avans Talepleri</h5>
+                <h2 id="pendingAdvancesCount">0</h2>
+                <div class="progress">
+                    <div class="progress-bar bg-secondary progress-bar-striped" role="progressbar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card stat-widget">
+            <div class="card-body">
+                <h5 class="card-title">Onayda Bekleyen Avans Talepleri</h5>
+                <h2 id="approvedAdvancesCount">0</h2>
+                <div class="progress">
+                    <div class="progress-bar bg-info progress-bar-striped" role="progressbar" ></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card stat-widget">
+            <div class="card-body">
+                <h5 class="card-title">Reddedilmiş Avans Talepleri</h5>
+                <h2 id="rejectedAdvancesCount">0</h2>
+                <div class="progress">
+                    <div class="progress-bar bg-danger progress-bar-striped" role="progressbar" ></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card stat-widget">
+            <div class="card-body">
+                <h5 class="card-title">Tamamlanmış Avans Talepleri</h5>
+                <h2 id="completedAdvancesCount">0</h2>
+                <div class="progress">
+                    <div class="progress-bar bg-success progress-bar-striped" role="progressbar" ></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row">
     <div class="col-md-12">
         <div class="card">
@@ -21,7 +67,7 @@
 
                 <div class="table-responsive">
                     <table id="approvedAdvancesTable" class="table table-striped table-hover display"
-                        style="width:100%">
+                           style="width:100%">
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
@@ -42,6 +88,41 @@
                         </tbody>
                     </table>
                 </div>
+
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-file-circle-check me-2"></i>
+                    Tamamlanmış Avanslar
+                </h5>
+
+                <div class="table-responsive">
+                    <table id="completedAdvancesTable" class="table table-striped table-hover display"
+                           style="width:100%">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>TALEP<br /> NEDENİ</th>
+                                <th>TUTAR</th>
+                                <th>DURUM</th>
+                                <th>AÇIKLAMA</th>
+
+                                <th>OLUŞTURMA<br />TARİHİ</th>
+                                <th>OLUŞTURAN<br />KULLANICI</th>
+                                <th>İŞLEM<br />YAPAN<br />FİNANS</th>
+                                <th>FİNANS<br />İŞLEM<br />TARİHİ</th>
+                                <th>İŞLEMLER</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- DataTables will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
     </div>
@@ -90,7 +171,7 @@
                 <div class="mb-3">
                     <label for="txtRejectReason" class="form-label">Reddetme Sebebi (İsteğe Bağlı)</label>
                     <textarea class="form-control" id="txtRejectReason" rows="3"
-                        placeholder="Avans talebini reddetme sebebinizi açıklayın..."></textarea>
+                              placeholder="Avans talebini reddetme sebebinizi açıklayın..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -108,20 +189,24 @@
 
     <script>
         let approvedAdvancesTable;
+        let completedAdvancesTable;
+        const advancePartsMap = {};
 
         $(document).ready(async function () {
             setupEventListeners();
-            await initializeDataTable();
+            await loadStatistics();
+            await initializeDataTables();
         });
-        async function initializeDataTable() {
-            approvedAdvancesTable = $('#approvedAdvancesTable').DataTable({
+        async function initializeDataTables() {
+               completedAdvancesTable = $('#completedAdvancesTable').DataTable({
                 "processing": true,
                 "ajax": {
-                    "url": "/avans/onaylanmis-liste",
+                    "url": "/avans/tamamlanmis-liste",
                     "type": "GET",
                     "dataSrc": function (json) {
-                        if (json && json.isSuccess && json.data) {
-                            return json.data;
+                        if (json) {
+
+                            return json;
                         }
                         return [];
                     },
@@ -137,7 +222,7 @@
                         } catch (e) {
                             errorMessage += ': ' + error;
                         }
-                        toastr.error(errorMessage);
+                        showToast(errorMessage, 'error', 'Hata');
                     }
                 },
                 "columns": [
@@ -177,8 +262,183 @@
                                 return `<span class="badge bg-success">${data}</span>`;
                             } else if (row.status === 2) {
                                 return `<span class="badge bg-primary">${data}</span>`;
-                            } else if (row.status === 3 || row.status === 4) {
+                            } else if (row.status === 3 || row.status === 4 || row.status === 5) {
                                 return `<span class="badge bg-danger">${data}</span>`;
+                            }   else if (row.status === 6) {
+                                return `<span class="badge bg-success">${data}</span>`;
+                            }else {
+                                return `<span class="badge bg-secondary">${data}</span>`;
+                            }
+                        }
+                    },
+                    {
+                        "data": "description",
+                        "className": "text-center",
+                        "render": function (data, type, row) {
+                            return data ? data : "";
+                        }
+                    },
+                    {
+                        "data": "createdDate",
+                        "render": function (data) {
+                            return data ? new Date(data).toLocaleString('tr-TR', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) : '';
+                        }
+                    },
+                    {
+                        "data": "createdByFullName",
+                        "className": "text-center",
+                        "render": function (data, type, row) {
+                            return data ? data : "";
+                        }
+                    },
+                    {
+                        "data": "completedByFullName",
+                        "className": "text-center",
+                        "render": function (data, type, row) {
+
+                             if (data) {
+                                return data
+                            }
+                            else {
+                                return "";
+                            }
+
+                        }
+                    },
+                    {
+                        "data": "completedDate",
+                        "render": function (data, type, row) {
+
+                             if (data) {
+                                return new Date(data).toLocaleString('tr-TR', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                            }
+                            else {
+                                return "";
+                            }
+
+                        }
+                    },
+                   {
+                        "data": null,
+                        "width": "10%",
+                        "orderable": false,
+                        "className": "text-center",
+                        "render": function (data, type, row) {
+                            var buttons = '<div class="btn-group btn-group-sm" role="group">';
+                                buttons += `
+                                                                               <button type="button" class="btn btn-outline-info btn-sm"
+                                                                                    onclick="viewAdvanceParts('completedAdvancesTable','${row.id}')" title="Parçaları Görüntüle">
+                                                                                    <i class="fas fa-list"></i>
+                                                                                </button>`;
+
+                            buttons += '</div>';
+                            return buttons;
+
+                        }
+                    }
+                ],
+                "language": {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/tr.json'
+                },
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "responsive": true,
+                "searchDelay": 300,
+                "order": [[8, "desc"]], // Order by created date desc
+                "drawCallback": function () {
+                    var api = this.api();
+                    var pageInfo = api.page.info();
+
+                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                        cell.innerHTML = pageInfo.start + i + 1;
+                    });
+                    $('[title]').tooltip();
+                }
+            });
+
+            approvedAdvancesTable = $('#approvedAdvancesTable').DataTable({
+                "processing": true,
+                "ajax": {
+                    "url": "/avans/onaylanmis-liste",
+                    "type": "GET",
+                 "dataSrc": function (rows) {
+                     if (rows) {
+                         rows.forEach(row => { advancePartsMap[row.id] = row.parts; });
+
+                         return rows;
+                     }
+
+                     return [];
+                    },
+                    "error": function (xhr, error, code) {
+                        console.error('DataTables AJAX error:', error);
+                        let errorMessage = 'Veriler yüklenirken hata oluştu';
+                        try {
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage += ': ' + xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                errorMessage += ': ' + xhr.responseText;
+                            }
+                        } catch (e) {
+                            errorMessage += ': ' + error;
+                        }
+                        showToast(errorMessage, 'error', 'Hata');
+                    }
+                },
+                "columns": [
+                    {
+                        "data": null,
+                        "width": "5%",
+                        "orderable": false,
+                        "className": "text-center",
+                        "render": function (data, type, row, meta) {
+                            return '';
+                        }
+                    },
+                    {
+                        "data": "reason",
+                        "render": function (data) {
+                            return data || '';
+                        }
+                    },
+                    {
+                        "data": "amount",
+                        "render": function (data) {
+                            if (!data && data !== 0) return '';
+
+                            return new Intl.NumberFormat('tr-TR', {
+                                style: 'currency',
+                                currency: 'TRY'
+                            }).format(data);
+                        }
+                    },
+                    {
+                        "data": "statusText",
+                        "className": "text-center",
+                        "render": function (data, type, row) {
+                            if (row.status === 0) {
+                                return `<span class="badge bg-warning">${data}</span>`;
+                            } else if (row.status === 1) {
+                                return `<span class="badge bg-success">${data}</span>`;
+                            } else if (row.status === 2) {
+                                return `<span class="badge bg-primary">${data}</span>`;
+                            } else if (row.status === 3 || row.status === 4 || row.status === 5) {
+                                return `<span class="badge bg-danger">${data}</span>`;
+                            }
+                            else if (row.status === 6) {
+                                return `<span class="badge bg-success">${data}</span>`;
                             } else {
                                 return `<span class="badge bg-secondary">${data}</span>`;
                             }
@@ -258,71 +518,27 @@
                         "width": "10%",
                         "orderable": false,
                         "className": "text-center",
-                        "render": function (data, type, row) {
-                            var buttons = '<div class="btn-group btn-group-sm" role="group">';
-                            const approvalThreshold = 5000;
-                            const amount = parseFloat(row.amount) || 0;
-                            const isOverThreshold = amount > approvalThreshold;
-                            console.log(row);
+                       "render": function (data, type, row) {
+                             var buttons = '<div class="btn-group btn-group-sm" role="group">';
 
-
-                            if (row.hasParts && row.parts && row.parts.length > 0) {
-                                console.log("a");
-                                console.log(row.hasParts);
                                 buttons += `
-                                                                <button type="button" class="btn btn-outline-info btn-sm"
-                                                                    onclick="viewAdvanceParts('${row.id}')" title="Parçaları Görüntüle">
-                                                                    <i class="fas fa-list"></i>
-                                                                </button>`;
-                            }
-                            buttons += '</div>';
-                            return buttons;
-
-
-                            // Yönetici rolü kontrolü - Can only approve/reject advances over ₺5000
-                            if (window.isUserUnitManager || window.isAdmin) {
-                                buttons += `
-                                                        <button type="button" class="btn btn-outline-warning btn-sm"
-                                                            onclick="loadAdvanceForEdit('${row.id}')" title="Düzenle">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-danger btn-sm"
-                                                            onclick="deleteAdvanceRequest('${row.id}')" title="Sil">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                          <button type="button" class="btn btn-outline-success btn-sm"
-                                                            onclick="approveAdvanceRequest('${row.id}')" title="Onayla">
-                                                            <i class="fas fa-check"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-danger btn-sm"
-                                                            onclick="openRejectModal('${row.id}')" title="Reddet">
-                                                            <i class="fas fa-times"></i>
-                                                        </button>`;
-
-                            }
-                            // Şef rolü kontrolü - Can only approve/reject advances up to ₺5000
-                            else if (window.isUserSef) {
-                                // Only show approve/reject buttons if amount <= ₺5000
-                                if (!isOverThreshold) {
-                                    buttons += `
-                                                           <button type="button" class="btn btn-outline-warning btn-sm"
-                                                            onclick="loadAdvanceForEdit('${row.id}')" title="Düzenle">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-danger btn-sm"
-                                                            onclick="deleteAdvanceRequest('${row.id}')" title="Sil">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-success btn-sm"
-                                                            onclick="approveAdvanceRequest('${row.id}')" title="Onayla">
-                                                            <i class="fas fa-check"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-danger btn-sm"
-                                                            onclick="openRejectModal('${row.id}')" title="Reddet">
-                                                            <i class="fas fa-times"></i>
-                                                        </button>`;
-                                }
-                            }
+                                                                        <button type="button" class="btn btn-outline-info btn-sm"
+                                                                                    onclick="viewAdvanceParts('approvedAdvancesTable','${row.id}')" title="Parçaları Görüntüle">
+                                                                                    <i class="fas fa-list"></i>
+                                                                                </button>
+                                                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                            onclick="deleteAdvanceRequest('${row.id}')" title="Sil">
+                                                                            <i class="fas fa-trash"></i>
+                                                                        </button>
+                                                                          <button type="button" class="btn btn-outline-success btn-sm"
+                                                                                     onclick="completeAdvanceRequest('${row.id}')"
+                                                                     title="Tamamla">
+                                                                            <i class="fas fa-check"></i>
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                                            onclick="openRejectModal('${row.id}')" title="Reddet">
+                                                                            <i class="fas fa-times"></i>
+                                                                        </button>`;
 
                             buttons += '</div>';
                             return buttons;
@@ -336,7 +552,7 @@
                 "pageLength": 10,
                 "responsive": true,
                 "searchDelay": 300,
-                "order": [[5, "desc"]], // Order by created date desc
+                "order": [[8, "desc"]], // Order by created date desc
                 "drawCallback": function () {
                     var api = this.api();
                     var pageInfo = api.page.info();
@@ -349,37 +565,9 @@
             });
         }
         function setupEventListeners() {
-            // Create expense form
-            $('#createAdvanceRequestForm').on('submit', function (e) {
-                e.preventDefault();
-                if (this.checkValidity()) {
-                    createAdvanceRequest();
-                }
-                $(this).addClass('was-validated');
-            });
-
-            // Update expense form
-            $('#updateAdvanceRequestForm').on('submit', function (e) {
-                e.preventDefault();
-                if (this.checkValidity()) {
-                    updateAdvanceRequest();
-                }
-                $(this).addClass('was-validated');
-            });
 
             $(document).on('click', '#btnRejectAdvanceRequest', async function () {
                 await rejectAdvanceRequest();
-            });
-
-            // Clear forms when modals hide
-            $('#createAdvanceRequestModal').on('hidden.bs.modal', function () {
-                $('#createAdvanceRequestForm')[0].reset();
-                $('#createAdvanceRequestForm').removeClass('was-validated');
-            });
-
-            $('#updateAdvanceRequestModal').on('hidden.bs.modal', function () {
-                $('#updateAdvanceRequestForm')[0].reset();
-                $('#updateAdvanceRequestForm').removeClass('was-validated');
             });
 
             $('#viewPartsModal').on('hidden.bs.modal', function () {
@@ -387,84 +575,7 @@
                 $('#viewPartsModal .modal-title').html('<i class="fas fa-list me-2"></i>Avans Parçaları');
             });
         }
-        async function createAdvanceRequest() {
-            const advanceData = {
-                amount: $('#txtCAmount').val(),
-                description: $('#txtCDescription').val().trim() ?? null,
-                reason: $('#selectCAdvanceReason').val()
-            };
 
-            try {
-                const response = await $.ajax({
-                    url: '/avans/istek-olustur',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(advanceData)
-                });
-
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#createAdvanceRequestModal').modal('hide');
-                    approvedAdvancesTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
-            } catch (error) {
-                console.error('Create advance error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
-            }
-        }
-
-        async function loadAdvanceForEdit(advanceId) {
-            try {
-                const response = await $.ajax({
-                    url: `/avans/${advanceId}`,
-                    type: 'GET'
-                });
-
-                if (response.isSuccess) {
-                    $('#txtUId').val(response.data.id);
-                    $('#txtUAmount').val(response.data.amount);
-                    $('#txtUDescription').val(response.data.description);
-                    $('#selectUAdvanceReason').val(response.data.reason);
-                    $('#updateAdvanceRequestModal').modal('show');
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
-            } catch (error) {
-                console.error('Load advance error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
-            }
-        }
-
-        async function updateAdvanceRequest() {
-            const expenseId = $('#txtUId').val();
-            const advanceData = {
-                amount: $('#txtUAmount').val(),
-                description: $('#txtUDescription').val().trim() ?? null,
-                reason: $('#selectUAdvanceReason').val()
-            };
-
-            try {
-                const response = await $.ajax({
-                    url: `/avans/${expenseId}`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify(advanceData)
-                });
-
-                if (response.isSuccess) {
-                    toastr.success(response.message, 'Başarılı!');
-                    $('#updateAdvanceRequestModal').modal('hide');
-                    approvedAdvancesTable.ajax.reload();
-                } else {
-                    toastr.error(response.message, 'Hata!');
-                }
-            } catch (error) {
-                console.error('Update advance error:', error);
-                toastr.error(error.responseJSON.message, 'Hata!');
-            }
-        }
         async function deleteAdvanceRequest(advanceRequestId) {
             try {
                 const result = await Swal.fire({
@@ -479,20 +590,14 @@
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/avans/${advanceRequestId}`,
-                                type: 'DELETE',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/avans/${advanceRequestId}`, 'DELETE');
                             return response;
                         } catch (error) {
                             let errorMessage = 'Silme başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;
@@ -517,11 +622,16 @@
                 console.error('Silme hatası:', error);
             }
         }
-        function viewAdvanceParts(advanceId) {
-            const row = approvedAdvancesTable.rows().data().toArray().find(r => r.id === advanceId);
+             function viewAdvanceParts(tableId, advanceId) {
+            // Get the DataTable instance from the table name/selector
+            const tbl = $("#"+tableId).DataTable();
+
+            console.log(tbl);
+
+            const row = tbl.rows().data().toArray().find(r => r.id === advanceId);
 
             if (!row || !row.parts || row.parts.length === 0) {
-                toastr.warning('Parça bilgisi bulunamadı');
+                showToast('Parça bilgisi bulunamadı', 'warning', 'Uyarı');
                 return;
             }
 
@@ -529,12 +639,15 @@
                 style: 'currency',
                 currency: 'TRY'
             }).format(row.amount);
+
+            // Fixed: Use template literal correctly with backticks
             $('#viewPartsModal .modal-title').html(`<i class="fas fa-list me-2"></i>Avans Parçaları - ${formattedTotalAmount}`);
 
             const tbody = $('#viewPartsTableBody');
             tbody.empty();
 
             let totalAmount = 0;
+
             row.parts.forEach((part, index) => {
                 const date = new Date(part.year, part.month - 1, part.day);
                 const formattedDate = date.toLocaleDateString('tr-TR', {
@@ -542,62 +655,64 @@
                     month: 'long',
                     day: 'numeric'
                 });
+
                 const formattedAmount = new Intl.NumberFormat('tr-TR', {
                     style: 'currency',
                     currency: 'TRY'
                 }).format(part.amount);
+
                 totalAmount += parseFloat(part.amount);
 
                 tbody.append(`
-                                            <tr>
-                                                <td>${index + 1}</td>
-                                                <td>${formattedDate}</td>
-                                                <td class="text-end">${formattedAmount}</td>
-                                            </tr>
-                                        `);
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${formattedDate}</td>
+                        <td class="text-end">${formattedAmount}</td>
+                    </tr>
+                `);
             });
 
             const totalFormatted = new Intl.NumberFormat('tr-TR', {
                 style: 'currency',
                 currency: 'TRY'
             }).format(totalAmount);
+
             tbody.append(`
-                                        <tr class="table-info fw-bold">
-                                            <td colspan="2" class="text-end">TOPLAM:</td>
-                                            <td class="text-end">${totalFormatted}</td>
-                                        </tr>
-                                    `);
+                <tr class="table-info fw-bold">
+                    <td colspan="2" class="text-end">TOPLAM:</td>
+                    <td class="text-end">${totalFormatted}</td>
+                </tr>
+            `);
 
             $('#viewPartsModal').modal('show');
         }
-        async function approveAdvanceRequest(advanceId) {
+        async function completeAdvanceRequest(advanceId ,parts) {
             try {
+                    const parts = advancePartsMap[advanceId];
+                          if (!parts || parts.length === 0) {
+            showToast('Parça bilgisi bulunamadı', 'warning', 'Uyarı');
+            return;
+        }
                 const result = await Swal.fire({
-                    title: 'Avans Talebini Onayla',
-                    text: 'Bu avans talebini onaylamak istediğinizden emin misiniz?',
+                    title: 'Avans Talebini Tamamla',
+                    text: 'Bu avans talebini tamamlamak istediğinizden emin misiniz?',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#28a745',
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="fas fa-check"></i> Evet, Onayla',
+                    confirmButtonText: '<i class="fas fa-check"></i> Evet, Tamamla',
                     cancelButtonText: '<i class="fas fa-times"></i> İptal',
                     showLoaderOnConfirm: true,
                     preConfirm: async () => {
                         try {
-                            const response = await $.ajax({
-                                url: `/avans/${advanceId}/onayla`,
-                                type: 'PUT',
-                                contentType: 'application/json'
-                            });
+                            const response = await makeRequest(`/avans/${advanceId}/tamamla`, 'PUT', { parts: parts });
                             return response;
                         } catch (error) {
-                            let errorMessage = 'Onaylama başarısız';
-                            if (error.responseJSON) {
-                                if (error.responseJSON.message) {
-                                    errorMessage = error.responseJSON.message;
-                                } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                                    errorMessage = error.responseJSON.errors.join(', ');
-                                }
+                            let errorMessage = 'Tamamlama başarısız';
+                            if (error.detail) {
+                                errorMessage = error.detail;
+                            } else if (error.title) {
+                                errorMessage = error.title;
                             }
                             Swal.showValidationMessage(`Hata: ${errorMessage}`);
                             return false;
@@ -609,16 +724,17 @@
                 if (result.isConfirmed) {
                     await Swal.fire({
                         title: 'Başarılı!',
-                        text: 'Avans talebi başarıyla onaylandı.',
+                        text: 'Avans talebi başarıyla tamamlandı.',
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
                     });
                     approvedAdvancesTable.ajax.reload(null, false);
+                    completedAdvancesTable.ajax.reload(null, false);
                 }
 
             } catch (error) {
-                console.error('Onaylama hatası:', error);
+                console.error('Tamamlama hatası:', error);
             }
         }
         function openRejectModal(id) {
@@ -631,7 +747,7 @@
                 const advanceRequestId = $('#txtRejectAdvanceRequestId').val();
 
                 if (!advanceRequestId) {
-                    toastr.error('Avans talebi ID\'si bulunamadı');
+                    showToast('Avans talebi ID\'si bulunamadı', 'error', 'Hata');
                     return;
                 }
 
@@ -640,34 +756,54 @@
                 const submitBtn = $('#btnRejectAdvanceRequest');
                 submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Reddediliyor...');
 
-                const response = await $.ajax({
-                    url: `/avans/${advanceRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : null}`,
-                    type: 'PUT',
-                    contentType: 'application/json'
-                });
+                const url = `/avans/${advanceRequestId}/reddet${rejectReason ? `?rejectReason=${encodeURIComponent(rejectReason)}` : ''}`;
+                await makeRequest(url, 'PUT');
 
-                toastr.success('Avans talebi başarıyla reddedildi.');
+                showToast('Avans talebi başarıyla reddedildi.', 'success', 'Başarılı');
                 $('#rejectModal').modal('hide');
                 approvedAdvancesTable.ajax.reload(null, false);
 
             } catch (error) {
                 console.error('Reddetme hatası:', error);
-                let errorMessage = 'Avans talebi reddedilirken hata oluştu';
-
-                if (error.responseJSON) {
-                    if (error.responseJSON.message) {
-                        errorMessage = error.responseJSON.message;
-                    } else if (error.responseJSON.errors && error.responseJSON.errors.length > 0) {
-                        errorMessage = error.responseJSON.errors.join(', ');
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                toastr.error(errorMessage);
+                handleError(error, 'Avans talebi reddedilirken hata oluştu');
             } finally {
                 const submitBtn = $('#btnRejectAdvanceRequest');
                 submitBtn.prop('disabled', false).html('<i class="fas fa-times me-1"></i>Reddet');
+            }
+        }
+                      // Sayfa yüklendiğinde istatistikleri çek
+        async function loadStatistics() {
+            try {
+                const response = await makeRequest('/avans/istatistik', 'GET');
+                if (response) {
+                    const stats = response;
+                    
+                    // Sayıları güncelle
+                    $('#pendingAdvancesCount').text(stats.pendingCount);
+                    $('#approvedAdvancesCount').text(stats.approvedCount);
+                    $('#rejectedAdvancesCount').text(stats.rejectedCount);
+                    $('#completedAdvancesCount').text(stats.completedCount);
+
+                    // Progress bar'ları güncelle
+                    $('.card-body').eq(0).find('.progress-bar')
+                        .css('width', stats.pendingPercentage + '%')
+                        .attr('aria-valuenow', stats.pendingPercentage);
+
+                    $('.card-body').eq(1).find('.progress-bar')
+                        .css('width', stats.approvedPercentage + '%')
+                        .attr('aria-valuenow', stats.approvedPercentage);
+
+                    $('.card-body').eq(2).find('.progress-bar')
+                        .css('width', stats.rejectedPercentage + '%')
+                        .attr('aria-valuenow', stats.rejectedPercentage);
+
+                    $('.card-body').eq(3).find('.progress-bar')
+                        .css('width', stats.completedPercentage + '%')
+                        .attr('aria-valuenow', stats.completedPercentage);
+                }
+            } catch (error) {
+                console.error('İstatistikler yüklenirken hata:', error);
+                handleError(error, 'İstatistikler yüklenirken hata oluştu');
             }
         }
 

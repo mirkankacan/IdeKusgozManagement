@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.DTOs.RoleDTOs;
 using IdeKusgozManagement.Application.Interfaces.Services;
 using IdeKusgozManagement.Domain.Entities;
@@ -6,21 +6,23 @@ using Mapster;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
     public class RoleService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, ILogger<RoleService> logger) : IRoleService
     {
-        public async Task<ServiceResponse<bool>> IsUserInRoleAsync(string userId, string roleName, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> IsUserInRoleAsync(string userId, string roleName, CancellationToken cancellationToken = default)
         {
             try
             {
                 var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
-                    return ServiceResponse<bool>.Error("Kullanıcı bulunamadı");
+                    return ServiceResult<bool>.Error("Kullanıcı Bulunamadı", "Belirtilen ID'ye sahip kullanıcı bulunamadı.", HttpStatusCode.NotFound);
 
                 var isInRole = await userManager.IsInRoleAsync(user, roleName);
-                return ServiceResponse<bool>.Success(isInRole);
+                return ServiceResult<bool>.SuccessAsOk(isInRole);
             }
             catch (Exception ex)
             {
@@ -29,7 +31,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<RoleDTO>>> GetRolesAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<RoleDTO>>> GetRolesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -41,7 +43,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 role.Name == "Personel" ? 4 : 5).ToList();
                 var roleDTOs = orderedRoles.Select(role => role.Adapt<RoleDTO>()).ToList();
 
-                return ServiceResponse<IEnumerable<RoleDTO>>.Success(roleDTOs);
+                return ServiceResult<IEnumerable<RoleDTO>>.SuccessAsOk(roleDTOs);
             }
             catch (Exception ex)
             {
@@ -50,19 +52,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<RoleDTO>> GetRoleByIdAsync(string roleId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<RoleDTO>> GetRoleByIdAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
-                    return ServiceResponse<RoleDTO>.Error("Rol bulunamadı");
+                    return ServiceResult<RoleDTO>.Error("Rol Bulunamadı", "Belirtilen ID'ye sahip rol bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var roleDTO = role.Adapt<RoleDTO>();
 
-                return ServiceResponse<RoleDTO>.Success(roleDTO);
+                return ServiceResult<RoleDTO>.SuccessAsOk(roleDTO);
             }
             catch (Exception ex)
             {
@@ -71,19 +73,19 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<RoleDTO>> GetRoleByNameAsync(string roleName, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<RoleDTO>> GetRoleByNameAsync(string roleName, CancellationToken cancellationToken = default)
         {
             try
             {
                 var role = await roleManager.FindByNameAsync(roleName);
                 if (role == null)
                 {
-                    return ServiceResponse<RoleDTO>.Error("Rol bulunamadı");
+                    return ServiceResult<RoleDTO>.Error("Rol Bulunamadı", "Belirtilen isme sahip rol bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 var roleDTO = role.Adapt<RoleDTO>();
 
-                return ServiceResponse<RoleDTO>.Success(roleDTO);
+                return ServiceResult<RoleDTO>.SuccessAsOk(roleDTO);
             }
             catch (Exception ex)
             {
@@ -92,7 +94,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<RoleDTO>> CreateRoleAsync(CreateRoleDTO createRoleDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<RoleDTO>> CreateRoleAsync(CreateRoleDTO createRoleDTO, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -100,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var existingRole = await roleManager.FindByNameAsync(createRoleDTO.Name);
                 if (existingRole != null)
                 {
-                    return ServiceResponse<RoleDTO>.Error("Bu rol adı zaten kullanılıyor");
+                    return ServiceResult<RoleDTO>.Error("Rol Adı Zaten Kullanılıyor", "Bu rol adı zaten kullanılıyor. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                 }
 
                 var role = createRoleDTO.Adapt<ApplicationRole>();
@@ -108,13 +110,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var result = await roleManager.CreateAsync(role);
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<RoleDTO>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<RoleDTO>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
                 var roleDTO = role.Adapt<RoleDTO>();
 
-                return ServiceResponse<RoleDTO>.Success(roleDTO, "Rol başarıyla oluşturuldu");
+                return ServiceResult<RoleDTO>.SuccessAsCreated(roleDTO, $"/api/roles/{roleDTO.Id}");
             }
             catch (Exception ex)
             {
@@ -123,14 +125,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<RoleDTO>> UpdateRoleAsync(string roleId, UpdateRoleDTO updateRoleDTO, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<RoleDTO>> UpdateRoleAsync(string roleId, UpdateRoleDTO updateRoleDTO, CancellationToken cancellationToken = default)
         {
             try
             {
                 var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
-                    return ServiceResponse<RoleDTO>.Error("Rol bulunamadı");
+                    return ServiceResult<RoleDTO>.Error("Rol Bulunamadı", "Belirtilen ID'ye sahip rol bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 // Rol adı değişikliği kontrolü
@@ -139,7 +141,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     var existingRole = await roleManager.FindByNameAsync(updateRoleDTO.Name);
                     if (existingRole != null && existingRole.Id != roleId)
                     {
-                        return ServiceResponse<RoleDTO>.Error("Bu rol adı kullanılıyor");
+                        return ServiceResult<RoleDTO>.Error("Rol Adı Kullanılıyor", "Bu rol adı kullanılıyor. Lütfen farklı bir isim kullanın.", HttpStatusCode.BadRequest);
                     }
                 }
 
@@ -149,13 +151,13 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 var result = await roleManager.UpdateAsync(role);
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<RoleDTO>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<RoleDTO>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
                 var roleDTO = role.Adapt<RoleDTO>();
 
-                return ServiceResponse<RoleDTO>.Success(roleDTO, "Rol başarıyla güncellendi");
+                return ServiceResult<RoleDTO>.SuccessAsOk(roleDTO);
             }
             catch (Exception ex)
             {
@@ -164,21 +166,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DeleteRoleAsync(string roleId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DeleteRoleAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
-                    return ServiceResponse<bool>.Error("Rol bulunamadı");
+                    return ServiceResult<bool>.Error("Rol Bulunamadı", "Belirtilen ID'ye sahip rol bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 // Bu role sahip kullanıcı var mı kontrol et
                 var usersInRole = await userManager.GetUsersInRoleAsync(role.Name);
                 if (usersInRole.Any())
                 {
-                    return ServiceResponse<bool>.Error("Bu role sahip kullanıcılar bulunduğu için rol silinemez");
+                    return ServiceResult<bool>.Error("Silme İşlemi Başarısız", "Bu role sahip kullanıcılar bulunduğu için rol silinemez.", HttpStatusCode.BadRequest);
                 }
 
                 // Soft delete
@@ -187,11 +189,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<bool>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<bool>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
-                return ServiceResponse<bool>.Success(true, "Rol başarıyla silindi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -200,14 +202,14 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> EnableRoleAsync(string roleId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> EnableRoleAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
-                    return ServiceResponse<bool>.Error("Rol bulunamadı");
+                    return ServiceResult<bool>.Error("Rol Bulunamadı", "Belirtilen ID'ye sahip rol bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 role.IsActive = true;
@@ -215,11 +217,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<bool>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<bool>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
-                return ServiceResponse<bool>.Success(true, "Rol başarıyla aktifleştirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -228,21 +230,21 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<bool>> DisableRoleAsync(string roleId, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<bool>> DisableRoleAsync(string roleId, CancellationToken cancellationToken = default)
         {
             try
             {
                 var role = await roleManager.FindByIdAsync(roleId);
                 if (role == null)
                 {
-                    return ServiceResponse<bool>.Error("Rol bulunamadı");
+                    return ServiceResult<bool>.Error("Rol Bulunamadı", "Belirtilen ID'ye sahip rol bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 // Bu role sahip kullanıcı var mı kontrol et
                 var usersInRole = await userManager.GetUsersInRoleAsync(role.Name);
                 if (usersInRole.Any())
                 {
-                    return ServiceResponse<bool>.Error("Bu role sahip kullanıcılar bulunduğu için rol pasifleştirilemez");
+                    return ServiceResult<bool>.Error("Pasifleştirme İşlemi Başarısız", "Bu role sahip kullanıcılar bulunduğu için rol pasifleştirilemez.", HttpStatusCode.BadRequest);
                 }
 
                 role.IsActive = false;
@@ -250,11 +252,11 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResponse<bool>.Error(errors);
+                    var errors = result.Errors.Select((e, i) => new { Index = i, Description = e.Description }).ToList();
+                    return ServiceResult<bool>.ErrorFromValidation(errors.ToDictionary(e => e.Index.ToString(), e => (object)e.Description));
                 }
 
-                return ServiceResponse<bool>.Success(true, "Rol başarıyla pasifleştirildi");
+                return ServiceResult<bool>.SuccessAsOk(true);
             }
             catch (Exception ex)
             {
@@ -263,7 +265,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<RoleDTO>>> GetActiveRolesAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<RoleDTO>>> GetActiveRolesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -275,7 +277,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 role.Name == "Personel" ? 4 : 5).ToList();
                 var roleDTOs = orderedRoles.Select(role => role.Adapt<RoleDTO>()).ToList();
 
-                return ServiceResponse<IEnumerable<RoleDTO>>.Success(roleDTOs);
+                return ServiceResult<IEnumerable<RoleDTO>>.SuccessAsOk(roleDTOs);
             }
             catch (Exception ex)
             {

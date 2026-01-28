@@ -1,3 +1,4 @@
+using IdeKusgozManagement.WebUI.Extensions;
 using IdeKusgozManagement.WebUI.Models.EquipmentModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +28,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetEquipments(CancellationToken cancellationToken)
         {
             var response = await _equipmentApiService.GetEquipmentsAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -35,7 +36,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetActiveEquipments(CancellationToken cancellationToken)
         {
             var response = await _equipmentApiService.GetActiveEquipmentsAsync(cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -48,7 +49,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _equipmentApiService.GetEquipmentByIdAsync(equipmentId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -62,7 +63,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _equipmentApiService.CreateEquipmentAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -81,7 +82,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _equipmentApiService.UpdateEquipmentAsync(equipmentId, model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -95,7 +96,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _equipmentApiService.DeleteEquipmentAsync(equipmentId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -109,7 +110,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _equipmentApiService.EnableEquipmentAsync(equipmentId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Yönetici, Şef")]
@@ -123,7 +124,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
 
             var response = await _equipmentApiService.DisableEquipmentAsync(equipmentId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

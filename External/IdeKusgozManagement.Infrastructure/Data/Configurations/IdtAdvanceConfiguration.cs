@@ -55,7 +55,14 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
                 .IsRequired(false)
              .HasMaxLength(500)
              .HasDefaultValue(null);
+            builder.Property(x => x.CompletedById)
+           .IsRequired(false)
+           .HasMaxLength(450)
+           .HasDefaultValue(null);
 
+            builder.Property(x => x.CompletedDate)
+                .IsRequired(false)
+                .HasDefaultValue(null);
             builder.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
@@ -69,20 +76,26 @@ namespace IdeKusgozManagement.Infrastructure.Data.Configurations
             builder.HasOne(x => x.ChiefUser)
              .WithMany()
              .HasForeignKey(x => x.ProcessedByChiefId)
-             .OnDelete(DeleteBehavior.NoAction)
+             .OnDelete(DeleteBehavior.Restrict)
              .IsRequired(false);
 
             builder.HasOne(x => x.UnitManagerUser)
              .WithMany()
              .HasForeignKey(x => x.ProcessedByUnitManagerId)
-             .OnDelete(DeleteBehavior.NoAction)
+             .OnDelete(DeleteBehavior.Restrict)
              .IsRequired(false);
 
             builder.HasOne(x => x.UpdatedByUser)
                 .WithMany()
                 .HasForeignKey(x => x.UpdatedBy)
-                .OnDelete(DeleteBehavior.NoAction)
+                .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);
+
+            builder.HasOne(x => x.CompletedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.CompletedById)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
         }
     }
 }

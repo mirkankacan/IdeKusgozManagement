@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.NotificationDTOs;
 using IdeKusgozManagement.Application.DTOs.WorkRecordDTOs;
@@ -10,6 +10,8 @@ using IdeKusgozManagement.Domain.Enums;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Net;
 
 namespace IdeKusgozManagement.Infrastructure.Services
 {
@@ -61,7 +63,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return status.Value;
         }
 
-        public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -77,7 +79,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .ToListAsync(cancellationToken);
 
                 var workRecordDTOs = workRecords.Adapt<IEnumerable<WorkRecordDTO>>();
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs);
+                return ServiceResult<IEnumerable<WorkRecordDTO>>.SuccessAsOk(workRecordDTOs);
             }
             catch (Exception ex)
             {
@@ -86,7 +88,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<WorkRecordDTO>>> BatchApproveWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -100,7 +102,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (!workRecords.Any())
                 {
-                    return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Belirtilen tarih aralığında puantaj kaydı bulunamadı ya da hepsi yönetici tarafından onaylanmış");
+                    return ServiceResult<IEnumerable<WorkRecordDTO>>.Error("Kayıt Bulunamadı", "Belirtilen tarih aralığında puantaj kaydı bulunamadı ya da hepsi yönetici tarafından onaylanmış.", HttpStatusCode.NotFound);
                 }
 
                 // Kayıtları onaylı duruma getir
@@ -117,7 +119,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (userJobBalance == null)
                 {
                     logger.LogError("{UserId} kullanıcısının {BalanceType} bakiyesi bulunamadı", userId, BalanceType.Job);
-                    return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Kullanıcı iş avansı bakiyesi bulunamadı");
+                    return ServiceResult<IEnumerable<WorkRecordDTO>>.Error("Bakiye Bulunamadı", "Kullanıcı iş avansı bakiyesi bulunamadı.", HttpStatusCode.NotFound);
                 }
                 userJobBalance.Balance -= totalExpensesAmount;
 
@@ -141,8 +143,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
 
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(mappedWorkRecords,
-                    $"{workRecords.Count} adet puantaj kaydı başarıyla onaylandı");
+                return ServiceResult<IEnumerable<WorkRecordDTO>>.SuccessAsOk(mappedWorkRecords);
             }
             catch (Exception ex)
             {
@@ -153,7 +154,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<WorkRecordDTO>>> BatchRejectWorkRecordsByUserIdAndDateAsync(string userId, DateTime date, string? rejectReason, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -166,7 +167,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (!workRecords.Any())
                 {
-                    return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error("Belirtilen tarih aralığında puantaj kaydı bulunamadı");
+                    return ServiceResult<IEnumerable<WorkRecordDTO>>.Error("Kayıt Bulunamadı", "Belirtilen tarih aralığında puantaj kaydı bulunamadı.", HttpStatusCode.NotFound);
                 }
                 var status = GetRejectStatusByRole().Value;
                 foreach (var workRecord in workRecords)
@@ -193,7 +194,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
 
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(mappedWorkRecords, $"{workRecords.Count} adet puantaj kaydı başarıyla reddedildi");
+                return ServiceResult<IEnumerable<WorkRecordDTO>>.SuccessAsOk(mappedWorkRecords);
             }
             catch (Exception ex)
             {
@@ -203,7 +204,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<WorkRecordDTO>> ApproveWorkRecordByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<WorkRecordDTO>> ApproveWorkRecordByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -213,7 +214,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (workRecord == null)
                 {
-                    return ServiceResponse<WorkRecordDTO>.Error("Belirtilen puantaj kaydı bulunamadı");
+                    return ServiceResult<WorkRecordDTO>.Error("Kayıt Bulunamadı", "Belirtilen puantaj kaydı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 workRecord.Status = GetApproveStatusByRole().Value;
@@ -224,7 +225,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 if (userJobBalance == null)
                 {
                     logger.LogError("{UserId} kullanıcısının {BalanceType} bakiyesi bulunamadı", workRecord.CreatedBy, BalanceType.Job);
-                    return ServiceResponse<WorkRecordDTO>.Error("Kullanıcı iş avansı bakiyesi bulunamadı");
+                    return ServiceResult<WorkRecordDTO>.Error("Bakiye Bulunamadı", "Kullanıcı iş avansı bakiyesi bulunamadı.", HttpStatusCode.NotFound);
                 }
                 userJobBalance.Balance -= totalExpenseAmount;
 
@@ -258,7 +259,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
 
-                return ServiceResponse<WorkRecordDTO>.Success(mappedWorkRecord, $"Puantaj kaydı başarıyla onaylandı");
+                return ServiceResult<WorkRecordDTO>.SuccessAsOk(mappedWorkRecord);
             }
             catch (Exception ex)
             {
@@ -268,7 +269,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<WorkRecordDTO>> RejectWorkRecordByIdAsync(string id, string? rejectReason, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<WorkRecordDTO>> RejectWorkRecordByIdAsync(string id, string? rejectReason, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -278,7 +279,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
                 if (workRecord == null)
                 {
-                    return ServiceResponse<WorkRecordDTO>.Error(message: "Belirtilen puantaj kaydı bulunamadı");
+                    return ServiceResult<WorkRecordDTO>.Error("Kayıt Bulunamadı", "Belirtilen puantaj kaydı bulunamadı.", HttpStatusCode.NotFound);
                 }
 
                 workRecord.Status = GetRejectStatusByRole().Value;
@@ -311,7 +312,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     TargetUsers = new List<string> { mappedWorkRecord.CreatedBy }
                 };
                 await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
-                return ServiceResponse<WorkRecordDTO>.Success(mappedWorkRecord, $"Puantaj kaydı başarıyla reddedildi");
+                return ServiceResult<WorkRecordDTO>.SuccessAsOk(mappedWorkRecord);
             }
             catch (Exception ex)
             {
@@ -321,7 +322,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> BatchUpdateWorkRecordsByUserIdAsync(string userId, IEnumerable<CreateOrModifyWorkRecordDTO> workRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<WorkRecordDTO>>> BatchUpdateWorkRecordsByUserIdAsync(string userId, IEnumerable<CreateOrModifyWorkRecordDTO> workRecordDTOs, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -339,7 +340,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     // Saat kontrolü
                     var check = CheckHoursIfValid(element);
                     if (!check.Item1)
-                        return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error(check.Item2 ?? "Saat kontrolü başarısız");
+                        return ServiceResult<IEnumerable<WorkRecordDTO>>.Error("Validasyon Hatası", check.Item2 ?? "Saat kontrolü başarısız.", HttpStatusCode.BadRequest);
 
                     // İlgili tarihin mevcut kaydı
                     var existingWorkRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == element.Date.Date);
@@ -364,7 +365,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     else
                     {
                         await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                        return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error($"{element.Date.Date} tarihli puantaj kaydı veritabanında bulunamadı");
+                        return ServiceResult<IEnumerable<WorkRecordDTO>>.Error("Kayıt Bulunamadı", $"{element.Date.Date:dd.MM.yyyy} tarihli puantaj kaydı veritabanında bulunamadı.", HttpStatusCode.NotFound);
                     }
                 }
 
@@ -379,7 +380,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     if (!expenseResult.IsSuccess)
                     {
                         await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                        return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error($"Puantaj masraf kayıtları işlenirken hata oluştu: {expenseResult.Message}");
+                        return ServiceResult<IEnumerable<WorkRecordDTO>>.Error("Masraf İşleme Hatası", expenseResult.Fail?.Detail ?? "Puantaj masraf kayıtları işlenirken hata oluştu.", HttpStatusCode.BadRequest);
                     }
                 }
 
@@ -419,7 +420,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     await notificationService.SendNotificationToUsersAsync(notificationDTO, cancellationToken);
                 }
 
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(mappedRecords, $"Puantaj kayıtları işlendi. {updatedCount} kayıt güncellendi.");
+                return ServiceResult<IEnumerable<WorkRecordDTO>>.SuccessAsOk(mappedRecords);
             }
             catch (Exception ex)
             {
@@ -429,7 +430,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateOrModifyWorkRecordDTO> workRecordDTOs, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<WorkRecordDTO>>> BatchCreateOrModifyWorkRecordsAsync(IEnumerable<CreateOrModifyWorkRecordDTO> workRecordDTOs, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -455,7 +456,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     // Saat kontrolü
                     var check = CheckHoursIfValid(element);
                     if (!check.Item1)
-                        return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error(check.Item2 ?? "Saat kontrolü başarısız");
+                        return ServiceResult<IEnumerable<WorkRecordDTO>>.Error("Validasyon Hatası", check.Item2 ?? "Saat kontrolü başarısız.", HttpStatusCode.BadRequest);
 
                     // İlgili tarihin mevcut kaydı
                     var existingWorkRecord = existingWorkRecords.FirstOrDefault(x => x.Date.Date == element.Date.Date);
@@ -504,7 +505,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     if (!expenseResult.IsSuccess)
                     {
                         await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                        return ServiceResponse<IEnumerable<WorkRecordDTO>>.Error($"Puantaj masraf kayıtları işlenirken hata oluştu: {expenseResult.Message}");
+                        return ServiceResult<IEnumerable<WorkRecordDTO>>.Error("Masraf İşleme Hatası", expenseResult.Fail?.Detail ?? "Puantaj masraf kayıtları işlenirken hata oluştu.", HttpStatusCode.BadRequest);
                     }
                 }
 
@@ -543,7 +544,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     await notificationService.SendNotificationToSuperiorsAsync(notificationDTO, cancellationToken);
                 }
 
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(mappedRecords, $"Puantaj kayıtları işlendi. {createdCount} kayıt eklendi, {updatedCount} kayıt güncellendi.");
+                return ServiceResult<IEnumerable<WorkRecordDTO>>.SuccessAsOk(mappedRecords);
             }
             catch (Exception ex)
             {
@@ -756,7 +757,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             return (true, string.Empty);
         }
 
-        public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdDateStatusAsync(string userId, DateTime date, WorkRecordStatus status, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<WorkRecordDTO>>> GetWorkRecordsByUserIdDateStatusAsync(string userId, DateTime date, WorkRecordStatus status, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -772,7 +773,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .ToListAsync(cancellationToken);
 
                 var workRecordDTOs = workRecords.Adapt<IEnumerable<WorkRecordDTO>>();
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs);
+                return ServiceResult<IEnumerable<WorkRecordDTO>>.SuccessAsOk(workRecordDTOs);
             }
             catch (Exception ex)
             {
@@ -781,7 +782,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
             }
         }
 
-        public async Task<ServiceResponse<IEnumerable<WorkRecordDTO>>> GetApprovedWorkRecordsByUserAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<IEnumerable<WorkRecordDTO>>> GetApprovedWorkRecordsByUserAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -797,7 +798,7 @@ namespace IdeKusgozManagement.Infrastructure.Services
                     .ToListAsync(cancellationToken);
 
                 var workRecordDTOs = workRecords.Adapt<IEnumerable<WorkRecordDTO>>();
-                return ServiceResponse<IEnumerable<WorkRecordDTO>>.Success(workRecordDTOs);
+                return ServiceResult<IEnumerable<WorkRecordDTO>>.SuccessAsOk(workRecordDTOs);
             }
             catch (Exception ex)
             {

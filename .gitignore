@@ -12,6 +12,8 @@
 
 /.vscode
 appsettings.json
+appsettings.Development.json
+appsettings.Production.json
 appsettings.*.json
 IdeKusgozManagement.WebAPI/wwwroot/Uploads/
 **/Uploads/

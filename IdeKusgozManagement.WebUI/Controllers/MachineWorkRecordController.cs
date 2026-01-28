@@ -1,4 +1,4 @@
-﻿using IdeKusgozManagement.WebUI.Authorization;
+﻿using IdeKusgozManagement.WebUI.Extensions;
 using IdeKusgozManagement.WebUI.Models.MachineWorkRecordModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -30,15 +30,15 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetApprovedMachineWorkRecordsByUser(string userId, DateTime date, int status, CancellationToken cancellationToken)
         {
             var response = await _MachineWorkRecordApiService.GetApprovedMachineWorkRecordsByUserAsync(userId, date, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin,Yönetici")]
         [HttpGet("liste/kullanici/{userId}/tarih/{date:datetime}/durum/{status:int}")]
-        public async Task<IActionResult> GetMachineWorkRecordsByUserIdAndDate(string userId, DateTime date, int status, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetMachineWorkRecordsByUserIdAndDateStatus(string userId, DateTime date, int status, CancellationToken cancellationToken)
         {
             var response = await _MachineWorkRecordApiService.GetMachineWorkRecordsByUserIdDateStatusAsync(userId, date, status, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin,Yönetici,Şef")]
@@ -46,7 +46,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetMachineWorkRecordsByUserIdAndDate(string userId, DateTime date, CancellationToken cancellationToken)
         {
             var response = await _MachineWorkRecordApiService.GetMachineWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize]
@@ -54,11 +54,9 @@ namespace IdeKusgozManagement.WebUI.Controllers
         public async Task<IActionResult> GetMyMachineWorkRecords(DateTime date, CancellationToken cancellationToken)
         {
             var response = await _MachineWorkRecordApiService.GetMyMachineWorkRecordsByDateAsync(date, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
-
-        [Authorize(Roles = "Admin, Şef, Yönetici")]
-        [DepartmentDuty("Şoför-Yük Taşıma", "Vinç Operatörü", "Platform Operatörü")]
+        [Authorize(Policy = "MakinePolicy")]
         [HttpGet("ekle")]
         public IActionResult Create()
         {
@@ -73,10 +71,8 @@ namespace IdeKusgozManagement.WebUI.Controllers
             ViewData["UserId"] = userId;
             return View();
         }
-
-        [Authorize]
         [HttpPost("toplu-ekle-duzenle")]
-        [DepartmentDuty("Şoför-Yük Taşıma", "Vinç Operatörü", "Platform Operatörü")]
+        [Authorize(Policy = "MakinePolicy")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateOrModifyMachineWorkRecord([FromForm] List<CreateOrModifyMachineWorkRecordViewModel> model, CancellationToken cancellationToken)
         {
@@ -85,7 +81,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest(ModelState);
             }
             var response = await _MachineWorkRecordApiService.BatchCreateOrModifyMachineWorkRecordsAsync(model, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -98,7 +94,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Kullanıcı ID'si boş geçilemez");
             }
             var response = await _MachineWorkRecordApiService.BatchRejectMachineWorkRecordsByUserIdAndDateAsync(userId, date, rejectReason, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -111,7 +107,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Kullanıcı ID'si boş geçilemez");
             }
             var response = await _MachineWorkRecordApiService.BatchApproveMachineWorkRecordsByUserIdAndDateAsync(userId, date, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -125,7 +121,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
             }
             var response = await _MachineWorkRecordApiService.BatchUpdateMachineWorkRecordsByUserIdAsync(userId, model, cancellationToken);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -138,7 +134,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Puantaj ID'si boş geçilemez");
             }
             var response = await _MachineWorkRecordApiService.ApproveMachineWorkRecordByIdAsync(MachineWorkRecordId, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         [Authorize(Roles = "Admin, Şef, Yönetici")]
@@ -151,7 +147,7 @@ namespace IdeKusgozManagement.WebUI.Controllers
                 return BadRequest("Puantaj ID'si boş geçilemez");
             }
             var response = await _MachineWorkRecordApiService.RejectMachineWorkRecordByIdAsync(MachineWorkRecordId, rejectReason, cancellationToken);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
     }
 }

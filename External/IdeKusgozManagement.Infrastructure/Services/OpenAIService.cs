@@ -1,10 +1,11 @@
-﻿using IdeKusgozManagement.Application.Common;
+using IdeKusgozManagement.Application.Common;
 using IdeKusgozManagement.Application.Contracts.Services;
 using IdeKusgozManagement.Application.DTOs.AIDTOs;
 using IdeKusgozManagement.Infrastructure.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
+using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -14,16 +15,16 @@ namespace IdeKusgozManagement.Infrastructure.Services
 
     public class OpenAIService(ChatClient chatClient, ILogger<OpenAIService> logger) : IAIService
     {
-        public async Task<ServiceResponse<AIDateResponse>> AnalyzeDocumentDateAsync(IFormFile file, string documentTypeName, CancellationToken cancellationToken = default)
+        public async Task<ServiceResult<AIDateResponse>> AnalyzeDocumentDateAsync(IFormFile file, string documentTypeName, CancellationToken cancellationToken = default)
         {
             try
             {
                 // Input validation
                 if (file == null || file.Length == 0)
-                    return ServiceResponse<AIDateResponse>.Error("Geçerli dosya bulunamadı");
+                    return ServiceResult<AIDateResponse>.Error("Dosya Bulunamadı", "Geçerli dosya bulunamadı.", HttpStatusCode.BadRequest);
 
                 if (string.IsNullOrWhiteSpace(documentTypeName))
-                    return ServiceResponse<AIDateResponse>.Error("Doküman türü belirtilmeli");
+                    return ServiceResult<AIDateResponse>.Error("Validasyon Hatası", "Doküman türü belirtilmeli.", HttpStatusCode.BadRequest);
 
                 var binaryData = await FileHelper.ConvertToBinaryDataAsync(file);
                 var contentType = FileHelper.GetContentType(Path.GetExtension(file.FileName).ToLowerInvariant());
@@ -59,7 +60,7 @@ Return ONLY this JSON:
                 if (string.IsNullOrWhiteSpace(text))
                 {
                     logger.LogError("OpenAI'dan boş response alındı");
-                    return ServiceResponse<AIDateResponse>.Error("OpenAI'dan geçerli yanıt alınamadı");
+                    return ServiceResult<AIDateResponse>.Error("Yanıt Alınamadı", "OpenAI'dan geçerli yanıt alınamadı. Lütfen daha sonra tekrar deneyin.", HttpStatusCode.BadGateway);
                 }
 
                 // JSON'u bul ve çıkart
@@ -67,7 +68,7 @@ Return ONLY this JSON:
                 if (!jsonMatch.Success)
                 {
                     logger.LogError("OpenAI response'unda JSON bulunamadı. Response: {Response}", text);
-                    return ServiceResponse<AIDateResponse>.Error("Geçerli JSON response alınamadı");
+                    return ServiceResult<AIDateResponse>.Error("Geçersiz Yanıt", "Geçerli JSON response alınamadı.", HttpStatusCode.BadGateway);
                 }
 
                 var result = JsonSerializer.Deserialize<AIDateResponse>(jsonMatch.Value,
@@ -76,19 +77,19 @@ Return ONLY this JSON:
                 if (result == null)
                 {
                     logger.LogError("JSON deserialize edilemedi: {Json}", jsonMatch.Value);
-                    return ServiceResponse<AIDateResponse>.Error("JSON parse edilemedi");
+                    return ServiceResult<AIDateResponse>.Error("Parse Hatası", "JSON parse edilemedi.", HttpStatusCode.BadGateway);
                 }
 
                 if (result.Confidence < 0.6)
                 {
                     logger.LogWarning("OpenAI güven skoru düşük: {Confidence}", result.Confidence);
-                    return ServiceResponse<AIDateResponse>.Error($"Güven skoru çok düşük: {result.Confidence:P0}");
+                    return ServiceResult<AIDateResponse>.Error("Düşük Güven Skoru", $"Güven skoru çok düşük: {result.Confidence:P0}. Lütfen daha net bir belge yükleyin.", HttpStatusCode.BadRequest);
                 }
 
                 logger.LogInformation("Başarılı analiz - Dosya: {FileName}, Tarih: {Date}, Güven: {Confidence}",
                     file.FileName, result.SelectedDate, result.Confidence);
 
-                return ServiceResponse<AIDateResponse>.Success(result, "Evrak tarihi başarıyla analiz edildi");
+                return ServiceResult<AIDateResponse>.SuccessAsOk(result);
             }
             catch (Exception ex)
             {

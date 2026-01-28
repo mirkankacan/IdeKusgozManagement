@@ -1,87 +1,36 @@
-﻿using IdeKusgozManagement.WebUI.Models;
+using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.MessageModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
-using Newtonsoft.Json;
-using System.Text;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
     public class MessageApiService : IMessageApiService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IApiService _apiService;
+        private readonly ILogger<MessageApiService> _logger;
+        private const string BaseEndpoint = "api/messages";
 
-        public MessageApiService(HttpClient httpClient)
+        public MessageApiService(
+            IApiService apiService,
+            ILogger<MessageApiService> logger)
         {
-            _httpClient = httpClient;
+            _apiService = apiService;
+            _logger = logger;
         }
 
         public async Task<ApiResponse<MessageViewModel>> CreateMessageAsync(CreateMessageViewModel model, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync("api/messages", content, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<MessageViewModel>>(responseContent);
-                    return apiResponse ?? new ApiResponse<MessageViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<MessageViewModel>>(responseContent);
-                return errorResponse ?? new ApiResponse<MessageViewModel> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<MessageViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.PostAsync<MessageViewModel>(BaseEndpoint, model, cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> DeleteMessageAsync(string messageId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/messages/{messageId}", cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.DeleteAsync<bool>($"{BaseEndpoint}/{messageId}", cancellationToken);
         }
 
         public async Task<ApiResponse<PagedResult<MessageViewModel>>> GetMessagesAsync(int pageSize = 10, int pageNumber = 1, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/messages?pageSize={pageSize}&pageNumber={pageNumber}", cancellationToken);
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<PagedResult<MessageViewModel>>>(content);
-                    return apiResponse ?? new ApiResponse<PagedResult<MessageViewModel>> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<PagedResult<MessageViewModel>>>(content);
-                return errorResponse ?? new ApiResponse<PagedResult<MessageViewModel>> { IsSuccess = false, Message = "API çağrısı başarısız" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<PagedResult<MessageViewModel>> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            return await _apiService.GetAsync<PagedResult<MessageViewModel>>($"{BaseEndpoint}?pageSize={pageSize}&pageNumber={pageNumber}", cancellationToken);
         }
     }
 }

@@ -1,146 +1,63 @@
-﻿using IdeKusgozManagement.WebUI.Models;
+using IdeKusgozManagement.WebUI.Models;
 using IdeKusgozManagement.WebUI.Models.AuthModels;
 using IdeKusgozManagement.WebUI.Services.Interfaces;
-using Newtonsoft.Json;
-using System.Text;
 
 namespace IdeKusgozManagement.WebUI.Services
 {
     public class AuthApiService : IAuthApiService
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<AuthApiService> _logger;
+        private readonly ILogger<ApiService> _apiServiceLogger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private const string BaseEndpoint = "api/auth";
 
-        public AuthApiService(IHttpClientFactory httpClientFactory)
+        public AuthApiService(
+            IHttpClientFactory httpClientFactory,
+            ILogger<AuthApiService> logger,
+            ILogger<ApiService> apiServiceLogger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _httpClientFactory = httpClientFactory;
+            _logger = logger;
+            _apiServiceLogger = apiServiceLogger;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private IApiService CreateApiService(string clientName)
+        {
+            var httpClient = _httpClientFactory.CreateClient(clientName);
+            return new ApiService(httpClient, _apiServiceLogger, _httpContextAccessor);
         }
 
         public async Task<ApiResponse<TokenViewModel>> LoginAsync(LoginViewModel model, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var httpClient = _httpClientFactory.CreateClient("AuthApiWithoutToken");
-
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await httpClient.PostAsync("api/auth/login", content, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<TokenViewModel>>(responseContent);
-                    return apiResponse ?? new ApiResponse<TokenViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<TokenViewModel>>(responseContent);
-                return errorResponse ?? new ApiResponse<TokenViewModel> { IsSuccess = false, Message = "Giriş yapılamadı" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<TokenViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            var apiService = CreateApiService("AuthApiWithoutToken");
+            return await apiService.PostAsync<TokenViewModel>($"{BaseEndpoint}/login", model, cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> LogoutAsync(CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var httpClient = _httpClientFactory.CreateClient("AuthApiWithToken");
-                var response = await httpClient.PostAsync("api/auth/logout", null, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Çıkış yapılamadı" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            var apiService = CreateApiService("AuthApiWithToken");
+            return await apiService.PostAsync<bool>($"{BaseEndpoint}/logout", null, cancellationToken);
         }
 
         public async Task<ApiResponse<TokenViewModel>> RefreshTokenAsync(CreateTokenByRefreshTokenViewModel model, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var httpClient = _httpClientFactory.CreateClient("AuthApiWithoutToken");
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await httpClient.PostAsync("api/auth/refresh-token", content, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<TokenViewModel>>(responseContent);
-                    return apiResponse ?? new ApiResponse<TokenViewModel> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<TokenViewModel>>(responseContent);
-                return errorResponse ?? new ApiResponse<TokenViewModel> { IsSuccess = false, Message = "Token yenilenemedi" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<TokenViewModel> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            var apiService = CreateApiService("AuthApiWithoutToken");
+            return await apiService.PostAsync<TokenViewModel>($"{BaseEndpoint}/refresh-token", model, cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordViewModel model, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var httpClient = _httpClientFactory.CreateClient("AuthApiWithoutToken");
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await httpClient.PostAsync("api/auth/reset-password", content, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Şifre sıfırlanamadı" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            var apiService = CreateApiService("AuthApiWithoutToken");
+            return await apiService.PostAsync<bool>($"{BaseEndpoint}/reset-password", model, cancellationToken);
         }
 
         public async Task<ApiResponse<bool>> SendResetPasswordEmailAsync(ForgotPasswordViewModel model, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var httpClient = _httpClientFactory.CreateClient("AuthApiWithoutToken");
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await httpClient.PostAsync("api/auth/send-reset-email", content, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                    return apiResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Veri alınamadı" };
-                }
-
-                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<bool>>(responseContent);
-                return errorResponse ?? new ApiResponse<bool> { IsSuccess = false, Message = "Şifre sıfırlama maili atılamadı" };
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<bool> { IsSuccess = false, Message = "Bir hata oluştu" };
-            }
+            var apiService = CreateApiService("AuthApiWithoutToken");
+            return await apiService.PostAsync<bool>($"{BaseEndpoint}/send-reset-email", model, cancellationToken);
         }
     }
 }
